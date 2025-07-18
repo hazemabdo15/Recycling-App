@@ -2,10 +2,9 @@ import { useEffect } from 'react';
 import { StatusBar, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import CategoriesSection from '../../components/CategoriesSection';
-import EarnPointsCard from '../../components/EarnPointsCard';
-import Header from '../../components/Header';
-import TopRecycledSection from '../../components/TopRecycledSection';
+import { EarnPointsCard } from '../../components/cards';
+import { Header } from '../../components/common';
+import { CategoriesSection, TopRecycledSection } from '../../components/sections';
 
 const Index = () => {
     const insets = useSafeAreaInsets();

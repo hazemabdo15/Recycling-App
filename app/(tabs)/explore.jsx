@@ -1,19 +1,9 @@
 import { useState } from 'react';
-import { StatusBar, StyleSheet, Text, View } from 'react-native';
+import { StatusBar, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import CategoriesGrid from '../../components/CategoriesGrid';
-import SearchBar from '../../components/SearchBar';
-
-const colors = {
-  primary: "#0E9F6E",
-  secondary: "#8BC34A", 
-  accent: "#FFC107",
-  neutral: "#607D8B",
-  base100: "#F8FFFE", 
-  base300: "#E0E0E0",
-  white: "#ffffff",
-  black: "#171717",
-};
+import { CategoriesGrid } from '../../components/sections';
+import { SearchBar } from '../../components/ui';
+import { exploreStyles } from '../../styles/components/exploreStyles';
 
 const Explore = () => {
     const [searchText, setSearchText] = useState('');
@@ -32,15 +22,15 @@ const Explore = () => {
     };
 
     return (
-        <View style={[styles.container, { paddingTop: insets.top }]}>
+        <View style={[exploreStyles.container, { paddingTop: insets.top }]}>
             <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
             
-            <View style={styles.header}>
-                <Text style={styles.title}>Explore Categories</Text>
-                <Text style={styles.subtitle}>Find the right recycling category for your items</Text>
+            <View style={exploreStyles.header}>
+                <Text style={exploreStyles.title}>Explore Categories</Text>
+                <Text style={exploreStyles.subtitle}>Find the right recycling category for your items</Text>
             </View>
 
-            <View style={styles.content}>
+            <View style={exploreStyles.content}>
                 <SearchBar 
                     placeholder="Search categories..."
                     onSearch={handleSearch}
@@ -55,36 +45,5 @@ const Explore = () => {
         </View>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: colors.base100,
-        paddingBottom: 20,
-    },
-    header: {
-        paddingHorizontal: 20,
-        paddingVertical: 20,
-        backgroundColor: colors.white,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.base300,
-    },
-    title: {
-        fontSize: 28,
-        fontWeight: 'bold',
-        color: colors.black,
-        marginBottom: 8,
-    },
-    subtitle: {
-        fontSize: 16,
-        color: colors.neutral,
-        lineHeight: 22,
-    },
-    content: {
-        flex: 1,
-        paddingHorizontal: 20,
-        paddingTop: 20,
-    },
-});
 
 export default Explore;

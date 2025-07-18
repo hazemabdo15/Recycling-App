@@ -1,5 +1,5 @@
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import CategoryCard from './CategoryCard';
+import { CategoryCard } from '../cards';
 
 const CategoriesSection = () => {
     const categories = [

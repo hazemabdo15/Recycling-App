@@ -2,20 +2,8 @@ import { useEffect } from 'react';
 import { StatusBar, StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import ProfileHeader from '../../components/ProfileHeader';
-import ProfileMenu from '../../components/ProfileMenu';
-import StatsCard from '../../components/StatsCard';
-
-const colors = {
-  primary: "#0E9F6E",
-  secondary: "#8BC34A", 
-  accent: "#FFC107",
-  neutral: "#607D8B",
-  base100: "#F8FFFE",
-  base300: "#E0E0E0",
-  white: "#ffffff",
-  black: "#171717",
-};
+import { ProfileHeader, ProfileMenu, StatsCard } from '../../components/profile';
+import { colors } from '../../styles/theme';
 
 const Profile = () => {
     const insets = useSafeAreaInsets();

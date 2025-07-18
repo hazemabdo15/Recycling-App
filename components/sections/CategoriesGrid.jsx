@@ -1,5 +1,5 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
-import CategoryCard from './CategoryCard';
+import { CategoryCard } from '../cards';
 
 const CategoriesGrid = ({ searchText = '', onCategoryPress }) => {
     const allCategories = [
