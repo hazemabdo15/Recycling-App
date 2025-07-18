@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { categoryHeaderStyles } from '../../styles/components/categoryStyles';
 import { colors } from '../../styles/theme';
 
@@ -9,8 +9,21 @@ const CategoryHeader = ({
     totalItems, 
     totalPoints, 
     totalValue, 
-    animatedStyle 
+    animatedStyle,
+    headerOpacity
 }) => {
+    // Create animated style for stats container to handle shadow during animation
+    const statsAnimatedStyle = useAnimatedStyle(() => {
+        // Use the headerOpacity shared value if provided
+        const opacity = headerOpacity?.value || 1;
+        
+        // Hide shadow during animation to prevent trails
+        return {
+            elevation: opacity < 0.95 ? 0 : 4,
+            shadowOpacity: opacity < 0.95 ? 0 : 0.1,
+        };
+    });
+
     return (
         <Animated.View style={[categoryHeaderStyles.header, animatedStyle]}>
             <View style={categoryHeaderStyles.headerContent}>
@@ -19,7 +32,7 @@ const CategoryHeader = ({
                     {totalItems} {totalItems === 1 ? 'item' : 'items'} available
                 </Text>
             </View>
-            <View style={categoryHeaderStyles.headerStats}>
+            <Animated.View style={[categoryHeaderStyles.headerStats, statsAnimatedStyle]}>
                 <View style={categoryHeaderStyles.statItem}>
                     <MaterialCommunityIcons 
                         name="package-variant" 
@@ -47,7 +60,7 @@ const CategoryHeader = ({
                     <Text style={categoryHeaderStyles.statText}>{totalValue} EGP</Text>
                     <Text style={categoryHeaderStyles.statLabel}>Cart Value</Text>
                 </View>
-            </View>
+            </Animated.View>
         </Animated.View>
     );
 };

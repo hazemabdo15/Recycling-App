@@ -1,6 +1,7 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import { getCategoryImageProps } from '../../utils/categoryUtils';
+import { CategoryImage } from '../ui';
 
 
 const borderRadius = {
@@ -11,9 +12,11 @@ const borderRadius = {
   xl: 32,   
 };
 
-const CategoryCard = ({ iconName, iconColor, title, onPress }) => {
+const CategoryCard = ({ category, onPress }) => {
     const scale = useSharedValue(1);
     const shadowOpacity = useSharedValue(0.05);
+    
+    const imageProps = getCategoryImageProps(category);
 
     const handlePressIn = () => {
         scale.value = withSpring(0.95, { damping: 15, stiffness: 200 });
@@ -50,10 +53,12 @@ const CategoryCard = ({ iconName, iconColor, title, onPress }) => {
                     }}
                     onResponderTerminate={handlePressOut}
                 >
-                    <View style={styles.categoryIcon}>
-                        <MaterialCommunityIcons name={iconName} size={32} color={iconColor} />
-                    </View>
-                    <Text style={styles.categoryText}>{title}</Text>
+                    <CategoryImage
+                        {...imageProps}
+                        size={60}
+                        style={styles.categoryIcon}
+                    />
+                    <Text style={styles.categoryText}>{category.name}</Text>
                 </Animated.View>
             </Animated.View>
         </Animated.View>
@@ -80,12 +85,6 @@ const styles = StyleSheet.create({
         width: '100%',
     },
     categoryIcon: {
-        width: 60,
-        height: 60,
-        borderRadius: borderRadius.xl,
-        backgroundColor: '#F7FAFC',
-        justifyContent: 'center',
-        alignItems: 'center',
         marginBottom: 12,
     },
     categoryText: {

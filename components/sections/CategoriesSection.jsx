@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useCategories } from '../../hooks/useAPI';
 import { CategoryCard } from '../cards';
@@ -5,24 +6,22 @@ import { CategoryCard } from '../cards';
 const CategoriesSection = () => {
     const { categories, loading, error } = useCategories();
 
-    const getCategoryIcon = (categoryName) => {
-        const iconMap = {
-            'Plastic': { iconName: 'bottle-soda', iconColor: '#FF69B4' },
-            'Glass': { iconName: 'glass-fragile', iconColor: '#4FC3F7' },
-            'Paper': { iconName: 'file-document', iconColor: '#8BC34A' },
-            'Metal': { iconName: 'hammer-wrench', iconColor: '#FF9800' },
-            'Electronics': { iconName: 'battery-charging', iconColor: '#F44336' },
-            'Textiles': { iconName: 'tshirt-crew', iconColor: '#9C27B0' },
-            'Batteries': { iconName: 'car-battery', iconColor: '#795548' },
-            'Oil': { iconName: 'oil', iconColor: '#607D8B' },
-        };
-        return iconMap[categoryName] || { iconName: 'help-circle', iconColor: '#9E9E9E' };
+    const handleCategoryPress = (category) => {
+        console.log(`${category.name} category pressed`);
+        // Navigate to category details page
+        router.push({
+            pathname: '/category-details',
+            params: { categoryName: category.name }
+        });
     };
 
-    const handleCategoryPress = (categoryName) => {
-        console.log(`${categoryName} category pressed`);
+    const handleViewAllPress = () => {
+        console.log('View all categories pressed');
+        // Navigate to explore page (all categories)
+        router.push('/explore');
     };
 
+    // Show only first 4 categories as preview
     const limitedCategories = categories.slice(0, 4);
 
     if (loading) {
@@ -48,21 +47,18 @@ const CategoriesSection = () => {
             <View style={styles.categoriesHeader}>
                 <Text style={styles.categoriesTitle}>Categories</Text>
                 <TouchableOpacity
-                onPress={() => console.log('View all categories pressed')}>
+                onPress={handleViewAllPress}>
                     <Text style={styles.viewAllText}>View all</Text>
                 </TouchableOpacity>
             </View>
 
             <View style={styles.categoriesGrid}>
                 {limitedCategories.map((category) => {
-                    const iconData = getCategoryIcon(category.name);
                     return (
                         <CategoryCard
                             key={category._id}
-                            iconName={iconData.iconName}
-                            iconColor={iconData.iconColor}
-                            title={category.name}
-                            onPress={() => handleCategoryPress(category.name)}
+                            category={category}
+                            onPress={() => handleCategoryPress(category)}
                         />
                     );
                 })}

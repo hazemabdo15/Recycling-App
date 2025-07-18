@@ -6,24 +6,6 @@ import { CategoryCard } from '../cards';
 const CategoriesGrid = ({ searchText = '', onCategoryPress, onFilteredCountChange }) => {
     const { categories, loading, error } = useCategories();
 
-    const getCategoryIcon = (categoryName) => {
-        const iconMap = {
-            'Plastic': { iconName: 'bottle-soda', iconColor: '#FF69B4' },
-            'Glass': { iconName: 'glass-fragile', iconColor: '#4FC3F7' },
-            'Paper': { iconName: 'file-document', iconColor: '#8BC34A' },
-            'Metal': { iconName: 'hammer-wrench', iconColor: '#FF9800' },
-            'Electronics': { iconName: 'battery-charging', iconColor: '#F44336' },
-            'Textiles': { iconName: 'tshirt-crew', iconColor: '#9C27B0' },
-            'Batteries': { iconName: 'car-battery', iconColor: '#795548' },
-            'Oil': { iconName: 'oil', iconColor: '#607D8B' },
-            'Tires': { iconName: 'tire', iconColor: '#424242' },
-            'Bulbs': { iconName: 'lightbulb', iconColor: '#FFC107' },
-            'Mobile Phones': { iconName: 'cellphone', iconColor: '#00BCD4' },
-            'Computers': { iconName: 'laptop', iconColor: '#3F51B5' },
-        };
-        return iconMap[categoryName] || { iconName: 'help-circle', iconColor: '#9E9E9E' };
-    };
-
     const filteredCategories = categories.filter(category =>
         category.name.toLowerCase().includes(searchText.toLowerCase())
     );
@@ -65,13 +47,10 @@ const CategoriesGrid = ({ searchText = '', onCategoryPress, onFilteredCountChang
         >
             <View style={styles.categoriesGrid}>
                 {filteredCategories.map((category) => {
-                    const iconData = getCategoryIcon(category.name);
                     return (
                         <CategoryCard
                             key={category._id}
-                            iconName={iconData.iconName}
-                            iconColor={iconData.iconColor}
-                            title={category.name}
+                            category={category}
                             onPress={() => handleCategoryPress(category)}
                             style={styles.categoryCard}
                         />

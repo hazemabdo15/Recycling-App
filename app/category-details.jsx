@@ -36,7 +36,7 @@ const CategoryDetails = () => {
     const contentAnimatedStyle = useAnimatedStyle(() => ({
         transform: [{ translateY: contentTranslateY.value }],
     }));
-    
+
     // Calculate cart statistics
     const { totalItems, totalPoints, totalValue } = calculateCartStats(items, cartItems);
     
@@ -82,6 +82,7 @@ const CategoryDetails = () => {
                 totalPoints={totalPoints}
                 totalValue={totalValue}
                 animatedStyle={headerAnimatedStyle}
+                headerOpacity={headerOpacity}
             />
             
             <Animated.View style={[layoutStyles.content, contentAnimatedStyle]}>
