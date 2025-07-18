@@ -1,18 +1,47 @@
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useCategories } from '../../hooks/useAPI';
 import { CategoryCard } from '../cards';
 
 const CategoriesSection = () => {
-    const categories = [
-        { id: 1, iconName: 'bottle-soda', iconColor: '#FF69B4', title: 'Plastic' },
-        { id: 2, iconName: 'glass-fragile', iconColor: '#4FC3F7', title: 'Glass' },
-        { id: 3, iconName: 'file-document', iconColor: '#8BC34A', title: 'Paper' },
-        { id: 4, iconName: 'hammer-wrench', iconColor: '#FF9800', title: 'Metal' },
-    ];
+    const { categories, loading, error } = useCategories();
 
-    const handleCategoryPress = (categoryTitle) => {
-        console.log(`${categoryTitle} category pressed`);
-        
+    const getCategoryIcon = (categoryName) => {
+        const iconMap = {
+            'Plastic': { iconName: 'bottle-soda', iconColor: '#FF69B4' },
+            'Glass': { iconName: 'glass-fragile', iconColor: '#4FC3F7' },
+            'Paper': { iconName: 'file-document', iconColor: '#8BC34A' },
+            'Metal': { iconName: 'hammer-wrench', iconColor: '#FF9800' },
+            'Electronics': { iconName: 'battery-charging', iconColor: '#F44336' },
+            'Textiles': { iconName: 'tshirt-crew', iconColor: '#9C27B0' },
+            'Batteries': { iconName: 'car-battery', iconColor: '#795548' },
+            'Oil': { iconName: 'oil', iconColor: '#607D8B' },
+        };
+        return iconMap[categoryName] || { iconName: 'help-circle', iconColor: '#9E9E9E' };
     };
+
+    const handleCategoryPress = (categoryName) => {
+        console.log(`${categoryName} category pressed`);
+    };
+
+    const limitedCategories = categories.slice(0, 4);
+
+    if (loading) {
+        return (
+            <View style={styles.categoriesSection}>
+                <Text style={styles.categoriesTitle}>Categories</Text>
+                <Text style={styles.loadingText}>Loading...</Text>
+            </View>
+        );
+    }
+
+    if (error) {
+        return (
+            <View style={styles.categoriesSection}>
+                <Text style={styles.categoriesTitle}>Categories</Text>
+                <Text style={styles.errorText}>Error loading categories</Text>
+            </View>
+        );
+    }
 
     return (
         <View style={styles.categoriesSection}>
@@ -25,15 +54,18 @@ const CategoriesSection = () => {
             </View>
 
             <View style={styles.categoriesGrid}>
-                {categories.map((category) => (
-                    <CategoryCard
-                        key={category.id}
-                        iconName={category.iconName}
-                        iconColor={category.iconColor}
-                        title={category.title}
-                        onPress={() => handleCategoryPress(category.title)}
-                    />
-                ))}
+                {limitedCategories.map((category) => {
+                    const iconData = getCategoryIcon(category.name);
+                    return (
+                        <CategoryCard
+                            key={category._id}
+                            iconName={iconData.iconName}
+                            iconColor={iconData.iconColor}
+                            title={category.name}
+                            onPress={() => handleCategoryPress(category.name)}
+                        />
+                    );
+                })}
             </View>
         </View>
     );
@@ -63,6 +95,18 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         flexWrap: 'wrap',
         justifyContent: 'space-between',
+    },
+    loadingText: {
+        fontSize: 16,
+        color: '#666',
+        textAlign: 'center',
+        marginTop: 20,
+    },
+    errorText: {
+        fontSize: 16,
+        color: '#F44336',
+        textAlign: 'center',
+        marginTop: 20,
     },
 });
 

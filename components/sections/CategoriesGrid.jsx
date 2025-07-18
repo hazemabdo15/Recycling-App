@@ -1,25 +1,31 @@
 import { useEffect } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCategories } from '../../hooks/useAPI';
 import { CategoryCard } from '../cards';
 
 const CategoriesGrid = ({ searchText = '', onCategoryPress, onFilteredCountChange }) => {
-    const allCategories = [
-        { id: 1, iconName: 'bottle-soda', iconColor: '#FF69B4', title: 'Plastic' },
-        { id: 2, iconName: 'glass-fragile', iconColor: '#4FC3F7', title: 'Glass' },
-        { id: 3, iconName: 'file-document', iconColor: '#8BC34A', title: 'Paper' },
-        { id: 4, iconName: 'hammer-wrench', iconColor: '#FF9800', title: 'Metal' },
-        { id: 5, iconName: 'battery-charging', iconColor: '#F44336', title: 'Electronics' },
-        { id: 6, iconName: 'tshirt-crew', iconColor: '#9C27B0', title: 'Textiles' },
-        { id: 7, iconName: 'car-battery', iconColor: '#795548', title: 'Batteries' },
-        { id: 8, iconName: 'oil', iconColor: '#607D8B', title: 'Oil' },
-        { id: 9, iconName: 'tire', iconColor: '#424242', title: 'Tires' },
-        { id: 10, iconName: 'lightbulb', iconColor: '#FFC107', title: 'Bulbs' },
-        { id: 11, iconName: 'cellphone', iconColor: '#00BCD4', title: 'Mobile Phones' },
-        { id: 12, iconName: 'laptop', iconColor: '#3F51B5', title: 'Computers' },
-    ];
+    const { categories, loading, error } = useCategories();
 
-    const filteredCategories = allCategories.filter(category =>
-        category.title.toLowerCase().includes(searchText.toLowerCase())
+    const getCategoryIcon = (categoryName) => {
+        const iconMap = {
+            'Plastic': { iconName: 'bottle-soda', iconColor: '#FF69B4' },
+            'Glass': { iconName: 'glass-fragile', iconColor: '#4FC3F7' },
+            'Paper': { iconName: 'file-document', iconColor: '#8BC34A' },
+            'Metal': { iconName: 'hammer-wrench', iconColor: '#FF9800' },
+            'Electronics': { iconName: 'battery-charging', iconColor: '#F44336' },
+            'Textiles': { iconName: 'tshirt-crew', iconColor: '#9C27B0' },
+            'Batteries': { iconName: 'car-battery', iconColor: '#795548' },
+            'Oil': { iconName: 'oil', iconColor: '#607D8B' },
+            'Tires': { iconName: 'tire', iconColor: '#424242' },
+            'Bulbs': { iconName: 'lightbulb', iconColor: '#FFC107' },
+            'Mobile Phones': { iconName: 'cellphone', iconColor: '#00BCD4' },
+            'Computers': { iconName: 'laptop', iconColor: '#3F51B5' },
+        };
+        return iconMap[categoryName] || { iconName: 'help-circle', iconColor: '#9E9E9E' };
+    };
+
+    const filteredCategories = categories.filter(category =>
+        category.name.toLowerCase().includes(searchText.toLowerCase())
     );
 
     useEffect(() => {
@@ -29,11 +35,28 @@ const CategoriesGrid = ({ searchText = '', onCategoryPress, onFilteredCountChang
     }, [filteredCategories.length, onFilteredCountChange]);
 
     const handleCategoryPress = (category) => {
-        console.log(`${category.title} category pressed`);
+        console.log(`${category.name} category pressed`);
         if (onCategoryPress) {
             onCategoryPress(category);
         }
     };
+
+    if (loading) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#0E9F6E" />
+                <Text style={styles.loadingText}>Loading categories...</Text>
+            </View>
+        );
+    }
+
+    if (error) {
+        return (
+            <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>Error: {error}</Text>
+            </View>
+        );
+    }
 
     return (
         <ScrollView 
@@ -41,16 +64,19 @@ const CategoriesGrid = ({ searchText = '', onCategoryPress, onFilteredCountChang
             contentContainerStyle={styles.scrollContainer}
         >
             <View style={styles.categoriesGrid}>
-                {filteredCategories.map((category) => (
-                    <CategoryCard
-                        key={category.id}
-                        iconName={category.iconName}
-                        iconColor={category.iconColor}
-                        title={category.title}
-                        onPress={() => handleCategoryPress(category)}
-                        style={styles.categoryCard}
-                    />
-                ))}
+                {filteredCategories.map((category) => {
+                    const iconData = getCategoryIcon(category.name);
+                    return (
+                        <CategoryCard
+                            key={category._id}
+                            iconName={iconData.iconName}
+                            iconColor={iconData.iconColor}
+                            title={category.name}
+                            onPress={() => handleCategoryPress(category)}
+                            style={styles.categoryCard}
+                        />
+                    );
+                })}
             </View>
         </ScrollView>
     );
@@ -69,6 +95,28 @@ const styles = StyleSheet.create({
     categoryCard: {
         width: '48%',
         marginBottom: 15,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingVertical: 50,
+    },
+    loadingText: {
+        marginTop: 16,
+        fontSize: 16,
+        color: '#666',
+    },
+    errorContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingVertical: 50,
+    },
+    errorText: {
+        fontSize: 16,
+        color: '#F44336',
+        textAlign: 'center',
     },
 });
 
