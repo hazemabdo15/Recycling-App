@@ -1,4 +1,5 @@
 import { useFocusEffect } from '@react-navigation/native';
+import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { StatusBar, Text } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
@@ -56,7 +57,11 @@ const Explore = () => {
     };
 
     const handleCategoryPress = (category) => {
-        console.log(`Navigate to ${category.title} details`);
+        console.log(`Navigate to ${category.name} details`);
+        router.push({
+            pathname: '/category-details',
+            params: { categoryName: category.name }
+        });
     };
 
     const handleFilteredCountChange = (count) => {
