@@ -9,21 +9,24 @@ export const exploreStyles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.lg,
-    backgroundColor: colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.base300,
+    paddingVertical: spacing.xl,
+    backgroundColor: colors.base100,
+    marginBottom: spacing.md,
   },
   title: {
     ...typography.title,
-    marginBottom: 8,
+    marginBottom: spacing.sm,
+    fontSize: 32,
+    fontWeight: '800',
   },
   subtitle: {
     ...typography.subtitle,
+    fontSize: 16,
+    opacity: 0.8,
   },
   content: {
     flex: 1,
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
+    paddingTop: spacing.md,
   },
 });

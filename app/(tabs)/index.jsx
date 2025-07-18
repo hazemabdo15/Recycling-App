@@ -1,21 +1,21 @@
-import { useEffect } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 import { StatusBar, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EarnPointsCard } from '../../components/cards';
 import { Header } from '../../components/common';
 import { CategoriesSection, TopRecycledSection } from '../../components/sections';
+import { colors } from '../../styles/theme';
 
 const Index = () => {
     const insets = useSafeAreaInsets();
-    
     
     const headerOpacity = useSharedValue(0);
     const contentTranslateY = useSharedValue(50);
     const contentOpacity = useSharedValue(0);
 
-    useEffect(() => {
-        
+    useFocusEffect(useCallback(() => {
         headerOpacity.value = withTiming(1, { duration: 600 });
         
         setTimeout(() => {
@@ -25,7 +25,13 @@ const Index = () => {
                 stiffness: 100,
             });
         }, 200);
-    }, [headerOpacity, contentOpacity, contentTranslateY]);
+
+        return () => {
+            headerOpacity.value = 0;
+            contentOpacity.value = 0;
+            contentTranslateY.value = 50;
+        };
+    }, [headerOpacity, contentOpacity, contentTranslateY]));
 
     const headerAnimatedStyle = useAnimatedStyle(() => {
         return {
@@ -41,9 +47,9 @@ const Index = () => {
     });
     
     return (
-        <View style={styles.container}>
-            <StatusBar barStyle="dark-content"/>
-            <Animated.View style={[styles.headerContainer, { paddingTop: insets.top }, headerAnimatedStyle]}>
+        <View style={[styles.container, { paddingTop: insets.top }]}>
+            <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+            <Animated.View style={[styles.headerContainer, headerAnimatedStyle]}>
                 <Header />
             </Animated.View>
             <Animated.ScrollView 
@@ -62,10 +68,10 @@ const Index = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F8F9FA',
+        backgroundColor: colors.base100,
     },
     headerContainer: {
-        backgroundColor: '#fff',
+        backgroundColor: colors.base100,
     },
     content: {
         flex: 1,

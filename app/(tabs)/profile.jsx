@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 import { StatusBar, StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,7 +13,7 @@ const Profile = () => {
     const contentTranslateY = useSharedValue(50);
     const contentOpacity = useSharedValue(0);
 
-    useEffect(() => {
+    useFocusEffect(useCallback(() => {
         headerOpacity.value = withTiming(1, { duration: 600 });
         
         setTimeout(() => {
@@ -22,7 +23,13 @@ const Profile = () => {
                 stiffness: 100,
             });
         }, 200);
-    }, [headerOpacity, contentOpacity, contentTranslateY]);
+
+        return () => {
+            headerOpacity.value = 0;
+            contentOpacity.value = 0;
+            contentTranslateY.value = 50;
+        };
+    }, [headerOpacity, contentOpacity, contentTranslateY]));
 
     const headerAnimatedStyle = useAnimatedStyle(() => {
         return {

@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { colors } from '../../styles/theme';
 
 const Header = () => {
     return (
@@ -23,7 +24,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: 20,
         paddingVertical: 15,
-        backgroundColor: '#fff',
+        backgroundColor: colors.base100,
     },
     headerButton: {
         width: 40,

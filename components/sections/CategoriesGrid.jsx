@@ -1,7 +1,8 @@
+import { useEffect } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { CategoryCard } from '../cards';
 
-const CategoriesGrid = ({ searchText = '', onCategoryPress }) => {
+const CategoriesGrid = ({ searchText = '', onCategoryPress, onFilteredCountChange }) => {
     const allCategories = [
         { id: 1, iconName: 'bottle-soda', iconColor: '#FF69B4', title: 'Plastic' },
         { id: 2, iconName: 'glass-fragile', iconColor: '#4FC3F7', title: 'Glass' },
@@ -20,6 +21,12 @@ const CategoriesGrid = ({ searchText = '', onCategoryPress }) => {
     const filteredCategories = allCategories.filter(category =>
         category.title.toLowerCase().includes(searchText.toLowerCase())
     );
+
+    useEffect(() => {
+        if (onFilteredCountChange) {
+            onFilteredCountChange(filteredCategories.length);
+        }
+    }, [filteredCategories.length, onFilteredCountChange]);
 
     const handleCategoryPress = (category) => {
         console.log(`${category.title} category pressed`);

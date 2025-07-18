@@ -1,5 +1,7 @@
-import { useState } from 'react';
-import { StatusBar, Text, View } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useState } from 'react';
+import { StatusBar, Text } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CategoriesGrid } from '../../components/sections';
 import { SearchBar } from '../../components/ui';
@@ -7,7 +9,43 @@ import { exploreStyles } from '../../styles/components/exploreStyles';
 
 const Explore = () => {
     const [searchText, setSearchText] = useState('');
+    const [filteredCount, setFilteredCount] = useState(0);
     const insets = useSafeAreaInsets();
+
+    const headerOpacity = useSharedValue(0);
+    const contentTranslateY = useSharedValue(50);
+    const contentOpacity = useSharedValue(0);
+
+    useFocusEffect(useCallback(() => {
+        headerOpacity.value = withTiming(1, { duration: 600 });
+        
+        setTimeout(() => {
+            contentOpacity.value = withTiming(1, { duration: 800 });
+            contentTranslateY.value = withSpring(0, {
+                damping: 15,
+                stiffness: 100,
+            });
+        }, 200);
+
+        return () => {
+            headerOpacity.value = 0;
+            contentOpacity.value = 0;
+            contentTranslateY.value = 50;
+        };
+    }, [headerOpacity, contentOpacity, contentTranslateY]));
+
+    const headerAnimatedStyle = useAnimatedStyle(() => {
+        return {
+            opacity: headerOpacity.value,
+        };
+    });
+
+    const contentAnimatedStyle = useAnimatedStyle(() => {
+        return {
+            opacity: contentOpacity.value,
+            transform: [{ translateY: contentTranslateY.value }],
+        };
+    });
 
     const handleSearch = (text) => {
         setSearchText(text);
@@ -21,16 +59,26 @@ const Explore = () => {
         console.log(`Navigate to ${category.title} details`);
     };
 
+    const handleFilteredCountChange = (count) => {
+        setFilteredCount(count);
+    };
+
     return (
-        <View style={[exploreStyles.container, { paddingTop: insets.top }]}>
+        <Animated.View style={[exploreStyles.container, { paddingTop: insets.top }]}>
             <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
             
-            <View style={exploreStyles.header}>
+            <Animated.View style={[exploreStyles.header, headerAnimatedStyle]}>
                 <Text style={exploreStyles.title}>Explore Categories</Text>
-                <Text style={exploreStyles.subtitle}>Find the right recycling category for your items</Text>
-            </View>
+                <Text style={exploreStyles.subtitle}>
+                    {searchText ? `${filteredCount} categories found` : 'Find the right recycling category for your items'}
+                </Text>
+            </Animated.View>
 
-            <View style={exploreStyles.content}>
+            <Animated.ScrollView 
+                style={[exploreStyles.content, contentAnimatedStyle]}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 120 }}
+            >
                 <SearchBar 
                     placeholder="Search categories..."
                     onSearch={handleSearch}
@@ -40,9 +88,10 @@ const Explore = () => {
                 <CategoriesGrid 
                     searchText={searchText}
                     onCategoryPress={handleCategoryPress}
+                    onFilteredCountChange={handleFilteredCountChange}
                 />
-            </View>
-        </View>
+            </Animated.ScrollView>
+        </Animated.View>
     );
 };
 
