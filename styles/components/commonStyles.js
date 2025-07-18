@@ -6,6 +6,7 @@ export const layoutStyles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.base100,
+        
     },
     content: {
         flex: 1,
@@ -14,6 +15,7 @@ export const layoutStyles = StyleSheet.create({
     listContainer: {
         paddingBottom: 120,
         paddingTop: spacing.sm,
+        paddingHorizontal: spacing.sm,
     },
     separator: {
         height: spacing.xs,
