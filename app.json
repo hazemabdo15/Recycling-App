@@ -16,7 +16,16 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "usesCleartextTraffic": false,
+      "networkSecurityConfig": {
+        "domain-config": [
+          {
+            "domain": "api.groq.com",
+            "cleartextTrafficPermitted": false
+          }
+        ]
+      }
     },
     "web": {
       "bundler": "metro",
@@ -37,6 +46,9 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "EXPO_PUBLIC_GROQ_API_KEY": "your-api-key-here"
     }
   }
 }

@@ -22,7 +22,9 @@ import Reanimated, {
     withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAIWorkflow } from '../hooks/useAIWorkflow';
 import { borderRadius, colors, shadows, spacing, typography } from '../styles/theme';
+
 const { height } = Dimensions.get('window');
 const MODAL_HEIGHT = height * 0.75;
 const DISMISS_THRESHOLD = 150;
@@ -41,6 +43,10 @@ export default function VoiceModal() {
   const waveformAnimation = useRef(new Animated.Value(0)).current;
   const recordingScale = useSharedValue(1);
   const recordingOpacity = useSharedValue(1);
+  
+  // AI Workflow
+  const { processAudioToMaterials, isProcessing, error: aiError } = useAIWorkflow();
+
   useEffect(() => {
     return () => {
       if (recording.current) {
@@ -131,8 +137,37 @@ export default function VoiceModal() {
         allowsRecordingIOS: true,
         playsInSilentModeIOS: true,
       });
+      
+      // Custom recording options for better API compatibility
+      const recordingOptions = {
+        ...Audio.RecordingOptionsPresets.HIGH_QUALITY,
+        android: {
+          extension: '.m4a',
+          outputFormat: Audio.AndroidOutputFormat.MPEG_4,
+          audioEncoder: Audio.AndroidAudioEncoder.AAC,
+          sampleRate: 16000,
+          numberOfChannels: 1,
+          bitRate: 128000,
+        },
+        ios: {
+          extension: '.m4a',
+          outputFormat: Audio.IOSOutputFormat.MPEG4AAC,
+          audioQuality: Audio.IOSAudioQuality.HIGH,
+          sampleRate: 16000,
+          numberOfChannels: 1,
+          bitRate: 128000,
+          linearPCMBitDepth: 16,
+          linearPCMIsBigEndian: false,
+          linearPCMIsFloat: false,
+        },
+        web: {
+          mimeType: 'audio/webm;codecs=opus',
+          bitsPerSecond: 128000,
+        },
+      };
+      
       const { recording: newRecording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
+        recordingOptions
       );
       recording.current = newRecording;
       setIsRecording(true);
@@ -204,8 +239,37 @@ export default function VoiceModal() {
   };
   const sendRecording = async () => {
     await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    console.log('Sending recording:', recordedURI);
-    dismissModal();
+    
+    if (!recordedURI) {
+      alert('No recording found');
+      return;
+    }
+
+    try {
+      const result = await processAudioToMaterials(recordedURI);
+      
+      if (result.success) {
+        // Replace current modal with AI results modal
+        try {
+          router.replace({
+            pathname: '/ai-results-modal',
+            params: {
+              extractedMaterials: JSON.stringify(result.materials),
+            }
+          });
+        } catch (navError) {
+          console.error('Navigation error:', navError);
+          // Fallback: just show an alert with the results
+          alert(`✅ Materials extracted!\n${result.materials.map(m => `${m.quantity} ${m.unit} ${m.material}`).join('\n')}\n\nGo to explore tab to add items manually.`);
+          dismissModal();
+        }
+      } else {
+        alert(`AI Processing Failed: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Send recording error:', error);
+      alert('Failed to process your recording. Please try again.');
+    }
   };
   const formatDuration = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -230,7 +294,6 @@ export default function VoiceModal() {
           <View style={styles.handleBar} />
           {}
           <View style={styles.header}>
-            {}
           </View>
           {}
           <View style={styles.visualizationContainer}>
@@ -346,9 +409,24 @@ export default function VoiceModal() {
                     />
                   </TouchableOpacity>
                 </View>
-                <TouchableOpacity style={styles.sendButton} onPress={sendRecording}>
-                  <MaterialCommunityIcons name="send" size={20} color={colors.white} />
-                  <Text style={styles.sendButtonText}>Send to AI</Text>
+                <TouchableOpacity 
+                  style={[styles.sendButton, isProcessing && styles.sendButtonDisabled]} 
+                  onPress={sendRecording}
+                  disabled={isProcessing}
+                >
+                  {isProcessing ? (
+                    <>
+                      <Animated.View style={{ transform: [{ rotate: '360deg' }] }}>
+                        <MaterialCommunityIcons name="loading" size={20} color={colors.white} />
+                      </Animated.View>
+                      <Text style={styles.sendButtonText}>Processing...</Text>
+                    </>
+                  ) : (
+                    <>
+                      <MaterialCommunityIcons name="send" size={20} color={colors.white} />
+                      <Text style={styles.sendButtonText}>Send to AI</Text>
+                    </>
+                  )}
                 </TouchableOpacity>
               </View>
             )}
@@ -520,6 +598,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     ...shadows.medium,
     elevation: 4,
+  },
+  sendButtonDisabled: {
+    backgroundColor: colors.neutral,
+    opacity: 0.7,
   },
   sendButtonText: {
     ...typography.subtitle,
