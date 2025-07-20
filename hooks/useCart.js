@@ -1,13 +1,10 @@
 import { useState } from 'react';
 import { getIncrementStep } from '../utils/cartUtils';
-
 export const useCart = () => {
     const [cartItems, setCartItems] = useState({});
-    
     const getItemQuantity = (itemId) => {
         return cartItems[itemId] || 0;
     };
-    
     const handleIncreaseQuantity = (item) => {
         const step = getIncrementStep(item.measurement_unit);
         const currentQuantity = getItemQuantity(item._id);
@@ -16,7 +13,6 @@ export const useCart = () => {
             [item._id]: currentQuantity + step
         }));
     };
-    
     const handleDecreaseQuantity = (item) => {
         const step = getIncrementStep(item.measurement_unit);
         const currentQuantity = getItemQuantity(item._id);
@@ -27,11 +23,9 @@ export const useCart = () => {
             }));
         }
     };
-    
     const clearCart = () => {
         setCartItems({});
     };
-    
     const removeFromCart = (itemId) => {
         setCartItems(prev => {
             const newCart = { ...prev };
@@ -39,7 +33,6 @@ export const useCart = () => {
             return newCart;
         });
     };
-    
     return {
         cartItems,
         getItemQuantity,
@@ -49,3 +42,4 @@ export const useCart = () => {
         removeFromCart
     };
 };
+

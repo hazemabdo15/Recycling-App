@@ -4,7 +4,6 @@ import { getUnitDisplay } from '../../utils/cartUtils';
 import ItemImage from './ItemImage';
 import ItemInfo from './ItemInfo';
 import QuantityControls from './QuantityControls';
-
 const ItemCard = ({ 
     item, 
     quantity, 
@@ -13,7 +12,6 @@ const ItemCard = ({
     disabled = false 
 }) => {
     const unitDisplay = getUnitDisplay(item.measurement_unit);
-    
     return (
         <View style={itemCardStyles.itemCard}>
             <View style={itemCardStyles.itemContent}>
@@ -21,7 +19,6 @@ const ItemCard = ({
                     imageUri={item.image}
                     points={item.points}
                 />
-                
                 <ItemInfo 
                     name={item.name}
                     price={item.price}
@@ -29,7 +26,6 @@ const ItemCard = ({
                     unitDisplay={unitDisplay}
                 />
             </View>
-            
             <QuantityControls 
                 quantity={quantity}
                 unitDisplay={unitDisplay}
@@ -40,5 +36,5 @@ const ItemCard = ({
         </View>
     );
 };
-
 export default ItemCard;
+

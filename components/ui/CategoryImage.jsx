@@ -2,7 +2,6 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 import { getCategoryIcon } from '../../utils/categoryUtils';
-
 const borderRadius = {
   xs: 6,    
   sm: 12,   
@@ -10,7 +9,6 @@ const borderRadius = {
   lg: 24,   
   xl: 32,   
 };
-
 const CategoryImage = ({ 
     imageUri, 
     iconName, 
@@ -20,20 +18,16 @@ const CategoryImage = ({
     style 
 }) => {
     const [imageError, setImageError] = useState(false);
-    
     // If iconName/iconColor not provided, get from category name
     const iconData = iconName && iconColor ? 
         { iconName, iconColor } : 
         getCategoryIcon(title);
-
     const handleImageError = () => {
         setImageError(true);
     };
-
     const handleImageLoad = () => {
         setImageError(false);
     };
-
     const containerStyle = {
         width: size,
         height: size,
@@ -43,7 +37,6 @@ const CategoryImage = ({
         alignItems: 'center',
         overflow: 'hidden',
     };
-
     return (
         <View style={[containerStyle, style]}>
             {imageUri && !imageError ? (
@@ -64,12 +57,11 @@ const CategoryImage = ({
         </View>
     );
 };
-
 const styles = StyleSheet.create({
     image: {
         width: '100%',
         height: '100%',
     },
 });
-
 export default CategoryImage;
+

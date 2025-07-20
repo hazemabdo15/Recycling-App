@@ -1,6 +1,5 @@
 import { Tabs } from "expo-router";
 import { TabBar } from "../../components/navigation";
-
 const Layout = () => {
   return (
     <Tabs 
@@ -24,6 +23,13 @@ const Layout = () => {
         }} 
       />
       <Tabs.Screen 
+        name="cart" 
+        options={{ 
+          title: "Cart",
+          headerShown: false,
+        }} 
+      />
+      <Tabs.Screen 
         name="profile" 
         options={{ 
           title: "Profile",
@@ -33,5 +39,5 @@ const Layout = () => {
     </Tabs>
   );
 };
-
 export default Layout;
+

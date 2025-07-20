@@ -1,6 +1,5 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-
 const borderRadius = {
   xs: 6,
   sm: 12,
@@ -8,7 +7,6 @@ const borderRadius = {
   lg: 24,
   xl: 32,
 };
-
 const colors = {
   primary: "#0E9F6E",
   secondary: "#8BC34A", 
@@ -19,7 +17,6 @@ const colors = {
   white: "#ffffff",
   black: "#171717",
 };
-
 const ProfileMenu = ({ onItemPress }) => {
     const menuItems = [
         {
@@ -65,12 +62,10 @@ const ProfileMenu = ({ onItemPress }) => {
             color: colors.neutral,
         },
     ];
-
     const handleItemPress = (item) => {
         onItemPress?.(item);
         console.log(`Pressed: ${item.title}`);
     };
-
     return (
         <View style={styles.container}>
             {menuItems.map((item, index) => (
@@ -90,12 +85,10 @@ const ProfileMenu = ({ onItemPress }) => {
                             color={item.color} 
                         />
                     </View>
-                    
                     <View style={styles.textContainer}>
                         <Text style={styles.title}>{item.title}</Text>
                         <Text style={styles.subtitle}>{item.subtitle}</Text>
                     </View>
-                    
                     <MaterialCommunityIcons 
                         name="chevron-right" 
                         size={20} 
@@ -106,7 +99,6 @@ const ProfileMenu = ({ onItemPress }) => {
         </View>
     );
 };
-
 const styles = StyleSheet.create({
     container: {
         backgroundColor: colors.white,
@@ -155,5 +147,5 @@ const styles = StyleSheet.create({
         lineHeight: 18,
     },
 });
-
 export default ProfileMenu;
+

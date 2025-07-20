@@ -1,6 +1,5 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-
 const colors = {
   primary: "#0E9F6E",
   secondary: "#8BC34A", 
@@ -11,8 +10,6 @@ const colors = {
   white: "#ffffff",
   black: "#171717",
 };
-
-
 const borderRadius = {
   xs: 6,    
   sm: 12,   
@@ -20,7 +17,6 @@ const borderRadius = {
   lg: 24,   
   xl: 32,   
 };
-
 const TopRecycledSection = () => {
     const topItems = [
         { 
@@ -64,11 +60,9 @@ const TopRecycledSection = () => {
             points: '+8 pts'
         },
     ];
-
     const handleItemPress = (item) => {
         console.log(`${item.name} pressed`);
     };
-
     return (
         <View style={styles.section}>
             <View style={styles.headerContainer}>
@@ -77,7 +71,6 @@ const TopRecycledSection = () => {
                     <Text style={styles.viewAllText}>View all</Text>
                 </TouchableOpacity>
             </View>
-            
             <ScrollView 
                 horizontal 
                 showsHorizontalScrollIndicator={false}
@@ -96,7 +89,6 @@ const TopRecycledSection = () => {
                         <View style={styles.rankBadge}>
                             <Text style={styles.rankText}>#{index + 1}</Text>
                         </View>
-                        
                         <View style={styles.iconContainer}>
                             <MaterialCommunityIcons 
                                 name={item.iconName} 
@@ -104,9 +96,7 @@ const TopRecycledSection = () => {
                                 color={item.iconColor} 
                             />
                         </View>
-                        
                         <Text style={styles.itemName}>{item.name}</Text>
-                        
                         <View style={styles.statsContainer}>
                             <View style={styles.statItem}>
                                 <MaterialCommunityIcons 
@@ -116,7 +106,6 @@ const TopRecycledSection = () => {
                                 />
                                 <Text style={styles.recycleCount}>{item.recycleCount}</Text>
                             </View>
-                            
                             <View style={styles.pointsBadge}>
                                 <Text style={styles.pointsText}>{item.points}</Text>
                             </View>
@@ -127,7 +116,6 @@ const TopRecycledSection = () => {
         </View>
     );
 };
-
 const styles = StyleSheet.create({
     section: {
         marginBottom: 30,
@@ -228,5 +216,5 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
 });
-
 export default TopRecycledSection;
+

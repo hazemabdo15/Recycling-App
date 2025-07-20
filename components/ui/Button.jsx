@@ -2,7 +2,6 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text, TouchableOpacity } from 'react-native';
 import { buttonStyles } from '../../styles/components/commonStyles';
 import { colors } from '../../styles/theme';
-
 const Button = ({ 
     title, 
     onPress, 
@@ -22,7 +21,6 @@ const Button = ({
                 return buttonStyles.primaryButton;
         }
     };
-
     const getTextStyle = () => {
         switch (variant) {
             case 'secondary':
@@ -33,7 +31,6 @@ const Button = ({
                 return buttonStyles.primaryButtonText;
         }
     };
-
     return (
         <TouchableOpacity
             style={[
@@ -57,5 +54,5 @@ const Button = ({
         </TouchableOpacity>
     );
 };
-
 export default Button;
+

@@ -2,7 +2,6 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { quantityControlsStyles } from '../../styles/components/categoryStyles';
 import { colors } from '../../styles/theme';
-
 const QuantityControls = ({ 
     quantity, 
     unitDisplay, 
@@ -26,13 +25,11 @@ const QuantityControls = ({
                     color={quantity === 0 || disabled ? colors.base300 : colors.white} 
                 />
             </TouchableOpacity>
-            
             <View style={quantityControlsStyles.quantityDisplay}>
                 <Text style={quantityControlsStyles.quantityText}>
                     {quantity} {unitDisplay}
                 </Text>
             </View>
-            
             <TouchableOpacity 
                 style={[quantityControlsStyles.quantityButton, disabled && quantityControlsStyles.quantityButtonDisabled]}
                 onPress={onIncrease}
@@ -47,5 +44,5 @@ const QuantityControls = ({
         </View>
     );
 };
-
 export default QuantityControls;
+

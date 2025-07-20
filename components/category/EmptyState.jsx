@@ -2,7 +2,6 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { emptyStateStyles } from '../../styles/components/categoryStyles';
 import { colors } from '../../styles/theme';
-
 const EmptyState = ({ 
     categoryName, 
     onAddItem,
@@ -34,5 +33,5 @@ const EmptyState = ({
         </View>
     );
 };
-
 export default EmptyState;
+

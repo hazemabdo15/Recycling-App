@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react';
 import { categoriesAPI } from '../services/api';
-
 export const useCategories = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
   const fetchCategories = async () => {
     try {
       setLoading(true);
@@ -18,11 +16,9 @@ export const useCategories = () => {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     fetchCategories();
   }, []);
-
   return {
     categories,
     loading,
@@ -30,12 +26,10 @@ export const useCategories = () => {
     refetch: fetchCategories,
   };
 };
-
 export const useAllItems = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
   const fetchAllItems = async () => {
     try {
       setLoading(true);
@@ -48,11 +42,9 @@ export const useAllItems = () => {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     fetchAllItems();
   }, []);
-
   return {
     items,
     loading,
@@ -60,16 +52,13 @@ export const useAllItems = () => {
     refetch: fetchAllItems,
   };
 };
-
 export const useCategoryItems = (categoryName) => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
   useEffect(() => {
     const fetchCategoryItems = async () => {
       if (!categoryName) return;
-      
       try {
         setLoading(true);
         setError(null);
@@ -81,13 +70,10 @@ export const useCategoryItems = (categoryName) => {
         setLoading(false);
       }
     };
-
     fetchCategoryItems();
   }, [categoryName]);
-
   const refetch = async () => {
     if (!categoryName) return;
-    
     try {
       setLoading(true);
       setError(null);
@@ -99,7 +85,6 @@ export const useCategoryItems = (categoryName) => {
       setLoading(false);
     }
   };
-
   return {
     items,
     loading,
@@ -107,3 +92,4 @@ export const useCategoryItems = (categoryName) => {
     refetch,
   };
 };
+

@@ -1,7 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { colors } from '../../styles/theme';
-
 const Header = () => {
     return (
         <View style={styles.header}>
@@ -16,7 +15,6 @@ const Header = () => {
         </View>
     );
 };
-
 const styles = StyleSheet.create({
     header: {
         flexDirection: 'row',
@@ -39,5 +37,5 @@ const styles = StyleSheet.create({
         gap: 12,
     },
 });
-
 export default Header;
+

@@ -2,10 +2,8 @@ import { router } from 'expo-router';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useCategories } from '../../hooks/useAPI';
 import { CategoryCard } from '../cards';
-
 const CategoriesSection = () => {
     const { categories, loading, error } = useCategories();
-
     const handleCategoryPress = (category) => {
         console.log(`${category.name} category pressed`);
         // Navigate to category details page
@@ -14,16 +12,13 @@ const CategoriesSection = () => {
             params: { categoryName: category.name }
         });
     };
-
     const handleViewAllPress = () => {
         console.log('View all categories pressed');
         // Navigate to explore page (all categories)
         router.push('/explore');
     };
-
     // Show only first 4 categories as preview
     const limitedCategories = categories.slice(0, 4);
-
     if (loading) {
         return (
             <View style={styles.categoriesSection}>
@@ -32,7 +27,6 @@ const CategoriesSection = () => {
             </View>
         );
     }
-
     if (error) {
         return (
             <View style={styles.categoriesSection}>
@@ -41,7 +35,6 @@ const CategoriesSection = () => {
             </View>
         );
     }
-
     return (
         <View style={styles.categoriesSection}>
             <View style={styles.categoriesHeader}>
@@ -51,7 +44,6 @@ const CategoriesSection = () => {
                     <Text style={styles.viewAllText}>View all</Text>
                 </TouchableOpacity>
             </View>
-
             <View style={styles.categoriesGrid}>
                 {limitedCategories.map((category) => {
                     return (
@@ -66,7 +58,6 @@ const CategoriesSection = () => {
         </View>
     );
 };
-
 const styles = StyleSheet.create({
     categoriesSection: {
         marginBottom: 30,
@@ -105,5 +96,5 @@ const styles = StyleSheet.create({
         marginTop: 20,
     },
 });
-
 export default CategoriesSection;
+

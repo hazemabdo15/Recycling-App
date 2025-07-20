@@ -2,7 +2,6 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
 import { badgeStyles } from '../../styles/components/commonStyles';
 import { colors } from '../../styles/theme';
-
 const Badge = ({ 
     text, 
     count, 
@@ -21,9 +20,7 @@ const Badge = ({
                 return badgeStyles.badge;
         }
     };
-
     const content = count !== undefined ? count : text;
-
     return (
         <View style={[badgeStyles.badge, getBadgeStyle(), props.style]}>
             {icon && (
@@ -42,5 +39,5 @@ const Badge = ({
         </View>
     );
 };
-
 export default Badge;
+

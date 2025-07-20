@@ -3,7 +3,6 @@ import { Text, View } from 'react-native';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { categoryHeaderStyles } from '../../styles/components/categoryStyles';
 import { colors } from '../../styles/theme';
-
 const CategoryHeader = ({ 
     categoryName, 
     totalItems, 
@@ -16,14 +15,12 @@ const CategoryHeader = ({
     const statsAnimatedStyle = useAnimatedStyle(() => {
         // Use the headerOpacity shared value if provided
         const opacity = headerOpacity?.value || 1;
-        
         // Hide shadow during animation to prevent trails
         return {
             elevation: opacity < 0.95 ? 0 : 4,
             shadowOpacity: opacity < 0.95 ? 0 : 0.1,
         };
     });
-
     return (
         <Animated.View style={[categoryHeaderStyles.header, animatedStyle]}>
             <View style={categoryHeaderStyles.headerContent}>
@@ -64,5 +61,5 @@ const CategoryHeader = ({
         </Animated.View>
     );
 };
-
 export default CategoryHeader;
+

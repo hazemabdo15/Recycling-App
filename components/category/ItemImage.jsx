@@ -2,7 +2,6 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image, Text, View } from 'react-native';
 import { itemImageStyles } from '../../styles/components/categoryStyles';
 import { colors } from '../../styles/theme';
-
 const ItemImage = ({ imageUri, points, placeholder = "recycle" }) => {
     return (
         <View style={itemImageStyles.itemImageContainer}>
@@ -32,5 +31,5 @@ const ItemImage = ({ imageUri, points, placeholder = "recycle" }) => {
         </View>
     );
 };
-
 export default ItemImage;
+

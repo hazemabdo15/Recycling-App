@@ -3,12 +3,10 @@ import { Text, View } from 'react-native';
 import { itemInfoStyles } from '../../styles/components/categoryStyles';
 import { colors } from '../../styles/theme';
 import { getMeasurementIcon } from '../../utils/cartUtils';
-
 const ItemInfo = ({ name, price, measurementUnit, unitDisplay }) => {
     return (
         <View style={itemInfoStyles.itemInfo}>
             <Text style={itemInfoStyles.itemName} numberOfLines={2}>{name}</Text>
-            
             <View style={itemInfoStyles.itemDetails}>
                 <View style={itemInfoStyles.priceContainer}>
                     <MaterialCommunityIcons 
@@ -18,7 +16,6 @@ const ItemInfo = ({ name, price, measurementUnit, unitDisplay }) => {
                     />
                     <Text style={itemInfoStyles.itemPrice}>{price} EGP</Text>
                 </View>
-                
                 <View style={itemInfoStyles.unitContainer}>
                     <MaterialCommunityIcons 
                         name={getMeasurementIcon(measurementUnit)} 
@@ -31,5 +28,5 @@ const ItemInfo = ({ name, price, measurementUnit, unitDisplay }) => {
         </View>
     );
 };
-
 export default ItemInfo;
+

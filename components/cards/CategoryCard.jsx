@@ -2,8 +2,6 @@ import { StyleSheet, Text } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { getCategoryImageProps } from '../../utils/categoryUtils';
 import { CategoryImage } from '../ui';
-
-
 const borderRadius = {
   xs: 6,    
   sm: 12,   
@@ -11,30 +9,24 @@ const borderRadius = {
   lg: 24,   
   xl: 32,   
 };
-
 const CategoryCard = ({ category, onPress }) => {
     const scale = useSharedValue(1);
     const shadowOpacity = useSharedValue(0.05);
-    
     const imageProps = getCategoryImageProps(category);
-
     const handlePressIn = () => {
         scale.value = withSpring(0.95, { damping: 15, stiffness: 200 });
         shadowOpacity.value = withTiming(0.15, { duration: 150 });
     };
-
     const handlePressOut = () => {
         scale.value = withSpring(1, { damping: 15, stiffness: 200 });
         shadowOpacity.value = withTiming(0.05, { duration: 150 });
     };
-
     const animatedStyle = useAnimatedStyle(() => {
         return {
             transform: [{ scale: scale.value }],
             shadowOpacity: shadowOpacity.value,
         };
     });
-
     return (
         <Animated.View style={[styles.categoryCard, animatedStyle]}>
             <Animated.View 
@@ -64,7 +56,6 @@ const CategoryCard = ({ category, onPress }) => {
         </Animated.View>
     );
 };
-
 const styles = StyleSheet.create({
     categoryCard: {
         width: '48%',
@@ -93,5 +84,5 @@ const styles = StyleSheet.create({
         color: '#2D3748',
     },
 });
-
 export default CategoryCard;
+

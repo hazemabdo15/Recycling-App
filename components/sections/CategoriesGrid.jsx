@@ -2,27 +2,22 @@ import { useEffect } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useCategories } from '../../hooks/useAPI';
 import { CategoryCard } from '../cards';
-
 const CategoriesGrid = ({ searchText = '', onCategoryPress, onFilteredCountChange }) => {
     const { categories, loading, error } = useCategories();
-
     const filteredCategories = categories.filter(category =>
         category.name.toLowerCase().includes(searchText.toLowerCase())
     );
-
     useEffect(() => {
         if (onFilteredCountChange) {
             onFilteredCountChange(filteredCategories.length);
         }
     }, [filteredCategories.length, onFilteredCountChange]);
-
     const handleCategoryPress = (category) => {
         console.log(`${category.name} category pressed`);
         if (onCategoryPress) {
             onCategoryPress(category);
         }
     };
-
     if (loading) {
         return (
             <View style={styles.loadingContainer}>
@@ -31,7 +26,6 @@ const CategoriesGrid = ({ searchText = '', onCategoryPress, onFilteredCountChang
             </View>
         );
     }
-
     if (error) {
         return (
             <View style={styles.errorContainer}>
@@ -39,7 +33,6 @@ const CategoriesGrid = ({ searchText = '', onCategoryPress, onFilteredCountChang
             </View>
         );
     }
-
     return (
         <ScrollView 
             showsVerticalScrollIndicator={false}
@@ -60,7 +53,6 @@ const CategoriesGrid = ({ searchText = '', onCategoryPress, onFilteredCountChang
         </ScrollView>
     );
 };
-
 const styles = StyleSheet.create({
     scrollContainer: {
         paddingBottom: 120,
@@ -98,5 +90,5 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
 });
-
 export default CategoriesGrid;
+

@@ -9,18 +9,14 @@ import { useCategoryItems } from '../hooks/useAPI';
 import { useCart } from '../hooks/useCart';
 import { layoutStyles } from '../styles/components/commonStyles';
 import { calculateCartStats } from '../utils/cartUtils';
-
 const CategoryDetails = () => {
     const { categoryName } = useLocalSearchParams();
     const { items, loading, error } = useCategoryItems(categoryName);
     const insets = useSafeAreaInsets();
-    
     // Use cart hook for cart management
     const { cartItems, getItemQuantity, handleIncreaseQuantity, handleDecreaseQuantity } = useCart();
-    
     const headerOpacity = useSharedValue(0);
     const contentTranslateY = useSharedValue(50);
-    
     useEffect(() => {
         headerOpacity.value = withTiming(1, { duration: 600 });
         contentTranslateY.value = withSpring(0, {
@@ -28,18 +24,14 @@ const CategoryDetails = () => {
             stiffness: 100,
         });
     }, [headerOpacity, contentTranslateY]);
-    
     const headerAnimatedStyle = useAnimatedStyle(() => ({
         opacity: headerOpacity.value,
     }));
-    
     const contentAnimatedStyle = useAnimatedStyle(() => ({
         transform: [{ translateY: contentTranslateY.value }],
     }));
-
     // Calculate cart statistics
     const { totalItems, totalPoints, totalValue } = calculateCartStats(items, cartItems);
-    
     const renderItem = ({ item }) => (
         <ItemCard
             item={item}
@@ -48,12 +40,10 @@ const CategoryDetails = () => {
             onDecrease={() => handleDecreaseQuantity(item)}
         />
     );
-    
     const handleAddItem = () => {
         console.log('Add item to', categoryName);
         // TODO: Implement add item functionality
     };
-    
     if (loading) {
         return (
             <View style={[layoutStyles.container, { paddingTop: insets.top }]}>
@@ -62,7 +52,6 @@ const CategoryDetails = () => {
             </View>
         );
     }
-    
     if (error) {
         return (
             <View style={[layoutStyles.container, { paddingTop: insets.top }]}>
@@ -71,11 +60,9 @@ const CategoryDetails = () => {
             </View>
         );
     }
-    
     return (
         <View style={[layoutStyles.container, { paddingTop: insets.top }]}>
             <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
-            
             <CategoryHeader
                 categoryName={categoryName}
                 totalItems={totalItems}
@@ -84,7 +71,6 @@ const CategoryDetails = () => {
                 animatedStyle={headerAnimatedStyle}
                 headerOpacity={headerOpacity}
             />
-            
             <Animated.View style={[layoutStyles.content, contentAnimatedStyle]}>
                 {items.length === 0 ? (
                     <EmptyState
@@ -105,5 +91,5 @@ const CategoryDetails = () => {
         </View>
     );
 };
-
 export default CategoryDetails;
+

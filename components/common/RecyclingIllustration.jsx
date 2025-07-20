@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, View } from 'react-native';
-
 const RecyclingIllustration = () => {
     return (
         <View style={styles.recyclingIllustration}>
@@ -17,7 +16,6 @@ const RecyclingIllustration = () => {
         </View>
     );
 };
-
 const styles = StyleSheet.create({
     recyclingIllustration: {
         flexDirection: 'row',
@@ -54,5 +52,5 @@ const styles = StyleSheet.create({
         marginHorizontal: 20,
     },
 });
-
 export default RecyclingIllustration;
+

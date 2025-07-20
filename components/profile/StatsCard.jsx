@@ -1,6 +1,5 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
-
 const borderRadius = {
   xs: 6,
   sm: 12,
@@ -8,7 +7,6 @@ const borderRadius = {
   lg: 24,
   xl: 32,
 };
-
 const colors = {
   primary: "#0E9F6E",
   secondary: "#8BC34A", 
@@ -19,7 +17,6 @@ const colors = {
   white: "#ffffff",
   black: "#171717",
 };
-
 const StatsCard = () => {
     const stats = [
         {
@@ -47,7 +44,6 @@ const StatsCard = () => {
             color: colors.accent,
         },
     ];
-
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Your Impact</Text>
@@ -69,7 +65,6 @@ const StatsCard = () => {
         </View>
     );
 };
-
 const styles = StyleSheet.create({
     container: {
         backgroundColor: colors.white,
@@ -124,5 +119,5 @@ const styles = StyleSheet.create({
         lineHeight: 16,
     },
 });
-
 export default StatsCard;
+
