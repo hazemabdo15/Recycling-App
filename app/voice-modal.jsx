@@ -342,7 +342,7 @@ export default function VoiceModal() {
                     <MaterialCommunityIcons
                       name="delete-outline"
                       size={28}
-                      color={colors.accent}
+                      color={colors.error}
                     />
                   </TouchableOpacity>
                 </View>
