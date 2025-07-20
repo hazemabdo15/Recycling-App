@@ -461,7 +461,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.xl,
     ...shadows.large,
-    elevation: 6,
+    elevation: 0,
   },
   hint: {
     ...typography.subtitle,
