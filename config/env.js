@@ -16,7 +16,7 @@ const getSecureApiKey = () => {
   const fromConstants = Constants.expoConfig?.extra?.EXPO_PUBLIC_GROQ_API_KEY;
   
   // Development fallback (only in development builds)
-  const devKey = __DEV__ ? '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' : null;
+  const devKey = __DEV__ ? 'groq_api_key' : null;
   
   const apiKey = fromEnv || fromConstants || devKey;
   
