@@ -1,5 +1,4 @@
 import { API_ENDPOINTS } from './config';
-
 export const categoriesAPI = {
   getAllCategories: async () => {
     try {
@@ -14,7 +13,6 @@ export const categoriesAPI = {
       throw error;
     }
   },
-
   getAllItems: async () => {
     try {
       const response = await fetch(API_ENDPOINTS.ALL_ITEMS);
@@ -28,7 +26,6 @@ export const categoriesAPI = {
       throw error;
     }
   },
-
   getCategoryItems: async (categoryName) => {
     try {
       const response = await fetch(API_ENDPOINTS.CATEGORY_ITEMS(categoryName));

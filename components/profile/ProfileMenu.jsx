@@ -9,7 +9,7 @@ const borderRadius = {
 };
 const colors = {
   primary: "#0E9F6E",
-  secondary: "#8BC34A", 
+  secondary: "#8BC34A",
   accent: "#FFC107",
   neutral: "#607D8B",
   base100: "#F8FFFE",
@@ -79,20 +79,20 @@ const ProfileMenu = ({ onItemPress }) => {
                     activeOpacity={0.7}
                 >
                     <View style={[styles.iconContainer, { backgroundColor: `${item.color}15` }]}>
-                        <MaterialCommunityIcons 
-                            name={item.icon} 
-                            size={24} 
-                            color={item.color} 
+                        <MaterialCommunityIcons
+                            name={item.icon}
+                            size={24}
+                            color={item.color}
                         />
                     </View>
                     <View style={styles.textContainer}>
                         <Text style={styles.title}>{item.title}</Text>
                         <Text style={styles.subtitle}>{item.subtitle}</Text>
                     </View>
-                    <MaterialCommunityIcons 
-                        name="chevron-right" 
-                        size={20} 
-                        color={colors.base300} 
+                    <MaterialCommunityIcons
+                        name="chevron-right"
+                        size={20}
+                        color={colors.base300}
                     />
                 </TouchableOpacity>
             ))}
@@ -148,4 +148,3 @@ const styles = StyleSheet.create({
     },
 });
 export default ProfileMenu;
-

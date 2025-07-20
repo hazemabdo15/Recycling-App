@@ -2,14 +2,14 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text, TouchableOpacity } from 'react-native';
 import { buttonStyles } from '../../styles/components/commonStyles';
 import { colors } from '../../styles/theme';
-const Button = ({ 
-    title, 
-    onPress, 
-    variant = 'primary', 
-    icon, 
+const Button = ({
+    title,
+    onPress,
+    variant = 'primary',
+    icon,
     disabled = false,
     size = 'medium',
-    ...props 
+    ...props
 }) => {
     const getButtonStyle = () => {
         switch (variant) {
@@ -43,9 +43,9 @@ const Button = ({
             {...props}
         >
             {icon && (
-                <MaterialCommunityIcons 
-                    name={icon} 
-                    size={20} 
+                <MaterialCommunityIcons
+                    name={icon}
+                    size={20}
                     color={variant === 'secondary' ? colors.primary : colors.white}
                     style={{ marginRight: title ? 8 : 0 }}
                 />
@@ -55,4 +55,3 @@ const Button = ({
     );
 };
 export default Button;
-

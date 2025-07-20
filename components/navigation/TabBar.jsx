@@ -1,23 +1,25 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useLinkBuilder } from "@react-navigation/native";
 import { BlurView } from "expo-blur";
+import * as Haptics from 'expo-haptics';
 import React from "react";
 import { Dimensions, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
 import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withSpring,
-  withTiming,
+    useAnimatedStyle,
+    useSharedValue,
+    withRepeat,
+    withSequence,
+    withSpring,
+    withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useVoiceModal } from "../../hooks/useVoiceModal";
 import { colors, shadows } from "../../styles/theme";
 const { width } = Dimensions.get("window");
 const getIconName = (routeName, isFocused) => {
   const icons = {
     index: isFocused ? "home" : "home-outline",
-    explore: isFocused ? "recycle" : "recycle", 
+    explore: isFocused ? "recycle" : "recycle",
     cart: isFocused ? "shopping" : "shopping-outline",
     profile: isFocused ? "account" : "account-outline",
   };
@@ -26,6 +28,7 @@ const getIconName = (routeName, isFocused) => {
 export function TabBar({ state, descriptors, navigation }) {
   const { buildHref } = useLinkBuilder();
   const insets = useSafeAreaInsets();
+  const { openVoiceModal } = useVoiceModal();
   const activeIndex = useSharedValue(state.index);
   const containerWidth = width - 40;
   const availableWidth = containerWidth - 32;
@@ -65,16 +68,17 @@ export function TabBar({ state, descriptors, navigation }) {
       target: route.key,
     });
   };
-  const handleMainActionPress = () => {
-    console.log('Main action button pressed');
+  const handleMainActionPress = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    openVoiceModal();
   };
   const indicatorStyle = useAnimatedStyle(() => {
     const indicatorWidth = tabWidth * 0.8;
     const centerOffset = (tabWidth - indicatorWidth) / 2;
     const containerPadding = 16;
     const positions = [
-      containerPadding + 0 * tabWidth + centerOffset, 
-      containerPadding + 1 * tabWidth + centerOffset, 
+      containerPadding + 0 * tabWidth + centerOffset,
+      containerPadding + 1 * tabWidth + centerOffset,
       containerPadding + sideWidth + centerSpacerWidth + 0 * tabWidth + centerOffset, // Cart
       containerPadding + sideWidth + centerSpacerWidth + 1 * tabWidth + centerOffset, // Profile
     ];
@@ -97,22 +101,21 @@ export function TabBar({ state, descriptors, navigation }) {
   const leftRoutes = state.routes.slice(0, 2);
   const rightRoutes = state.routes.slice(2);
   return (
-    <>
-      <View style={[styles.container, { paddingBottom: insets.bottom }]}>
-        {}
-        <TouchableOpacity
-          style={styles.mainActionButtonContainer}
-          onPress={handleMainActionPress}
-          activeOpacity={1}
-        >
-          <Animated.View style={[styles.mainActionButton, mainButtonAnimatedStyle]}>
-            <MaterialCommunityIcons
-              name="microphone"
-              size={28}
-              color={colors.white}
-            />
-          </Animated.View>
-        </TouchableOpacity>
+    <View style={[styles.container, { paddingBottom: insets.bottom }]}>
+      {}
+      <TouchableOpacity
+        style={styles.mainActionButtonContainer}
+        onPress={handleMainActionPress}
+        activeOpacity={1}
+      >
+        <Animated.View style={[styles.mainActionButton, mainButtonAnimatedStyle]}>
+          <MaterialCommunityIcons
+            name="microphone"
+            size={28}
+            color={colors.white}
+          />
+        </Animated.View>
+      </TouchableOpacity>
         {}
         <BlurView intensity={90} tint="light" style={styles.blurContainer}>
           {}
@@ -165,9 +168,8 @@ export function TabBar({ state, descriptors, navigation }) {
           </View>
         </BlurView>
       </View>
-    </>
-  );
-}
+    );
+  }
 function TabBarItem({ route, label, isFocused, index, onPress, onLongPress, buildHref, options }) {
   const scale = useSharedValue(1);
   const opacity = useSharedValue(isFocused ? 1 : 0.6);
@@ -213,7 +215,7 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 28,
     overflow: "hidden",
-    backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     ...shadows.large,
     position: 'relative',
   },
@@ -303,4 +305,3 @@ const styles = StyleSheet.create({
     width: 90,
   },
 });
-

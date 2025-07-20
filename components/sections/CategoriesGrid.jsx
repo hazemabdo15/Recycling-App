@@ -34,7 +34,7 @@ const CategoriesGrid = ({ searchText = '', onCategoryPress, onFilteredCountChang
         );
     }
     return (
-        <ScrollView 
+        <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContainer}
         >
@@ -91,4 +91,3 @@ const styles = StyleSheet.create({
     },
 });
 export default CategoriesGrid;
-

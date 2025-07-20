@@ -20,9 +20,6 @@ const Profile = () => {
             });
         }, 200);
         return () => {
-            headerOpacity.value = 0;
-            contentOpacity.value = 0;
-            contentTranslateY.value = 50;
         };
     }, [headerOpacity, contentOpacity, contentTranslateY]));
     const headerAnimatedStyle = useAnimatedStyle(() => {
@@ -63,13 +60,13 @@ const Profile = () => {
     return (
         <Animated.View style={[styles.container, { paddingTop: insets.top }]}>
             <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
-            <Animated.ScrollView 
+            <Animated.ScrollView
                 style={[styles.scrollView, contentAnimatedStyle]}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
             >
                 <Animated.View style={headerAnimatedStyle}>
-                    <ProfileHeader 
+                    <ProfileHeader
                         name="Hazem"
                         email="hazem@gmail.com"
                         points={2847}
@@ -96,4 +93,3 @@ const styles = StyleSheet.create({
     },
 });
 export default Profile;
-

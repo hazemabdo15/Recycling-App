@@ -22,9 +22,6 @@ const Index = () => {
             });
         }, 200);
         return () => {
-            headerOpacity.value = 0;
-            contentOpacity.value = 0;
-            contentTranslateY.value = 50;
         };
     }, [headerOpacity, contentOpacity, contentTranslateY]));
     const headerAnimatedStyle = useAnimatedStyle(() => {
@@ -44,8 +41,8 @@ const Index = () => {
             <Animated.View style={[styles.headerContainer, headerAnimatedStyle]}>
                 <Header />
             </Animated.View>
-            <Animated.ScrollView 
-                style={[styles.content, contentAnimatedStyle]} 
+            <Animated.ScrollView
+                style={[styles.content, contentAnimatedStyle]}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
             >
@@ -69,8 +66,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
     },
     scrollContent: {
-        paddingBottom: 120, 
+        paddingBottom: 120,
     },
 })
 export default Index;
-

@@ -27,4 +27,3 @@ const ProfileHeader = ({ name = "John Doe", email = "john.doe@email.com", points
     );
 };
 export default ProfileHeader;
-

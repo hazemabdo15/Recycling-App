@@ -3,19 +3,16 @@ import { Text, View } from 'react-native';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { categoryHeaderStyles } from '../../styles/components/categoryStyles';
 import { colors } from '../../styles/theme';
-const CategoryHeader = ({ 
-    categoryName, 
-    totalItems, 
-    totalPoints, 
-    totalValue, 
+const CategoryHeader = ({
+    categoryName,
+    totalItems,
+    totalPoints,
+    totalValue,
     animatedStyle,
     headerOpacity
 }) => {
-    // Create animated style for stats container to handle shadow during animation
     const statsAnimatedStyle = useAnimatedStyle(() => {
-        // Use the headerOpacity shared value if provided
         const opacity = headerOpacity?.value || 1;
-        // Hide shadow during animation to prevent trails
         return {
             elevation: opacity < 0.95 ? 0 : 4,
             shadowOpacity: opacity < 0.95 ? 0 : 0.1,
@@ -31,28 +28,28 @@ const CategoryHeader = ({
             </View>
             <Animated.View style={[categoryHeaderStyles.headerStats, statsAnimatedStyle]}>
                 <View style={categoryHeaderStyles.statItem}>
-                    <MaterialCommunityIcons 
-                        name="package-variant" 
-                        size={20} 
-                        color={colors.primary} 
+                    <MaterialCommunityIcons
+                        name="package-variant"
+                        size={20}
+                        color={colors.primary}
                     />
                     <Text style={categoryHeaderStyles.statText}>{totalItems}</Text>
                     <Text style={categoryHeaderStyles.statLabel}>Items</Text>
                 </View>
                 <View style={categoryHeaderStyles.statItem}>
-                    <MaterialCommunityIcons 
-                        name="star" 
-                        size={20} 
-                        color={colors.accent} 
+                    <MaterialCommunityIcons
+                        name="star"
+                        size={20}
+                        color={colors.accent}
                     />
                     <Text style={categoryHeaderStyles.statText}>{totalPoints}</Text>
                     <Text style={categoryHeaderStyles.statLabel}>Points</Text>
                 </View>
                 <View style={categoryHeaderStyles.statItem}>
-                    <MaterialCommunityIcons 
-                        name="cash" 
-                        size={20} 
-                        color={colors.secondary} 
+                    <MaterialCommunityIcons
+                        name="cash"
+                        size={20}
+                        color={colors.secondary}
                     />
                     <Text style={categoryHeaderStyles.statText}>{totalValue} EGP</Text>
                     <Text style={categoryHeaderStyles.statLabel}>Cart Value</Text>
@@ -62,4 +59,3 @@ const CategoryHeader = ({
     );
 };
 export default CategoryHeader;
-

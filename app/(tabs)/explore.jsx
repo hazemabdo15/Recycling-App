@@ -24,9 +24,6 @@ const Explore = () => {
             });
         }, 200);
         return () => {
-            headerOpacity.value = 0;
-            contentOpacity.value = 0;
-            contentTranslateY.value = 50;
         };
     }, [headerOpacity, contentOpacity, contentTranslateY]));
     const headerAnimatedStyle = useAnimatedStyle(() => {
@@ -65,17 +62,17 @@ const Explore = () => {
                     {searchText ? `${filteredCount} categories found` : 'Find the right recycling category for your items'}
                 </Text>
             </Animated.View>
-            <Animated.ScrollView 
+            <Animated.ScrollView
                 style={[exploreStyles.content, contentAnimatedStyle]}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 120 }}
             >
-                <SearchBar 
+                <SearchBar
                     placeholder="Search categories..."
                     onSearch={handleSearch}
                     onFilter={handleFilter}
                 />
-                <CategoriesGrid 
+                <CategoriesGrid
                     searchText={searchText}
                     onCategoryPress={handleCategoryPress}
                     onFilteredCountChange={handleFilteredCountChange}
@@ -85,4 +82,3 @@ const Explore = () => {
     );
 };
 export default Explore;
-

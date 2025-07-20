@@ -8,7 +8,6 @@ export const CategoryType = {
   updatedAt: '',
   __v: 0,
 };
-
 export const ItemType = {
   _id: '',
   name: '',
@@ -19,7 +18,6 @@ export const ItemType = {
   categoryName: '',
   categoryId: '',
 };
-
 export const CategoryItemType = {
   _id: '',
   name: '',

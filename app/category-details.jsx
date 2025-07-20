@@ -13,7 +13,6 @@ const CategoryDetails = () => {
     const { categoryName } = useLocalSearchParams();
     const { items, loading, error } = useCategoryItems(categoryName);
     const insets = useSafeAreaInsets();
-    // Use cart hook for cart management
     const { cartItems, getItemQuantity, handleIncreaseQuantity, handleDecreaseQuantity } = useCart();
     const headerOpacity = useSharedValue(0);
     const contentTranslateY = useSharedValue(50);
@@ -30,7 +29,6 @@ const CategoryDetails = () => {
     const contentAnimatedStyle = useAnimatedStyle(() => ({
         transform: [{ translateY: contentTranslateY.value }],
     }));
-    // Calculate cart statistics
     const { totalItems, totalPoints, totalValue } = calculateCartStats(items, cartItems);
     const renderItem = ({ item }) => (
         <ItemCard
@@ -42,7 +40,6 @@ const CategoryDetails = () => {
     );
     const handleAddItem = () => {
         console.log('Add item to', categoryName);
-        // TODO: Implement add item functionality
     };
     if (loading) {
         return (
@@ -92,4 +89,3 @@ const CategoryDetails = () => {
     );
 };
 export default CategoryDetails;
-

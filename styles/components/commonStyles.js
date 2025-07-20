@@ -1,12 +1,9 @@
 import { StyleSheet } from 'react-native';
 import { borderRadius, colors, shadows, spacing } from '../theme';
-
-// Common Layout Styles
 export const layoutStyles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.base100,
-        
     },
     content: {
         flex: 1,
@@ -21,8 +18,6 @@ export const layoutStyles = StyleSheet.create({
         height: spacing.xs,
     },
 });
-
-// Loading State Styles
 export const loadingStateStyles = StyleSheet.create({
     loadingContainer: {
         flex: 1,
@@ -37,8 +32,6 @@ export const loadingStateStyles = StyleSheet.create({
         fontWeight: '500',
     },
 });
-
-// Error State Styles
 export const errorStateStyles = StyleSheet.create({
     errorContainer: {
         flex: 1,
@@ -55,8 +48,6 @@ export const errorStateStyles = StyleSheet.create({
         lineHeight: 24,
     },
 });
-
-// Button Styles
 export const buttonStyles = StyleSheet.create({
     primaryButton: {
         backgroundColor: colors.primary,
@@ -101,8 +92,6 @@ export const buttonStyles = StyleSheet.create({
         elevation: 3,
     },
 });
-
-// Card Styles
 export const cardStyles = StyleSheet.create({
     card: {
         backgroundColor: colors.white,
@@ -131,8 +120,6 @@ export const cardStyles = StyleSheet.create({
         marginTop: spacing.sm,
     },
 });
-
-// Badge Styles
 export const badgeStyles = StyleSheet.create({
     badge: {
         backgroundColor: colors.primary,

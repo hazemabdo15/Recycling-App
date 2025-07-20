@@ -21,13 +21,10 @@ export const getCategoryIcon = (categoryName) => {
         'CDs/DVDs': { iconName: 'disc', iconColor: '#AB47BC' },
         'Shoes': { iconName: 'shoe-formal', iconColor: '#5D4037' },
     };
-    
     return iconMap[categoryName] || { iconName: 'help-circle', iconColor: '#9E9E9E' };
 };
-
 export const getCategoryImageProps = (category) => {
     const iconData = getCategoryIcon(category.name);
-    
     return {
         imageUri: category.image,
         iconName: iconData.iconName,

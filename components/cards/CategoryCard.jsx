@@ -3,11 +3,11 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } fr
 import { getCategoryImageProps } from '../../utils/categoryUtils';
 import { CategoryImage } from '../ui';
 const borderRadius = {
-  xs: 6,    
-  sm: 12,   
-  md: 18,   
-  lg: 24,   
-  xl: 32,   
+  xs: 6,
+  sm: 12,
+  md: 18,
+  lg: 24,
+  xl: 32,
 };
 const CategoryCard = ({ category, onPress }) => {
     const scale = useSharedValue(1);
@@ -29,7 +29,7 @@ const CategoryCard = ({ category, onPress }) => {
     });
     return (
         <Animated.View style={[styles.categoryCard, animatedStyle]}>
-            <Animated.View 
+            <Animated.View
                 style={styles.touchableArea}
                 onTouchStart={handlePressIn}
                 onTouchEnd={handlePressOut}
@@ -85,4 +85,3 @@ const styles = StyleSheet.create({
     },
 });
 export default CategoryCard;
-

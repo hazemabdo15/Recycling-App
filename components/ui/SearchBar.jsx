@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 const colors = {
   primary: "#0E9F6E",
-  secondary: "#8BC34A", 
+  secondary: "#8BC34A",
   accent: "#FFC107",
   neutral: "#607D8B",
   base100: "#E8F5E9",
@@ -12,11 +12,11 @@ const colors = {
   black: "#171717",
 };
 const borderRadius = {
-  xs: 6,    
-  sm: 12,   
-  md: 18,   
-  lg: 24,   
-  xl: 32,   
+  xs: 6,
+  sm: 12,
+  md: 18,
+  lg: 24,
+  xl: 32,
 };
 const SearchBar = ({ placeholder = "Search categories...", onSearch, onFilter }) => {
   const [searchText, setSearchText] = useState('');
@@ -35,10 +35,10 @@ const SearchBar = ({ placeholder = "Search categories...", onSearch, onFilter })
   return (
     <View style={styles.container}>
       <View style={styles.searchInputContainer}>
-        <MaterialCommunityIcons 
-          name="magnify" 
-          size={20} 
-          color={colors.neutral} 
+        <MaterialCommunityIcons
+          name="magnify"
+          size={20}
+          color={colors.neutral}
           style={styles.searchIcon}
         />
         <TextInput
@@ -50,9 +50,9 @@ const SearchBar = ({ placeholder = "Search categories...", onSearch, onFilter })
         />
         {searchText.length > 0 && (
           <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
-            <MaterialCommunityIcons 
-              name="close-circle" 
-              size={20} 
+            <MaterialCommunityIcons
+              name="close-circle"
+              size={20}
               color={colors.neutral}
             />
           </TouchableOpacity>
@@ -60,9 +60,9 @@ const SearchBar = ({ placeholder = "Search categories...", onSearch, onFilter })
       </View>
       {onFilter && (
         <TouchableOpacity style={styles.filterButton} onPress={onFilter}>
-          <MaterialCommunityIcons 
-            name="filter-variant" 
-            size={20} 
+          <MaterialCommunityIcons
+            name="filter-variant"
+            size={20}
             color={colors.white}
           />
         </TouchableOpacity>
@@ -123,4 +123,3 @@ const styles = StyleSheet.create({
   },
 });
 export default SearchBar;
-

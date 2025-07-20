@@ -4,11 +4,11 @@ import { StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from 'react-native-reanimated';
 import { RecyclingIllustration } from '../common';
 const borderRadius = {
-  xs: 6,    
-  sm: 12,   
-  md: 18,   
-  lg: 24,   
-  xl: 32,   
+  xs: 6,
+  sm: 12,
+  md: 18,
+  lg: 24,
+  xl: 32,
 };
 const EarnPointsCard = () => {
     const cardScale = useSharedValue(0.9);
@@ -98,4 +98,3 @@ const styles = StyleSheet.create({
     },
 });
 export default EarnPointsCard;
-

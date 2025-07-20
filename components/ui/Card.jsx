@@ -1,11 +1,11 @@
 import { Text, View } from 'react-native';
 import { cardStyles } from '../../styles/components/commonStyles';
-const Card = ({ 
-    title, 
-    subtitle, 
-    children, 
+const Card = ({
+    title,
+    subtitle,
+    children,
     headerRight,
-    ...props 
+    ...props
 }) => {
     return (
         <View style={[cardStyles.card, props.style]}>
@@ -27,4 +27,3 @@ const Card = ({
     );
 };
 export default Card;
-

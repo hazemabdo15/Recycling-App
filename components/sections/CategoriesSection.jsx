@@ -6,7 +6,6 @@ const CategoriesSection = () => {
     const { categories, loading, error } = useCategories();
     const handleCategoryPress = (category) => {
         console.log(`${category.name} category pressed`);
-        // Navigate to category details page
         router.push({
             pathname: '/category-details',
             params: { categoryName: category.name }
@@ -14,10 +13,8 @@ const CategoriesSection = () => {
     };
     const handleViewAllPress = () => {
         console.log('View all categories pressed');
-        // Navigate to explore page (all categories)
         router.push('/explore');
     };
-    // Show only first 4 categories as preview
     const limitedCategories = categories.slice(0, 4);
     if (loading) {
         return (
@@ -97,4 +94,3 @@ const styles = StyleSheet.create({
     },
 });
 export default CategoriesSection;
-

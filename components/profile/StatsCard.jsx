@@ -9,7 +9,7 @@ const borderRadius = {
 };
 const colors = {
   primary: "#0E9F6E",
-  secondary: "#8BC34A", 
+  secondary: "#8BC34A",
   accent: "#FFC107",
   neutral: "#607D8B",
   base100: "#F8FFFE",
@@ -51,10 +51,10 @@ const StatsCard = () => {
                 {stats.map((stat, index) => (
                     <View key={index} style={styles.statItem}>
                         <View style={[styles.iconContainer, { backgroundColor: `${stat.color}15` }]}>
-                            <MaterialCommunityIcons 
-                                name={stat.icon} 
-                                size={24} 
-                                color={stat.color} 
+                            <MaterialCommunityIcons
+                                name={stat.icon}
+                                size={24}
+                                color={stat.color}
                             />
                         </View>
                         <Text style={styles.statValue}>{stat.value}</Text>
@@ -120,4 +120,3 @@ const styles = StyleSheet.create({
     },
 });
 export default StatsCard;
-

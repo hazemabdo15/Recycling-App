@@ -2,13 +2,13 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
 import { badgeStyles } from '../../styles/components/commonStyles';
 import { colors } from '../../styles/theme';
-const Badge = ({ 
-    text, 
-    count, 
-    variant = 'primary', 
-    icon, 
+const Badge = ({
+    text,
+    count,
+    variant = 'primary',
+    icon,
     size = 'medium',
-    ...props 
+    ...props
 }) => {
     const getBadgeStyle = () => {
         switch (variant) {
@@ -24,9 +24,9 @@ const Badge = ({
     return (
         <View style={[badgeStyles.badge, getBadgeStyle(), props.style]}>
             {icon && (
-                <MaterialCommunityIcons 
-                    name={icon} 
-                    size={12} 
+                <MaterialCommunityIcons
+                    name={icon}
+                    size={12}
                     color={colors.white}
                     style={{ marginRight: content ? 4 : 0 }}
                 />
@@ -40,4 +40,3 @@ const Badge = ({
     );
 };
 export default Badge;
-
