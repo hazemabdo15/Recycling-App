@@ -1,7 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View, Pressable} from 'react-native';
 import { colors } from '../../styles/theme';
+import { useRouter } from 'expo-router';
+
+
 const Header = () => {
+    const router = useRouter();
+
+    const handleLoginPress = () => {
+        router.push('/login');
+    };
     return (
         <View style={styles.header}>
             <TouchableOpacity style={styles.headerButton}>
@@ -11,6 +19,9 @@ const Header = () => {
                 <TouchableOpacity style={styles.headerButton}>
                     <Ionicons name="notifications-outline" size={24} color="#333" />
                 </TouchableOpacity>
+                <Pressable style={styles.headerButton}>
+                    <Ionicons name="log-in" size={24} color="#333" onPress={handleLoginPress}/>
+                </Pressable>
             </View>
         </View>
     );
