@@ -1,7 +1,6 @@
 import { ActivityIndicator, Text, View } from 'react-native';
 import { errorStateStyles, loadingStateStyles } from '../../styles/components/commonStyles';
 import { colors } from '../../styles/theme';
-
 const LoadingState = ({ message = "Loading..." }) => {
     return (
         <View style={loadingStateStyles.loadingContainer}>
@@ -10,7 +9,6 @@ const LoadingState = ({ message = "Loading..." }) => {
         </View>
     );
 };
-
 const ErrorState = ({ message = "An error occurred" }) => {
     return (
         <View style={errorStateStyles.errorContainer}>
@@ -18,6 +16,4 @@ const ErrorState = ({ message = "An error occurred" }) => {
         </View>
     );
 };
-
 export { ErrorState, LoadingState };
-

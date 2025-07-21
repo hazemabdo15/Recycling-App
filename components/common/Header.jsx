@@ -26,7 +26,6 @@ const Header = () => {
         </View>
     );
 };
-
 const styles = StyleSheet.create({
     header: {
         flexDirection: 'row',
@@ -49,5 +48,4 @@ const styles = StyleSheet.create({
         gap: 12,
     },
 });
-
 export default Header;

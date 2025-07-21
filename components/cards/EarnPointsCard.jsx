@@ -3,29 +3,23 @@ import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from 'react-native-reanimated';
 import { RecyclingIllustration } from '../common';
-
-
 const borderRadius = {
-  xs: 6,    
-  sm: 12,   
-  md: 18,   
-  lg: 24,   
-  xl: 32,   
+  xs: 6,
+  sm: 12,
+  md: 18,
+  lg: 24,
+  xl: 32,
 };
-
 const EarnPointsCard = () => {
     const cardScale = useSharedValue(0.9);
     const cardOpacity = useSharedValue(0);
     const leafRotation = useSharedValue(0);
-
     useEffect(() => {
         cardOpacity.value = withDelay(300, withTiming(1, { duration: 600 }));
         cardScale.value = withDelay(300, withSpring(1, {
             damping: 15,
             stiffness: 150,
         }));
-        
-        
         setTimeout(() => {
             leafRotation.value = withTiming(15, { duration: 1500 }, () => {
                 leafRotation.value = withTiming(-15, { duration: 1500 }, () => {
@@ -34,20 +28,17 @@ const EarnPointsCard = () => {
             });
         }, 1000);
     }, [cardScale, cardOpacity, leafRotation]);
-
     const cardAnimatedStyle = useAnimatedStyle(() => {
         return {
             opacity: cardOpacity.value,
             transform: [{ scale: cardScale.value }],
         };
     });
-
     const leafAnimatedStyle = useAnimatedStyle(() => {
         return {
             transform: [{ rotate: `${leafRotation.value}deg` }],
         };
     });
-
     return (
         <Animated.View style={[styles.earnPointsCard, cardAnimatedStyle]}>
             <View style={styles.cardContent}>
@@ -65,7 +56,6 @@ const EarnPointsCard = () => {
         </Animated.View>
     );
 };
-
 const styles = StyleSheet.create({
     earnPointsCard: {
         backgroundColor: '#E8F5E9',
@@ -107,5 +97,4 @@ const styles = StyleSheet.create({
         elevation: 3,
     },
 });
-
 export default EarnPointsCard;

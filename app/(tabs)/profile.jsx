@@ -5,17 +5,13 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } fr
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ProfileHeader, ProfileMenu, StatsCard } from '../../components/profile';
 import { colors } from '../../styles/theme';
-
 const Profile = () => {
     const insets = useSafeAreaInsets();
-    
     const headerOpacity = useSharedValue(0);
     const contentTranslateY = useSharedValue(50);
     const contentOpacity = useSharedValue(0);
-
     useFocusEffect(useCallback(() => {
         headerOpacity.value = withTiming(1, { duration: 600 });
-        
         setTimeout(() => {
             contentOpacity.value = withTiming(1, { duration: 800 });
             contentTranslateY.value = withSpring(0, {
@@ -23,27 +19,20 @@ const Profile = () => {
                 stiffness: 100,
             });
         }, 200);
-
         return () => {
-            headerOpacity.value = 0;
-            contentOpacity.value = 0;
-            contentTranslateY.value = 50;
         };
     }, [headerOpacity, contentOpacity, contentTranslateY]));
-
     const headerAnimatedStyle = useAnimatedStyle(() => {
         return {
             opacity: headerOpacity.value,
         };
     });
-
     const contentAnimatedStyle = useAnimatedStyle(() => {
         return {
             opacity: contentOpacity.value,
             transform: [{ translateY: contentTranslateY.value }],
         };
     });
-
     const handleMenuItemPress = (item) => {
         switch (item.id) {
             case 'edit-profile':
@@ -68,33 +57,28 @@ const Profile = () => {
                 console.log('Unknown menu item');
         }
     };
-
     return (
         <Animated.View style={[styles.container, { paddingTop: insets.top }]}>
             <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
-            
-            <Animated.ScrollView 
+            <Animated.ScrollView
                 style={[styles.scrollView, contentAnimatedStyle]}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
             >
                 <Animated.View style={headerAnimatedStyle}>
-                    <ProfileHeader 
+                    <ProfileHeader
                         name="Hazem"
                         email="hazem@gmail.com"
                         points={2847}
                         level="Eco Champion"
                     />
                 </Animated.View>
-                
                 <StatsCard />
-                
                 <ProfileMenu onItemPress={handleMenuItemPress} />
             </Animated.ScrollView>
         </Animated.View>
     );
 };
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -108,5 +92,4 @@ const styles = StyleSheet.create({
         paddingBottom: 130,
     },
 });
-
 export default Profile;

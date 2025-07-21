@@ -1,40 +1,35 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
-
-
+import { getCategoryImageProps } from '../../utils/categoryUtils';
+import { CategoryImage } from '../ui';
 const borderRadius = {
-  xs: 6,    
-  sm: 12,   
-  md: 18,   
-  lg: 24,   
-  xl: 32,   
+  xs: 6,
+  sm: 12,
+  md: 18,
+  lg: 24,
+  xl: 32,
 };
-
-const CategoryCard = ({ iconName, iconColor, title, onPress }) => {
+const CategoryCard = ({ category, onPress }) => {
     const scale = useSharedValue(1);
     const shadowOpacity = useSharedValue(0.05);
-
+    const imageProps = getCategoryImageProps(category);
     const handlePressIn = () => {
         scale.value = withSpring(0.95, { damping: 15, stiffness: 200 });
         shadowOpacity.value = withTiming(0.15, { duration: 150 });
     };
-
     const handlePressOut = () => {
         scale.value = withSpring(1, { damping: 15, stiffness: 200 });
         shadowOpacity.value = withTiming(0.05, { duration: 150 });
     };
-
     const animatedStyle = useAnimatedStyle(() => {
         return {
             transform: [{ scale: scale.value }],
             shadowOpacity: shadowOpacity.value,
         };
     });
-
     return (
         <Animated.View style={[styles.categoryCard, animatedStyle]}>
-            <Animated.View 
+            <Animated.View
                 style={styles.touchableArea}
                 onTouchStart={handlePressIn}
                 onTouchEnd={handlePressOut}
@@ -50,16 +45,17 @@ const CategoryCard = ({ iconName, iconColor, title, onPress }) => {
                     }}
                     onResponderTerminate={handlePressOut}
                 >
-                    <View style={styles.categoryIcon}>
-                        <MaterialCommunityIcons name={iconName} size={32} color={iconColor} />
-                    </View>
-                    <Text style={styles.categoryText}>{title}</Text>
+                    <CategoryImage
+                        {...imageProps}
+                        size={60}
+                        style={styles.categoryIcon}
+                    />
+                    <Text style={styles.categoryText}>{category.name}</Text>
                 </Animated.View>
             </Animated.View>
         </Animated.View>
     );
 };
-
 const styles = StyleSheet.create({
     categoryCard: {
         width: '48%',
@@ -80,12 +76,6 @@ const styles = StyleSheet.create({
         width: '100%',
     },
     categoryIcon: {
-        width: 60,
-        height: 60,
-        borderRadius: borderRadius.xl,
-        backgroundColor: '#F7FAFC',
-        justifyContent: 'center',
-        alignItems: 'center',
         marginBottom: 12,
     },
     categoryText: {
@@ -94,5 +84,4 @@ const styles = StyleSheet.create({
         color: '#2D3748',
     },
 });
-
 export default CategoryCard;

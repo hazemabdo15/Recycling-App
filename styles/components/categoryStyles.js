@@ -1,7 +1,5 @@
 import { StyleSheet } from 'react-native';
 import { borderRadius, colors, shadows, spacing } from '../theme';
-
-// Category Header Styles
 export const categoryHeaderStyles = StyleSheet.create({
     header: {
         padding: spacing.lg,
@@ -49,8 +47,6 @@ export const categoryHeaderStyles = StyleSheet.create({
         fontWeight: '500',
     },
 });
-
-// Item Card Styles
 export const itemCardStyles = StyleSheet.create({
     itemCard: {
         backgroundColor: colors.white,
@@ -67,8 +63,6 @@ export const itemCardStyles = StyleSheet.create({
         marginBottom: spacing.md,
     },
 });
-
-// Item Image Styles
 export const itemImageStyles = StyleSheet.create({
     itemImageContainer: {
         width: 80,
@@ -113,8 +107,6 @@ export const itemImageStyles = StyleSheet.create({
         marginLeft: 2,
     },
 });
-
-// Item Info Styles
 export const itemInfoStyles = StyleSheet.create({
     itemInfo: {
         flex: 1,
@@ -164,8 +156,6 @@ export const itemInfoStyles = StyleSheet.create({
         fontWeight: '500',
     },
 });
-
-// Quantity Controls Styles
 export const quantityControlsStyles = StyleSheet.create({
     quantityControls: {
         flexDirection: 'row',
@@ -202,8 +192,6 @@ export const quantityControlsStyles = StyleSheet.create({
         color: colors.black,
     },
 });
-
-// Empty State Styles
 export const emptyStateStyles = StyleSheet.create({
     emptyState: {
         flex: 1,
