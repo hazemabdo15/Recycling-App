@@ -5,12 +5,12 @@ import * as Haptics from 'expo-haptics';
 import React from "react";
 import { Dimensions, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
 import Animated, {
-    useAnimatedStyle,
-    useSharedValue,
-    withRepeat,
-    withSequence,
-    withSpring,
-    withTiming,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withSpring,
+  withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useVoiceModal } from "../../hooks/useVoiceModal";
@@ -18,7 +18,7 @@ import { colors, shadows } from "../../styles/theme";
 const { width } = Dimensions.get("window");
 const getIconName = (routeName, isFocused) => {
   const icons = {
-    index: isFocused ? "home" : "home-outline",
+    home: isFocused ? "home" : "home-outline",
     explore: isFocused ? "recycle" : "recycle",
     cart: isFocused ? "shopping" : "shopping-outline",
     profile: isFocused ? "account" : "account-outline",
