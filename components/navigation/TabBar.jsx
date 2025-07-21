@@ -110,7 +110,7 @@ export function TabBar({ state, descriptors, navigation }) {
       >
         <Animated.View style={[styles.mainActionButton, mainButtonAnimatedStyle]}>
           <MaterialCommunityIcons
-            name="robot"
+            name="microphone"
             size={28}
             color={colors.white}
           />
