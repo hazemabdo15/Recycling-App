@@ -35,7 +35,11 @@ export const CartProvider = ({ children }) => {
         setCartItems(itemsObj);
         setError(null);
       })
-      .catch((err) => setError(err.message || 'Failed to fetch cart'))
+      .catch((err) => {
+        console.warn('Failed to fetch cart from backend, using empty cart:', err.message);
+        setCartItems({});
+        setError(null);
+      })
       .finally(() => setLoading(false));
   }, [isLoggedIn]);
 
@@ -315,8 +319,13 @@ export const CartProvider = ({ children }) => {
   const getItemQuantity = (categoryId) => cartItems[categoryId] || 0;
 
   const fetchBackendCart = async () => {
-    const cart = await getCart(isLoggedIn);
-    return cart;
+    try {
+      const cart = await getCart(isLoggedIn);
+      return cart;
+    } catch (error) {
+      console.warn('Error fetching backend cart, using local cart data:', error.message);
+      return { items: cartItems };
+    }
   };
 
   const testConnectivity = async () => {

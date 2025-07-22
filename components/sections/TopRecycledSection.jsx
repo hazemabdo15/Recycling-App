@@ -66,7 +66,7 @@ const TopRecycledSection = () => {
     return (
         <View style={styles.section}>
             <View style={styles.headerContainer}>
-                <Text style={styles.sectionTitle}>Top Recycled Items</Text>
+                <Text style={styles.sectionTitle}>🌟 Most Recycled This Month</Text>
                 <TouchableOpacity onPress={() => console.log('View all top items')}>
                     <Text style={styles.viewAllText}>View all</Text>
                 </TouchableOpacity>

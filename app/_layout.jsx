@@ -1,28 +1,58 @@
-﻿import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Stack } from "expo-router";
-import { useEffect, useState } from 'react';
-import { CartProvider } from '../context/CartContext';
+﻿import { Stack } from "expo-router";
 import { AuthProvider } from '../context/AuthContext';
+import { CartProvider } from '../context/CartContext';
 
 export default function RootLayout() {
 
   return (
     <AuthProvider>
       <CartProvider>
-        <Stack>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            animation: 'slide_from_right',
+            animationDuration: 300,
+            gestureEnabled: true,
+            gestureDirection: 'horizontal',
+          }}
+        >
           <Stack.Screen
             name="login"
-            options={{ headerShown: false }}
+            options={{ 
+              headerShown: false,
+              animation: 'fade',
+            }}
           />
           <Stack.Screen
             name="register"
-            options={{ headerShown: false }}
+            options={{ 
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
           />
           <Stack.Screen
             name="otp"
-            options={{ headerShown: false }}
+            options={{ 
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
           />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen 
+            name="(tabs)" 
+            options={{ 
+              headerShown: false,
+              animation: 'fade',
+            }} 
+          />
+          <Stack.Screen
+            name="category-details"
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+              gestureEnabled: true,
+              gestureDirection: 'horizontal',
+            }}
+          />
           <Stack.Screen
             name="voice-modal"
             options={{

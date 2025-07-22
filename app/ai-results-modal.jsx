@@ -2,26 +2,40 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
-  Dimensions,
-  FlatList,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Dimensions,
+    FlatList,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
-import Reanimated, {
-  interpolate,
-  runOnJS,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
-} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCart } from '../hooks/useCart';
 import { borderRadius, colors, spacing, typography } from '../styles/theme';
+
+let Reanimated, interpolate, runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming;
+
+try {
+  const reanimated = require('react-native-reanimated');
+  Reanimated = reanimated.default;
+  interpolate = reanimated.interpolate;
+  runOnJS = reanimated.runOnJS;
+  useAnimatedStyle = reanimated.useAnimatedStyle;
+  useSharedValue = reanimated.useSharedValue;
+  withSpring = reanimated.withSpring;
+  withTiming = reanimated.withTiming;
+} catch (_error) {
+  const { View: RNView } = require('react-native');
+  Reanimated = { View: RNView };
+  interpolate = (value, input, output) => output[0];
+  runOnJS = (fn) => fn;
+  useAnimatedStyle = () => ({});
+  useSharedValue = (value) => ({ value });
+  withSpring = (value) => value;
+  withTiming = (value) => value;
+}
 
 const { height } = Dimensions.get('window');
 const MODAL_HEIGHT = height * 0.85;

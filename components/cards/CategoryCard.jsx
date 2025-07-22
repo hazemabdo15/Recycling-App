@@ -1,8 +1,28 @@
-﻿import { StyleSheet, Text } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
-import { colors } from '../../styles/theme';
+﻿import { StyleSheet, Text, View } from 'react-native';
 import { getCategoryImageProps } from '../../utils/categoryUtils';
 import { CategoryImage } from '../ui';
+
+let Animated, useSharedValue, useAnimatedStyle, withTiming, withSpring;
+
+try {
+  const reanimated = require('react-native-reanimated');
+  Animated = reanimated.default;
+  useSharedValue = reanimated.useSharedValue;
+  useAnimatedStyle = reanimated.useAnimatedStyle;
+  withTiming = reanimated.withTiming;
+  withSpring = reanimated.withSpring;
+} catch (_error) {
+  console.warn('React Native Reanimated not available in CategoryCard, using fallbacks');
+
+  Animated = { 
+    View: View,
+    createAnimatedComponent: (Component) => Component 
+  };
+  useSharedValue = (value) => ({ value });
+  useAnimatedStyle = () => ({});
+  withTiming = (value) => value;
+  withSpring = (value) => value;
+}
 
 const borderRadius = {
     xs: 6,

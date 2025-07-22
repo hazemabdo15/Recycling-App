@@ -1,8 +1,8 @@
 ﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
-import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { categoryHeaderStyles } from '../../styles/components/categoryStyles';
 import { colors } from '../../styles/theme';
+
 const CategoryHeader = ({
     categoryName,
     totalItems,
@@ -12,15 +12,8 @@ const CategoryHeader = ({
     headerOpacity,
     onGoBack
 }) => {
-    const statsAnimatedStyle = useAnimatedStyle(() => {
-        const opacity = headerOpacity?.value || 1;
-        return {
-            elevation: opacity < 0.95 ? 0 : 4,
-            shadowOpacity: opacity < 0.95 ? 0 : 0.1,
-        };
-    });
     return (
-        <Animated.View style={[categoryHeaderStyles.header, animatedStyle]}>
+        <View style={[categoryHeaderStyles.header, animatedStyle]}>
             <View style={categoryHeaderStyles.headerContentRow}>
                 <MaterialCommunityIcons
                     name="arrow-left"
@@ -31,7 +24,7 @@ const CategoryHeader = ({
                 />
                 <Text style={categoryHeaderStyles.title}>{categoryName}</Text>
             </View>
-            <Animated.View style={[categoryHeaderStyles.headerStats, statsAnimatedStyle]}>
+            <View style={[categoryHeaderStyles.headerStats]}>
                 <View style={categoryHeaderStyles.statItem}>
                     <MaterialCommunityIcons
                         name="package-variant"
@@ -48,7 +41,7 @@ const CategoryHeader = ({
                         color={colors.accent}
                     />
                     <Text style={categoryHeaderStyles.statText}>{totalPoints}</Text>
-                    <Text style={categoryHeaderStyles.statLabel}>Points</Text>
+                    <Text style={categoryHeaderStyles.statLabel}>Eco Points</Text>
                 </View>
                 <View style={categoryHeaderStyles.statItem}>
                     <MaterialCommunityIcons
@@ -57,10 +50,10 @@ const CategoryHeader = ({
                         color={colors.secondary}
                     />
                     <Text style={categoryHeaderStyles.statText}>{totalValue} EGP</Text>
-                    <Text style={categoryHeaderStyles.statLabel}>Cart Value</Text>
+                    <Text style={categoryHeaderStyles.statLabel}>You&apos;ll Earn</Text>
                 </View>
-            </Animated.View>
-        </Animated.View>
+            </View>
+        </View>
     );
 };
 export default CategoryHeader;

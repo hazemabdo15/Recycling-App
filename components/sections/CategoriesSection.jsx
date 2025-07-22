@@ -1,8 +1,8 @@
 ﻿import { router } from 'expo-router';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useCategories } from '../../hooks/useAPI';
-import { CategoryCard } from '../cards';
 import { colors } from '../../styles/theme';
+import { CategoryCard } from '../cards';
 const CategoriesSection = () => {
     const { categories, loading, error } = useCategories();
     const handleCategoryPress = (category) => {
@@ -36,7 +36,7 @@ const CategoriesSection = () => {
     return (
         <View style={styles.categoriesSection}>
             <View style={styles.categoriesHeader}>
-                <Text style={styles.categoriesTitle}>Categories</Text>
+                <Text style={styles.categoriesTitle}>What are you recycling today?</Text>
                 <TouchableOpacity
                 onPress={handleViewAllPress}>
                     <Text style={styles.viewAllText}>View all</Text>

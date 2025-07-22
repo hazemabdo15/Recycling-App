@@ -12,6 +12,7 @@ import {
   View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { AnimatedButton, AnimatedListItem, FadeInView } from '../../components/common';
 import { useAllItems } from '../../hooks/useAPI';
 import { useCart } from '../../hooks/useCart';
 import { borderRadius, shadows, spacing, typography } from '../../styles';
@@ -20,7 +21,7 @@ import { normalizeItemData } from '../../utils/cartUtils';
 
 const Cart = () => {
   const insets = useSafeAreaInsets();
-  const { cartItems, handleIncreaseQuantity, handleDecreaseQuantity, handleRemoveFromCart, fetchBackendCart, removingItems } = useCart();
+  const { cartItems, handleIncreaseQuantity, handleDecreaseQuantity, handleRemoveFromCart, handleClearCart, fetchBackendCart, removingItems } = useCart();
   const { items: allItems, loading: itemsLoading } = useAllItems();
   const [backendCartItems, setBackendCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -119,7 +120,15 @@ const Cart = () => {
     }
   };
 
-  const renderCartItem = ({ item }) => {
+  const handleClearAll = async () => {
+    try {
+      await handleClearCart();
+    } catch (err) {
+      console.error('[Cart] Error clearing cart:', err);
+    }
+  };
+
+  const renderCartItem = ({ item, index }) => {
     const name = item.name || item.material || 'Unknown Item';
     let unit = item.unit || item.measurement_unit || '';
     if (unit === 1 || unit === '1') unit = 'KG';
@@ -131,7 +140,7 @@ const Cart = () => {
     const totalValue = value !== null ? value * quantity : null;
 
     return (
-      <View style={[styles.cartCard, { borderLeftWidth: 5, borderLeftColor: colors.primary, marginBottom: spacing.md, marginTop: spacing.sm, shadowOpacity: 0.18 }]}> 
+      <AnimatedListItem index={index} style={[styles.cartCard, { borderLeftWidth: 5, borderLeftColor: colors.primary, marginBottom: spacing.md, marginTop: spacing.sm, shadowOpacity: 0.18 }]}> 
         <View style={styles.cartImageContainer}>
           {item.image ? (
             <Image source={{ uri: item.image }} style={styles.cartImage} resizeMode="cover" />
@@ -175,7 +184,7 @@ const Cart = () => {
             <MaterialCommunityIcons name="delete-outline" size={24} color={colors.error} />
           </TouchableOpacity>
         </View>
-      </View>
+      </AnimatedListItem>
     );
   };
 
@@ -200,14 +209,14 @@ const Cart = () => {
     return (
       <View style={styles.emptyCartContainer}>
         <View style={styles.emptyCartIconWrapper}>
-          <MaterialCommunityIcons name="cart-off" size={80} color={colors.base300} />
+          <MaterialCommunityIcons name="truck-delivery-outline" size={80} color={colors.base300} />
         </View>
-        <Text style={styles.emptyCartTitle}>No items in your cart</Text>
-        <Text style={styles.emptyCartSubtitle}>Your cart is currently empty. Start adding items to see them here!</Text>
-        <TouchableOpacity style={styles.emptyCartBrowseBtn} onPress={() => router.push('/(tabs)/explore')}>
-          <MaterialCommunityIcons name="magnify" size={22} color={colors.primary} />
-          <Text style={styles.emptyCartBrowseText}>Browse Items</Text>
-        </TouchableOpacity>
+        <Text style={styles.emptyCartTitle}>No pickup items yet</Text>
+        <Text style={styles.emptyCartSubtitle}>Add recyclable items to schedule your pickup and earn rewards!</Text>
+        <AnimatedButton style={styles.emptyCartBrowseBtn} onPress={() => router.push('/(tabs)/explore')}>
+          <MaterialCommunityIcons name="recycle" size={22} color={colors.primary} />
+          <Text style={styles.emptyCartBrowseText}>Find Recyclables</Text>
+        </AnimatedButton>
       </View>
     );
   }
@@ -235,30 +244,42 @@ const Cart = () => {
       <StatusBar barStyle="dark-content" backgroundColor={colors.base100} />
       <View style={[styles.headerMerged, { paddingTop: insets.top }]}> 
         <View style={styles.headerRowMerged}>
-          <MaterialCommunityIcons name="cart" size={32} color={colors.primary} style={{ marginRight: spacing.sm }} />
-          <Text style={styles.headerTitleMerged}>Your Cart</Text>
+          <View style={styles.headerLeftSection}>
+            <MaterialCommunityIcons name="truck-delivery" size={32} color={colors.primary} style={{ marginRight: spacing.sm }} />
+            <View>
+              <Text style={styles.headerTitleMerged}>Pickup Request</Text>
+              <Text style={styles.headerSubtitleMerged}>{cartArray.length} items ready for pickup</Text>
+            </View>
+          </View>
+          {cartArray.length > 0 && (
+            <AnimatedButton style={styles.clearCartBtn} onPress={handleClearAll}>
+              <MaterialCommunityIcons name="delete-sweep" size={20} color={colors.error} />
+              <Text style={styles.clearCartText}>Clear All</Text>
+            </AnimatedButton>
+          )}
         </View>
-        <Text style={styles.headerSubtitleMerged}>{cartArray.length} items</Text>
       </View>
       
-      <View style={styles.checkoutBarTop}> 
-        <View style={styles.checkoutSummaryRow}>
-          <View style={styles.checkoutSummaryItem}>
-            <MaterialCommunityIcons name="star" size={22} color={colors.accent} />
-            <Text style={styles.checkoutSummaryLabel}>Total Points</Text>
-            <Text style={styles.checkoutSummaryValue}>{totalPoints}</Text>
+      <FadeInView delay={100}>
+        <View style={styles.checkoutBarTop}> 
+          <View style={styles.checkoutSummaryRow}>
+            <View style={styles.checkoutSummaryItem}>
+              <MaterialCommunityIcons name="star" size={22} color={colors.accent} />
+              <Text style={styles.checkoutSummaryLabel}>Eco Points</Text>
+              <Text style={styles.checkoutSummaryValue}>{totalPoints}</Text>
+            </View>
+            <View style={styles.checkoutSummaryItem}>
+              <MaterialCommunityIcons name="cash" size={22} color={colors.secondary} />
+              <Text style={styles.checkoutSummaryLabel}>You&apos;ll Earn</Text>
+              <Text style={styles.checkoutSummaryValue}>{totalValue.toFixed(2)} EGP</Text>
+            </View>
           </View>
-          <View style={styles.checkoutSummaryItem}>
-            <MaterialCommunityIcons name="cash" size={22} color={colors.secondary} />
-            <Text style={styles.checkoutSummaryLabel}>Total Value</Text>
-            <Text style={styles.checkoutSummaryValue}>{totalValue.toFixed(2)} EGP</Text>
-          </View>
+          <AnimatedButton style={styles.checkoutBtnBar} onPress={() => router.push('/checkout')}>
+            <MaterialCommunityIcons name="truck-fast" size={24} color={colors.white} />
+            <Text style={styles.checkoutBtnBarText}>Schedule Pickup</Text>
+          </AnimatedButton>
         </View>
-        <TouchableOpacity style={styles.checkoutBtnBar} onPress={() => router.push('/checkout')}>
-          <MaterialCommunityIcons name="arrow-right-bold-circle" size={24} color={colors.white} />
-          <Text style={styles.checkoutBtnBarText}>Proceed to Checkout</Text>
-        </TouchableOpacity>
-      </View>
+      </FadeInView>
       
       <FlatList
         data={cartArray}
@@ -438,7 +459,31 @@ const styles = StyleSheet.create({
   headerRowMerged: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginTop: spacing.sm,
+    width: '100%',
+  },
+  headerLeftSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  clearCartBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.base100,
+    borderRadius: borderRadius.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.base200,
+  },
+  clearCartText: {
+    ...typography.caption,
+    color: colors.error,
+    fontWeight: '600',
+    fontSize: 12,
+    marginLeft: 4,
   },
   headerTitleMerged: {
     ...typography.title,

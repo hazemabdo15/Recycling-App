@@ -3,24 +3,46 @@ import { useLinkBuilder } from "@react-navigation/native";
 import { BlurView } from "expo-blur";
 import * as Haptics from 'expo-haptics';
 import React from "react";
-import { Dimensions, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withSpring,
-  withTiming,
-} from "react-native-reanimated";
+import { Dimensions, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useCart } from "../../hooks/useCart";
 import { useVoiceModal } from "../../hooks/useVoiceModal";
 import { colors, shadows } from "../../styles/theme";
+
+let Animated, useSharedValue, useAnimatedStyle, withTiming, withSpring, withRepeat, withSequence, runOnJS;
+
+try {
+  const reanimated = require('react-native-reanimated');
+  Animated = reanimated.default;
+  useSharedValue = reanimated.useSharedValue;
+  useAnimatedStyle = reanimated.useAnimatedStyle;
+  withTiming = reanimated.withTiming;
+  withSpring = reanimated.withSpring;
+  withRepeat = reanimated.withRepeat;
+  withSequence = reanimated.withSequence;
+  runOnJS = reanimated.runOnJS;
+} catch (_error) {
+  console.warn('React Native Reanimated not available in TabBar, using fallbacks');
+
+  Animated = { 
+    View: View,
+    createAnimatedComponent: (Component) => Component 
+  };
+  useSharedValue = (value) => ({ value });
+  useAnimatedStyle = () => ({});
+  withTiming = (value) => value;
+  withSpring = (value) => value;
+  withRepeat = (value) => value;
+  withSequence = (...values) => values[0];
+  runOnJS = (fn) => fn;
+}
+
 const { width } = Dimensions.get("window");
 const getIconName = (routeName, isFocused) => {
   const icons = {
     home: isFocused ? "home" : "home-outline",
-    explore: isFocused ? "recycle" : "recycle",
-    cart: isFocused ? "shopping" : "shopping-outline",
+    explore: isFocused ? "magnify" : "magnify",
+    cart: isFocused ? "truck-delivery" : "truck-delivery-outline",
     profile: isFocused ? "account" : "account-outline",
   };
   return icons[routeName] || "circle-outline";
@@ -29,6 +51,13 @@ export function TabBar({ state, descriptors, navigation }) {
   const { buildHref } = useLinkBuilder();
   const insets = useSafeAreaInsets();
   const { openVoiceModal } = useVoiceModal();
+  const { cartItems } = useCart();
+
+  const cartItemsCount = cartItems ? Object.keys(cartItems).filter(key => {
+    const quantity = cartItems[key];
+    return typeof quantity === 'number' && quantity > 0;
+  }).length : 0;
+  
   const activeIndex = useSharedValue(state.index);
   const containerWidth = width - 40;
   const availableWidth = containerWidth - 32;
@@ -139,6 +168,7 @@ export function TabBar({ state, descriptors, navigation }) {
                     onLongPress={() => handleLongPress(route)}
                     buildHref={buildHref}
                     options={options}
+                    badgeCount={route.name === 'cart' ? cartItemsCount : 0}
                   />
                 );
               })}
@@ -161,6 +191,7 @@ export function TabBar({ state, descriptors, navigation }) {
                     onLongPress={() => handleLongPress(route)}
                     buildHref={buildHref}
                     options={options}
+                    badgeCount={route.name === 'cart' ? cartItemsCount : 0}
                   />
                 );
               })}
@@ -170,21 +201,41 @@ export function TabBar({ state, descriptors, navigation }) {
       </View>
     );
   }
-function TabBarItem({ route, label, isFocused, index, onPress, onLongPress, buildHref, options }) {
+function TabBarItem({ route, label, isFocused, index, onPress, onLongPress, buildHref, options, badgeCount = 0 }) {
   const scale = useSharedValue(1);
   const opacity = useSharedValue(isFocused ? 1 : 0.6);
+  const badgeScale = useSharedValue(1);
+  
   React.useEffect(() => {
     scale.value = withSpring(isFocused ? 1.1 : 1, { damping: 15, stiffness: 200 });
     opacity.value = withTiming(isFocused ? 1 : 0.6, { duration: 200 });
   }, [isFocused, scale, opacity]);
+
+  React.useEffect(() => {
+    if (badgeCount > 0) {
+      badgeScale.value = withSequence(
+        withSpring(1.3, { damping: 15, stiffness: 300 }),
+        withSpring(1, { damping: 15, stiffness: 300 })
+      );
+    }
+  }, [badgeCount, badgeScale]);
+  
   const animatedStyle = useAnimatedStyle(() => {
     return {
       transform: [{ scale: scale.value }],
       opacity: opacity.value,
     };
   });
+
+  const badgeAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: badgeScale.value }],
+    };
+  });
+  
   const iconColor = isFocused ? colors.primary : colors.neutral;
   const textColor = isFocused ? colors.primary : colors.neutral;
+  
   return (
     <TouchableWithoutFeedback onPress={onPress} onLongPress={onLongPress}>
       <Animated.View style={[styles.tabItem, animatedStyle]}>
@@ -194,6 +245,13 @@ function TabBarItem({ route, label, isFocused, index, onPress, onLongPress, buil
             size={24}
             color={iconColor}
           />
+          {badgeCount > 0 && (
+            <Animated.View style={[styles.badge, badgeAnimatedStyle]}>
+              <Text style={styles.badgeText}>
+                {badgeCount > 99 ? '99+' : badgeCount}
+              </Text>
+            </Animated.View>
+          )}
         </Animated.View>
         <Animated.Text style={[styles.tabLabel, { color: textColor }]}>
           {label}
@@ -277,6 +335,26 @@ const styles = StyleSheet.create({
   },
   iconContainer: {
     marginBottom: 4,
+    position: 'relative',
+  },
+  badge: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    backgroundColor: colors.primary,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: colors.white,
+  },
+  badgeText: {
+    color: colors.white,
+    fontSize: 11,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
   tabLabel: {
     fontSize: 12,

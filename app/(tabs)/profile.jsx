@@ -3,17 +3,29 @@ import { useFocusEffect } from '@react-navigation/native';
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
-import Animated, {
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
-    withTiming,
-} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ProfileHeader, ProfileMenu, StatsCard } from '../../components/profile';
+import { useAuth } from '../../context/AuthContext';
 import { colors } from '../../styles/theme';
 import { getLoggedInUser } from '../../utils/authUtils';
-import { useAuth } from '../../context/AuthContext'; 
+
+let Animated, useAnimatedStyle, useSharedValue, withSpring, withTiming;
+
+try {
+  const reanimated = require('react-native-reanimated');
+  Animated = reanimated.default;
+  useAnimatedStyle = reanimated.useAnimatedStyle;
+  useSharedValue = reanimated.useSharedValue;
+  withSpring = reanimated.withSpring;
+  withTiming = reanimated.withTiming;
+} catch (_error) {
+  const { View: RNView } = require('react-native');
+  Animated = { View: RNView };
+  useAnimatedStyle = () => ({});
+  useSharedValue = (value) => ({ value });
+  withSpring = (value) => value;
+  withTiming = (value) => value;
+} 
 
 const Profile = () => {
     const insets = useSafeAreaInsets();

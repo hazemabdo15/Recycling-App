@@ -66,7 +66,7 @@ export async function testMinimalPost(isLoggedIn) {
 export async function testBackendConnectivity() {
   try {
     console.log('[cart API] Testing backend connectivity to:', BASE_URL);
-    // Use the categories endpoint to test connectivity since health endpoint doesn't exist
+
     const response = await fetch(API_ENDPOINTS.CATEGORIES, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' }
@@ -247,16 +247,29 @@ async function getAuthHeaders(isLoggedIn, sessionId) {
 }
 
 export async function getCart(isLoggedIn) {
-  const sessionId = isLoggedIn ? null : await getSessionId();
-  const headers = await getAuthHeaders(isLoggedIn, sessionId);
-  const response = await fetch(BASE_URL, { method: 'GET', headers, credentials: 'include' });
-  await setSessionIdFromResponse(response);
-  return response.json();
+  try {
+    const sessionId = isLoggedIn ? null : await getSessionId();
+    const headers = await getAuthHeaders(isLoggedIn, sessionId);
+    const response = await fetch(BASE_URL, { method: 'GET', headers, credentials: 'include' });
+    
+    if (!response.ok) {
+      console.warn(`[cart API] getCart failed with status ${response.status}, returning empty cart`);
+      return { items: [] };
+    }
+    
+    await setSessionIdFromResponse(response);
+    const cartData = await response.json();
+    return cartData;
+  } catch (error) {
+    console.warn('[cart API] getCart network error, returning empty cart:', error.message);
+    return { items: [] };
+  }
 }
 
 export async function addItemToCart(item, isLoggedIn) {
-  const sessionId = isLoggedIn ? null : await getSessionId();
-  let headers = await getAuthHeaders(isLoggedIn, sessionId);
+  try {
+    const sessionId = isLoggedIn ? null : await getSessionId();
+    let headers = await getAuthHeaders(isLoggedIn, sessionId);
 
   if (!isLoggedIn && !sessionId) {
     console.log('[cart API] No sessionId found for guest user, attempting to create session...');
@@ -345,11 +358,16 @@ export async function addItemToCart(item, isLoggedIn) {
   }
   
   return result;
+  } catch (error) {
+    console.warn('[cart API] addItemToCart network error:', error.message);
+    throw error;
+  }
 }
 
 export async function updateCartItem(categoryId, quantity, isLoggedIn) {
-  const sessionId = isLoggedIn ? null : await getSessionId();
-  const headers = await getAuthHeaders(isLoggedIn, sessionId);
+  try {
+    const sessionId = isLoggedIn ? null : await getSessionId();
+    const headers = await getAuthHeaders(isLoggedIn, sessionId);
   
   console.log('🔄 [cart API] updateCartItem - Request:', {
     categoryId,
@@ -407,28 +425,54 @@ export async function updateCartItem(categoryId, quantity, isLoggedIn) {
   }
   
   return result;
+  } catch (error) {
+    console.warn('[cart API] updateCartItem network error:', error.message);
+    throw error;
+  }
 }
 
 export async function removeCartItem(categoryId, isLoggedIn) {
-  const sessionId = isLoggedIn ? null : await getSessionId();
-  const headers = await getAuthHeaders(isLoggedIn, sessionId);
-  const response = await fetch(`${BASE_URL}/${categoryId}`, {
-    method: 'DELETE',
-    headers,
-    credentials: 'include',
-  });
-  await setSessionIdFromResponse(response);
-  return response.json();
+  try {
+    const sessionId = isLoggedIn ? null : await getSessionId();
+    const headers = await getAuthHeaders(isLoggedIn, sessionId);
+    const response = await fetch(`${BASE_URL}/${categoryId}`, {
+      method: 'DELETE',
+      headers,
+      credentials: 'include',
+    });
+    
+    if (!response.ok) {
+      console.warn(`[cart API] removeCartItem failed with status ${response.status} for item ${categoryId}`);
+      return { success: false, error: `Failed to remove item: ${response.status}` };
+    }
+    
+    await setSessionIdFromResponse(response);
+    return await response.json();
+  } catch (error) {
+    console.warn('[cart API] removeCartItem network error:', error.message);
+    return { success: false, error: error.message };
+  }
 }
 
 export async function clearCart(isLoggedIn) {
-  const sessionId = isLoggedIn ? null : await getSessionId();
-  const headers = await getAuthHeaders(isLoggedIn, sessionId);
-  const response = await fetch(BASE_URL, {
-    method: 'DELETE',
-    headers,
-    credentials: 'include',
-  });
-  await setSessionIdFromResponse(response);
-  return response.json();
+  try {
+    const sessionId = isLoggedIn ? null : await getSessionId();
+    const headers = await getAuthHeaders(isLoggedIn, sessionId);
+    const response = await fetch(BASE_URL, {
+      method: 'DELETE',
+      headers,
+      credentials: 'include',
+    });
+    
+    if (!response.ok) {
+      console.warn(`[cart API] clearCart failed with status ${response.status}`);
+      return { success: false, error: `Failed to clear cart: ${response.status}` };
+    }
+    
+    await setSessionIdFromResponse(response);
+    return await response.json();
+  } catch (error) {
+    console.warn('[cart API] clearCart network error:', error.message);
+    return { success: false, error: error.message };
+  }
 }

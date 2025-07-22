@@ -1,6 +1,7 @@
 ﻿import { View } from 'react-native';
 import { itemCardStyles } from '../../styles/components/categoryStyles';
 import { getUnitDisplay } from '../../utils/cartUtils';
+import { AnimatedListItem } from '../common';
 import ItemImage from './ItemImage';
 import ItemInfo from './ItemInfo';
 import QuantityControls from './QuantityControls';
@@ -12,12 +13,13 @@ const ItemCard = ({
     onFastIncrease,
     onFastDecrease,
     disabled = false,
-    pendingAction = null
+    pendingAction = null,
+    index = 0
 }) => {
     const unitDisplay = getUnitDisplay(item.measurement_unit);
     
     return (
-        <View style={itemCardStyles.itemCard}>
+        <AnimatedListItem index={index} style={itemCardStyles.itemCard}>
             <View style={itemCardStyles.itemContent}>
                 <ItemImage
                     imageUri={item.image}
@@ -41,7 +43,7 @@ const ItemCard = ({
                 disabled={disabled}
                 pendingAction={pendingAction}
             />
-        </View>
+        </AnimatedListItem>
     );
 };
 export default ItemCard;

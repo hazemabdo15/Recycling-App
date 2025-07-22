@@ -2,6 +2,7 @@
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useCategories } from '../../hooks/useAPI';
 import { CategoryCard } from '../cards';
+import { FadeInView } from '../common';
 const CategoriesGrid = ({ searchText = '', onCategoryPress, onFilteredCountChange }) => {
     const { categories, loading, error } = useCategories();
     const filteredCategories = categories.filter(category =>
@@ -34,23 +35,26 @@ const CategoriesGrid = ({ searchText = '', onCategoryPress, onFilteredCountChang
         );
     }
     return (
-        <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContainer}
-        >
-            <View style={styles.categoriesGrid}>
-                {filteredCategories.map((category) => {
-                    return (
-                        <CategoryCard
-                            key={category._id}
-                            category={category}
-                            onPress={() => handleCategoryPress(category)}
-                            style={styles.categoryCard}
-                        />
-                    );
-                })}
-            </View>
-        </ScrollView>
+        <FadeInView delay={100}>
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scrollContainer}
+            >
+                <View style={styles.categoriesGrid}>
+                    {filteredCategories.map((category, index) => {
+                        return (
+                            <CategoryCard
+                                key={category._id}
+                                category={category}
+                                onPress={() => handleCategoryPress(category)}
+                                style={styles.categoryCard}
+                                delay={index * 100}
+                            />
+                        );
+                    })}
+                </View>
+            </ScrollView>
+        </FadeInView>
     );
 };
 const styles = StyleSheet.create({

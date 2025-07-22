@@ -13,17 +13,33 @@ import {
     View,
 } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
-import Reanimated, {
-    interpolate,
-    runOnJS,
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
-    withTiming,
-} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAIWorkflow } from '../hooks/useAIWorkflow';
 import { borderRadius, colors, shadows, spacing, typography } from '../styles/theme';
+
+let Reanimated, interpolate, runOnJS, useAnimatedStyle, useSharedValue, withRepeat, withSpring, withTiming;
+
+try {
+  const reanimated = require('react-native-reanimated');
+  Reanimated = reanimated.default;
+  interpolate = reanimated.interpolate;
+  runOnJS = reanimated.runOnJS;
+  useAnimatedStyle = reanimated.useAnimatedStyle;
+  useSharedValue = reanimated.useSharedValue;
+  withRepeat = reanimated.withRepeat;
+  withSpring = reanimated.withSpring;
+  withTiming = reanimated.withTiming;
+} catch (_error) {
+  const { View: RNView } = require('react-native');
+  Reanimated = { View: RNView };
+  interpolate = (value, input, output) => output[0];
+  runOnJS = (fn) => fn;
+  useAnimatedStyle = () => ({});
+  useSharedValue = (value) => ({ value });
+  withRepeat = (value) => value;
+  withSpring = (value) => value;
+  withTiming = (value) => value;
+}
 
 const { height } = Dimensions.get('window');
 const MODAL_HEIGHT = height * 0.75;
@@ -44,7 +60,25 @@ export default function VoiceModal() {
   const recordingScale = useSharedValue(1);
   const recordingOpacity = useSharedValue(1);
 
-  const { processAudioToMaterials, isProcessing, error: aiError } = useAIWorkflow();
+  const spinnerRotation = useSharedValue(0);
+
+  const { processAudioToMaterials, isProcessing } = useAIWorkflow();
+
+  useEffect(() => {
+    if (isProcessing) {
+      spinnerRotation.value = withRepeat(
+        withTiming(360, { duration: 1000 }),
+        -1,
+        false
+      );
+    } else {
+      spinnerRotation.value = 0;
+    }
+  }, [isProcessing, spinnerRotation]);
+
+  const spinnerStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${spinnerRotation.value}deg` }],
+  }));
 
   useEffect(() => {
     return () => {
@@ -418,9 +452,9 @@ export default function VoiceModal() {
                 >
                   {isProcessing ? (
                     <>
-                      <Animated.View style={{ transform: [{ rotate: '360deg' }] }}>
-                        <MaterialCommunityIcons name="loading" size={20} color={colors.white} />
-                      </Animated.View>
+                      <Reanimated.View style={spinnerStyle}>
+                        <MaterialCommunityIcons name="reload" size={20} color={colors.white} />
+                      </Reanimated.View>
                       <Text style={styles.sendButtonText}>Processing...</Text>
                     </>
                   ) : (

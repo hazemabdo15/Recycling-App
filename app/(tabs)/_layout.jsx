@@ -18,14 +18,14 @@ const Layout = () => {
       <Tabs.Screen
         name="explore"
         options={{
-          title: "Explore",
+          title: "Browse",
           headerShown: false,
         }}
       />
       <Tabs.Screen
         name="cart"
         options={{
-          title: "Cart",
+          title: "Pickup",
           headerShown: false,
         }}
       />

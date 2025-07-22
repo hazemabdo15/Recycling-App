@@ -1,18 +1,39 @@
 ﻿import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { FlatList, StatusBar, StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CategoryHeader, EmptyState, ItemCard } from '../components/category';
 import { ErrorState, LoadingState } from '../components/common';
+import { Toast } from '../components/ui';
 import { useCategoryItems } from '../hooks/useAPI';
 import { useCart } from '../hooks/useCart';
+import { useToast } from '../hooks/useToast';
 import { layoutStyles } from '../styles/components/commonStyles';
 import { colors } from '../styles/theme';
-import { calculateCartStats, normalizeItemData } from '../utils/cartUtils';
+import { calculateCartStats, getIncrementStep, normalizeItemData } from '../utils/cartUtils';
+
+let Animated, useAnimatedStyle, useSharedValue, withSpring, withTiming;
+
+try {
+  const reanimated = require('react-native-reanimated');
+  Animated = reanimated.default;
+  useAnimatedStyle = reanimated.useAnimatedStyle;
+  useSharedValue = reanimated.useSharedValue;
+  withSpring = reanimated.withSpring;
+  withTiming = reanimated.withTiming;
+} catch (_error) {
+  const { View: RNView } = require('react-native');
+  Animated = { View: RNView };
+  useAnimatedStyle = () => ({});
+  useSharedValue = (value) => ({ value });
+  withSpring = (value) => value;
+  withTiming = (value) => value;
+}
+
 const CategoryDetails = () => {
     const { categoryName } = useLocalSearchParams();
     const navigation = useNavigation();
+    const { toast, showSuccess, showError, hideToast } = useToast();
 
     const [pendingOperations, setPendingOperations] = useState({});
 
@@ -57,7 +78,7 @@ const CategoryDetails = () => {
 
     const { totalItems, totalPoints, totalValue } = calculateCartStats(mergedItems, cartItems);
 
-    const renderItem = ({ item }) => {
+    const renderItem = ({ item, index }) => {
         const itemPendingAction = pendingOperations[item.categoryId];
         
         return (
@@ -66,6 +87,7 @@ const CategoryDetails = () => {
                 quantity={item.quantity}
                 disabled={!!itemPendingAction}
                 pendingAction={itemPendingAction}
+                index={index}
                 onIncrease={async () => {
 
                     if (itemPendingAction) return;
@@ -81,9 +103,14 @@ const CategoryDetails = () => {
                     try {
                         setPendingOperations(prev => ({ ...prev, [item.categoryId]: 'increase' }));
                         await handleIncreaseQuantity(item);
+
+                        const normalizedItem = normalizeItemData(item);
+                        const step = getIncrementStep(normalizedItem.measurement_unit);
+                        const unit = normalizedItem.measurement_unit === 1 ? 'kg' : '';
+                        showSuccess(`Added ${step}${unit} ${item.name || 'item'} to pickup`, 2500);
                     } catch (err) {
                         console.error('[CategoryDetails] Error increasing quantity:', err);
-
+                        showError('Failed to add item to pickup');
                     } finally {
                         clearTimeout(timeoutId);
                         setPendingOperations(prev => {
@@ -108,9 +135,18 @@ const CategoryDetails = () => {
                     try {
                         setPendingOperations(prev => ({ ...prev, [item.categoryId]: 'decrease' }));
                         await handleDecreaseQuantity(item);
+
+                        const normalizedItem = normalizeItemData(item);
+                        const step = getIncrementStep(normalizedItem.measurement_unit);
+                        const unit = normalizedItem.measurement_unit === 1 ? 'kg' : '';
+                        if (item.quantity > step) {
+                            showSuccess(`Reduced ${item.name || 'item'} by ${step}${unit}`, 2000);
+                        } else {
+                            showSuccess(`Removed ${item.name || 'item'} from pickup`, 2000);
+                        }
                     } catch (err) {
                         console.error('[CategoryDetails] Error decreasing quantity:', err);
-
+                        showError('Failed to update item quantity');
                     } finally {
                         clearTimeout(timeoutId);
                         setPendingOperations(prev => {
@@ -135,8 +171,13 @@ const CategoryDetails = () => {
                     try {
                         setPendingOperations(prev => ({ ...prev, [item.categoryId]: 'fastIncrease' }));
                         await handleFastIncreaseQuantity(item);
+
+                        const normalizedItem = normalizeItemData(item);
+                        const unit = normalizedItem.measurement_unit === 1 ? 'kg' : '';
+                        showSuccess(`Added 5${unit} ${item.name || 'items'} to pickup`, 2500);
                     } catch (err) {
                         console.error('[CategoryDetails] Error fast increasing quantity:', err);
+                        showError('Failed to add items to pickup');
                     } finally {
                         clearTimeout(timeoutId);
                         setPendingOperations(prev => {
@@ -161,8 +202,18 @@ const CategoryDetails = () => {
                     try {
                         setPendingOperations(prev => ({ ...prev, [item.categoryId]: 'fastDecrease' }));
                         await handleFastDecreaseQuantity(item);
+
+                        const normalizedItem = normalizeItemData(item);
+                        const unit = normalizedItem.measurement_unit === 1 ? 'kg' : '';
+                        const remainingQuantity = item.quantity - 5;
+                        if (remainingQuantity > 0) {
+                            showSuccess(`Reduced ${item.name || 'item'} by 5${unit}`, 2000);
+                        } else {
+                            showSuccess(`Removed ${item.name || 'item'} from pickup`, 2000);
+                        }
                     } catch (err) {
                         console.error('[CategoryDetails] Error fast decreasing quantity:', err);
+                        showError('Failed to update item quantity');
                     } finally {
                         clearTimeout(timeoutId);
                         setPendingOperations(prev => {
@@ -197,7 +248,16 @@ const CategoryDetails = () => {
     return (
         <View style={[layoutStyles.container, { paddingTop: insets.top, backgroundColor: colors.base100 }]}> 
             <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+            
             {}
+            <Toast
+                visible={toast.visible}
+                message={toast.message}
+                type={toast.type}
+                onHide={hideToast}
+                duration={toast.duration}
+            />
+            
             <CategoryHeader
                 categoryName={categoryName}
                 totalItems={totalItems}

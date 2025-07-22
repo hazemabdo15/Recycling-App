@@ -1,16 +1,30 @@
 ﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { StyleSheet, TouchableOpacity } from 'react-native';
-import Animated, {
-    interpolate,
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
-    withTiming,
-} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useVoiceModal } from '../../hooks/useVoiceModal';
 import { colors, shadows, spacing } from '../../styles/theme';
+
+let Animated, interpolate, useAnimatedStyle, useSharedValue, withSpring, withTiming;
+
+try {
+  const reanimated = require('react-native-reanimated');
+  Animated = reanimated.default;
+  interpolate = reanimated.interpolate;
+  useAnimatedStyle = reanimated.useAnimatedStyle;
+  useSharedValue = reanimated.useSharedValue;
+  withSpring = reanimated.withSpring;
+  withTiming = reanimated.withTiming;
+} catch (_error) {
+  const { View: RNView } = require('react-native');
+  Animated = { View: RNView };
+  interpolate = (value, input, output) => output[0];
+  useAnimatedStyle = () => ({});
+  useSharedValue = (value) => ({ value });
+  withSpring = (value) => value;
+  withTiming = (value) => value;
+}
+
 const FloatingVoiceButton = ({ style }) => {
   const insets = useSafeAreaInsets();
   const { openVoiceModal } = useVoiceModal();
@@ -54,7 +68,7 @@ const FloatingVoiceButton = ({ style }) => {
       >
         <Animated.View style={[styles.gradient, gradientStyle]} />
         <MaterialCommunityIcons
-          name="microphone"
+          name="microphone-variant"
           size={28}
           color={colors.white}
         />

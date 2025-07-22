@@ -1,10 +1,10 @@
-﻿import { Ionicons } from '@expo/vector-icons';
-import { StyleSheet, TouchableOpacity, View, Pressable} from 'react-native';
-import { colors } from '../../styles/theme';
-import { useRouter } from 'expo-router';
+﻿import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getLoggedInUser } from '../../utils/authUtils';
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
+import { Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { colors, typography } from '../../styles/theme';
+import { getLoggedInUser } from '../../utils/authUtils';
 
 const Header = () => {
     const router = useRouter();
@@ -35,12 +35,13 @@ const Header = () => {
 
     return (
         <View style={styles.header}>
-            <TouchableOpacity style={styles.headerButton}>
-                <Ionicons name="menu" size={24} color="#333" />
-            </TouchableOpacity>
+            <View style={styles.brandContainer}>
+                <MaterialCommunityIcons name="recycle" size={28} color={colors.primary} />
+                <Text style={styles.brandText}>EcoPickup</Text>
+            </View>
             <View style={styles.headerRight}>
                 <TouchableOpacity style={styles.headerButton}>
-                    <Ionicons name="notifications-outline" size={24} color="#333" />
+                    <MaterialCommunityIcons name="bell-outline" size={24} color="#333" />
                 </TouchableOpacity>
                 {user ? (
                         <Pressable style={styles.headerButton} onPress={handleLogoutPress}>
@@ -63,6 +64,17 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingVertical: 15,
         backgroundColor: colors.base100,
+    },
+    brandContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    brandText: {
+        ...typography.title,
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: colors.primary,
+        marginLeft: 8,
     },
     headerButton: {
         width: 40,
