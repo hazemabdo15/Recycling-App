@@ -1,6 +1,7 @@
 ﻿import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_ENDPOINTS, BASE_URLS } from './config';
 
-const BASE_URL = 'http://192.168.0.165:5000/api/cart';
+const BASE_URL = BASE_URLS.CART;
 
 export async function clearAuthData() {
   try {
@@ -65,12 +66,13 @@ export async function testMinimalPost(isLoggedIn) {
 export async function testBackendConnectivity() {
   try {
     console.log('[cart API] Testing backend connectivity to:', BASE_URL);
-    const response = await fetch(BASE_URL.replace('/cart', '/health') || 'http://192.168.0.165:5000/api/health', {
+    // Use the categories endpoint to test connectivity since health endpoint doesn't exist
+    const response = await fetch(API_ENDPOINTS.CATEGORIES, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' }
     });
     
-    console.log('[cart API] Health check response:', {
+    console.log('[cart API] Connectivity test response:', {
       status: response.status,
       statusText: response.statusText,
       headers: Object.fromEntries(response.headers.entries())
@@ -78,10 +80,10 @@ export async function testBackendConnectivity() {
     
     if (response.ok) {
       const result = await response.text();
-      console.log('[cart API] Health check result:', result);
+      console.log('[cart API] Connectivity test result:', result);
     } else {
       const errorText = await response.text();
-      console.error('[cart API] Health check failed:', errorText);
+      console.error('[cart API] Connectivity test failed:', errorText);
     }
     
     return response.ok;
