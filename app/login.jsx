@@ -1,37 +1,70 @@
-﻿import { View, StyleSheet, Alert} from 'react-native';
+﻿import { View, StyleSheet, Alert } from 'react-native';
 import LoginForm from '../components/auth/LoginForm';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { loginUser } from '../services/auth';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
+import { useAuth } from '../context/AuthContext';
+import { getLoggedInUser } from '../utils/authUtils';
 
 export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
+  const [checkingUser, setCheckingUser] = useState(true);
+  const { setUser } = useAuth();
+
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      const checkUser = async () => {
+        try {
+          const savedUser = await getLoggedInUser();
+          if (isActive && savedUser) {
+            setUser(savedUser);
+            router.replace('/home');
+          } else {
+            setCheckingUser(false);
+          }
+        } catch (err) {
+          console.error('Error checking user:', err);
+          setCheckingUser(false);
+        }
+      };
+
+      checkUser();
+
+      return () => {
+        isActive = false;
+      };
+    }, [])
+  );
+
+  if (checkingUser) return null;
 
   const handleLogin = async ({ email, password }) => {
     if (loading) return;
     setLoading(true);
-    console.log('Login attempt with:', { email, password });
+
     if (!email || !password) {
       Alert.alert('Missing Fields', 'Email and password are required.');
       setLoading(false);
       return;
     }
+
     try {
-      console.log('Attempting to log in with:', { email, password });
       const { user, accessToken } = await loginUser({ email, password });
 
       await AsyncStorage.multiSet([
         ['accessToken', accessToken],
-        ['user', JSON.stringify(user)]
+        ['user', JSON.stringify(user)],
       ]);
-      console.log('Login successful:', user);
-      Alert.alert('Login Successful', `Welcome back, ${user.name || user.email}!`);
-      setLoading(false);
+
+      setUser(user);
+
       router.replace('/home');
     } catch (error) {
       console.error('Login error:', error);
-      Alert.alert('Login failed', 'Please check your credentials and try again.');
+      Alert.alert('Login failed', error.message || 'Please check your credentials and try again.');
     } finally {
       setLoading(false);
     }
@@ -39,7 +72,7 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.screen}>
-      <LoginForm onSubmit={handleLogin} loading={loading}/>
+      <LoginForm onSubmit={handleLogin} loading={loading} />
     </View>
   );
 }

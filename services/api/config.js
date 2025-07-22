@@ -1,5 +1,5 @@
 ﻿
-const API_BASE_URL = 'http://192.168.0.165:5000';
+const API_BASE_URL = 'http://192.168.1.11:5000';
 
 // Base URLs for different services
 export const BASE_URLS = {

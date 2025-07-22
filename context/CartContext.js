@@ -9,12 +9,14 @@ import {
   testMinimalPost,
   updateCartItem
 } from '../services/api/cart.js';
+import { useAuth } from './AuthContext';
 
 const CartContext = createContext();
 
 export const useCartContext = () => useContext(CartContext);
 
-export const CartProvider = ({ children, isLoggedIn }) => {
+export const CartProvider = ({ children }) => {
+  const { isLoggedIn } = useAuth();
   const [cartItems, setCartItems] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);

@@ -2,13 +2,37 @@
 import { StyleSheet, TouchableOpacity, View, Pressable} from 'react-native';
 import { colors } from '../../styles/theme';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getLoggedInUser } from '../../utils/authUtils';
+import { useEffect, useState } from 'react';
 
 const Header = () => {
     const router = useRouter();
+    const [user, setUser] = useState(null);
+
+    useEffect(() => {
+        const loadUser = async () => {
+            const user = await getLoggedInUser();
+            setUser(user);
+            console.log('Header user:', user);
+        };
+        loadUser();
+    }, []);
+
 
     const handleLoginPress = () => {
         router.push('/login');
     };
+
+    const handleLogoutPress = async () => {
+        try {
+            await AsyncStorage.multiRemove(['accessToken', 'user']);
+            router.replace('/login');
+        } catch (error) {
+            console.error('Logout failed', error);
+        }
+    };
+
     return (
         <View style={styles.header}>
             <TouchableOpacity style={styles.headerButton}>
@@ -18,10 +42,16 @@ const Header = () => {
                 <TouchableOpacity style={styles.headerButton}>
                     <Ionicons name="notifications-outline" size={24} color="#333" />
                 </TouchableOpacity>
-                <Pressable style={styles.headerButton}>
-                    <Ionicons name="log-in" size={24} color="#333" onPress={handleLoginPress}/>
-                </Pressable>
-            </View>
+                {user ? (
+                        <Pressable style={styles.headerButton} onPress={handleLogoutPress}>
+                            <Ionicons name="log-out" size={24} color={colors.error} />
+                        </Pressable>
+                    ) : (
+                        <Pressable style={styles.headerButton} onPress={handleLoginPress}>
+                            <Ionicons name="log-in" size={24} color="#333" />
+                        </Pressable>
+                )}
+                </View>
         </View>
     );
 };
