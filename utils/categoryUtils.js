@@ -1,4 +1,4 @@
-export const getCategoryIcon = (categoryName) => {
+﻿export const getCategoryIcon = (categoryName) => {
     const iconMap = {
         'Plastic': { iconName: 'bottle-soda', iconColor: '#FF69B4' },
         'Glass': { iconName: 'glass-fragile', iconColor: '#4FC3F7' },

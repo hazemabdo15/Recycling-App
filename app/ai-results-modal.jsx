@@ -1,25 +1,26 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
-    Dimensions,
-    FlatList,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  FlatList,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Reanimated, {
-    interpolate,
-    runOnJS,
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
-    withTiming,
+  interpolate,
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useCart } from '../hooks/useCart';
 import { borderRadius, colors, spacing, typography } from '../styles/theme';
 
 const { height } = Dimensions.get('window');
@@ -27,24 +28,44 @@ const MODAL_HEIGHT = height * 0.85;
 const DISMISS_THRESHOLD = 150;
 
 export default function AIResultsModal() {
+  const { handleAddToCart } = useCart();
   const params = useLocalSearchParams();
-  const { extractedMaterials = '[]' } = params;
+  const { 
+    extractedMaterials = '[]', 
+    verifiedMaterials = '[]'
+  } = params;
+
+  let parsedExtractedMaterials = [];
+  let parsedVerifiedMaterials = [];
   
-  // Parse the extracted materials from JSON string
-  let parsedMaterials = [];
   try {
-    parsedMaterials = JSON.parse(extractedMaterials);
+    parsedExtractedMaterials = JSON.parse(extractedMaterials);
   } catch (error) {
     console.error('Error parsing extracted materials:', error);
-    parsedMaterials = [];
+    parsedExtractedMaterials = [];
   }
+  
+  try {
+    parsedVerifiedMaterials = JSON.parse(verifiedMaterials);
+  } catch (error) {
+    console.error('Error parsing verified materials:', error);
+    parsedVerifiedMaterials = [];
+  }
+  
+  console.log('📋 AI Results Modal - Extracted:', parsedExtractedMaterials);
+  console.log('📋 AI Results Modal - Verified:', parsedVerifiedMaterials);
+  
   const insets = useSafeAreaInsets();
   const translateY = useSharedValue(0);
   const opacity = useSharedValue(1);
-  
-  const [materials, setMaterials] = useState(parsedMaterials);
 
-  // Safety check - if no materials, go back
+  const initialMaterials = parsedVerifiedMaterials.length > 0 ? parsedVerifiedMaterials : parsedExtractedMaterials;
+  const [materials, setMaterials] = useState(initialMaterials);
+
+  const safeMaterials = materials || [];
+  const availableCount = safeMaterials.filter(material => material.available !== false).length;
+  const unavailableCount = safeMaterials.length - availableCount;
+
   const hasMaterials = materials && materials.length > 0;
 
   const dismissModal = useCallback(() => {
@@ -82,7 +103,7 @@ export default function AIResultsModal() {
   const updateQuantity = useCallback((index, delta) => {
     setMaterials(prev => prev.map((item, i) => {
       if (i === index) {
-        // Use 0.25 step for KG, 1 step for pieces
+
         const step = item.unit === 'KG' ? 0.25 : 1;
         const minValue = item.unit === 'KG' ? 0.25 : 1;
         const newQuantity = Math.max(minValue, item.quantity + (delta * step));
@@ -97,69 +118,123 @@ export default function AIResultsModal() {
   }, []);
 
   const addToCart = useCallback(() => {
-    // Navigate to cart with materials - dismiss all modals first
+
+    const availableMaterials = materials.filter(item => item.available && item.databaseItem);
+    if (availableMaterials.length === 0) {
+      alert('No available materials to add to cart. Items marked in red are not yet in our database.');
+      return;
+    }
+
+    const cartItems = availableMaterials.map(item => ({
+      categoryId: item.databaseItem.categoryId,
+      name: item.databaseItem.name,
+      image: item.databaseItem.image,
+      points: item.databaseItem.points,
+      price: item.databaseItem.price,
+      measurement_unit: item.databaseItem.measurement_unit,
+      quantity: item.quantity
+    }));
+    
+    console.log('🚀 [AI Results Modal] Starting cart addition process');
+    console.log('📦 [AI Results Modal] Items to add:', cartItems);
+    console.log('📋 [AI Results Modal] Available materials from AI:', availableMaterials);
+    console.log('🔄 [AI Results Modal] These items will be merged with existing cart items');
+
+    handleAddToCart(cartItems);
+
     router.dismissAll();
-    router.push({
-      pathname: '/(tabs)/cart',
-      params: { newItems: JSON.stringify(materials) }
-    });
-  }, [materials]);
+    router.push('/(tabs)/cart');
+  }, [materials, handleAddToCart]);
 
   const browseMore = useCallback(() => {
-    // Navigate to explore - dismiss all modals first
+
     router.dismissAll();
     router.push('/(tabs)/explore');
   }, []);
 
-  const renderMaterialItem = ({ item, index }) => (
-    <View style={styles.materialItem}>
-      {/* Header row with material name and delete button */}
-      <View style={styles.materialHeader}>
-        <View style={styles.materialInfo}>
-          <Text style={styles.materialName} numberOfLines={2} ellipsizeMode="tail">
-            {item.material}
-          </Text>
-          <Text style={styles.materialUnit}>{item.unit}</Text>
+  const renderMaterialItem = ({ item, index }) => {
+    const isAvailable = item.available !== false;
+    const displayName = isAvailable && item.databaseItem 
+      ? item.databaseItem.name 
+      : item.material;
+
+    return (
+      <View style={[styles.materialItem, !isAvailable && styles.materialItemUnavailableRefined]}>
+        <View style={styles.materialHeader}>
+          <View style={styles.materialInfo}>
+            <View style={styles.materialNameRow}>
+              <Text
+                style={[styles.materialName, !isAvailable && styles.materialNameUnavailableRefined]}
+                numberOfLines={2}
+                ellipsizeMode="tail"
+              >
+                {displayName ? String(displayName) : ''}
+              </Text>
+              {}
+              <View style={[styles.availabilityIndicator, isAvailable ? styles.availabilityIndicatorAvailable : styles.availabilityIndicatorUnavailableRefined, { marginLeft: 4 }]}> 
+                <MaterialCommunityIcons
+                  name={isAvailable ? "check-circle" : "alert-circle-outline"}
+                  size={16}
+                  color={isAvailable ? colors.success : colors.error + 'B0'}
+                  style={!isAvailable ? { opacity: 0.7 } : undefined}
+                />
+              </View>
+            </View>
+            <View style={styles.materialMeta}>
+              {item.unit ? (
+                <Text style={[styles.materialUnit, !isAvailable && styles.materialUnitUnavailableRefined]}>
+                  {String(item.unit)}
+                </Text>
+              ) : null}
+              {}
+              {item.matchSimilarity && item.matchSimilarity < 100 ? (
+                <Text style={[styles.matchInfo, !isAvailable && styles.matchInfoUnavailableRefined]}>
+                  {String(item.matchSimilarity)}% match
+                </Text>
+              ) : null}
+              {!isAvailable ? (
+                <Text style={styles.unavailableLabelRefined}>
+                  Not Available
+                </Text>
+              ) : null}
+            </View>
+          </View>
+          <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={() => removeMaterial(index)}
+          >
+            <MaterialCommunityIcons name="delete-outline" size={22} color={colors.error + 'B0'} style={{ opacity: 0.7 }} />
+          </TouchableOpacity>
         </View>
-        
-        <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={() => removeMaterial(index)}
-        >
-          <MaterialCommunityIcons name="delete-outline" size={22} color={colors.error} />
-        </TouchableOpacity>
-      </View>
-      
-      {/* Bottom row with quantity controls */}
+      {}
       <View style={styles.quantityRow}>
         <View style={styles.quantityLabel}>
-          <Text style={styles.quantityLabelText}>Quantity</Text>
+          <Text style={[styles.quantityLabelText, !isAvailable && { color: colors.neutral + '80' } ]}>Quantity</Text>
         </View>
-        
         <View style={styles.quantityControls}>
           <TouchableOpacity
-            style={styles.quantityButton}
+            style={[styles.quantityButton, !isAvailable && { backgroundColor: colors.base200 }]}
             onPress={() => updateQuantity(index, -1)}
+            disabled={!isAvailable}
           >
-            <MaterialCommunityIcons name="minus" size={20} color={colors.white} />
+            <MaterialCommunityIcons name="minus" size={20} color={isAvailable ? colors.white : colors.neutral + '80'} />
           </TouchableOpacity>
-          
-          <Text style={styles.quantityText}>
+          <Text style={[styles.quantityText, !isAvailable && { color: colors.neutral + '80' } ]}>
             {item.unit === 'KG' ? item.quantity.toFixed(2) : item.quantity}
           </Text>
-          
           <TouchableOpacity
-            style={styles.quantityButton}
+            style={[styles.quantityButton, !isAvailable && { backgroundColor: colors.base200 }]}
             onPress={() => updateQuantity(index, 1)}
+            disabled={!isAvailable}
           >
-            <MaterialCommunityIcons name="plus" size={20} color={colors.white} />
+            <MaterialCommunityIcons name="plus" size={20} color={isAvailable ? colors.white : colors.neutral + '80'} />
           </TouchableOpacity>
         </View>
       </View>
     </View>
   );
+};
 
-  // Safety check - if no materials, show error state
   if (!hasMaterials) {
     return (
       <GestureHandlerRootView style={styles.container}>
@@ -208,6 +283,24 @@ export default function AIResultsModal() {
               </View>
               <Text style={styles.title}>AI Found These Items</Text>
               <Text style={styles.subtitle}>Review and edit your recycling items</Text>
+              
+              {}
+              <View style={styles.summaryContainer}>
+                <View style={styles.summaryItem}>
+                  <MaterialCommunityIcons name="check-circle" size={20} color={colors.success} />
+                  <Text style={styles.summaryText}>
+                    {`${availableCount} available`}
+                  </Text>
+                </View>
+                {unavailableCount > 0 && (
+                  <View style={styles.summaryItem}>
+                    <MaterialCommunityIcons name="alert-circle" size={20} color={colors.error} />
+                    <Text style={styles.summaryText}>
+                      {`${unavailableCount} not available`}
+                    </Text>
+                  </View>
+                )}
+              </View>
             </View>
           </View>
         </GestureDetector>
@@ -237,13 +330,13 @@ export default function AIResultsModal() {
           <View style={styles.actionsContainer}>
             <TouchableOpacity style={styles.browseButton} onPress={browseMore}>
               <MaterialCommunityIcons name="magnify" size={20} color={colors.primary} />
-              <Text style={styles.browseButtonText}>Browse More</Text>
+              <Text style={styles.browseButtonText}>Browse Items</Text>
             </TouchableOpacity>
             
             {materials.length > 0 && (
               <TouchableOpacity style={styles.addToCartButton} onPress={addToCart}>
                 <MaterialCommunityIcons name="cart-plus" size={20} color={colors.white} />
-                <Text style={styles.addToCartButtonText}>Add to Cart ({materials.length})</Text>
+                <Text style={styles.addToCartButtonText}>{`Add to Cart (${availableCount})`}</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -272,7 +365,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: borderRadius.xl,
     paddingHorizontal: spacing.xl,
     paddingBottom: spacing.xl,
-    // Elegant modal shadow
+
     shadowColor: colors.black,
     shadowOffset: {
       width: 0,
@@ -308,7 +401,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.md,
-    // Soft shadow for icon
+
     shadowColor: colors.primary,
     shadowOffset: {
       width: 0,
@@ -370,7 +463,7 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     marginBottom: spacing.lg,
     marginHorizontal: spacing.sm,
-    // Enhanced elegant shadow
+
     shadowColor: colors.black,
     shadowOffset: {
       width: 0,
@@ -382,6 +475,42 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.base200,
   },
+
+  materialItemUnavailableRefined: {
+    borderColor: colors.base200,
+    backgroundColor: colors.base100,
+    opacity: 1,
+  },
+  materialNameUnavailableRefined: {
+    color: colors.error + 'B0',
+    opacity: 0.7,
+  },
+  materialUnitUnavailableRefined: {
+    backgroundColor: colors.base200,
+    color: colors.neutral + '80',
+    opacity: 0.7,
+  },
+  availabilityIndicatorUnavailableRefined: {
+    backgroundColor: colors.base200,
+    opacity: 0.7,
+  },
+  matchInfoUnavailableRefined: {
+    backgroundColor: colors.base200,
+    color: colors.neutral + '80',
+    opacity: 0.7,
+  },
+  unavailableLabelRefined: {
+    ...typography.caption,
+    fontSize: 10,
+    color: colors.error + 'B0',
+    fontWeight: '600',
+    backgroundColor: colors.base200,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 2,
+    borderRadius: borderRadius.xs,
+    opacity: 0.7,
+    marginLeft: spacing.sm,
+  },
   materialHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -392,14 +521,29 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: spacing.md,
   },
+  materialNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    marginBottom: spacing.xs,
+  },
   materialName: {
     ...typography.subtitle,
     fontSize: 18,
     fontWeight: '700',
     color: colors.black,
-    marginBottom: spacing.xs,
     letterSpacing: 0.3,
     lineHeight: 24,
+
+  },
+  materialNameUnavailable: {
+    color: colors.error,
+  },
+  materialMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
   },
   materialUnit: {
     ...typography.caption,
@@ -411,7 +555,40 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.sm,
-    alignSelf: 'flex-start',
+  },
+  materialUnitUnavailable: {
+    backgroundColor: colors.error + '10',
+    color: colors.error,
+  },
+  availabilityIndicator: {
+    padding: spacing.xs,
+    borderRadius: borderRadius.sm,
+  },
+  availabilityIndicatorAvailable: {
+    backgroundColor: colors.success + '10',
+  },
+  availabilityIndicatorUnavailable: {
+    backgroundColor: colors.error + '10',
+  },
+  matchInfo: {
+    ...typography.caption,
+    fontSize: 10,
+    color: colors.neutral,
+    fontWeight: '500',
+    backgroundColor: colors.base200,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 2,
+    borderRadius: borderRadius.xs,
+  },
+  unavailableLabel: {
+    ...typography.caption,
+    fontSize: 10,
+    color: colors.error,
+    fontWeight: '600',
+    backgroundColor: colors.error + '10',
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 2,
+    borderRadius: borderRadius.xs,
   },
   quantityRow: {
     flexDirection: 'row',
@@ -441,7 +618,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    // Enhanced button shadow
+
     shadowColor: colors.primary,
     shadowOffset: {
       width: 0,
@@ -467,7 +644,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.base100,
     justifyContent: 'center',
     alignItems: 'center',
-    // Subtle shadow for delete button
+
     shadowColor: colors.black,
     shadowOffset: {
       width: 0,
@@ -528,7 +705,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.xl,
     paddingVertical: spacing.xl,
     paddingHorizontal: spacing.lg,
-    // Enhanced button shadow
+
     shadowColor: colors.primary,
     shadowOffset: {
       width: 0,
@@ -568,5 +745,29 @@ const styles = StyleSheet.create({
     ...typography.subtitle,
     color: colors.white,
     fontWeight: '600',
+  },
+  summaryContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.sm,
+    gap: spacing.sm,
+  },
+  summaryItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.background + '80',
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: borderRadius.sm,
+    borderWidth: 1,
+    borderColor: colors.background + '60',
+  },
+  summaryText: {
+    ...typography.caption,
+    color: colors.text,
+    fontWeight: '600',
+    marginLeft: spacing.xs,
   },
 });

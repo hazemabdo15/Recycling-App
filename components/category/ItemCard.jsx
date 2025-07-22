@@ -1,4 +1,4 @@
-import { View } from 'react-native';
+﻿import { View } from 'react-native';
 import { itemCardStyles } from '../../styles/components/categoryStyles';
 import { getUnitDisplay } from '../../utils/cartUtils';
 import ItemImage from './ItemImage';
@@ -9,9 +9,13 @@ const ItemCard = ({
     quantity,
     onIncrease,
     onDecrease,
-    disabled = false
+    onFastIncrease,
+    onFastDecrease,
+    disabled = false,
+    pendingAction = null
 }) => {
     const unitDisplay = getUnitDisplay(item.measurement_unit);
+    
     return (
         <View style={itemCardStyles.itemCard}>
             <View style={itemCardStyles.itemContent}>
@@ -29,9 +33,13 @@ const ItemCard = ({
             <QuantityControls
                 quantity={quantity}
                 unitDisplay={unitDisplay}
+                measurementUnit={item.measurement_unit}
                 onIncrease={onIncrease}
                 onDecrease={onDecrease}
+                onFastIncrease={onFastIncrease}
+                onFastDecrease={onFastDecrease}
                 disabled={disabled}
+                pendingAction={pendingAction}
             />
         </View>
     );

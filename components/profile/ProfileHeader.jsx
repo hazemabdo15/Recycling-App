@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { profileHeaderStyles } from '../../styles/components/profileHeaderStyles';
 import { colors } from '../../styles/theme';

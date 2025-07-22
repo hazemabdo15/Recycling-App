@@ -1,4 +1,4 @@
-import { View, TextInput, Text, StyleSheet, Pressable } from 'react-native';
+﻿import { View, TextInput, Text, StyleSheet, Pressable } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import React, { useState } from 'react';
 import { colors } from '../../styles/theme';

@@ -1,4 +1,4 @@
-import Constants from 'expo-constants';
+﻿import Constants from 'expo-constants';
 import itemsData from '../data/items.json';
 
 const getApiKey = () => {
@@ -32,13 +32,11 @@ function fuzzyMatch(input, candidates, threshold = 80) {
 
   for (const candidate of candidates) {
     const candidateLower = candidate.toLowerCase();
-    
-    // Exact match
+
     if (input === candidateLower) {
       return { match: candidate, score: 100 };
     }
-    
-    // Contains match
+
     if (candidateLower.includes(input) || input.includes(candidateLower)) {
       const score = Math.max(
         (input.length / candidateLower.length) * 90,
@@ -49,13 +47,12 @@ function fuzzyMatch(input, candidates, threshold = 80) {
         bestScore = score;
       }
     }
-    
-    // Levenshtein distance approximation
+
     const maxLen = Math.max(input.length, candidateLower.length);
     const minLen = Math.min(input.length, candidateLower.length);
     const ratio = (minLen / maxLen) * 100;
     
-    if (ratio > 60) { // Basic similarity threshold
+    if (ratio > 60) {
       let commonChars = 0;
       for (let i = 0; i < minLen; i++) {
         if (input[i] === candidateLower[i]) commonChars++;
@@ -73,13 +70,11 @@ function fuzzyMatch(input, candidates, threshold = 80) {
 
 function mapToCanonicalMaterial(input) {
   const cleaned = input.trim().toLowerCase();
-  
-  // Direct English match
+
   if (enToInfo[cleaned]) {
     return { name: cleaned, unit: enToInfo[cleaned].unit };
   }
-  
-  // Fuzzy matching
+
   const fuzzyResult = fuzzyMatch(cleaned, allNames);
   if (fuzzyResult) {
     const match = fuzzyResult.match;
@@ -178,7 +173,6 @@ export async function extractMaterialsFromTranscription(transcription) {
       throw new Error('No response from AI');
     }
 
-    // Parse the JSON response
     let parsed = [];
     try {
       const raw = JSON.parse(rawContent);
@@ -200,8 +194,7 @@ export async function extractMaterialsFromTranscription(transcription) {
 
     console.log('🧠 Parsed materials:', parsed);
 
-    // Process and validate the results
-    const materialCounts = {}; // For merging duplicates
+    const materialCounts = {};
 
     for (const item of parsed) {
       if (!item.material) continue;
@@ -211,13 +204,11 @@ export async function extractMaterialsFromTranscription(transcription) {
       
       const quantity = typeof item.quantity === 'number' ? item.quantity : 1;
       const unit = item.unit ? normalizeUnit(item.unit) : normalizeUnit(mapped.unit);
-      
-      // Find the canonical name (proper case)
+
       const canonicalName = Object.keys(itemsData).find(
         k => k.toLowerCase() === mapped.name
       ) || mapped.name;
 
-      // Merge duplicates
       const key = `${canonicalName}_${unit}`;
       if (materialCounts[key]) {
         materialCounts[key].quantity += quantity;
@@ -230,7 +221,6 @@ export async function extractMaterialsFromTranscription(transcription) {
       }
     }
 
-    // Convert back to array
     const result = Object.values(materialCounts);
     console.log('✅ Final extracted materials:', result);
     return result;

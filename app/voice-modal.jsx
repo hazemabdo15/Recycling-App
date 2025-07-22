@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
@@ -43,8 +43,7 @@ export default function VoiceModal() {
   const waveformAnimation = useRef(new Animated.Value(0)).current;
   const recordingScale = useSharedValue(1);
   const recordingOpacity = useSharedValue(1);
-  
-  // AI Workflow
+
   const { processAudioToMaterials, isProcessing, error: aiError } = useAIWorkflow();
 
   useEffect(() => {
@@ -137,8 +136,7 @@ export default function VoiceModal() {
         allowsRecordingIOS: true,
         playsInSilentModeIOS: true,
       });
-      
-      // Custom recording options for better API compatibility
+
       const recordingOptions = {
         ...Audio.RecordingOptionsPresets.HIGH_QUALITY,
         android: {
@@ -249,18 +247,22 @@ export default function VoiceModal() {
       const result = await processAudioToMaterials(recordedURI);
       
       if (result.success) {
-        // Replace current modal with AI results modal
+
         try {
           router.replace({
             pathname: '/ai-results-modal',
             params: {
-              extractedMaterials: JSON.stringify(result.materials),
+              extractedMaterials: JSON.stringify(result.extractedMaterials || []),
+              verifiedMaterials: JSON.stringify(result.verifiedMaterials || []),
+              transcription: result.transcription || '',
             }
           });
         } catch (navError) {
           console.error('Navigation error:', navError);
-          // Fallback: just show an alert with the results
-          alert(`✅ Materials extracted!\n${result.materials.map(m => `${m.quantity} ${m.unit} ${m.material}`).join('\n')}\n\nGo to explore tab to add items manually.`);
+
+          const availableCount = result.verifiedMaterials?.filter(m => m.available)?.length || 0;
+          const totalCount = result.verifiedMaterials?.length || 0;
+          alert(`✅ Materials processed!\nFound: ${totalCount} items\nAvailable in database: ${availableCount}\n\nGo to explore tab to add items manually.`);
           dismissModal();
         }
       } else {

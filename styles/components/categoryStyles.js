@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+﻿import { StyleSheet } from 'react-native';
 import { borderRadius, colors, shadows, spacing } from '../theme';
 export const categoryHeaderStyles = StyleSheet.create({
     header: {
@@ -6,7 +6,9 @@ export const categoryHeaderStyles = StyleSheet.create({
         paddingBottom: spacing.sm,
         backgroundColor: colors.base100,
     },
-    headerContent: {
+    headerContentRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
         marginBottom: spacing.lg,
     },
     title: {
@@ -157,19 +159,33 @@ export const itemInfoStyles = StyleSheet.create({
     },
 });
 export const quantityControlsStyles = StyleSheet.create({
-    quantityControls: {
+    quantityControlsContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundColor: colors.base50,
+        borderRadius: borderRadius.lg,
+        padding: spacing.sm,
+        marginTop: spacing.xs,
+    },
+    mainControls: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: colors.base100,
-        borderRadius: borderRadius.sm,
-        padding: spacing.xs,
+        backgroundColor: colors.white,
+        borderRadius: borderRadius.md,
+        paddingHorizontal: spacing.sm,
+        paddingVertical: spacing.xs,
+        flex: 1,
+        marginHorizontal: spacing.sm,
+        ...shadows.small,
+        elevation: 2,
     },
     quantityButton: {
         backgroundColor: colors.primary,
-        width: 36,
-        height: 36,
-        borderRadius: 18,
+        width: 32,
+        height: 32,
+        borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
         ...shadows.small,
@@ -177,19 +193,61 @@ export const quantityControlsStyles = StyleSheet.create({
     },
     quantityButtonDisabled: {
         backgroundColor: colors.base300,
-        ...shadows.small,
         elevation: 1,
     },
     quantityDisplay: {
-        minWidth: 80,
+        minWidth: 60,
         alignItems: 'center',
         justifyContent: 'center',
         paddingHorizontal: spacing.md,
     },
     quantityText: {
         fontSize: 16,
-        fontWeight: '600',
+        fontWeight: '700',
         color: colors.black,
+        lineHeight: 20,
+    },
+    unitText: {
+        fontSize: 11,
+        fontWeight: '500',
+        color: colors.neutral,
+        marginTop: -2,
+    },
+    fastButton: {
+        width: 44,
+        height: 44,
+        borderRadius: borderRadius.md,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        ...shadows.medium,
+        elevation: 4,
+    },
+    fastButtonIncrease: {
+        backgroundColor: colors.success,
+        borderColor: colors.success,
+        shadowColor: colors.success,
+    },
+    fastButtonDecrease: {
+        backgroundColor: colors.error,
+        borderColor: colors.error,
+        shadowColor: colors.error,
+    },
+    fastButtonDisabled: {
+        backgroundColor: colors.base200,
+        borderColor: colors.base300,
+        elevation: 1,
+        shadowColor: colors.base300,
+    },
+    fastButtonContent: {
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    fastButtonText: {
+        fontSize: 11,
+        fontWeight: '800',
+        marginTop: -1,
+        letterSpacing: 0.8,
     },
 });
 export const emptyStateStyles = StyleSheet.create({

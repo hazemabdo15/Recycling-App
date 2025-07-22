@@ -1,4 +1,4 @@
-import { Alert } from 'react-native';
+﻿import { Alert } from 'react-native';
 import api from './api/api';
 
 export const loginUser = async ({ email, password }) => {
@@ -8,7 +8,7 @@ export const loginUser = async ({ email, password }) => {
     password,
   });
   console.log(response.data)
-  return response.data; // Returns { user, accessToken }
+  return response.data;
 };
 
 export const initialSetupForRegister = async (email) => {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { categoriesAPI } from '../services/api';
 export const useCategories = () => {
   const [categories, setCategories] = useState([]);
@@ -34,12 +34,20 @@ export const useAllItems = () => {
     try {
       setLoading(true);
       setError(null);
+      console.log('[useAllItems] Starting to fetch all items...');
       const data = await categoriesAPI.getAllItems();
-      setItems(data);
+      console.log('[useAllItems] Received data:', data);
+      console.log('[useAllItems] Data type:', typeof data, 'Array?', Array.isArray(data));
+
+      const itemsArray = data?.items || data;
+      console.log('[useAllItems] Items array:', itemsArray, 'Length:', itemsArray?.length);
+      setItems(Array.isArray(itemsArray) ? itemsArray : []);
     } catch (err) {
+      console.error('[useAllItems] Error fetching items:', err);
       setError(err.message);
     } finally {
       setLoading(false);
+      console.log('[useAllItems] Loading completed');
     }
   };
   useEffect(() => {

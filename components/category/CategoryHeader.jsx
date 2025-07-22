@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { categoryHeaderStyles } from '../../styles/components/categoryStyles';
@@ -9,7 +9,8 @@ const CategoryHeader = ({
     totalPoints,
     totalValue,
     animatedStyle,
-    headerOpacity
+    headerOpacity,
+    onGoBack
 }) => {
     const statsAnimatedStyle = useAnimatedStyle(() => {
         const opacity = headerOpacity?.value || 1;
@@ -20,11 +21,15 @@ const CategoryHeader = ({
     });
     return (
         <Animated.View style={[categoryHeaderStyles.header, animatedStyle]}>
-            <View style={categoryHeaderStyles.headerContent}>
+            <View style={categoryHeaderStyles.headerContentRow}>
+                <MaterialCommunityIcons
+                    name="arrow-left"
+                    size={28}
+                    color={colors.primary}
+                    style={{ marginRight: 8 }}
+                    onPress={onGoBack}
+                />
                 <Text style={categoryHeaderStyles.title}>{categoryName}</Text>
-                <Text style={categoryHeaderStyles.subtitle}>
-                    {totalItems} {totalItems === 1 ? 'item' : 'items'} available
-                </Text>
             </View>
             <Animated.View style={[categoryHeaderStyles.headerStats, statsAnimatedStyle]}>
                 <View style={categoryHeaderStyles.statItem}>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors } from '../../styles/theme';
@@ -58,7 +58,6 @@ export default function LoginForm({ onSubmit, loading }) {
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -115,4 +114,3 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
 });
-

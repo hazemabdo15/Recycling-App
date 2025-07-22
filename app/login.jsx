@@ -1,4 +1,4 @@
-import { View, StyleSheet, Alert} from 'react-native';
+﻿import { View, StyleSheet, Alert} from 'react-native';
 import LoginForm from '../components/auth/LoginForm';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useState } from 'react';
@@ -7,7 +7,6 @@ import { router } from 'expo-router';
 
 export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
-  
 
   const handleLogin = async ({ email, password }) => {
     if (loading) return;

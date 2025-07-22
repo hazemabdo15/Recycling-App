@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 import { getCategoryIcon } from '../../utils/categoryUtils';
@@ -49,7 +49,7 @@ const CategoryImage = ({
             ) : (
                 <MaterialCommunityIcons
                     name={iconData.iconName}
-                    size={size * 0.53} // Proportional icon size
+                    size={size * 0.53}
                     color={iconData.iconColor}
                 />
             )}

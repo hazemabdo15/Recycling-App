@@ -1,11 +1,13 @@
-export const colors = {
+﻿export const colors = {
   primary: "#0E9F6E",
   secondary: "#8BC34A",
   accent: "#FFC107",
   neutral: "#607D8B",
+  base50: "#FAFAFA",
   base100: "#F8FFFE",
   base200: "#F1F5F9",
   base300: "#E0E0E0",
+  base400: "#B0BEC5",
   white: "#ffffff",
   black: "#171717",
   error: "#EF4444",

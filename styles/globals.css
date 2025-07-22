@@ -1,4 +1,4 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 @plugin "flowbite-react/plugin/tailwindcss";
 @source "../.flowbite-react/class-list.json";
 
@@ -11,7 +11,7 @@
 
 @theme {
   --color-primary: #0E9F6E;
-  /* --color-button-primary: */
+  
   --color-primary-content: oklch(93% 0.034 272.788);
   --color-secondary: #8BC34A;
   --color-secondary-content: oklch(94% 0.028 342.258);
@@ -27,23 +27,16 @@
   --color-warning-content: oklch(41% 0.112 45.904);
   --color-error: #F44336;
   --color-error-content: oklch(27% 0.105 12.094);
-
   
-  /* Base colors */
   --color-base-100: #E8F5E9;
   --color-base-200: oklch(100% 0 0);
   --color-base-300: #E0E0E0;
   --color-base-content: oklch(21% 0.006 285.885);
   
-  /* Custom radius values */
   --radius-selector: 0.5rem;
   --radius-field: 0.25rem;
   --radius-box: 0.5rem;
 }
-
-
-
-
 
 @media (prefers-color-scheme: dark) {
   :root {

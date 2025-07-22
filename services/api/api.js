@@ -1,8 +1,8 @@
-import axios from "axios";
+﻿import axios from "axios";
 
 const api = axios.create({
   baseURL: 'http://192.168.0.165:5000/api',
-  withCredentials: true, // ✅ ensures cookies are sent with requests
+  withCredentials: true,
 });
 
 api.interceptors.request.use((config) => {
@@ -26,7 +26,7 @@ api.interceptors.response.use(
     ) {
       original._retry = true;
       console.warn("🔁 Unauthorized. You may need to log in again.");
-      // Optional: redirect to login or show message
+
     }
 
     return Promise.reject(error);

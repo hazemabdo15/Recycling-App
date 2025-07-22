@@ -1,4 +1,4 @@
-import { API_ENDPOINTS } from './config';
+﻿import { API_ENDPOINTS } from './config';
 export const categoriesAPI = {
   getAllCategories: async () => {
     try {

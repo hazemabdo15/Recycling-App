@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+﻿import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useLinkBuilder } from "@react-navigation/native";
 import { BlurView } from "expo-blur";
 import * as Haptics from 'expo-haptics';
@@ -79,8 +79,8 @@ export function TabBar({ state, descriptors, navigation }) {
     const positions = [
       containerPadding + 0 * tabWidth + centerOffset,
       containerPadding + 1 * tabWidth + centerOffset,
-      containerPadding + sideWidth + centerSpacerWidth + 0 * tabWidth + centerOffset, // Cart
-      containerPadding + sideWidth + centerSpacerWidth + 1 * tabWidth + centerOffset, // Profile
+      containerPadding + sideWidth + centerSpacerWidth + 0 * tabWidth + centerOffset,
+      containerPadding + sideWidth + centerSpacerWidth + 1 * tabWidth + centerOffset,
     ];
     const targetPosition = positions[Math.round(activeIndex.value)] || positions[0];
     return {

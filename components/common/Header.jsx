@@ -1,8 +1,7 @@
-import { Ionicons } from '@expo/vector-icons';
+﻿import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, TouchableOpacity, View, Pressable} from 'react-native';
 import { colors } from '../../styles/theme';
 import { useRouter } from 'expo-router';
-
 
 const Header = () => {
     const router = useRouter();

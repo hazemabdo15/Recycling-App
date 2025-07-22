@@ -1,11 +1,13 @@
-import { useCallback, useState } from 'react';
+﻿import { useCallback, useState } from 'react';
 import { extractMaterialsFromTranscription } from '../services/materialExtraction';
+import { verifyMaterialsAgainstDatabase } from '../services/materialVerification';
 import { useTranscription } from './useTranscription';
 
 export const useAIWorkflow = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState(null);
   const [extractedMaterials, setExtractedMaterials] = useState([]);
+  const [verifiedMaterials, setVerifiedMaterials] = useState([]);
   
   const { transcribe, isLoading: isTranscribing, error: transcriptionError } = useTranscription();
 
@@ -13,9 +15,10 @@ export const useAIWorkflow = () => {
     setIsProcessing(true);
     setError(null);
     setExtractedMaterials([]);
+    setVerifiedMaterials([]);
 
     try {
-      // Step 1: Transcribe audio
+
       console.log('🎤 Starting transcription...');
       const transcription = await transcribe(audioURI);
       
@@ -25,18 +28,23 @@ export const useAIWorkflow = () => {
 
       console.log('✅ Transcription successful:', transcription);
 
-      // Step 2: Extract materials from transcription
       console.log('🤖 Extracting materials...');
       const materials = await extractMaterialsFromTranscription(transcription);
       
       console.log('✅ Materials extracted:', materials);
-      
       setExtractedMaterials(materials);
+
+      console.log('🔍 Verifying materials against database...');
+      const verified = await verifyMaterialsAgainstDatabase(materials);
+      
+      console.log('✅ Materials verified:', verified);
+      setVerifiedMaterials(verified);
       
       return {
         success: true,
         transcription,
-        materials,
+        extractedMaterials: materials,
+        verifiedMaterials: verified,
       };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'AI processing failed';
@@ -47,7 +55,8 @@ export const useAIWorkflow = () => {
         success: false,
         error: errorMessage,
         transcription: null,
-        materials: [],
+        extractedMaterials: [],
+        verifiedMaterials: [],
       };
     } finally {
       setIsProcessing(false);
@@ -58,6 +67,7 @@ export const useAIWorkflow = () => {
     setIsProcessing(false);
     setError(null);
     setExtractedMaterials([]);
+    setVerifiedMaterials([]);
   }, []);
 
   return {
@@ -65,6 +75,7 @@ export const useAIWorkflow = () => {
     isProcessing: isProcessing || isTranscribing,
     error,
     extractedMaterials,
+    verifiedMaterials,
     reset,
   };
 };

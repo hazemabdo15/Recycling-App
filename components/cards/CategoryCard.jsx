@@ -1,4 +1,4 @@
-import { StyleSheet, Text } from 'react-native';
+﻿import { StyleSheet, Text } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { getCategoryImageProps } from '../../utils/categoryUtils';
 import { CategoryImage } from '../ui';

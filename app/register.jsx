@@ -1,9 +1,8 @@
-import { View, Alert } from 'react-native';
+﻿import { View, Alert } from 'react-native';
 import RegisterForm from '../components/auth/RegisterForm';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { initialSetupForRegister } from '../services/auth';
-
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -14,7 +13,6 @@ export default function RegisterScreen() {
 
   const validatePassword = (password) =>
     /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,20}$/.test(password.trim());
-
 
   const handleRegister = async ({ name, email, password, confirmPassword, role, number }) => {
     console.log('Registering with:', { name, email, password, confirmPassword, role, number });

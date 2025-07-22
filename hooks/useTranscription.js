@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+﻿import { useCallback, useState } from 'react';
 import { getSecureApiKey } from '../config/env';
 
 export const useTranscription = () => {
@@ -20,8 +20,7 @@ export const useTranscription = () => {
       }
       
       const formData = new FormData();
-      
-      // React Native specific file handling
+
       formData.append('file', {
         uri: audioURI,
         type: 'audio/m4a',
