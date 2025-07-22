@@ -2,7 +2,7 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Button, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
 import Animated, {
     useAnimatedStyle,
     useSharedValue,
@@ -12,6 +12,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ProfileHeader, ProfileMenu, StatsCard } from '../../components/profile';
 import { colors } from '../../styles/theme';
+import { getLoggedInUser } from '../../utils/authUtils';
 
 const Profile = () => {
     const insets = useSafeAreaInsets();
@@ -24,13 +25,9 @@ const Profile = () => {
     useFocusEffect(
         useCallback(() => {
             const loadUser = async () => {
-                const userString = await AsyncStorage.getItem('user');
-                if (userString) {
-                    const parsed = JSON.parse(userString);
-                    setUser(parsed);
-                } else {
-                    setUser(null);
-                }
+                const user = await getLoggedInUser();
+                setUser(user);
+                console.log('Header user:', user);
             };
 
             loadUser();

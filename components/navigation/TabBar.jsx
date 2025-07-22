@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 12,
     bottom: 12,
-    backgroundColor: colors.primary + "15",
+    backgroundColor: 'transparent',
     borderRadius: 20,
     zIndex: 0,
   },

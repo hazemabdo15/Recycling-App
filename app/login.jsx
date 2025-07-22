@@ -9,6 +9,7 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async ({ email, password }) => {
+    email = email.trim().toLowerCase();
     if (loading) return;
     setLoading(true);
     console.log('Login attempt with:', { email, password });
@@ -28,7 +29,10 @@ export default function LoginScreen() {
       console.log('Login successful:', user);
       Alert.alert('Login Successful', `Welcome back, ${user.name || user.email}!`);
       setLoading(false);
-      router.replace('/home');
+      router.replace({
+        pathname: '/home',
+        params: { shouldPreventBack: true }
+      });
     } catch (error) {
       console.error('Login error:', error);
       Alert.alert('Login failed', 'Please check your credentials and try again.');
