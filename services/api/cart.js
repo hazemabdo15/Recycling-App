@@ -1,6 +1,6 @@
 ﻿import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = 'http://192.168.0.165:5000/api/cart';
+const BASE_URL = 'http://192.168.1.11:5000/api/cart';
 
 export async function clearAuthData() {
   try {
