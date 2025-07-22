@@ -1,14 +1,15 @@
 ﻿import { StyleSheet, Text } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import { colors } from '../../styles/theme';
 import { getCategoryImageProps } from '../../utils/categoryUtils';
 import { CategoryImage } from '../ui';
 
 const borderRadius = {
-  xs: 6,
-  sm: 12,
-  md: 18,
-  lg: 24,
-  xl: 32,
+    xs: 6,
+    sm: 12,
+    md: 18,
+    lg: 24,
+    xl: 32,
 };
 
 const CategoryCard = ({ category, onPress }) => {
@@ -64,16 +65,16 @@ const CategoryCard = ({ category, onPress }) => {
 const styles = StyleSheet.create({
     categoryCard: {
         width: '48%',
-        backgroundColor: '#FFF9E6', // Light yellow background
+        backgroundColor: '#FFFFFF',
         borderRadius: borderRadius.md,
         marginBottom: 15,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowRadius: 8,
-        shadowOpacity: 0.05, // Default shadow opacity
+        shadowOpacity: 0.05,
         elevation: 2,
         borderWidth: 1,
-        borderColor: '#FFF3CC', // Slightly darker yellow border for depth
+        borderColor: '#f0f0f0',
     },
     touchableArea: {
         width: '100%',

@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
         paddingBottom: 10,
     },
     itemCard: {
-        backgroundColor: "#FFF9E6",
+        backgroundColor: "#FFFFFF",
         borderRadius: borderRadius.lg,
         padding: 16,
         marginRight: 15,
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
         elevation: 4,
         borderWidth: 1,
-        borderColor: "#FFF3CC",
+        borderColor: '#f0f0f0',
     },
     rankBadge: {
         position: 'absolute',
