@@ -28,7 +28,7 @@ export default function LoginScreen() {
       console.log('Login successful:', user);
       Alert.alert('Login Successful', `Welcome back, ${user.name || user.email}!`);
       setLoading(false);
-      router.push('/home');
+      router.replace('/home');
     } catch (error) {
       console.error('Login error:', error);
       Alert.alert('Login failed', 'Please check your credentials and try again.');
