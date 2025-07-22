@@ -13,20 +13,22 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ProfileHeader, ProfileMenu, StatsCard } from '../../components/profile';
 import { colors } from '../../styles/theme';
 import { getLoggedInUser } from '../../utils/authUtils';
+import { useAuth } from '../../context/AuthContext'; 
 
 const Profile = () => {
     const insets = useSafeAreaInsets();
     const headerOpacity = useSharedValue(0);
     const contentTranslateY = useSharedValue(50);
     const contentOpacity = useSharedValue(0);
+    const { setUser } = useAuth();
 
-    const [user, setUser] = useState(null);
+    const [loggedUser, setloggedUser] = useState(null);
 
     useFocusEffect(
         useCallback(() => {
             const loadUser = async () => {
                 const user = await getLoggedInUser();
-                setUser(user);
+                setloggedUser(user);
                 console.log('Header user:', user);
             };
 
@@ -55,7 +57,7 @@ const Profile = () => {
     }));
 
     const handleMenuItemPress = (item) => {
-        if (!user || user.isGuest) {
+        if (!loggedUser || loggedUser.isGuest) {
             console.log('Guest user cannot access this feature');
             return;
         }
@@ -86,14 +88,20 @@ const Profile = () => {
 
     const handleLogout = async () => {
         try {
-            await AsyncStorage.multiRemove(['accessToken', 'user']);
-            router.replace('/login'); // Navigate to login screen
+            await AsyncStorage.removeItem('accessToken');
+            await AsyncStorage.removeItem('user');
+            const token = await AsyncStorage.getItem('accessToken');
+            const savedUser = await AsyncStorage.getItem('user');
+            console.log('Still exists:', { token, savedUser });
+            setUser(null);
+            setloggedUser(null);
+            router.replace('/login');
         } catch (error) {
             console.error('Logout failed', error);
         }
     };
 
-    const isGuest = !user || user.isGuest;
+    const isGuest = !loggedUser || loggedUser.isGuest;
 
     return (
         <Animated.View style={[styles.container, { paddingTop: insets.top }]}>
@@ -105,8 +113,8 @@ const Profile = () => {
             >
                 <Animated.View style={headerAnimatedStyle}>
                     <ProfileHeader
-                        name={user?.name || 'Guest'}
-                        email={user?.email || 'Not logged in'}
+                        name={loggedUser?.name || 'Guest'}
+                        email={loggedUser?.email || 'Not logged in'}
                         points={!isGuest ? 2847 : 0}
                         level={!isGuest ? 'Eco Champion' : 'Guest Mode'}
                     />
