@@ -131,14 +131,20 @@ const styles = StyleSheet.create({
         paddingHorizontal: 0,
     },
     sectionTitle: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        color: colors.black,
+        fontSize: 18,
+        fontWeight: '700',
+        color: colors.primary,
+        letterSpacing: -0.5,
+        lineHeight: 34,
+        marginBottom: 8,
+        textTransform: 'uppercase',
+        includeFontPadding: false,
     },
     viewAllText: {
         fontSize: 16,
         color: colors.primary,
-        fontWeight: '600',
+        fontWeight: '700',
+        lineHeight: 34,
     },
     scrollContainer: {
         paddingLeft: 20,
@@ -146,7 +152,7 @@ const styles = StyleSheet.create({
         paddingBottom: 10,
     },
     itemCard: {
-        backgroundColor: colors.white,
+        backgroundColor: "#FFF9E6",
         borderRadius: borderRadius.lg,
         padding: 16,
         marginRight: 15,
@@ -161,7 +167,7 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
         elevation: 4,
         borderWidth: 1,
-        borderColor: colors.base300 + '20',
+        borderColor: "#FFF3CC",
     },
     rankBadge: {
         position: 'absolute',

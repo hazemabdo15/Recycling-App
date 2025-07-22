@@ -1,39 +1,68 @@
-﻿import { useFocusEffect } from '@react-navigation/native';
-import { useCallback } from 'react';
-import { StatusBar, StyleSheet } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+﻿import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
+import { router } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { Button, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
+import Animated, {
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
+    withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ProfileHeader, ProfileMenu, StatsCard } from '../../components/profile';
 import { colors } from '../../styles/theme';
+
 const Profile = () => {
     const insets = useSafeAreaInsets();
     const headerOpacity = useSharedValue(0);
     const contentTranslateY = useSharedValue(50);
     const contentOpacity = useSharedValue(0);
-    useFocusEffect(useCallback(() => {
-        headerOpacity.value = withTiming(1, { duration: 600 });
-        setTimeout(() => {
-            contentOpacity.value = withTiming(1, { duration: 800 });
-            contentTranslateY.value = withSpring(0, {
-                damping: 15,
-                stiffness: 100,
-            });
-        }, 200);
-        return () => {
-        };
-    }, [headerOpacity, contentOpacity, contentTranslateY]));
-    const headerAnimatedStyle = useAnimatedStyle(() => {
-        return {
-            opacity: headerOpacity.value,
-        };
-    });
-    const contentAnimatedStyle = useAnimatedStyle(() => {
-        return {
-            opacity: contentOpacity.value,
-            transform: [{ translateY: contentTranslateY.value }],
-        };
-    });
+
+    const [user, setUser] = useState(null);
+
+    useFocusEffect(
+        useCallback(() => {
+            const loadUser = async () => {
+                const userString = await AsyncStorage.getItem('user');
+                if (userString) {
+                    const parsed = JSON.parse(userString);
+                    setUser(parsed);
+                } else {
+                    setUser(null);
+                }
+            };
+
+            loadUser();
+
+            headerOpacity.value = withTiming(1, { duration: 600 });
+            setTimeout(() => {
+                contentOpacity.value = withTiming(1, { duration: 800 });
+                contentTranslateY.value = withSpring(0, {
+                    damping: 15,
+                    stiffness: 100,
+                });
+            }, 200);
+
+            return () => { };
+        }, [])
+    );
+
+    const headerAnimatedStyle = useAnimatedStyle(() => ({
+        opacity: headerOpacity.value,
+    }));
+
+    const contentAnimatedStyle = useAnimatedStyle(() => ({
+        opacity: contentOpacity.value,
+        transform: [{ translateY: contentTranslateY.value }],
+    }));
+
     const handleMenuItemPress = (item) => {
+        if (!user || user.isGuest) {
+            console.log('Guest user cannot access this feature');
+            return;
+        }
+
         switch (item.id) {
             case 'edit-profile':
                 console.log('Navigate to Edit Profile');
@@ -57,6 +86,18 @@ const Profile = () => {
                 console.log('Unknown menu item');
         }
     };
+
+    const handleLogout = async () => {
+        try {
+            await AsyncStorage.multiRemove(['accessToken', 'user']);
+            router.replace('/login'); // Navigate to login screen
+        } catch (error) {
+            console.error('Logout failed', error);
+        }
+    };
+
+    const isGuest = !user || user.isGuest;
+
     return (
         <Animated.View style={[styles.container, { paddingTop: insets.top }]}>
             <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
@@ -67,18 +108,59 @@ const Profile = () => {
             >
                 <Animated.View style={headerAnimatedStyle}>
                     <ProfileHeader
-                        name="Hazem"
-                        email="hazem@gmail.com"
-                        points={2847}
-                        level="Eco Champion"
+                        name={user?.name || 'Guest'}
+                        email={user?.email || 'Not logged in'}
+                        points={!isGuest ? 2847 : 0}
+                        level={!isGuest ? 'Eco Champion' : 'Guest Mode'}
                     />
                 </Animated.View>
-                <StatsCard />
-                <ProfileMenu onItemPress={handleMenuItemPress} />
+
+                {!isGuest ? (
+                    <>
+                        <StatsCard />
+                        <ProfileMenu onItemPress={handleMenuItemPress} />
+
+                        <View style={{ alignItems: 'center', marginTop: 30 }}>
+                            <Pressable
+                                onPress={handleLogout}
+                                style={{
+                                    paddingVertical: 12,
+                                    paddingHorizontal: 30,
+                                    backgroundColor: 'red',
+                                    borderRadius: 8,
+                                }}
+                            >
+                                <Text style={{ color: 'white', fontSize: 16 }}>Log Out</Text>
+                            </Pressable>
+                        </View>
+                    </>
+                ) : (
+                    <View style={{ marginTop: 40, alignItems: 'center' }}>
+                        <Text style={{ fontSize: 16, textAlign: 'center' }}>
+                            You are using a guest profile. Log in to track your progress and unlock features.
+                        </Text>
+                        <View style={{ marginTop: 20 }}>
+                            <Pressable
+                                onPress={() => router.replace('/login')}
+                                style={{
+                                    paddingVertical: 12,
+                                    paddingHorizontal: 30,
+                                    backgroundColor: colors.primary,
+                                    borderRadius: 8,
+                                }}
+                            >
+                                <Text style={{ color: 'white', fontSize: 16, textAlign: 'center' }}>
+                                    Log In Now!
+                                </Text>
+                            </Pressable>
+                        </View>
+                    </View>
+                )}
             </Animated.ScrollView>
         </Animated.View>
     );
 };
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -92,4 +174,5 @@ const styles = StyleSheet.create({
         paddingBottom: 130,
     },
 });
+
 export default Profile;

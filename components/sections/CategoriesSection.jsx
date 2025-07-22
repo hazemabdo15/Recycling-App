@@ -2,6 +2,7 @@
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useCategories } from '../../hooks/useAPI';
 import { CategoryCard } from '../cards';
+import { colors } from '../../styles/theme';
 const CategoriesSection = () => {
     const { categories, loading, error } = useCategories();
     const handleCategoryPress = (category) => {
@@ -66,14 +67,20 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     categoriesTitle: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        color: '#2D3748',
+        fontSize: 18,
+        fontWeight: '700',
+        color: colors.primary,
+        letterSpacing: -0.5,
+        lineHeight: 34,
+        marginBottom: 8,
+        textTransform: 'uppercase',
+        includeFontPadding: false,
     },
     viewAllText: {
         fontSize: 16,
-        color: '#4299E1',
-        fontWeight: '600',
+        color: colors.primary,
+        fontWeight: '700',
+        lineHeight: 34,
     },
     categoriesGrid: {
         flexDirection: 'row',

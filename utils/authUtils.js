@@ -18,3 +18,9 @@ export async function getAccessTokenAsync() {
     return null;
   }
 }
+
+export const getLoggedInUser = async () => {
+  const userString = await AsyncStorage.getItem('user');
+  if (userString) return JSON.parse(userString);
+  return null;
+};
