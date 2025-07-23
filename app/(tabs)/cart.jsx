@@ -220,6 +220,13 @@ const Cart = () => {
             <Text style={styles.heroSubtitle}>
               No pickup items yet
             </Text>
+            <AnimatedButton
+              style={styles.heroFindBtn}
+              onPress={() => router.push('/(tabs)/explore')}
+            >
+              <MaterialCommunityIcons name="recycle" size={28} color={colors.white} />
+              <Text style={styles.heroFindBtnText}>Find Recyclables</Text>
+            </AnimatedButton>
           </View>
         </LinearGradient>
         <View style={styles.emptyCartContainer}>
@@ -228,10 +235,6 @@ const Cart = () => {
           </View>
           <Text style={styles.emptyCartTitle}>Add recyclable items to get started</Text>
           <Text style={styles.emptyCartSubtitle}>Schedule your pickup and earn rewards!</Text>
-          <AnimatedButton style={styles.emptyCartBrowseBtn} onPress={() => router.push('/(tabs)/explore')}>
-            <MaterialCommunityIcons name="recycle" size={22} color={colors.primary} />
-            <Text style={styles.emptyCartBrowseText}>Find Recyclables</Text>
-          </AnimatedButton>
         </View>
       </View>
     );
@@ -278,7 +281,7 @@ const Cart = () => {
               </View>
               <View style={styles.checkoutSummaryItemHero}>
                 <MaterialCommunityIcons name="cash" size={22} color={colors.secondary} />
-                <Text style={styles.checkoutSummaryLabelHero}>You'll Earn</Text>
+                <Text style={styles.checkoutSummaryLabelHero}>You&apos;ll Earn</Text>
                 <Text style={styles.checkoutSummaryValueHero}>{totalValue.toFixed(2)} EGP</Text>
               </View>
             </View>
@@ -344,11 +347,12 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
   },
   heroContent: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
     paddingBottom: spacing.sm,
+    paddingTop: spacing.lg,
+    minHeight: 120,
   },
   heroTitle: {
     fontSize: 24,
@@ -403,21 +407,31 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: spacing.md,
   },
-  emptyCartBrowseBtn: {
+  heroFindBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.base200,
-    borderRadius: borderRadius.lg,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.xl,
-    marginTop: spacing.lg,
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.xl,
+    paddingVertical: spacing.xl,
+    paddingHorizontal: spacing.xxl,
+    marginTop: spacing.xl,
+    marginBottom: spacing.md,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    elevation: 6,
+    minWidth: 220,
+    alignSelf: 'center',
   },
-  emptyCartBrowseText: {
+  heroFindBtnText: {
     ...typography.subtitle,
-    color: colors.primary,
+    color: colors.white,
     fontWeight: '700',
-    fontSize: 16,
-    marginLeft: spacing.sm,
+    fontSize: 18,
+    marginLeft: spacing.md,
+    letterSpacing: 0.2,
   },
   cartCard: {
     flexDirection: 'row',

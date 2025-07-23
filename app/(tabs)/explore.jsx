@@ -106,11 +106,11 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
     shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
-    // Removed absolute positioning for normal flow
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    elevation: 12,
+    backgroundColor: colors.primary + '10',
   },
   heroSectionBg: {
     borderBottomLeftRadius: 32,
