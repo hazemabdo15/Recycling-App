@@ -17,15 +17,8 @@ const colors = {
   white: "#ffffff",
   black: "#171717",
 };
-const ProfileMenu = ({ onItemPress }) => {
+const ProfileMenu = ({ onItemPress, onLogout }) => {
     const menuItems = [
-        {
-            id: 'edit-profile',
-            icon: 'account-edit',
-            title: 'Edit Profile',
-            subtitle: 'Update your personal information',
-            color: colors.primary,
-        },
         {
             id: 'recycling-history',
             icon: 'history',
@@ -61,9 +54,21 @@ const ProfileMenu = ({ onItemPress }) => {
             subtitle: 'App preferences and privacy',
             color: colors.neutral,
         },
+        {
+            id: 'logout',
+            icon: 'logout',
+            title: 'Log Out',
+            subtitle: 'Sign out of your account',
+            color: '#EF4444',
+            isLogout: true,
+        },
     ];
     const handleItemPress = (item) => {
-        onItemPress?.(item);
+        if (item.isLogout && typeof onLogout === 'function') {
+            onLogout();
+        } else {
+            onItemPress?.(item);
+        }
         console.log(`Pressed: ${item.title}`);
     };
     return (

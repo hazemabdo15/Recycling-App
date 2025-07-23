@@ -135,21 +135,7 @@ const Profile = () => {
                 {!isGuest ? (
                     <>
                         <StatsCard />
-                        <ProfileMenu onItemPress={handleMenuItemPress} />
-
-                        <View style={{ alignItems: 'center', marginTop: 30 }}>
-                            <Pressable
-                                onPress={handleLogout}
-                                style={{
-                                    paddingVertical: 12,
-                                    paddingHorizontal: 30,
-                                    backgroundColor: 'red',
-                                    borderRadius: 8,
-                                }}
-                            >
-                                <Text style={{ color: 'white', fontSize: 16 }}>Log Out</Text>
-                            </Pressable>
-                        </View>
+                        <ProfileMenu onItemPress={handleMenuItemPress} onLogout={handleLogout} />
                     </>
                 ) : (
                     <View style={{ marginTop: 40, alignItems: 'center' }}>
