@@ -18,7 +18,7 @@ import { colors, spacing } from "../../styles/theme";
 
 const Index = () => {
   const insets = useSafeAreaInsets();
-  const { isLoggedIn } = useAuth();
+  const { user, isLoggedIn } = useAuth();
 
   useFocusEffect(
     useCallback(() => {
@@ -49,7 +49,7 @@ const Index = () => {
         >
           <View style={styles.headerRow}>
             <Text style={styles.appName}>EcoPickup</Text>
-            {isLoggedIn && (
+            {isLoggedIn && user && !user.isGuest && (
               <TouchableOpacity
                 style={styles.notificationButton}
                 onPress={handleNotificationPress}
