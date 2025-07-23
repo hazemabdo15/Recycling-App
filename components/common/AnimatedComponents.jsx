@@ -268,38 +268,3 @@ export const FadeInView = ({
     </Animated.View>
   );
 };
-
-// New component for tab screen transitions
-export const TabScreenWrapper = ({ 
-  children, 
-  style,
-  ...props 
-}) => {
-  const opacity = useSharedValue(0);
-  const translateY = useSharedValue(30);
-
-  useEffect(() => {
-    if (!isReanimatedAvailable) return;
-    
-    opacity.value = withTiming(1, { duration: ANIMATION_CONFIG.tabTransition.duration });
-    translateY.value = withSpring(0, {
-      damping: ANIMATION_CONFIG.tabTransition.damping,
-      stiffness: ANIMATION_CONFIG.tabTransition.stiffness,
-    });
-  }, [opacity, translateY]);
-
-  const animatedStyle = useAnimatedStyle(() => {
-    if (!isReanimatedAvailable) return {};
-    
-    return {
-      opacity: opacity.value,
-      transform: [{ translateY: translateY.value }],
-    };
-  });
-
-  return (
-    <Animated.View style={[{ flex: 1 }, animatedStyle, style]} {...props}>
-      {children}
-    </Animated.View>
-  );
-};

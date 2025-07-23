@@ -34,17 +34,17 @@ const borderRadius = {
 
 const CategoryCard = ({ category, onPress }) => {
     const scale = useSharedValue(1);
-    const shadowOpacity = useSharedValue(0.08);
+    const shadowOpacity = useSharedValue(0.1);
     const imageProps = getCategoryImageProps(category);
 
     const handlePressIn = () => {
         scale.value = withSpring(0.96, { damping: 20, stiffness: 300 });
-        shadowOpacity.value = withTiming(0.15, { duration: 100 });
+        shadowOpacity.value = withTiming(0.2, { duration: 100 });
     };
 
     const handlePressOut = () => {
         scale.value = withSpring(1, { damping: 20, stiffness: 300 });
-        shadowOpacity.value = withTiming(0.08, { duration: 100 });
+        shadowOpacity.value = withTiming(0.1, { duration: 100 });
     };
 
     const animatedStyle = useAnimatedStyle(() => ({
@@ -88,25 +88,28 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFFFFF',
         borderRadius: borderRadius.md,
         marginBottom: 15,
+        // iOS shadow
         shadowColor: '#000000',
         shadowOffset: { width: 0, height: 1 },
-        shadowRadius: 4,
-        shadowOpacity: 0.08,
-        elevation: 3,
-        borderWidth: 0.5,
-        borderColor: '#E5E7EB',
+        shadowRadius: 3,
+        shadowOpacity: 0.1,
+        // Android shadow
+        elevation: 2,
+        // Border to prevent shadow rendering issues
+        borderWidth: 1,
+        borderColor: '#F3F4F6',
     },
     touchableArea: {
         width: '100%',
         borderRadius: borderRadius.md,
         overflow: 'hidden',
+        backgroundColor: '#FFFFFF',
     },
     cardContent: {
         padding: 20,
         alignItems: 'center',
         width: '100%',
-        backgroundColor: '#FFFFFF',
-        borderRadius: borderRadius.md,
+        backgroundColor: 'transparent',
     },
     categoryIcon: {
         marginBottom: 12,

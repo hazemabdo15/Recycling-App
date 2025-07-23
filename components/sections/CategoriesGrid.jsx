@@ -43,7 +43,7 @@ const CategoriesGrid = ({ searchText = '', onCategoryPress, onFilteredCountChang
         );
     }
     return (
-        <FadeInView delay={100}>
+        <FadeInView delay={0}>
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContainer}
@@ -56,7 +56,6 @@ const CategoriesGrid = ({ searchText = '', onCategoryPress, onFilteredCountChang
                                 category={category}
                                 onPress={() => handleCategoryPress(category)}
                                 style={styles.categoryCard}
-                                delay={index * 100}
                             />
                         );
                     })}
@@ -69,11 +68,13 @@ const styles = StyleSheet.create({
     scrollContainer: {
         paddingBottom: 120,
         paddingHorizontal: 5,
+        backgroundColor: 'transparent',
     },
     categoriesGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
         justifyContent: 'space-between',
+        backgroundColor: 'transparent',
     },
     categoryCard: {
         width: '48%',

@@ -12,7 +12,7 @@ import {
     View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AnimatedButton, AnimatedListItem, FadeInView, TabScreenWrapper } from '../../components/common';
+import { AnimatedButton, AnimatedListItem, FadeInView } from '../../components/common';
 import { useAllItems } from '../../hooks/useAPI';
 import { useCart } from '../../hooks/useCart';
 import { borderRadius, shadows, spacing, typography } from '../../styles';
@@ -240,10 +240,9 @@ const Cart = () => {
   }, 0);
 
   return (
-    <TabScreenWrapper>
-      <SafeAreaView style={[styles.filledContainer, { backgroundColor: colors.base100 }]}> 
-        <StatusBar barStyle="dark-content" backgroundColor={colors.base100} />
-        <View style={[styles.headerMerged, { paddingTop: insets.top }]}> 
+    <SafeAreaView style={[styles.filledContainer, { backgroundColor: colors.base100 }]}> 
+      <StatusBar barStyle="dark-content" backgroundColor={colors.base100} />
+      <View style={[styles.headerMerged, { paddingTop: insets.top }]}> 
         <View style={styles.headerRowMerged}>
           <View style={styles.headerLeftSection}>
             <MaterialCommunityIcons name="truck-delivery" size={32} color={colors.primary} style={{ marginRight: spacing.sm }} />
@@ -291,7 +290,6 @@ const Cart = () => {
         extraData={cartItems}
       />
     </SafeAreaView>
-    </TabScreenWrapper>
   );
 };
 

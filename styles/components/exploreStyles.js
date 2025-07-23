@@ -27,5 +27,6 @@ export const exploreStyles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
+    backgroundColor: colors.base100,
   },
 });

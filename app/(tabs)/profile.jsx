@@ -4,7 +4,6 @@ import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { TabScreenWrapper } from '../../components/common';
 import { ProfileHeader, ProfileMenu, StatsCard } from '../../components/profile';
 import { useAuth } from '../../context/AuthContext';
 import { colors } from '../../styles/theme';
@@ -117,14 +116,13 @@ const Profile = () => {
     const isGuest = !loggedUser || loggedUser.isGuest;
 
     return (
-        <TabScreenWrapper>
-            <Animated.View style={[styles.container, { paddingTop: insets.top }]}>
-                <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
-                <Animated.ScrollView
-                    style={[styles.scrollView, contentAnimatedStyle]}
-                    showsVerticalScrollIndicator={false}
-                    contentContainerStyle={styles.scrollContent}
-                >
+        <Animated.View style={[styles.container, { paddingTop: insets.top }]}>
+            <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+            <Animated.ScrollView
+                style={[styles.scrollView, contentAnimatedStyle]}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scrollContent}
+            >
                     <Animated.View style={headerAnimatedStyle}>
                         <ProfileHeader
                             name={loggedUser?.name || 'Guest'}
@@ -177,7 +175,6 @@ const Profile = () => {
                 )}
             </Animated.ScrollView>
         </Animated.View>
-        </TabScreenWrapper>
     );
 };
 
