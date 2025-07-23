@@ -97,14 +97,14 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFFFFF',
         borderRadius: borderRadius.md,
         marginBottom: 15,
-        // iOS shadow
+
         shadowColor: '#000000',
         shadowOffset: { width: 0, height: 1 },
         shadowRadius: 3,
         shadowOpacity: 0.1,
-        // Android shadow
+
         elevation: 2,
-        // Border to prevent shadow rendering issues
+
         borderWidth: 1,
         borderColor: '#F3F4F6',
     },

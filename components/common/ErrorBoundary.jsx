@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { colors } from '../../styles/theme';
 
@@ -13,14 +13,12 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    // Log error in development only
+
     if (__DEV__) {
       console.error('ErrorBoundary caught an error:', error);
       console.error('Error info:', errorInfo);
     }
-    
-    // In production, you might want to send this to a crash reporting service
-    // crashlytics().recordError(error);
+
   }
 
   handleRetry = () => {
@@ -60,7 +58,6 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-// Lightweight error boundary for individual components
 export const ComponentErrorBoundary = ({ children, fallback }) => (
   <ErrorBoundary fallback={fallback || (() => (
     <View style={styles.componentError}>

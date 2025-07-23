@@ -6,7 +6,7 @@ try {
   withSpring = reanimated.withSpring;
   withTiming = reanimated.withTiming;
 } catch (_error) {
-  // React Native Reanimated not available, using fallback values
+
 
   withSpring = (value, config) => value;
   withTiming = (value, config) => value;

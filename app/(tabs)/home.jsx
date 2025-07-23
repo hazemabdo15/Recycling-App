@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+﻿import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback } from 'react';
@@ -20,11 +20,10 @@ const Index = () => {
     }, []));
 
     const handleNotificationPress = () => {
-        // TODO: Navigate to notifications screen
+
         console.log('Navigate to notifications');
     };
 
-    // Tab bar height is typically around 80-90px, adding safe area bottom
     const tabBarHeight = 140 + insets.bottom;
 
     return (
@@ -32,14 +31,14 @@ const Index = () => {
             <View style={styles.container}>
                 <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
                 
-                {/* Hero Section with Gradient */}
+                {}
                 <LinearGradient
                     colors={[colors.primary, colors.secondary]}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={[styles.heroSection, { paddingTop: insets.top + 20 }]}
                 >
-                    {/* Header with App Name and Notification */}
+                    {}
                     <View style={styles.headerRow}>
                         <Text style={styles.appName}>EcoPickup</Text>
                         {isLoggedIn && (
@@ -49,7 +48,7 @@ const Index = () => {
                                 activeOpacity={0.7}
                             >
                                 <Ionicons name="notifications-outline" size={24} color={colors.white} />
-                                {/* Notification badge - you can conditionally show this based on unread count */}
+                                {}
                                 <View style={styles.notificationBadge}>
                                     <Text style={styles.badgeText}>3</Text>
                                 </View>
@@ -67,12 +66,12 @@ const Index = () => {
                 </LinearGradient>
 
                 <View style={[styles.contentContainer, { paddingBottom: tabBarHeight }]}>
-                    {/* Quick Stats Section */}
+                    {}
                     <View style={styles.statsSection}>
                         <EarnPointsCard />
                     </View>
 
-                    {/* Popular Items Section */}
+                    {}
                     <View style={styles.section}>
                         <View style={styles.sectionHeader}>
                             <Text style={styles.sectionTitle}>🔥 Trending This Week</Text>

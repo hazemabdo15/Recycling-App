@@ -18,16 +18,16 @@ export const normalizeItemData = (item) => {
         } else if (lowerUnit === 'piece' || lowerUnit === 'pieces') {
             normalized.measurement_unit = 2;
         } else {
-            // Unknown unit, default to KG
+
             normalized.measurement_unit = 1;
         }
     } else if (typeof item.measurement_unit === 'number') {
-        // Validate numeric measurement unit
+
         if (item.measurement_unit !== 1 && item.measurement_unit !== 2) {
-            normalized.measurement_unit = 1; // Default to KG
+            normalized.measurement_unit = 1;
         }
     } else {
-        // Invalid type, default to KG
+
         normalized.measurement_unit = 1;
     }
     

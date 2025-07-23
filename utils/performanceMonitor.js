@@ -1,12 +1,9 @@
-/**
- * Performance monitoring utilities for React Native
- * Helps track component render times and API call performance
- */
+﻿
 
 class PerformanceMonitor {
   constructor() {
     this.metrics = new Map();
-    this.isEnabled = __DEV__; // Only enable in development
+    this.isEnabled = __DEV__;
   }
 
   startTimer(key) {
@@ -21,8 +18,7 @@ class PerformanceMonitor {
     if (!metric) return;
 
     const duration = Date.now() - metric.startTime;
-    
-    // Log slow operations (> 100ms for API calls, > 16ms for renders)
+
     const threshold = metadata.type === 'render' ? 16 : 100;
     if (duration > threshold) {
       console.warn(`⚠️ Slow ${metadata.type || 'operation'}: ${key} took ${duration}ms`, metadata);
@@ -73,7 +69,6 @@ class PerformanceMonitor {
   }
 }
 
-// React hook for component performance monitoring
 export const usePerformanceMonitor = (componentName) => {
   const monitor = performanceMonitor;
   
@@ -84,7 +79,6 @@ export const usePerformanceMonitor = (componentName) => {
   };
 };
 
-// HOC for automatic render performance monitoring
 export const withPerformanceMonitoring = (WrappedComponent) => {
   const ComponentWithMonitoring = (props) => {
     const monitor = performanceMonitor;
@@ -102,7 +96,6 @@ export const withPerformanceMonitoring = (WrappedComponent) => {
   return ComponentWithMonitoring;
 };
 
-// API call performance wrapper
 export const measureApiCall = (apiCall, endpoint) => {
   return performanceMonitor.measureAsync(
     `api-${endpoint}`,
@@ -111,12 +104,9 @@ export const measureApiCall = (apiCall, endpoint) => {
   );
 };
 
-// Memory usage tracking (React Native specific)
 export const trackMemoryUsage = () => {
   if (!__DEV__) return;
-  
-  // This is a simplified version - in a real app you might use
-  // react-native-performance or similar libraries
+
   const used = performance?.memory?.usedJSHeapSize;
   const total = performance?.memory?.totalJSHeapSize;
   
@@ -126,7 +116,6 @@ export const trackMemoryUsage = () => {
   }
 };
 
-// Create singleton instance
 const performanceMonitor = new PerformanceMonitor();
 
 export default performanceMonitor;

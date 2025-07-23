@@ -43,10 +43,10 @@ export const categoriesAPI = {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      apiCache.set(cacheKey, data, 10 * 60 * 1000); // Cache for 10 minutes
+      apiCache.set(cacheKey, data, 10 * 60 * 1000);
       return data;
     } catch (_error) {
-      // Use fallback data but don't cache it (so we retry on next call)
+
       return fallbackCategories;
     }
   },

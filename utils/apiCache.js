@@ -1,9 +1,6 @@
-/**
- * Simple cache utility for API responses
- * Helps reduce unnecessary API calls and improve performance
- */
+﻿
 class APICache {
-  constructor(defaultTTL = 5 * 60 * 1000) { // 5 minutes default TTL
+  constructor(defaultTTL = 5 * 60 * 1000) {
     this.cache = new Map();
     this.defaultTTL = defaultTTL;
   }
@@ -41,14 +38,14 @@ class APICache {
 
   clear(pattern) {
     if (pattern) {
-      // Clear entries matching pattern
+
       for (const key of this.cache.keys()) {
         if (key.includes(pattern)) {
           this.cache.delete(key);
         }
       }
     } else {
-      // Clear all cache
+
       this.cache.clear();
     }
   }
@@ -70,7 +67,6 @@ class APICache {
   }
 }
 
-// Create singleton instance
 const apiCache = new APICache();
 
 export default apiCache;

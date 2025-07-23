@@ -21,7 +21,7 @@ try {
   withRepeat = reanimated.withRepeat;
   withSequence = reanimated.withSequence;
 } catch (_error) {
-  // React Native Reanimated not available, using fallbacks
+
   Animated = { 
     View: View,
     createAnimatedComponent: (Component) => Component 

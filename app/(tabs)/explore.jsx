@@ -22,7 +22,7 @@ const Explore = () => {
         setSearchText(text);
     };
     const handleFilter = () => {
-        // Filter functionality placeholder
+
     };
     const handleCategoryPress = (category) => {
         router.push({

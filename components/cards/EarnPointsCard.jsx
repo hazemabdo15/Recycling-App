@@ -86,9 +86,7 @@ const EarnPointsCard = () => {
             transform: [{ scale: cardScale.value }],
         };
     });
-    
-    
-    // Array of fun environmental facts
+
     const facts = [
         "Recycling one aluminum can saves enough energy to run a TV for 3 hours!",
         "Plastic bottles can take up to 450 years to decompose in a landfill.",
@@ -123,7 +121,6 @@ const EarnPointsCard = () => {
         "Recycled paper produces 73% less air pollution than if it was made from raw materials."
     ];
 
-    // Pick a random fact on each app open
     const randomIndex = Math.floor(Math.random() * facts.length);
     const fact = facts[randomIndex];
 
