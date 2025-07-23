@@ -2,8 +2,46 @@
 export const getUnitDisplay = (measurementUnit) => {
     return measurementUnit === 1 ? 'KG' : 'Piece';
 };
+
 export const getIncrementStep = (measurementUnit) => {
     return measurementUnit === 1 ? 0.25 : 1;
+};
+
+export const getMinimumQuantity = (measurementUnit) => {
+    // All items now have minimum quantity of 1
+    return 1;
+};
+
+// Centralized validation function for quantity based on measurement unit
+export const validateQuantity = (item) => {
+    const quantity = Number(item.quantity);
+    const measurementUnit = Number(item.measurement_unit);
+    
+    if (isNaN(quantity) || quantity <= 0) {
+        throw new Error("Quantity must be greater than 0.");
+    }
+    
+    if (isNaN(measurementUnit)) {
+        throw new Error("Invalid measurement unit. Must be 1 (KG) or 2 (Piece).");
+    }
+    
+    if (measurementUnit === 1) {
+        // KG - must be >= 1 and in 0.25 increments after 1
+        if (quantity < 1) {
+            throw new Error("For KG items, minimum quantity is 1.");
+        }
+        // Only validate 0.25 increments if quantity > 1
+        if (quantity > 1 && quantity % 0.25 !== 0) {
+            throw new Error("For KG items, quantity must be in 0.25 increments (e.g., 1.0, 1.25, 1.5, 1.75, 2.0).");
+        }
+    } else if (measurementUnit === 2) {
+        // Piece - must be whole numbers >= 1
+        if (!Number.isInteger(quantity) || quantity < 1) {
+            throw new Error("For piece items, quantity must be whole numbers >= 1.");
+        }
+    } else {
+        throw new Error("Invalid measurement unit. Must be 1 (KG) or 2 (Piece).");
+    }
 };
 
 export const normalizeItemData = (item) => {

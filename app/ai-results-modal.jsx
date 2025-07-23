@@ -1,19 +1,20 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
-    Dimensions,
-    FlatList,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  FlatList,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCart } from '../hooks/useCart';
 import { borderRadius, colors, spacing, typography } from '../styles/theme';
+import { getMinimumQuantity } from '../utils/cartUtils';
 
 let Reanimated, interpolate, runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming;
 
@@ -76,9 +77,42 @@ export default function AIResultsModal() {
   const initialMaterials = parsedVerifiedMaterials.length > 0 ? parsedVerifiedMaterials : parsedExtractedMaterials;
   const [materials, setMaterials] = useState(initialMaterials);
 
-  const safeMaterials = materials || [];
+  const safeMaterials = useMemo(() => materials || [], [materials]);
   const availableCount = safeMaterials.filter(material => material.available !== false).length;
   const unavailableCount = safeMaterials.length - availableCount;
+
+  // Validation logic for minimum quantities
+  const validationResults = useMemo(() => {
+    const validationErrors = [];
+    const validItems = [];
+    
+    safeMaterials.forEach((material, index) => {
+      if (material.available !== false) {
+        const measurementUnit = material.databaseItem?.measurement_unit || 
+                               (material.unit === 'KG' ? 1 : 2);
+        const minQuantity = getMinimumQuantity(measurementUnit);
+        
+        if (material.quantity < minQuantity) {
+          validationErrors.push({
+            index,
+            material: material.material,
+            currentQuantity: material.quantity,
+            minQuantity,
+            unit: material.unit
+          });
+        } else {
+          validItems.push(material);
+        }
+      }
+    });
+    
+    return {
+      hasErrors: validationErrors.length > 0,
+      errors: validationErrors,
+      validItems,
+      totalErrors: validationErrors.length
+    };
+  }, [safeMaterials]);
 
   const hasMaterials = materials && materials.length > 0;
 
@@ -117,9 +151,8 @@ export default function AIResultsModal() {
   const updateQuantity = useCallback((index, delta) => {
     setMaterials(prev => prev.map((item, i) => {
       if (i === index) {
-
         const step = item.unit === 'KG' ? 0.25 : 1;
-        const minValue = item.unit === 'KG' ? 0.25 : 1;
+        const minValue = 1; // All items now have minimum quantity of 1
         const newQuantity = Math.max(minValue, item.quantity + (delta * step));
         return { ...item, quantity: newQuantity };
       }
@@ -132,6 +165,14 @@ export default function AIResultsModal() {
   }, []);
 
   const addToCart = useCallback(() => {
+    // Check for validation errors
+    if (validationResults.hasErrors) {
+      const errorMessage = `Please fix quantity issues:\n${validationResults.errors.map(error => 
+        `• ${error.material}: minimum ${error.minQuantity} ${error.unit}`
+      ).join('\n')}`;
+      alert(errorMessage);
+      return;
+    }
 
     const availableMaterials = materials.filter(item => item.available && item.databaseItem);
     if (availableMaterials.length === 0) {
@@ -158,7 +199,7 @@ export default function AIResultsModal() {
 
     router.dismissAll();
     router.push('/(tabs)/cart');
-  }, [materials, handleAddToCart]);
+  }, [materials, handleAddToCart, validationResults]);
 
   const browseMore = useCallback(() => {
 
@@ -172,20 +213,36 @@ export default function AIResultsModal() {
       ? item.databaseItem.name 
       : item.material;
 
+    // Check if this item has validation errors
+    const validationError = validationResults.errors.find(error => error.index === index);
+    const hasValidationError = !!validationError;
+
     return (
-      <View style={[styles.materialItem, !isAvailable && styles.materialItemUnavailableRefined]}>
+      <View style={[
+        styles.materialItem, 
+        !isAvailable && styles.materialItemUnavailableRefined,
+        hasValidationError && styles.materialItemValidationError
+      ]}>
         <View style={styles.materialHeader}>
           <View style={styles.materialInfo}>
             <View style={styles.materialNameRow}>
               <Text
-                style={[styles.materialName, !isAvailable && styles.materialNameUnavailableRefined]}
+                style={[
+                  styles.materialName, 
+                  !isAvailable && styles.materialNameUnavailableRefined,
+                  hasValidationError && styles.materialNameValidationError
+                ]}
                 numberOfLines={2}
                 ellipsizeMode="tail"
               >
                 {displayName ? String(displayName) : ''}
               </Text>
               {}
-              <View style={[styles.availabilityIndicator, isAvailable ? styles.availabilityIndicatorAvailable : styles.availabilityIndicatorUnavailableRefined, { marginLeft: 4 }]}> 
+              <View style={[
+                styles.availabilityIndicator, 
+                isAvailable ? styles.availabilityIndicatorAvailable : styles.availabilityIndicatorUnavailableRefined, 
+                { marginLeft: 4 }
+              ]}> 
                 <MaterialCommunityIcons
                   name={isAvailable ? "check-circle" : "alert-circle-outline"}
                   size={16}
@@ -196,19 +253,32 @@ export default function AIResultsModal() {
             </View>
             <View style={styles.materialMeta}>
               {item.unit ? (
-                <Text style={[styles.materialUnit, !isAvailable && styles.materialUnitUnavailableRefined]}>
+                <Text style={[
+                  styles.materialUnit, 
+                  !isAvailable && styles.materialUnitUnavailableRefined,
+                  hasValidationError && styles.materialUnitValidationError
+                ]}>
                   {String(item.unit)}
                 </Text>
               ) : null}
               {}
               {item.matchSimilarity && item.matchSimilarity < 100 ? (
-                <Text style={[styles.matchInfo, !isAvailable && styles.matchInfoUnavailableRefined]}>
+                <Text style={[
+                  styles.matchInfo, 
+                  !isAvailable && styles.matchInfoUnavailableRefined,
+                  hasValidationError && styles.matchInfoValidationError
+                ]}>
                   {String(item.matchSimilarity)}% match
                 </Text>
               ) : null}
               {!isAvailable ? (
                 <Text style={styles.unavailableLabelRefined}>
                   Not Available
+                </Text>
+              ) : null}
+              {hasValidationError ? (
+                <Text style={styles.validationErrorLabel}>
+                  Min: {validationError.minQuantity} {validationError.unit}
                 </Text>
               ) : null}
             </View>
@@ -223,21 +293,39 @@ export default function AIResultsModal() {
       {}
       <View style={styles.quantityRow}>
         <View style={styles.quantityLabel}>
-          <Text style={[styles.quantityLabelText, !isAvailable && { color: colors.neutral + '80' } ]}>Quantity</Text>
+          <Text style={[
+            styles.quantityLabelText, 
+            !isAvailable && { color: colors.neutral + '80' },
+            hasValidationError && styles.quantityLabelValidationError
+          ]}>
+            Quantity {hasValidationError && (
+              <MaterialCommunityIcons name="alert" size={14} color={colors.warning} />
+            )}
+          </Text>
         </View>
         <View style={styles.quantityControls}>
           <TouchableOpacity
-            style={[styles.quantityButton, !isAvailable && { backgroundColor: colors.base200 }]}
+            style={[
+              styles.quantityButton, 
+              !isAvailable && { backgroundColor: colors.base200 }
+            ]}
             onPress={() => updateQuantity(index, -1)}
             disabled={!isAvailable}
           >
             <MaterialCommunityIcons name="minus" size={20} color={isAvailable ? colors.white : colors.neutral + '80'} />
           </TouchableOpacity>
-          <Text style={[styles.quantityText, !isAvailable && { color: colors.neutral + '80' } ]}>
+          <Text style={[
+            styles.quantityText, 
+            !isAvailable && { color: colors.neutral + '80' },
+            hasValidationError && styles.quantityTextValidationError
+          ]}>
             {item.unit === 'KG' ? item.quantity.toFixed(2) : item.quantity}
           </Text>
           <TouchableOpacity
-            style={[styles.quantityButton, !isAvailable && { backgroundColor: colors.base200 }]}
+            style={[
+              styles.quantityButton, 
+              !isAvailable && { backgroundColor: colors.base200 }
+            ]}
             onPress={() => updateQuantity(index, 1)}
             disabled={!isAvailable}
           >
@@ -314,6 +402,14 @@ export default function AIResultsModal() {
                     </Text>
                   </View>
                 )}
+                {validationResults.hasErrors && (
+                  <View style={styles.summaryItem}>
+                    <MaterialCommunityIcons name="alert" size={20} color={colors.warning} />
+                    <Text style={styles.summaryText}>
+                      {`${validationResults.errors.length} need${validationResults.errors.length > 1 ? '' : 's'} min quantity`}
+                    </Text>
+                  </View>
+                )}
               </View>
             </View>
           </View>
@@ -348,9 +444,28 @@ export default function AIResultsModal() {
             </TouchableOpacity>
             
             {materials.length > 0 && (
-              <TouchableOpacity style={styles.addToCartButton} onPress={addToCart}>
-                <MaterialCommunityIcons name="cart-plus" size={20} color={colors.white} />
-                <Text style={styles.addToCartButtonText}>{`Add to Cart (${availableCount})`}</Text>
+              <TouchableOpacity 
+                style={[
+                  styles.addToCartButton,
+                  validationResults.hasErrors && styles.addToCartButtonDisabled
+                ]}
+                onPress={addToCart}
+                disabled={validationResults.hasErrors}
+              >
+                <MaterialCommunityIcons 
+                  name={validationResults.hasErrors ? "alert" : "cart-plus"} 
+                  size={20} 
+                  color={validationResults.hasErrors ? colors.warning : colors.white} 
+                />
+                <Text style={[
+                  styles.addToCartButtonText,
+                  validationResults.hasErrors && styles.addToCartButtonTextDisabled
+                ]}>
+                  {validationResults.hasErrors 
+                    ? `Fix ${validationResults.errors.length} Item${validationResults.errors.length > 1 ? 's' : ''} First`
+                    : `Add to Cart (${availableCount})`
+                  }
+                </Text>
               </TouchableOpacity>
             )}
           </View>
@@ -636,11 +751,11 @@ const styles = StyleSheet.create({
     shadowColor: colors.primary,
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 1,
     },
     shadowOpacity: 0.2,
     shadowRadius: 3,
-    elevation: 2,
+    elevation: 0,
   },
   quantityText: {
     ...typography.title,
@@ -771,17 +886,65 @@ const styles = StyleSheet.create({
   summaryItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.background + '80',
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    borderRadius: borderRadius.sm,
-    borderWidth: 1,
-    borderColor: colors.background + '60',
+    gap: spacing.xs,
   },
   summaryText: {
     ...typography.caption,
-    color: colors.text,
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  
+  // Validation error styles
+  materialItemValidationError: {
+    borderColor: colors.warning + '60',
+    borderWidth: 1,
+    backgroundColor: colors.white,
+    // Remove all shadows for clean appearance
+    shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
+  },
+  materialNameValidationError: {
+    color: colors.warning,
+    fontWeight: '700',
+  },
+  materialUnitValidationError: {
+    color: colors.warning,
+    backgroundColor: colors.warning + '12',
+    borderWidth: 0,
+  },
+  matchInfoValidationError: {
+    color: colors.warning,
+    backgroundColor: colors.warning + '12',
+  },
+  quantityLabelValidationError: {
+    color: colors.warning,
+    fontWeight: '700',
+  },
+  quantityTextValidationError: {
+    color: colors.warning,
+    fontWeight: '800',
+  },
+  validationErrorLabel: {
+    ...typography.caption,
+    color: colors.warning,
+    fontWeight: '700',
+    fontSize: 10,
+    backgroundColor: colors.warning + '15',
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 2,
+    borderRadius: borderRadius.xs,
+  },
+  addToCartButtonDisabled: {
+    backgroundColor: colors.base200,
+    shadowColor: colors.base400,
+    shadowOpacity: 0.1,
+    elevation: 2,
+  },
+  addToCartButtonTextDisabled: {
+    color: colors.neutral,
     fontWeight: '600',
-    marginLeft: spacing.xs,
   },
 });

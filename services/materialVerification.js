@@ -10,18 +10,55 @@ export async function fetchDatabaseItems() {
       return cachedDatabaseItems;
     }
 
+    console.log('🔍 [Material Verification] Fetching categories from API...');
     const response = await apiService.get('/categories');
     
-    if (!response.data || !Array.isArray(response.data)) {
+    console.log('📊 [Material Verification] API Response:', {
+      response: response,
+      type: typeof response,
+      isArray: Array.isArray(response),
+      hasData: response && response.data,
+      dataIsArray: response && response.data && Array.isArray(response.data)
+    });
+    
+    // Handle different response formats
+    let categoriesData;
+    if (Array.isArray(response)) {
+      // Direct array response
+      categoriesData = response;
+    } else if (response && Array.isArray(response.data)) {
+      // Response with data property
+      categoriesData = response.data;
+    } else if (response && Array.isArray(response.categories)) {
+      // Response with categories property
+      categoriesData = response.categories;
+    } else {
+      console.error('🔥 [Material Verification] Unexpected response format:', response);
       throw new Error('Invalid response format from categories API');
     }
 
     const allItems = [];
     const itemsIndex = new Map();
 
-    response.data.forEach(category => {
+    // Process categories to extract items
+    categoriesData.forEach(category => {
+      console.log('🔍 [Material Verification] Processing category:', {
+        name: category.name,
+        id: category._id,
+        hasItems: !!(category.items),
+        itemsCount: category.items ? category.items.length : 0
+      });
+      
       if (category.items && Array.isArray(category.items)) {
         category.items.forEach(item => {
+          console.log('📝 [Material Verification] Processing item:', {
+            name: item.name,
+            id: item._id,
+            measurement_unit: item.measurement_unit,
+            points: item.points,
+            price: item.price
+          });
+          
           const itemData = {
             ...item,
             categoryId: category._id,
@@ -44,19 +81,55 @@ export async function fetchDatabaseItems() {
             itemsIndex.set(itemName + 's', itemData);
           }
         });
+      } else if (category.subcategories && Array.isArray(category.subcategories)) {
+        // Handle subcategories structure if it exists
+        category.subcategories.forEach(subcategory => {
+          const itemData = {
+            ...subcategory,
+            categoryId: category._id,
+            categoryName: category.name,
+            categoryDescription: category.description,
+            available: true
+          };
+          
+          allItems.push(itemData);
+
+          const itemName = subcategory.name.toLowerCase().trim();
+          itemsIndex.set(itemName, itemData);
+
+          const nameNoSpaces = itemName.replace(/\s+/g, '');
+          itemsIndex.set(nameNoSpaces, itemData);
+
+          if (itemName.endsWith('s')) {
+            itemsIndex.set(itemName.slice(0, -1), itemData);
+          } else {
+            itemsIndex.set(itemName + 's', itemData);
+          }
+        });
       }
     });
 
     const result = {
       items: allItems,
       index: itemsIndex,
-      categories: response.data
+      categories: categoriesData
     };
+
+    // Validate that we have items
+    if (allItems.length === 0) {
+      console.warn('⚠️ [Material Verification] No items found in categories response');
+      console.log('📊 [Material Verification] Categories structure:', categoriesData.map(cat => ({
+        name: cat.name,
+        keys: Object.keys(cat),
+        itemsType: typeof cat.items,
+        subcategoriesType: typeof cat.subcategories
+      })));
+    }
 
     cachedDatabaseItems = result;
     cacheTimestamp = Date.now();
 
-    console.log(`✅ Database items fetched: ${allItems.length} items from ${response.data.length} categories`);
+    console.log(`✅ Database items fetched: ${allItems.length} items from ${categoriesData.length} categories`);
     return result;
 
   } catch (error) {

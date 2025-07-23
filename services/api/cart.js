@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { validateQuantity } from '../../utils/cartUtils.js';
 import { API_ENDPOINTS, BASE_URLS } from './config';
 
 const BASE_URL = BASE_URLS.CART;
@@ -263,26 +264,6 @@ export async function getCart(isLoggedIn) {
   } catch (error) {
     console.warn('[cart API] getCart network error, returning empty cart:', error.message);
     return { items: [] };
-  }
-}
-
-// Validation function for quantity based on measurement unit
-export function validateQuantity(item) {
-  if (item.measurement_unit === 1) {
-    // KG - must be in 0.25 increments
-    if (item.quantity % 0.25 !== 0) {
-      throw new Error("For KG items, quantity must be in 0.25 increments (e.g., 0.25, 0.5, 0.75, 1.0).");
-    }
-    if (item.quantity <= 0) {
-      throw new Error("Quantity must be greater than 0.");
-    }
-  } else if (item.measurement_unit === 2) {
-    // Piece - must be whole numbers >= 1
-    if (!Number.isInteger(item.quantity) || item.quantity < 1) {
-      throw new Error("For Piece items, quantity must be whole numbers >= 1.");
-    }
-  } else {
-    throw new Error("Invalid measurement unit. Must be 1 (KG) or 2 (Piece).");
   }
 }
 

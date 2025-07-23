@@ -1,3 +1,4 @@
+import { validateQuantity } from '../../utils/cartUtils';
 import apiService from './apiService';
 
 /**
@@ -225,20 +226,14 @@ export const orderService = {
       throw new Error(`Item ${index + 1} missing required fields: ${missingFields.join(', ')}`);
     }
 
-    // Validate quantity based on measurement unit
-    if (item.measurement_unit === 1) {
-      // For KG items, must be in 0.25 increments
-      const multiplied = Math.round(item.quantity * 4);
-      if (item.quantity < 0.25 || Math.abs(item.quantity * 4 - multiplied) >= 0.0001) {
-        throw new Error(`Item ${index + 1}: For KG items, quantity must be in 0.25 increments (0.25, 0.5, 0.75, 1.0, etc.)`);
-      }
-    } else if (item.measurement_unit === 2) {
-      // For piece items, must be whole numbers >= 1
-      if (!Number.isInteger(item.quantity) || item.quantity < 1) {
-        throw new Error(`Item ${index + 1}: For piece items, quantity must be whole numbers >= 1`);
-      }
-    } else {
-      throw new Error(`Item ${index + 1}: Invalid measurement_unit. Must be 1 (KG) or 2 (Pieces)`);
+    // Use centralized validation from cartUtils
+    try {
+      validateQuantity({
+        quantity: item.quantity,
+        measurement_unit: item.measurement_unit
+      });
+    } catch (error) {
+      throw new Error(`Item ${index + 1}: ${error.message}`);
     }
   }
 };

@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { addressService } from '../services/api/addresses';
 import { orderService } from '../services/api/orders';
+import { validateQuantity } from '../utils/cartUtils';
 import { useCart } from './useCart';
 
 export const usePickupWorkflow = () => {
@@ -252,31 +253,11 @@ export const usePickupWorkflow = () => {
         throw new Error(`Item ${index + 1} missing required fields: ${missingItemFields.join(', ')}`);
       }
 
-      // Convert quantity to number if it's a string
-      const quantity = Number(item.quantity);
-      const measurementUnit = Number(item.measurement_unit);
-      
-      if (isNaN(quantity) || quantity <= 0) {
-        throw new Error(`Item ${index + 1}: Invalid quantity (${item.quantity})`);
-      }
-      
-      if (isNaN(measurementUnit)) {
-        throw new Error(`Item ${index + 1}: Invalid measurement unit (${item.measurement_unit})`);
-      }
-
-      // Validate quantity based on measurement unit
-      if (measurementUnit === 1) {
-        // For KG items, must be in 0.25 increments
-        const multiplied = Math.round(quantity * 4);
-        if (quantity < 0.25 || Math.abs(quantity * 4 - multiplied) >= 0.0001) {
-          throw new Error(`Item ${index + 1}: For KG items, quantity must be in 0.25 increments (current: ${quantity})`);
-        }
-      } else if (measurementUnit === 2) {
-        // For piece items, must be whole numbers >= 1
-        if (!Number.isInteger(quantity) || quantity < 1) {
-          throw new Error(`Item ${index + 1}: For piece items, quantity must be whole numbers >= 1 (current: ${quantity}, type: ${typeof quantity})`);
-        }
-      }
+      // Validate each item using centralized validation
+      validateQuantity({
+        quantity: Number(item.quantity),
+        measurement_unit: Number(item.measurement_unit)
+      });
     });
   };
 
