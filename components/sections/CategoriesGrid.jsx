@@ -249,12 +249,12 @@ const CategoriesGrid = ({ searchText = '', onCategoryPress, onFilteredCountChang
 };
 const styles = StyleSheet.create({
     scrollContainer: {
-        paddingBottom: 120,
+        paddingBottom: 40,
         paddingHorizontal: 5,
         backgroundColor: 'transparent',
     },
     itemsScrollContainer: {
-        paddingBottom: 120,
+        paddingBottom: 5,
         paddingHorizontal: spacing.sm,
         backgroundColor: 'transparent',
     },
