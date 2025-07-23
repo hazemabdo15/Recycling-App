@@ -1,8 +1,12 @@
 import { useCallback, useState } from 'react';
 import { addressService } from '../services/api/addresses';
 import { orderService } from '../services/api/orders';
+import { useCart } from './useCart';
 
 export const usePickupWorkflow = () => {
+  // Get cart clearing function
+  const { handleClearCart } = useCart();
+  
   // API state
   const [addresses, setAddresses] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -191,6 +195,15 @@ export const usePickupWorkflow = () => {
       
       console.log('[Pickup Workflow] Order created successfully:', order._id);
       
+      // Clear the cart after successful order creation
+      try {
+        handleClearCart();
+        console.log('[Pickup Workflow] Cart cleared after successful order creation');
+      } catch (cartError) {
+        console.warn('[Pickup Workflow] Failed to clear cart:', cartError.message);
+        // Don't throw here - order was successful, cart clearing is secondary
+      }
+      
       // Move to confirmation phase
       setCurrentPhase(3);
       
@@ -202,7 +215,7 @@ export const usePickupWorkflow = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedAddress]);
+  }, [selectedAddress, handleClearCart]);
 
   // Validate order data
   const validateOrderData = (orderData) => {
