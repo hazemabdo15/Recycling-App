@@ -3,6 +3,9 @@ import {
     Text,
     TouchableOpacity,
     View,
+    ScrollView,
+    Image,
+    StyleSheet,
 } from 'react-native';
 import { categoriesAPI } from '../../services/api';
 
@@ -20,6 +23,7 @@ const ReviewPhase = ({ selectedAddress, cartItems, onConfirm, onBack, loading })
 
   const [allItems, setAllItems] = useState([]);
   const [itemsLoaded, setItemsLoaded] = useState(false);
+  const [cartItemsDisplay, setCartItemsDisplay] = useState([]);
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -38,6 +42,43 @@ const ReviewPhase = ({ selectedAddress, cartItems, onConfirm, onBack, loading })
     
     fetchItems();
   }, []);
+
+  // Update cart display items when allItems or cartItems change
+  useEffect(() => {
+    if (itemsLoaded && cartItems && allItems.length > 0) {
+      const displayItems = Object.entries(cartItems).map(([categoryId, quantity]) => {
+        const realItem = allItems.find(item => item._id === categoryId || item.categoryId === categoryId);
+        
+        if (realItem) {
+          return {
+            categoryId,
+            quantity,
+            itemName: realItem.name,
+            measurement_unit: realItem.measurement_unit,
+            points: realItem.points || 10,
+            price: realItem.price || 5.0,
+            image: realItem.image,
+            totalPoints: (realItem.points || 10) * quantity,
+            totalPrice: (realItem.price || 5.0) * quantity
+          };
+        } else {
+          return {
+            categoryId,
+            quantity,
+            itemName: `Item ${categoryId}`,
+            measurement_unit: 'KG',
+            points: 10,
+            price: 5.0,
+            image: null,
+            totalPoints: 10 * quantity,
+            totalPrice: 5.0 * quantity
+          };
+        }
+      });
+      
+      setCartItemsDisplay(displayItems);
+    }
+  }, [itemsLoaded, cartItems, allItems]);
 
   const handleConfirm = () => {
     console.log('[ReviewPhase] MINIMAL confirm pressed');
@@ -98,60 +139,292 @@ const ReviewPhase = ({ selectedAddress, cartItems, onConfirm, onBack, loading })
     }
   };
 
-  return (
-    <View style={{ flex: 1, padding: 20, backgroundColor: '#f5f5f5' }}>
-      <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 20 }}>
-        Review Phase - Minimal Test Version
-      </Text>
-      <Text style={{ marginBottom: 10 }}>
-        Address: {selectedAddress?.street || 'No address'}
-      </Text>
-      <Text style={{ marginBottom: 10 }}>
-        Cart Items: {Object.keys(cartItems || {}).length}
-      </Text>
-      <Text style={{ marginBottom: 10 }}>
-        Items Loaded: {itemsLoaded ? `${allItems.length} items` : 'Loading...'}
-      </Text>
-      <Text style={{ marginBottom: 20 }}>
-        Loading: {loading ? 'Yes' : 'No'}
-      </Text>
-      
-      <TouchableOpacity 
-        style={{ 
-          backgroundColor: itemsLoaded ? '#007AFF' : '#cccccc', 
-          padding: 15, 
-          borderRadius: 8, 
-          alignItems: 'center',
-          marginBottom: 10
-        }}
-        onPress={handleConfirm}
-        disabled={!itemsLoaded}
-      >
-        <Text style={{ color: 'white', fontWeight: 'bold' }}>
-          {itemsLoaded ? 'Minimal Confirm' : 'Loading Items...'}
-        </Text>
-      </TouchableOpacity>
-      
-      <TouchableOpacity 
-        style={{ 
-          backgroundColor: '#FF3B30', 
-          padding: 15, 
-          borderRadius: 8, 
-          alignItems: 'center' 
-        }}
-        onPress={() => {
-          console.log('[ReviewPhase] MINIMAL back pressed');
-          if (typeof onBack === 'function') {
-            onBack();
-          }
-        }}
-      >
-        <Text style={{ color: 'white', fontWeight: 'bold' }}>
-          Minimal Back
-        </Text>
-      </TouchableOpacity>
+  // Calculate totals
+  const totalItems = cartItemsDisplay.reduce((sum, item) => sum + item.quantity, 0);
+  const totalPoints = cartItemsDisplay.reduce((sum, item) => sum + item.totalPoints, 0);
+  const totalPrice = cartItemsDisplay.reduce((sum, item) => sum + item.totalPrice, 0);
+
+  const renderCartItem = (item, index) => (
+    <View key={index} style={styles.itemCard}>
+      <View style={styles.itemContent}>
+        {item.image ? (
+          <Image 
+            source={{ uri: item.image }} 
+            style={styles.itemImage}
+            onError={() => console.log('Failed to load image:', item.image)}
+          />
+        ) : (
+          <View style={styles.placeholderImage}>
+            <Text style={styles.placeholderText}>📦</Text>
+          </View>
+        )}
+        
+        <View style={styles.itemDetails}>
+          <Text style={styles.itemName}>{item.itemName}</Text>
+          <Text style={styles.itemUnit}>
+            {item.quantity} {item.measurement_unit}
+          </Text>
+          <View style={styles.itemStats}>
+            <Text style={styles.points}>{item.totalPoints} pts</Text>
+            <Text style={styles.price}>{item.totalPrice.toFixed(2)} EGP</Text>
+          </View>
+        </View>
+      </View>
     </View>
   );
+
+  return (
+    <ScrollView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Review Your Order</Text>
+        <Text style={styles.subtitle}>
+          {selectedAddress?.street ? `Delivery to ${selectedAddress.street}` : 'No address selected'}
+        </Text>
+      </View>
+
+      {!itemsLoaded ? (
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading items...</Text>
+        </View>
+      ) : (
+        <>
+          <View style={styles.itemsSection}>
+            <Text style={styles.sectionTitle}>Items in your cart:</Text>
+            {cartItemsDisplay.map((item, index) => renderCartItem(item, index))}
+          </View>
+
+          <View style={styles.summarySection}>
+            <Text style={styles.sectionTitle}>Order Summary:</Text>
+            <View style={styles.summaryCard}>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Total Items:</Text>
+                <Text style={styles.summaryValue}>{totalItems}</Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Total Points:</Text>
+                <Text style={[styles.summaryValue, styles.pointsText]}>{totalPoints}</Text>
+              </View>
+              <View style={[styles.summaryRow, styles.totalRow]}>
+                <Text style={styles.totalLabel}>Total Price:</Text>
+                <Text style={styles.totalValue}>{totalPrice.toFixed(2)} EGP</Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.actionsSection}>
+            <TouchableOpacity 
+              style={styles.confirmButton}
+              onPress={handleConfirm}
+              disabled={!itemsLoaded}
+            >
+              <Text style={styles.confirmButtonText}>
+                Confirm Order
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={() => {
+                console.log('[ReviewPhase] Back pressed');
+                if (typeof onBack === 'function') {
+                  onBack();
+                }
+              }}
+            >
+              <Text style={styles.backButtonText}>
+                Back to Address
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
+    </ScrollView>
+  );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  header: {
+    padding: 20,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 5,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#666',
+  },
+  itemsSection: {
+    padding: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 15,
+  },
+  itemCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    marginBottom: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  itemContent: {
+    flexDirection: 'row',
+    padding: 15,
+    alignItems: 'center',
+  },
+  itemImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    backgroundColor: '#f0f0f0',
+  },
+  placeholderImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    backgroundColor: '#e0e0e0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  placeholderText: {
+    fontSize: 24,
+  },
+  itemDetails: {
+    flex: 1,
+    marginLeft: 15,
+  },
+  itemName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
+  },
+  itemUnit: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 8,
+  },
+  itemStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  points: {
+    fontSize: 14,
+    color: '#4CAF50',
+    fontWeight: '600',
+  },
+  price: {
+    fontSize: 14,
+    color: '#2196F3',
+    fontWeight: '600',
+  },
+  summarySection: {
+    padding: 20,
+    paddingTop: 0,
+  },
+  summaryCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  summaryLabel: {
+    fontSize: 16,
+    color: '#666',
+  },
+  summaryValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  pointsText: {
+    color: '#4CAF50',
+  },
+  totalRow: {
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+    paddingTop: 12,
+    marginTop: 8,
+    marginBottom: 0,
+  },
+  totalLabel: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  totalValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2196F3',
+  },
+  actionsSection: {
+    padding: 20,
+    paddingTop: 0,
+  },
+  confirmButton: {
+    backgroundColor: '#4CAF50',
+    padding: 18,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  confirmButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  backButton: {
+    backgroundColor: '#fff',
+    padding: 18,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  backButtonText: {
+    color: '#666',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+});
 
 export default ReviewPhase;
