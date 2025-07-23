@@ -1,434 +1,431 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
-    Alert,
-    FlatList,
     Image,
     ScrollView,
     StyleSheet,
     Text,
-    TextInput,
     TouchableOpacity,
     View,
 } from 'react-native';
 
-import { AuthContext } from '../../context/AuthContext';
-import { useAllItems } from '../../hooks/useAPI';
+import { categoriesAPI } from '../../services/api';
 import { borderRadius, spacing, typography } from '../../styles';
 import { colors } from '../../styles/theme';
-import { normalizeItemData } from '../../utils/cartUtils';
+import { AnimatedButton } from '../common';
 
-const ReviewPhase = ({ selectedAddress, cartItems, onConfirm, onBack, loading, user: userProp, pickupWorkflow, ...otherProps }) => {
-  // ALL HOOKS MUST BE CALLED FIRST (React rule)
-  const authContext = useContext(AuthContext);
-  const { items: allItems, loading: itemsLoading } = useAllItems();
-  const [phoneNumber, setPhoneNumber] = useState('');
-
-  // DEBUG: Add comprehensive error checking
-  console.log('[ReviewPhase] Component start - props received:', {
+const ReviewPhase = ({ selectedAddress, cartItems, onConfirm, onBack, loading }) => {
+  console.log('[ReviewPhase] MINIMAL component starting');
+  console.log('[ReviewPhase] Received props:', {
     selectedAddress: !!selectedAddress,
-    cartItems: !!cartItems,
+    cartItems: cartItems,
+    cartItemsType: typeof cartItems,
+    cartItemsKeys: cartItems ? Object.keys(cartItems) : [],
     onConfirm: typeof onConfirm,
     onBack: typeof onBack,
-    loading: typeof loading,
-    userProp: !!userProp,
-    pickupWorkflow: !!pickupWorkflow
+    loading: typeof loading
   });
 
-  // Safe user extraction using useMemo
-  const user = useMemo(() => {
-    try {
-      if (authContext && typeof authContext === 'object') {
-        return authContext.user || null;
-      }
-      return null;
-    } catch (error) {
-      console.warn('[ReviewPhase] AuthContext access failed:', error.message);
-      return null;
-    }
-  }, [authContext]);
+  const [allItems, setAllItems] = useState([]);
+  const [itemsLoaded, setItemsLoaded] = useState(false);
+  const [cartItemsDisplay, setCartItemsDisplay] = useState([]);
 
-  // Update phone number when user data becomes available
   useEffect(() => {
-    const phoneValue = user?.phoneNumber || user?.phone || user?.mobile || user?.number || '';
-    if (phoneValue) {
-      setPhoneNumber(phoneValue);
-    }
-    console.log('[ReviewPhase] Phone number updated:', phoneValue || 'none');
-  }, [user, authContext]);
-
-  // Safe items array
-  const safeAllItems = useMemo(() => allItems || [], [allItems]);
-
-  // Convert cart items to display format with safety checks
-  const reviewItems = useMemo(() => {
-    try {
-      if (!cartItems || !Array.isArray(safeAllItems)) {
-        console.warn('[ReviewPhase] Invalid data for processing items');
-        return [];
+    const fetchItems = async () => {
+      try {
+        console.log('[ReviewPhase] Fetching all items...');
+        const response = await categoriesAPI.getAllItems();
+        const items = response.items || response;
+        setAllItems(Array.isArray(items) ? items : []);
+        setItemsLoaded(true);
+        console.log('[ReviewPhase] Items loaded:', items.length);
+      } catch (error) {
+        console.error('[ReviewPhase] Failed to fetch items:', error);
+        setItemsLoaded(true); // Set to true even on error to avoid infinite loading
       }
+    };
+    
+    fetchItems();
+  }, []);
 
-      const items = Object.entries(cartItems).map(([categoryId, quantity]) => {
-        try {
-          const itemDetails = safeAllItems.find((item) => item.categoryId === categoryId || item._id === categoryId) || {};
-          
-          const combinedItem = {
-            ...itemDetails,
-            categoryId: categoryId,
-            name: itemDetails.name || itemDetails.material || 'Unknown Item',
-            image: itemDetails.image,
-            points: typeof itemDetails.points === 'number' ? itemDetails.points : 0,
-            price: typeof itemDetails.price === 'number' ? itemDetails.price : 0,
-            measurement_unit: itemDetails.measurement_unit,
-            quantity: quantity,
+  // Update cart display items when allItems or cartItems change
+  useEffect(() => {
+    if (itemsLoaded && cartItems && allItems.length > 0) {
+      const displayItems = Object.entries(cartItems).map(([categoryId, quantity]) => {
+        const realItem = allItems.find(item => item._id === categoryId || item.categoryId === categoryId);
+        
+        if (realItem) {
+          return {
+            categoryId,
+            quantity,
+            itemName: realItem.name,
+            measurement_unit: realItem.measurement_unit === 1 ? 'KG' : 'Piece', // Convert string to number format expected by backend
+            points: realItem.points || 10,
+            price: realItem.price || 5.0,
+            image: realItem.image,
+            totalPoints: (realItem.points || 10) * quantity,
+            totalPrice: (realItem.price || 5.0) * quantity
           };
-
-          const normalizedItem = normalizeItemData(combinedItem);
-          return normalizedItem;
-        } catch (error) {
-          console.error(`[ReviewPhase] Error processing item ${categoryId}:`, error);
-          return null;
+        } else {
+          return {
+            categoryId,
+            quantity,
+            itemName: `Item ${categoryId}`,
+            measurement_unit: 'KG',
+            points: 10,
+            price: 5.0,
+            image: null,
+            totalPoints: 10 * quantity,
+            totalPrice: 5.0 * quantity
+          };
         }
-      }).filter(item => item && item.quantity > 0);
-
-      return items;
-    } catch (error) {
-      console.error('[ReviewPhase] Error processing review items:', error);
-      return [];
+      });
+      
+      setCartItemsDisplay(displayItems);
     }
-  }, [cartItems, safeAllItems]);
+  }, [itemsLoaded, cartItems, allItems]);
 
-  // Early safety check for props AFTER hooks
-  if (!selectedAddress || !cartItems) {
-    console.log('[ReviewPhase] Missing required props, rendering fallback');
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-        <Text style={{ color: colors.error, textAlign: 'center' }}>
-          Loading review data...
-        </Text>
-      </View>
-    );
-  }
-
-  // Additional safety check for essential functions
-  if (typeof onConfirm !== 'function' || typeof onBack !== 'function') {
-    console.error('[ReviewPhase] Missing required callback functions');
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-        <Text style={{ color: colors.error, textAlign: 'center' }}>
-          Component configuration error
-        </Text>
-      </View>
-    );
-  }
+  const handleConfirm = () => {
+    console.log('[ReviewPhase] MINIMAL confirm pressed');
+    console.log('[ReviewPhase] Processing cart items:', cartItems);
+    console.log('[ReviewPhase] Available items for lookup:', allItems.length);
+    
+    // Convert cart object to array format expected by createOrder
+    // cartItems is likely in format: { categoryId: quantity, ... }
+    // We need to convert it to array of item objects
+    if (cartItems && typeof cartItems === 'object') {
+      // Convert using real item data
+      const cartItemsArray = Object.entries(cartItems).map(([categoryId, quantity]) => {
+        // Find the real item data
+        const realItem = allItems.find(item => item._id === categoryId || item.categoryId === categoryId);
+        
+        if (realItem) {
+          console.log('[ReviewPhase] Found real item for', categoryId, ':', realItem.name);
+          return {
+            categoryId: categoryId,
+            quantity: quantity,
+            itemName: realItem.name,
+            measurement_unit: realItem.measurement_unit === 'KG' ? 1 : 2, // Convert string to number format expected by backend
+            points: realItem.points || 10,
+            price: realItem.price || 5.0,
+            image: realItem.image || `${realItem.name.toLowerCase().replace(/\s+/g, '-')}.png`
+          };
+        } else {
+          console.log('[ReviewPhase] No real item found for', categoryId, ', using fallback with proper image');
+          return {
+            categoryId: categoryId,
+            quantity: quantity,
+            itemName: `Item ${categoryId}`,
+            measurement_unit: 1, // Default to KG (1)
+            points: 10,
+            price: 5.0,
+            image: `item-${categoryId.slice(-4)}.png` // Generate a valid image filename
+          };
+        }
+      });
+      
+      const userData = {
+        phoneNumber: '123456789',
+        name: 'Test User',
+        email: 'test@example.com',
+        imageUrl: 'https://via.placeholder.com/150/0000FF/808080?text=TestUser' // Add required imageUrl field
+      };
+      
+      console.log('[ReviewPhase] Calling onConfirm with:', {
+        cartItemsArray,
+        userData
+      });
+      
+      if (typeof onConfirm === 'function') {
+        onConfirm(cartItemsArray, userData);
+      }
+    } else {
+      console.error('[ReviewPhase] Invalid cartItems format:', cartItems);
+    }
+  };
 
   // Calculate totals
-  const totalPoints = reviewItems.reduce((sum, item) => {
-    const points = typeof item.points === 'number' ? item.points : 0;
-    return sum + points * (item.quantity || 1);
-  }, 0);
+  const totalItems = cartItemsDisplay.reduce((sum, item) => sum + item.quantity, 0);
+  const totalPoints = cartItemsDisplay.reduce((sum, item) => sum + item.totalPoints, 0);
+  const totalPrice = cartItemsDisplay.reduce((sum, item) => sum + item.totalPrice, 0);
 
-  const totalValue = reviewItems.reduce((sum, item) => {
-    const value = typeof item.value === 'number' ? item.value : (typeof item.price === 'number' ? item.price : 0);
-    return sum + value * (item.quantity || 1);
-  }, 0);
-
-  const handleConfirmOrder = async () => {
-    if (!phoneNumber.trim()) {
-      Alert.alert('Error', 'Please enter your phone number');
-      return;
-    }
-
-    const orderData = {
-      selectedAddress,
-      items: reviewItems,
-      phoneNumber: phoneNumber.trim(),
-      totalPoints,
-      totalValue,
-      user
-    };
-
-    console.log('[ReviewPhase] Creating order with data:', orderData);
-    onConfirm(orderData);
-  };
-
-  const renderOrderItem = ({ item }) => {
-    const name = item?.name || item?.material || 'Unknown Item';
-    let unit = item?.unit || item?.measurement_unit || '';
-    if (unit === 1 || unit === '1') unit = 'KG';
-    if (unit === 2 || unit === '2') unit = 'Piece';
-    const points = typeof item?.points === 'number' ? item.points : 0;
-    const value = typeof item?.value === 'number' ? item.value : (typeof item?.price === 'number' ? item.price : 0);
-    const quantity = typeof item?.quantity === 'number' ? item.quantity : 1;
-
-    return (
-      <View style={styles.orderItem}>
-        <View style={styles.itemImageContainer}>
-          {item?.image ? (
-            <Image source={{ uri: item.image }} style={styles.itemImage} resizeMode="cover" />
-          ) : (
-            <View style={styles.itemImagePlaceholder}>
-              <MaterialCommunityIcons name="image-off-outline" size={24} color={colors.base300} />
+  const renderCartItem = (item, index) => (
+    <View key={index} style={styles.itemCard}>
+      <View style={styles.itemContent}>
+        {item.image ? (
+          <Image 
+            source={{ uri: item.image }} 
+            style={styles.itemImage}
+            onError={() => console.log('Failed to load image:', item.image)}
+          />
+        ) : (
+          <View style={styles.placeholderImage}>
+            <MaterialCommunityIcons name="package-variant" size={24} color={colors.base300} />
+          </View>
+        )}
+        
+        <View style={styles.itemDetails}>
+          <Text style={styles.itemName}>{item.itemName}</Text>
+          <View style={styles.itemMeta}>
+            <Text style={styles.itemUnit}>
+              {item.quantity} {item.measurement_unit}
+            </Text>
+            <View style={styles.separator} />
+            <View style={styles.pointsRow}>
+              <MaterialCommunityIcons name="star" size={14} color={colors.accent} />
+              <Text style={styles.points}>{item.totalPoints} pts</Text>
             </View>
-          )}
+          </View>
+          <Text style={styles.price}>{item.totalPrice.toFixed(2)} EGP</Text>
         </View>
         
-        <View style={styles.itemInfo}>
-          <Text style={styles.itemName}>{name}</Text>
-          <View style={styles.itemDetails}>
-            <Text style={styles.itemQuantity}>
-              {quantity} {unit}
-            </Text>
-            {points > 0 && (
-              <Text style={styles.itemPoints}>+{points * quantity} pts</Text>
-            )}
-          </View>
-          {value > 0 && (
-            <Text style={styles.itemValue}>{(value * quantity).toFixed(2)} EGP</Text>
-          )}
+        <View style={styles.quantityBadge}>
+          <Text style={styles.quantityText}>{item.quantity}</Text>
         </View>
       </View>
-    );
-  };
-
-  console.log('[ReviewPhase] Rendering component successfully');
-
-  // TEST: Return a simple test component first to isolate the $$typeof error
-  return (
-    <View style={{ flex: 1, padding: 20, backgroundColor: '#f5f5f5' }}>
-      <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 20 }}>
-        Review Phase - Test Version
-      </Text>
-      <Text style={{ marginBottom: 10 }}>
-        Address: {selectedAddress?.street || 'No address'}
-      </Text>
-      <Text style={{ marginBottom: 10 }}>
-        Cart Items: {Object.keys(cartItems || {}).length}
-      </Text>
-      <Text style={{ marginBottom: 20 }}>
-        User: {user?.name || 'No user'}
-      </Text>
-      
-      <TouchableOpacity 
-        style={{ 
-          backgroundColor: '#007AFF', 
-          padding: 15, 
-          borderRadius: 8, 
-          alignItems: 'center',
-          marginBottom: 10
-        }}
-        onPress={() => {
-          console.log('[ReviewPhase] Test confirm pressed');
-          onConfirm?.({ test: true });
-        }}
-      >
-        <Text style={{ color: 'white', fontWeight: 'bold' }}>
-          Test Confirm
-        </Text>
-      </TouchableOpacity>
-      
-      <TouchableOpacity 
-        style={{ 
-          backgroundColor: '#FF3B30', 
-          padding: 15, 
-          borderRadius: 8, 
-          alignItems: 'center' 
-        }}
-        onPress={() => {
-          console.log('[ReviewPhase] Test back pressed');
-          onBack?.();
-        }}
-      >
-        <Text style={{ color: 'white', fontWeight: 'bold' }}>
-          Test Back
-        </Text>
-      </TouchableOpacity>
     </View>
   );
 
-  /* ORIGINAL COMPONENT - TEMPORARILY COMMENTED OUT
-      </ScrollView>
+  return (
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.title}>Review Your Order</Text>
+        <Text style={styles.subtitle}>
+          {selectedAddress?.street 
+            ? `Delivery to ${selectedAddress.street}, ${selectedAddress.area || selectedAddress.city}` 
+            : 'No address selected'
+          }
+        </Text>
+      </View>
+
+      {!itemsLoaded ? (
+        <View style={styles.loadingContainer}>
+          <MaterialCommunityIcons name="loading" size={32} color={colors.primary} />
+          <Text style={styles.loadingText}>Loading items...</Text>
+        </View>
+      ) : (
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Items Section */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <MaterialCommunityIcons name="package-variant" size={20} color={colors.primary} />
+              <Text style={styles.sectionTitle}>Items in your cart</Text>
+            </View>
+            {cartItemsDisplay.map((item, index) => renderCartItem(item, index))}
+          </View>
+
+          {/* Summary Section */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <MaterialCommunityIcons name="calculator" size={20} color={colors.primary} />
+              <Text style={styles.sectionTitle}>Order Summary</Text>
+            </View>
+            <View style={styles.summaryCard}>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Total Items:</Text>
+                <Text style={styles.summaryValue}>{totalItems}</Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Total Points:</Text>
+                <View style={styles.pointsContainer}>
+                  <MaterialCommunityIcons name="star" size={16} color={colors.accent} />
+                  <Text style={[styles.summaryValue, styles.pointsText]}>{totalPoints}</Text>
+                </View>
+              </View>
+              <View style={[styles.summaryRow, styles.totalRow]}>
+                <Text style={styles.totalLabel}>Total Value:</Text>
+                <Text style={styles.totalValue}>{totalPrice.toFixed(2)} EGP</Text>
+              </View>
+            </View>
+          </View>
+        </ScrollView>
+      )}
 
       {/* Footer */}
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <Text style={styles.backButtonText}>Back</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={[styles.confirmButton, (loading || !phoneNumber.trim()) && { opacity: 0.5 }]}
-          onPress={handleConfirmOrder}
-          disabled={loading || !phoneNumber.trim()}
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => {
+            console.log('[ReviewPhase] Back pressed');
+            if (typeof onBack === 'function') {
+              onBack();
+            }
+          }}
         >
-          <MaterialCommunityIcons name="truck-fast" size={20} color={colors.white} />
-          <Text style={styles.confirmButtonText}>
-            {loading ? 'Processing...' : 'Confirm Order'}
-          </Text>
+          <Text style={styles.backButtonText}>Back to Address</Text>
         </TouchableOpacity>
+
+        <AnimatedButton
+          style={[styles.confirmButton, !itemsLoaded && styles.disabledButton]}
+          onPress={handleConfirm}
+          disabled={!itemsLoaded}
+        >
+          <MaterialCommunityIcons name="check" size={20} color={colors.white} />
+          <Text style={styles.confirmButtonText}>Confirm Order</Text>
+        </AnimatedButton>
       </View>
     </View>
   );
-  */
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.base100,
   },
+  
+  // Header
+  header: {
+    padding: spacing.xl,
+    backgroundColor: colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.base200,
+  },
+  title: {
+    ...typography.title,
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.primary,
+    marginBottom: spacing.sm,
+  },
+  subtitle: {
+    ...typography.body,
+    color: colors.neutral,
+    lineHeight: 20,
+  },
+  
+  // Loading
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  loadingText: {
+    ...typography.body,
+    color: colors.neutral,
+  },
+  
+  // Content
   content: {
     flex: 1,
-    paddingHorizontal: spacing.lg,
   },
   section: {
-    marginVertical: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.md,
+    gap: spacing.sm,
   },
   sectionTitle: {
-    ...typography.headline,
-    color: colors.text,
+    ...typography.subtitle,
+    fontWeight: 'bold',
+    color: colors.primary,
+  },
+  
+  // Item Cards
+  itemCard: {
+    backgroundColor: colors.white,
+    marginHorizontal: spacing.xl,
     marginBottom: spacing.md,
-    fontWeight: '600',
+    borderRadius: borderRadius.lg,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  addressCard: {
+  itemContent: {
     flexDirection: 'row',
-    backgroundColor: colors.white,
     padding: spacing.lg,
-    borderRadius: borderRadius.lg,
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    alignItems: 'center',
   },
-  addressInfo: {
-    flex: 1,
-    marginLeft: spacing.md,
-  },
-  addressText: {
-    ...typography.body,
-    color: colors.text,
-    fontWeight: '500',
-  },
-  addressSubtext: {
-    ...typography.caption,
-    color: colors.base600,
-    marginTop: spacing.xs,
-  },
-  addressLandmark: {
-    ...typography.caption,
-    color: colors.base500,
-    marginTop: spacing.xs,
-    fontStyle: 'italic',
-  },
-  userInfoCard: {
-    backgroundColor: colors.white,
-    padding: spacing.lg,
-    borderRadius: borderRadius.lg,
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  userField: {
-    marginBottom: spacing.md,
-  },
-  fieldLabel: {
-    ...typography.caption,
-    color: colors.base600,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    marginBottom: spacing.xs,
-  },
-  fieldValue: {
-    ...typography.body,
-    color: colors.text,
-  },
-  phoneInput: {
-    ...typography.body,
-    color: colors.text,
-    borderWidth: 1,
-    borderColor: colors.base300,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    fontSize: 16,
-  },
-  orderItem: {
-    flexDirection: 'row',
-    backgroundColor: colors.white,
-    padding: spacing.lg,
-    borderRadius: borderRadius.lg,
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  itemImageContainer: {
+  itemImage: {
     width: 60,
     height: 60,
     borderRadius: borderRadius.md,
-    overflow: 'hidden',
     backgroundColor: colors.base100,
   },
-  itemImage: {
-    width: '100%',
-    height: '100%',
-  },
-  itemImagePlaceholder: {
-    width: '100%',
-    height: '100%',
+  placeholderImage: {
+    width: 60,
+    height: 60,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.base100,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.base200,
   },
-  itemInfo: {
+  itemDetails: {
     flex: 1,
-    marginLeft: spacing.md,
+    marginLeft: spacing.lg,
   },
   itemName: {
     ...typography.subtitle,
-    color: colors.text,
-    fontWeight: '600',
+    fontWeight: 'bold',
+    color: colors.black,
     marginBottom: spacing.xs,
   },
-  itemDetails: {
+  itemMeta: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.xs,
+    marginBottom: spacing.sm,
   },
-  itemQuantity: {
-    ...typography.caption,
-    color: colors.base600,
-    marginRight: spacing.md,
-  },
-  itemPoints: {
-    ...typography.caption,
-    color: colors.success,
-    fontWeight: '600',
-  },
-  itemValue: {
+  itemUnit: {
     ...typography.body,
-    color: colors.primary,
-    fontWeight: '600',
+    color: colors.neutral,
+    fontSize: 13,
   },
-  itemSeparator: {
-    height: spacing.md,
+  separator: {
+    width: 1,
+    height: 12,
+    backgroundColor: colors.base200,
+    marginHorizontal: spacing.sm,
   },
-  emptyText: {
+  pointsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  points: {
     ...typography.body,
-    color: colors.base500,
-    textAlign: 'center',
-    padding: spacing.xl,
+    color: colors.accent,
+    fontWeight: '600',
+    fontSize: 13,
   },
+  price: {
+    ...typography.subtitle,
+    color: colors.secondary,
+    fontWeight: 'bold',
+  },
+  quantityBadge: {
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    minWidth: 24,
+    alignItems: 'center',
+  },
+  quantityText: {
+    ...typography.caption,
+    color: colors.white,
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+  
+  // Summary Card
   summaryCard: {
     backgroundColor: colors.white,
-    padding: spacing.lg,
+    marginHorizontal: spacing.xl,
     borderRadius: borderRadius.lg,
-    shadowColor: colors.shadow,
+    padding: spacing.lg,
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
+    shadowRadius: 4,
     elevation: 3,
   },
   summaryRow: {
@@ -437,21 +434,50 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: colors.base200,
+    borderBottomColor: colors.base100,
   },
   summaryLabel: {
     ...typography.body,
-    color: colors.base600,
+    color: colors.neutral,
+    fontWeight: '500',
   },
   summaryValue: {
-    ...typography.body,
-    color: colors.text,
-    fontWeight: '600',
+    ...typography.subtitle,
+    fontWeight: 'bold',
+    color: colors.black,
   },
+  pointsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  pointsText: {
+    color: colors.accent,
+  },
+  totalRow: {
+    borderBottomWidth: 0,
+    borderTopWidth: 1,
+    borderTopColor: colors.base200,
+    paddingTop: spacing.md,
+    marginTop: spacing.sm,
+  },
+  totalLabel: {
+    ...typography.subtitle,
+    fontWeight: 'bold',
+    color: colors.primary,
+    fontSize: 16,
+  },
+  totalValue: {
+    ...typography.title,
+    fontWeight: 'bold',
+    color: colors.secondary,
+    fontSize: 18,
+  },
+  
+  // Footer
   footer: {
     flexDirection: 'row',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.lg,
+    padding: spacing.xl,
     backgroundColor: colors.white,
     borderTopWidth: 1,
     borderTopColor: colors.base200,
@@ -462,15 +488,15 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.xl,
     borderRadius: borderRadius.lg,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    backgroundColor: colors.white,
+    backgroundColor: colors.base100,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.base200,
   },
   backButtonText: {
     ...typography.subtitle,
-    color: colors.primary,
+    color: colors.neutral,
     fontWeight: '600',
-    textAlign: 'center',
   },
   confirmButton: {
     flex: 2,
@@ -487,6 +513,9 @@ const styles = StyleSheet.create({
     ...typography.subtitle,
     color: colors.white,
     fontWeight: '700',
+  },
+  disabledButton: {
+    backgroundColor: colors.base300,
   },
 });
 

@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import AddressPhase from '../components/pickup/AddressPhase';
 import ConfirmationPhase from '../components/pickup/ConfirmationPhase';
-import ReviewPhase from '../components/pickup/ReviewPhase-minimal';
+import ReviewPhase from '../components/pickup/ReviewPhase';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../hooks/useCart';
 import { usePickupWorkflow } from '../hooks/usePickupWorkflow';
@@ -336,10 +336,10 @@ export default function Pickup() {
       case 3:
         return (
           <ConfirmationPhase
-            orderData={orderData}
+            order={orderData}
             onFinish={() => {
               reset();
-              router.back();
+              router.push('/(tabs)/home');
             }}
           />
         );

@@ -1,5 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {
+    ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -10,7 +11,7 @@ import { borderRadius, spacing, typography } from '../../styles';
 import { colors } from '../../styles/theme';
 import { AnimatedButton } from '../common';
 
-const ConfirmationPhase = ({ order, onNewRequest }) => {
+const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
   const generateTrackingNumber = (orderId) => {
     if (!orderId) return 'REC' + Date.now().toString().slice(-8);
     
@@ -21,9 +22,19 @@ const ConfirmationPhase = ({ order, onNewRequest }) => {
 
   const trackingNumber = generateTrackingNumber(order?._id);
 
+  const handleDone = () => {
+    // Use onFinish if provided (from pickup.jsx), otherwise use onNewRequest
+    if (onFinish && typeof onFinish === 'function') {
+      onFinish();
+    } else if (onNewRequest && typeof onNewRequest === 'function') {
+      onNewRequest();
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <View style={styles.content}>
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <View style={styles.content}>
         {/* Success Icon */}
         <View style={styles.iconContainer}>
           <View style={styles.successCircle}>
@@ -123,13 +134,14 @@ const ConfirmationPhase = ({ order, onNewRequest }) => {
             <Text style={styles.stepText}>Collect your recyclables and earn rewards</Text>
           </View>
         </View>
-      </View>
+        </View>
+      </ScrollView>
 
       {/* Footer */}
       <View style={styles.footer}>
-        <AnimatedButton style={styles.newRequestButton} onPress={onNewRequest}>
-          <MaterialCommunityIcons name="plus" size={20} color={colors.white} />
-          <Text style={styles.newRequestButtonText}>Make Another Request</Text>
+        <AnimatedButton style={styles.newRequestButton} onPress={handleDone}>
+          <MaterialCommunityIcons name="check" size={20} color={colors.white} />
+          <Text style={styles.newRequestButtonText}>Done</Text>
         </AnimatedButton>
       </View>
     </View>
@@ -141,10 +153,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.base100,
   },
-  content: {
+  scrollView: {
     flex: 1,
+  },
+  content: {
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.xxl,
+    paddingBottom: spacing.xl,
     alignItems: 'center',
   },
   
