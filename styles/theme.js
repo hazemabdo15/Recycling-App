@@ -13,6 +13,9 @@
   error: "#EF4444",
   warning: "#F59E0B",
   success: "#10B981",
+  background: "#FAFAFA",
+  text: "#171717",
+  textSecondary: "#607D8B",
 };
 export const borderRadius = {
   xs: 6,

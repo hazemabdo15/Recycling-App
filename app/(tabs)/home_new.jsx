@@ -1,4 +1,5 @@
 import { useFocusEffect } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback } from 'react';
 import { ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,8 +21,13 @@ const Index = () => {
             <View style={styles.container}>
                 <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
                 
-                {/* Hero Section */}
-                <View style={[styles.heroSection, { paddingTop: insets.top + 20 }]}>
+                {/* Hero Section with Gradient */}
+                <LinearGradient
+                    colors={[colors.primary, colors.secondary]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={[styles.heroSection, { paddingTop: insets.top + 20 }]}
+                >
                     <View style={styles.heroContent}>
                         <Text style={styles.welcomeText}>Welcome Back!</Text>
                         <Text style={styles.heroTitle}>Make Every Item Count</Text>
@@ -29,7 +35,7 @@ const Index = () => {
                             Turn your recyclables into rewards and help save our planet
                         </Text>
                     </View>
-                </View>
+                </LinearGradient>
 
                 <ScrollView
                     style={styles.scrollContainer}
@@ -74,7 +80,6 @@ const styles = StyleSheet.create({
         backgroundColor: colors.background,
     },
     heroSection: {
-        backgroundColor: colors.primary,
         paddingHorizontal: spacing.lg,
         paddingBottom: spacing.xl,
         borderBottomLeftRadius: 32,
