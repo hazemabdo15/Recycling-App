@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
         paddingTop: spacing.sm,
     },
     heroTitle: {
-        fontSize: 26,
+        fontSize: 24,
         fontWeight: 'bold',
         color: colors.white,
         textAlign: 'center',
@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
         letterSpacing: -0.5,
     },
     heroSubtitle: {
-        fontSize: 15,
+        fontSize: 14,
         color: colors.white,
         textAlign: 'center',
         opacity: 0.85,

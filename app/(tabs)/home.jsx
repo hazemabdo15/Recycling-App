@@ -3,11 +3,11 @@ import { useFocusEffect } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback } from "react";
 import {
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { EarnPointsCard } from "../../components/cards";
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   heroTitle: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: "bold",
     color: colors.white,
     textAlign: "center",
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   heroSubtitle: {
-    fontSize: 15,
+    fontSize: 14,
     color: colors.white,
     textAlign: "center",
     opacity: 0.85,

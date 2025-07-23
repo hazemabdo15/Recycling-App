@@ -1,15 +1,15 @@
 ﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
-    FlatList,
-    Image,
-    SafeAreaView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  FlatList,
+  Image,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AnimatedButton, AnimatedListItem, FadeInView } from '../../components/common';
@@ -207,16 +207,32 @@ const Cart = () => {
 
   if (cartArray.length === 0 && showEmptyState) {
     return (
-      <View style={styles.emptyCartContainer}>
-        <View style={styles.emptyCartIconWrapper}>
-          <MaterialCommunityIcons name="truck-delivery-outline" size={80} color={colors.base300} />
+      <View style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+        <LinearGradient
+          colors={[colors.primary, colors.secondary]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.heroSection, { paddingTop: insets.top + 20 }]}
+        >
+          <View style={styles.heroContent}>
+            <Text style={styles.heroTitle}>🛒 Your Pickup Cart</Text>
+            <Text style={styles.heroSubtitle}>
+              No pickup items yet
+            </Text>
+          </View>
+        </LinearGradient>
+        <View style={styles.emptyCartContainer}>
+          <View style={styles.emptyCartIconWrapper}>
+            <MaterialCommunityIcons name="truck-delivery-outline" size={80} color={colors.base300} />
+          </View>
+          <Text style={styles.emptyCartTitle}>Add recyclable items to get started</Text>
+          <Text style={styles.emptyCartSubtitle}>Schedule your pickup and earn rewards!</Text>
+          <AnimatedButton style={styles.emptyCartBrowseBtn} onPress={() => router.push('/(tabs)/explore')}>
+            <MaterialCommunityIcons name="recycle" size={22} color={colors.primary} />
+            <Text style={styles.emptyCartBrowseText}>Find Recyclables</Text>
+          </AnimatedButton>
         </View>
-        <Text style={styles.emptyCartTitle}>No pickup items yet</Text>
-        <Text style={styles.emptyCartSubtitle}>Add recyclable items to schedule your pickup and earn rewards!</Text>
-        <AnimatedButton style={styles.emptyCartBrowseBtn} onPress={() => router.push('/(tabs)/explore')}>
-          <MaterialCommunityIcons name="recycle" size={22} color={colors.primary} />
-          <Text style={styles.emptyCartBrowseText}>Find Recyclables</Text>
-        </AnimatedButton>
       </View>
     );
   }
@@ -240,60 +256,124 @@ const Cart = () => {
   }, 0);
 
   return (
-    <SafeAreaView style={[styles.filledContainer, { backgroundColor: colors.base100 }]}> 
-      <StatusBar barStyle="dark-content" backgroundColor={colors.base100} />
-      <View style={[styles.headerMerged, { paddingTop: insets.top }]}> 
-        <View style={styles.headerRowMerged}>
-          <View style={styles.headerLeftSection}>
-            <MaterialCommunityIcons name="truck-delivery" size={32} color={colors.primary} style={{ marginRight: spacing.sm }} />
-            <View>
-              <Text style={styles.headerTitleMerged}>Pickup Request</Text>
-              <Text style={styles.headerSubtitleMerged}>{cartArray.length} items ready for pickup</Text>
-            </View>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+      <LinearGradient
+        colors={[colors.primary, colors.secondary]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.heroSection, { paddingTop: insets.top + 20 }]}
+      >
+        <View style={styles.heroRowHeader}>
+          <View style={styles.heroContent}>
+            <Text style={styles.heroTitle}>🛒 Your Pickup Cart</Text>
+            <Text style={styles.heroSubtitle}>
+              {cartArray.length} items ready for pickup
+            </Text>
           </View>
           {cartArray.length > 0 && (
-            <AnimatedButton style={styles.clearCartBtn} onPress={handleClearAll}>
-              <MaterialCommunityIcons name="delete-sweep" size={20} color={colors.error} />
-              <Text style={styles.clearCartText}>Clear All</Text>
-            </AnimatedButton>
+            <TouchableOpacity
+              style={styles.clearButton}
+              onPress={handleClearAll}
+              activeOpacity={0.7}
+            >
+              <MaterialCommunityIcons
+                name="delete-sweep"
+                size={20}
+                color={colors.white}
+              />
+            </TouchableOpacity>
           )}
         </View>
-      </View>
+      </LinearGradient>
       
-      <FadeInView delay={100}>
-        <View style={styles.checkoutBarTop}> 
-          <View style={styles.checkoutSummaryRow}>
-            <View style={styles.checkoutSummaryItem}>
-              <MaterialCommunityIcons name="star" size={22} color={colors.accent} />
-              <Text style={styles.checkoutSummaryLabel}>Eco Points</Text>
-              <Text style={styles.checkoutSummaryValue}>{totalPoints}</Text>
+      <View style={[styles.contentContainer, { backgroundColor: colors.base100 }]}>
+        <FadeInView delay={100}>
+          <View style={styles.checkoutBarTop}> 
+            <View style={styles.checkoutSummaryRow}>
+              <View style={styles.checkoutSummaryItem}>
+                <MaterialCommunityIcons name="star" size={22} color={colors.accent} />
+                <Text style={styles.checkoutSummaryLabel}>Eco Points</Text>
+                <Text style={styles.checkoutSummaryValue}>{totalPoints}</Text>
+              </View>
+              <View style={styles.checkoutSummaryItem}>
+                <MaterialCommunityIcons name="cash" size={22} color={colors.secondary} />
+                <Text style={styles.checkoutSummaryLabel}>You&apos;ll Earn</Text>
+                <Text style={styles.checkoutSummaryValue}>{totalValue.toFixed(2)} EGP</Text>
+              </View>
             </View>
-            <View style={styles.checkoutSummaryItem}>
-              <MaterialCommunityIcons name="cash" size={22} color={colors.secondary} />
-              <Text style={styles.checkoutSummaryLabel}>You&apos;ll Earn</Text>
-              <Text style={styles.checkoutSummaryValue}>{totalValue.toFixed(2)} EGP</Text>
-            </View>
+            <AnimatedButton style={styles.checkoutBtnBar} onPress={() => router.push('/checkout')}>
+              <MaterialCommunityIcons name="truck-fast" size={24} color={colors.white} />
+              <Text style={styles.checkoutBtnBarText}>Schedule Pickup</Text>
+            </AnimatedButton>
           </View>
-          <AnimatedButton style={styles.checkoutBtnBar} onPress={() => router.push('/checkout')}>
-            <MaterialCommunityIcons name="truck-fast" size={24} color={colors.white} />
-            <Text style={styles.checkoutBtnBarText}>Schedule Pickup</Text>
-          </AnimatedButton>
-        </View>
-      </FadeInView>
-      
-      <FlatList
-        data={cartArray}
-        renderItem={renderCartItem}
-        keyExtractor={(item) => item.categoryId || item._id || String(Math.random())}
-        contentContainerStyle={[styles.listContainerModern, { paddingBottom: spacing.xxl + 32 }]}
-        showsVerticalScrollIndicator={false}
-        extraData={cartItems}
-      />
-    </SafeAreaView>
+        </FadeInView>
+        
+        <FlatList
+          data={cartArray}
+          renderItem={renderCartItem}
+          keyExtractor={(item) => item.categoryId || item._id || String(Math.random())}
+          contentContainerStyle={[styles.listContainerModern, { paddingBottom: spacing.xxl + 32 }]}
+          showsVerticalScrollIndicator={false}
+          extraData={cartItems}
+        />
+      </View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  heroSection: {
+    height: 140 ,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.lg,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  heroRowHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: spacing.sm,
+  },
+  heroContent: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  heroTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.white,
+    textAlign: 'center',
+    marginBottom: spacing.sm,
+    letterSpacing: -0.5,
+  },
+  heroSubtitle: {
+    fontSize: 14,
+    color: colors.white,
+    textAlign: 'center',
+    opacity: 0.85,
+    lineHeight: 22,
+  },
+  clearButton: {
+    position: 'relative',
+    padding: spacing.sm,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  contentContainer: {
+    flex: 1,
+    paddingTop: spacing.md,
+  },
   emptyCartContainer: {
     flex: 1,
     justifyContent: 'center',
