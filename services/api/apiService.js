@@ -148,14 +148,15 @@ class APIService {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('[API] Token refreshed successfully');
+        console.log('[API] Token refreshed successfully, new token:', data.accessToken ? 'present' : 'missing');
         
         await this.setAccessToken(data.accessToken);
         this.processQueue(null, data.accessToken);
         
         return data.accessToken;
       } else {
-        console.warn('[API] Token refresh failed:', response.status);
+        const errorText = await response.text();
+        console.warn('[API] Token refresh failed:', response.status, errorText);
         this.processQueue(new Error('Token refresh failed'), null);
         await this.clearTokens();
         return null;

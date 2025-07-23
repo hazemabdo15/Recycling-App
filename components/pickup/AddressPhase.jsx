@@ -27,7 +27,7 @@ const AREAS = {
   'Giza': ['Dokki', 'Mohandessin', 'Agouza', '6th October', 'Sheikh Zayed'],
 };
 
-const AddressPhase = ({ onNext, onBack, pickupWorkflow }) => {
+const AddressPhase = ({ onNext, onBack, onAddressSelect, pickupWorkflow }) => {
   const [showForm, setShowForm] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
   const [formData, setFormData] = useState({
@@ -51,7 +51,30 @@ const AddressPhase = ({ onNext, onBack, pickupWorkflow }) => {
   }, []); // Empty dependency array to run only once
 
   const handleAddressSelect = (address) => {
-    onNext(address);
+    console.log('[AddressPhase] Address selected:', address);
+    console.log('[AddressPhase] onAddressSelect type:', typeof onAddressSelect);
+    console.log('[AddressPhase] onNext type:', typeof onNext);
+    
+    try {
+      // First set the selected address
+      if (onAddressSelect && typeof onAddressSelect === 'function') {
+        console.log('[AddressPhase] Calling onAddressSelect...');
+        onAddressSelect(address);
+        console.log('[AddressPhase] onAddressSelect completed');
+      }
+      
+      // Add delay before phase transition to prevent race conditions
+      setTimeout(() => {
+        // Then proceed to next phase
+        if (onNext && typeof onNext === 'function') {
+          console.log('[AddressPhase] Calling onNext after delay...');
+          onNext();
+          console.log('[AddressPhase] onNext completed');
+        }
+      }, 100); // Small delay to ensure state update completes
+    } catch (error) {
+      console.error('[AddressPhase] Error in handleAddressSelect:', error);
+    }
   };
 
   const handleEditAddress = (address) => {

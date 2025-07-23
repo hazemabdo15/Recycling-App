@@ -1,6 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import {
+    Alert,
     FlatList,
     Image,
     ScrollView,
@@ -16,74 +17,154 @@ import { useAllItems } from '../../hooks/useAPI';
 import { borderRadius, spacing, typography } from '../../styles';
 import { colors } from '../../styles/theme';
 import { normalizeItemData } from '../../utils/cartUtils';
-import { AnimatedButton } from '../common';
 
-const ReviewPhase = ({ selectedAddress, cartItems, onConfirm, onBack, loading }) => {
-  const { user } = useContext(AuthContext);
-  const { items: allItems } = useAllItems();
-  const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || '');
+const ReviewPhase = ({ selectedAddress, cartItems, onConfirm, onBack, loading, user: userProp, pickupWorkflow, ...otherProps }) => {
+  // ALL HOOKS MUST BE CALLED FIRST (React rule)
+  const authContext = useContext(AuthContext);
+  const { items: allItems, loading: itemsLoading } = useAllItems();
+  const [phoneNumber, setPhoneNumber] = useState('');
 
-  const safeAllItems = Array.isArray(allItems) ? allItems : [];
-  
-  // Convert cart items to display format
-  const reviewItems = Object.entries(cartItems).map(([categoryId, quantity]) => {
-    const itemDetails = safeAllItems.find((item) => item.categoryId === categoryId || item._id === categoryId) || {};
-    
-    const combinedItem = {
-      ...itemDetails,
-      categoryId: categoryId,
-      name: itemDetails.name || itemDetails.material || 'Unknown Item',
-      image: itemDetails.image,
-      points: typeof itemDetails.points === 'number' ? itemDetails.points : 0,
-      price: typeof itemDetails.price === 'number' ? itemDetails.price : 0,
-      measurement_unit: itemDetails.measurement_unit,
-      quantity: quantity,
-    };
+  // DEBUG: Add comprehensive error checking
+  console.log('[ReviewPhase] Component start - props received:', {
+    selectedAddress: !!selectedAddress,
+    cartItems: !!cartItems,
+    onConfirm: typeof onConfirm,
+    onBack: typeof onBack,
+    loading: typeof loading,
+    userProp: !!userProp,
+    pickupWorkflow: !!pickupWorkflow
+  });
 
-    return normalizeItemData(combinedItem);
-  }).filter(item => item.quantity > 0);
+  // Safe user extraction using useMemo
+  const user = useMemo(() => {
+    try {
+      if (authContext && typeof authContext === 'object') {
+        return authContext.user || null;
+      }
+      return null;
+    } catch (error) {
+      console.warn('[ReviewPhase] AuthContext access failed:', error.message);
+      return null;
+    }
+  }, [authContext]);
+
+  // Update phone number when user data becomes available
+  useEffect(() => {
+    const phoneValue = user?.phoneNumber || user?.phone || user?.mobile || user?.number || '';
+    if (phoneValue) {
+      setPhoneNumber(phoneValue);
+    }
+    console.log('[ReviewPhase] Phone number updated:', phoneValue || 'none');
+  }, [user, authContext]);
+
+  // Safe items array
+  const safeAllItems = useMemo(() => allItems || [], [allItems]);
+
+  // Convert cart items to display format with safety checks
+  const reviewItems = useMemo(() => {
+    try {
+      if (!cartItems || !Array.isArray(safeAllItems)) {
+        console.warn('[ReviewPhase] Invalid data for processing items');
+        return [];
+      }
+
+      const items = Object.entries(cartItems).map(([categoryId, quantity]) => {
+        try {
+          const itemDetails = safeAllItems.find((item) => item.categoryId === categoryId || item._id === categoryId) || {};
+          
+          const combinedItem = {
+            ...itemDetails,
+            categoryId: categoryId,
+            name: itemDetails.name || itemDetails.material || 'Unknown Item',
+            image: itemDetails.image,
+            points: typeof itemDetails.points === 'number' ? itemDetails.points : 0,
+            price: typeof itemDetails.price === 'number' ? itemDetails.price : 0,
+            measurement_unit: itemDetails.measurement_unit,
+            quantity: quantity,
+          };
+
+          const normalizedItem = normalizeItemData(combinedItem);
+          return normalizedItem;
+        } catch (error) {
+          console.error(`[ReviewPhase] Error processing item ${categoryId}:`, error);
+          return null;
+        }
+      }).filter(item => item && item.quantity > 0);
+
+      return items;
+    } catch (error) {
+      console.error('[ReviewPhase] Error processing review items:', error);
+      return [];
+    }
+  }, [cartItems, safeAllItems]);
+
+  // Early safety check for props AFTER hooks
+  if (!selectedAddress || !cartItems) {
+    console.log('[ReviewPhase] Missing required props, rendering fallback');
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+        <Text style={{ color: colors.error, textAlign: 'center' }}>
+          Loading review data...
+        </Text>
+      </View>
+    );
+  }
+
+  // Additional safety check for essential functions
+  if (typeof onConfirm !== 'function' || typeof onBack !== 'function') {
+    console.error('[ReviewPhase] Missing required callback functions');
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+        <Text style={{ color: colors.error, textAlign: 'center' }}>
+          Component configuration error
+        </Text>
+      </View>
+    );
+  }
 
   // Calculate totals
   const totalPoints = reviewItems.reduce((sum, item) => {
     const points = typeof item.points === 'number' ? item.points : 0;
     return sum + points * (item.quantity || 1);
   }, 0);
-  
+
   const totalValue = reviewItems.reduce((sum, item) => {
     const value = typeof item.value === 'number' ? item.value : (typeof item.price === 'number' ? item.price : 0);
     return sum + value * (item.quantity || 1);
   }, 0);
 
-  const handleConfirmOrder = () => {
+  const handleConfirmOrder = async () => {
+    if (!phoneNumber.trim()) {
+      Alert.alert('Error', 'Please enter your phone number');
+      return;
+    }
+
     const orderData = {
-      items: reviewItems.map(item => ({
-        categoryId: item.categoryId,
-        image: item.image,
-        itemName: item.name,
-        measurement_unit: item.measurement_unit || 1,
-        points: item.points || 0,
-        price: item.price || item.value || 0,
-        quantity: item.quantity,
-      })),
-      phoneNumber: phoneNumber,
+      selectedAddress,
+      items: reviewItems,
+      phoneNumber: phoneNumber.trim(),
+      totalPoints,
+      totalValue,
+      user
     };
 
+    console.log('[ReviewPhase] Creating order with data:', orderData);
     onConfirm(orderData);
   };
 
   const renderOrderItem = ({ item }) => {
-    const name = item.name || item.material || 'Unknown Item';
-    let unit = item.unit || item.measurement_unit || '';
+    const name = item?.name || item?.material || 'Unknown Item';
+    let unit = item?.unit || item?.measurement_unit || '';
     if (unit === 1 || unit === '1') unit = 'KG';
     if (unit === 2 || unit === '2') unit = 'Piece';
-    const points = typeof item.points === 'number' ? item.points : 0;
-    const value = typeof item.value === 'number' ? item.value : (typeof item.price === 'number' ? item.price : 0);
-    const quantity = typeof item.quantity === 'number' ? item.quantity : 1;
+    const points = typeof item?.points === 'number' ? item.points : 0;
+    const value = typeof item?.value === 'number' ? item.value : (typeof item?.price === 'number' ? item.price : 0);
+    const quantity = typeof item?.quantity === 'number' ? item.quantity : 1;
 
     return (
       <View style={styles.orderItem}>
         <View style={styles.itemImageContainer}>
-          {item.image ? (
+          {item?.image ? (
             <Image source={{ uri: item.image }} style={styles.itemImage} resizeMode="cover" />
           ) : (
             <View style={styles.itemImagePlaceholder}>
@@ -99,99 +180,73 @@ const ReviewPhase = ({ selectedAddress, cartItems, onConfirm, onBack, loading })
               {quantity} {unit}
             </Text>
             {points > 0 && (
-              <Text style={styles.itemPoints}>{points} pts each</Text>
-            )}
-            {value > 0 && (
-              <Text style={styles.itemValue}>{(value * quantity).toFixed(2)} EGP</Text>
+              <Text style={styles.itemPoints}>+{points * quantity} pts</Text>
             )}
           </View>
+          {value > 0 && (
+            <Text style={styles.itemValue}>{(value * quantity).toFixed(2)} EGP</Text>
+          )}
         </View>
       </View>
     );
   };
 
+  console.log('[ReviewPhase] Rendering component successfully');
+
+  // TEST: Return a simple test component first to isolate the $$typeof error
   return (
-    <View style={styles.container}>
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Address Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Delivery Address</Text>
-          <View style={styles.addressCard}>
-            <MaterialCommunityIcons name="map-marker" size={24} color={colors.primary} />
-            <View style={styles.addressInfo}>
-              <Text style={styles.addressText}>
-                {selectedAddress.building && `Building ${selectedAddress.building}, `}
-                {selectedAddress.street}
-              </Text>
-              <Text style={styles.addressSubtext}>
-                {selectedAddress.area}, {selectedAddress.city}
-              </Text>
-              {selectedAddress.landmark && (
-                <Text style={styles.addressLandmark}>Near {selectedAddress.landmark}</Text>
-              )}
-            </View>
-          </View>
-        </View>
+    <View style={{ flex: 1, padding: 20, backgroundColor: '#f5f5f5' }}>
+      <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 20 }}>
+        Review Phase - Test Version
+      </Text>
+      <Text style={{ marginBottom: 10 }}>
+        Address: {selectedAddress?.street || 'No address'}
+      </Text>
+      <Text style={{ marginBottom: 10 }}>
+        Cart Items: {Object.keys(cartItems || {}).length}
+      </Text>
+      <Text style={{ marginBottom: 20 }}>
+        User: {user?.name || 'No user'}
+      </Text>
+      
+      <TouchableOpacity 
+        style={{ 
+          backgroundColor: '#007AFF', 
+          padding: 15, 
+          borderRadius: 8, 
+          alignItems: 'center',
+          marginBottom: 10
+        }}
+        onPress={() => {
+          console.log('[ReviewPhase] Test confirm pressed');
+          onConfirm?.({ test: true });
+        }}
+      >
+        <Text style={{ color: 'white', fontWeight: 'bold' }}>
+          Test Confirm
+        </Text>
+      </TouchableOpacity>
+      
+      <TouchableOpacity 
+        style={{ 
+          backgroundColor: '#FF3B30', 
+          padding: 15, 
+          borderRadius: 8, 
+          alignItems: 'center' 
+        }}
+        onPress={() => {
+          console.log('[ReviewPhase] Test back pressed');
+          onBack?.();
+        }}
+      >
+        <Text style={{ color: 'white', fontWeight: 'bold' }}>
+          Test Back
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
 
-        {/* Contact Information */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Contact Information</Text>
-          <View style={styles.contactCard}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Phone Number</Text>
-              <TextInput
-                style={styles.phoneInput}
-                value={phoneNumber}
-                onChangeText={setPhoneNumber}
-                placeholder="Enter your phone number"
-                placeholderTextColor={colors.base300}
-                keyboardType="phone-pad"
-              />
-            </View>
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Name</Text>
-              <Text style={styles.userInfo}>{user?.name || user?.email || 'User'}</Text>
-            </View>
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Email</Text>
-              <Text style={styles.userInfo}>{user?.email || 'No email provided'}</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Order Items */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Order Items ({reviewItems.length})</Text>
-          <View style={styles.orderItemsContainer}>
-            <FlatList
-              data={reviewItems}
-              renderItem={renderOrderItem}
-              keyExtractor={(item) => item.categoryId}
-              scrollEnabled={false}
-            />
-          </View>
-        </View>
-
-        {/* Order Summary */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Order Summary</Text>
-          <View style={styles.summaryCard}>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Total Items</Text>
-              <Text style={styles.summaryValue}>{reviewItems.length}</Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Eco Points</Text>
-              <Text style={[styles.summaryValue, { color: colors.accent }]}>{totalPoints}</Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Total Earnings</Text>
-              <Text style={[styles.summaryValue, { color: colors.secondary }]}>
-                {totalValue.toFixed(2)} EGP
-              </Text>
-            </View>
-          </View>
-        </View>
+  /* ORIGINAL COMPONENT - TEMPORARILY COMMENTED OUT
       </ScrollView>
 
       {/* Footer */}
@@ -200,8 +255,8 @@ const ReviewPhase = ({ selectedAddress, cartItems, onConfirm, onBack, loading })
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
         
-        <AnimatedButton
-          style={styles.confirmButton}
+        <TouchableOpacity
+          style={[styles.confirmButton, (loading || !phoneNumber.trim()) && { opacity: 0.5 }]}
           onPress={handleConfirmOrder}
           disabled={loading || !phoneNumber.trim()}
         >
@@ -209,11 +264,11 @@ const ReviewPhase = ({ selectedAddress, cartItems, onConfirm, onBack, loading })
           <Text style={styles.confirmButtonText}>
             {loading ? 'Processing...' : 'Confirm Order'}
           </Text>
-        </AnimatedButton>
+        </TouchableOpacity>
       </View>
     </View>
   );
-};
+  */
 
 const styles = StyleSheet.create({
   container: {
@@ -222,101 +277,99 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    paddingHorizontal: spacing.lg,
   },
   section: {
-    marginBottom: spacing.lg,
+    marginVertical: spacing.md,
   },
   sectionTitle: {
-    ...typography.title,
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.primary,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
-    backgroundColor: colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.base200,
+    ...typography.headline,
+    color: colors.text,
+    marginBottom: spacing.md,
+    fontWeight: '600',
   },
-  
-  // Address styles
   addressCard: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
     backgroundColor: colors.white,
     padding: spacing.lg,
-    gap: spacing.md,
+    borderRadius: borderRadius.lg,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
   addressInfo: {
     flex: 1,
+    marginLeft: spacing.md,
   },
   addressText: {
-    ...typography.subtitle,
-    fontWeight: 'bold',
-    color: colors.black,
-    marginBottom: spacing.xs,
+    ...typography.body,
+    color: colors.text,
+    fontWeight: '500',
   },
   addressSubtext: {
-    ...typography.body,
-    color: colors.neutral,
-    marginBottom: spacing.xs,
+    ...typography.caption,
+    color: colors.base600,
+    marginTop: spacing.xs,
   },
   addressLandmark: {
     ...typography.caption,
-    color: colors.primary,
+    color: colors.base500,
+    marginTop: spacing.xs,
     fontStyle: 'italic',
   },
-  
-  // Contact styles
-  contactCard: {
+  userInfoCard: {
     backgroundColor: colors.white,
     padding: spacing.lg,
+    borderRadius: borderRadius.lg,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  inputGroup: {
+  userField: {
     marginBottom: spacing.md,
   },
-  inputLabel: {
+  fieldLabel: {
     ...typography.caption,
-    color: colors.primary,
+    color: colors.base600,
     fontWeight: '600',
-    marginBottom: spacing.sm,
     textTransform: 'uppercase',
+    marginBottom: spacing.xs,
+  },
+  fieldValue: {
+    ...typography.body,
+    color: colors.text,
   },
   phoneInput: {
-    backgroundColor: colors.base100,
-    borderRadius: borderRadius.lg,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
     ...typography.body,
-    color: colors.black,
+    color: colors.text,
     borderWidth: 1,
-    borderColor: colors.base200,
-  },
-  userInfo: {
-    ...typography.body,
-    color: colors.neutral,
+    borderColor: colors.base300,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-  },
-  
-  // Order items styles
-  orderItemsContainer: {
-    backgroundColor: colors.white,
+    fontSize: 16,
   },
   orderItem: {
     flexDirection: 'row',
-    alignItems: 'center',
+    backgroundColor: colors.white,
     padding: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.base100,
+    borderRadius: borderRadius.lg,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
   itemImageContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
+    width: 60,
+    height: 60,
+    borderRadius: borderRadius.md,
     overflow: 'hidden',
-    marginRight: spacing.lg,
     backgroundColor: colors.base100,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   itemImage: {
     width: '100%',
@@ -331,42 +384,52 @@ const styles = StyleSheet.create({
   },
   itemInfo: {
     flex: 1,
+    marginLeft: spacing.md,
   },
   itemName: {
     ...typography.subtitle,
-    fontWeight: 'bold',
-    color: colors.black,
+    color: colors.text,
+    fontWeight: '600',
     marginBottom: spacing.xs,
   },
   itemDetails: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
+    marginBottom: spacing.xs,
   },
   itemQuantity: {
     ...typography.caption,
-    color: colors.primary,
-    fontWeight: '600',
-    backgroundColor: colors.base100,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.sm,
+    color: colors.base600,
+    marginRight: spacing.md,
   },
   itemPoints: {
     ...typography.caption,
-    color: colors.accent,
+    color: colors.success,
     fontWeight: '600',
   },
   itemValue: {
-    ...typography.caption,
-    color: colors.secondary,
+    ...typography.body,
+    color: colors.primary,
     fontWeight: '600',
   },
-  
-  // Summary styles
+  itemSeparator: {
+    height: spacing.md,
+  },
+  emptyText: {
+    ...typography.body,
+    color: colors.base500,
+    textAlign: 'center',
+    padding: spacing.xl,
+  },
   summaryCard: {
     backgroundColor: colors.white,
     padding: spacing.lg,
+    borderRadius: borderRadius.lg,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
   summaryRow: {
     flexDirection: 'row',
@@ -374,23 +437,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: colors.base100,
+    borderBottomColor: colors.base200,
   },
   summaryLabel: {
     ...typography.body,
-    color: colors.neutral,
-    fontWeight: '500',
+    color: colors.base600,
   },
   summaryValue: {
-    ...typography.subtitle,
-    fontWeight: 'bold',
-    color: colors.black,
+    ...typography.body,
+    color: colors.text,
+    fontWeight: '600',
   },
-  
-  // Footer styles
   footer: {
     flexDirection: 'row',
-    padding: spacing.xl,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
     backgroundColor: colors.white,
     borderTopWidth: 1,
     borderTopColor: colors.base200,
@@ -401,15 +462,15 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.xl,
     borderRadius: borderRadius.lg,
-    backgroundColor: colors.base100,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.base200,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    backgroundColor: colors.white,
   },
   backButtonText: {
     ...typography.subtitle,
-    color: colors.neutral,
+    color: colors.primary,
     fontWeight: '600',
+    textAlign: 'center',
   },
   confirmButton: {
     flex: 2,

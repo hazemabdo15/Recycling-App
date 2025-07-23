@@ -1,19 +1,20 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
     Alert,
     StatusBar,
     StyleSheet,
     Text,
+    TouchableOpacity,
     View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import AddressPhase from '../components/pickup/AddressPhase';
 import ConfirmationPhase from '../components/pickup/ConfirmationPhase';
-import ReviewPhase from '../components/pickup/ReviewPhase';
+import ReviewPhase from '../components/pickup/ReviewPhase-minimal';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../hooks/useCart';
 import { usePickupWorkflow } from '../hooks/usePickupWorkflow';
@@ -99,6 +100,23 @@ export default function Pickup() {
     createOrder = () => {},
     reset = () => {}
   } = workflowHook || {};
+
+  // Add debugging for phase changes
+  useEffect(() => {
+    console.log('[Pickup] Phase changed to:', currentPhase);
+    console.log('[Pickup] Selected address:', selectedAddress ? 'present' : 'null');
+  }, [currentPhase, selectedAddress]);
+
+  // Wrapper functions with debugging
+  const handleAddressSelect = useCallback((address) => {
+    console.log('[Pickup] handleAddressSelect called with:', address);
+    setSelectedAddress(address);
+  }, [setSelectedAddress]);
+
+  const handleNextPhase = useCallback(() => {
+    console.log('[Pickup] handleNextPhase called, current phase:', currentPhase);
+    nextPhase();
+  }, [nextPhase, currentPhase]);
 
   // Handle authentication errors
   useEffect(() => {
@@ -241,27 +259,77 @@ export default function Pickup() {
   );
 
   // Render current phase
-  const renderCurrentPhase = () => {
-    switch (currentPhase) {
+  const renderCurrentPhase = (phase = currentPhase) => {
+    console.log('[Pickup] Rendering phase:', phase);
+    
+    try {
+      switch (phase) {
       case 1:
         return (
           <AddressPhase
             user={user}
             selectedAddress={selectedAddress}
-            onAddressSelect={setSelectedAddress}
-            onNext={nextPhase}
+            onAddressSelect={handleAddressSelect}
+            onNext={handleNextPhase}
             onBack={() => router.back()}
             pickupWorkflow={workflowHook}
           />
         );
       case 2:
+        // Add safety checks for ReviewPhase
+        if (!selectedAddress) {
+          console.log('[Pickup] No selected address, staying in phase 1');
+          return renderCurrentPhase(1);
+        }
+        if (!cartItems || Object.keys(cartItems).length === 0) {
+          console.log('[Pickup] No cart items, redirecting to cart');
+          router.push('/(tabs)/cart');
+          return null;
+        }
+        
+        console.log('[Pickup] Rendering ReviewPhase with:', {
+          user: !!user,
+          cartItems: Object.keys(cartItems).length,
+          selectedAddress: !!selectedAddress,
+          loading: workflowHook?.loading,
+          selectedAddressKeys: selectedAddress ? Object.keys(selectedAddress) : [],
+          userType: typeof user,
+          cartItemsType: typeof cartItems
+        });
+        
+        // Additional validation for props
+        if (typeof createOrder !== 'function') {
+          console.error('[Pickup] createOrder is not a function:', typeof createOrder);
+          return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+              <Text style={{ color: 'red', textAlign: 'center' }}>
+                Configuration error: Invalid createOrder function
+              </Text>
+            </View>
+          );
+        }
+        
+        if (typeof previousPhase !== 'function') {
+          console.error('[Pickup] previousPhase is not a function:', typeof previousPhase);
+          return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+              <Text style={{ color: 'red', textAlign: 'center' }}>
+                Configuration error: Invalid previousPhase function
+              </Text>
+            </View>
+          );
+        }
+        
+        // Return component directly without try-catch wrapper
+        console.log('[Pickup] Creating ReviewPhase directly...');
         return (
           <ReviewPhase
             user={user}
             cartItems={cartItems}
             selectedAddress={selectedAddress}
-            onNext={createOrder}
+            onConfirm={createOrder}
             onBack={previousPhase}
+            loading={workflowHook?.loading || false}
             pickupWorkflow={workflowHook}
           />
         );
@@ -277,6 +345,33 @@ export default function Pickup() {
         );
       default:
         return null;
+    }
+    } catch (error) {
+      console.error('[Pickup] Error rendering phase:', phase, error);
+      return (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+          <Text style={{ color: colors.error, textAlign: 'center', marginBottom: 20 }}>
+            An error occurred while loading this phase. Please try again.
+          </Text>
+          <TouchableOpacity
+            style={{
+              backgroundColor: colors.primary,
+              paddingVertical: 12,
+              paddingHorizontal: 24,
+              borderRadius: 8
+            }}
+            onPress={() => {
+              console.log('[Pickup] Retrying phase render');
+              // Force re-render by resetting phase
+              if (phase > 1) {
+                previousPhase();
+              }
+            }}
+          >
+            <Text style={{ color: colors.white, fontWeight: 'bold' }}>Try Again</Text>
+          </TouchableOpacity>
+        </View>
+      );
     }
   };
 

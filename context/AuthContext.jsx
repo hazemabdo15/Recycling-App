@@ -30,14 +30,34 @@ export function AuthProvider({ children }) {
                     const apiService = (await import('../services/api/apiService')).default;
                     await apiService.setAccessToken(storedToken);
                     
-                    // Now check if authenticated
-                    const authStatus = await isAuthenticated();
-                    console.log('[AuthContext] Authentication status:', authStatus);
+                    // Check if authenticated (this will try to refresh if token is expired)
+                    let authStatus = await isAuthenticated();
+                    console.log('[AuthContext] Initial authentication status:', authStatus);
+                    
+                    // If authentication failed but we have a refresh token, try refreshing
+                    if (!authStatus) {
+                        console.log('[AuthContext] Token expired, attempting refresh...');
+                        try {
+                            const newToken = await apiService.refreshToken();
+                            if (newToken) {
+                                console.log('[AuthContext] Token refreshed successfully');
+                                authStatus = true; // Refresh was successful
+                                await AsyncStorage.setItem('accessToken', newToken);
+                            } else {
+                                console.log('[AuthContext] Token refresh failed');
+                                authStatus = false;
+                            }
+                        } catch (error) {
+                            console.log('[AuthContext] Token refresh error:', error.message);
+                            authStatus = false;
+                        }
+                    }
                     
                     if (authStatus) {
                         console.log('[AuthContext] User authenticated successfully');
+                        const currentToken = await apiService.getAccessToken();
                         setUser(JSON.parse(storedUser));
-                        setAccessToken(storedToken);
+                        setAccessToken(currentToken);
                         setIsLoggedIn(true);
                     } else {
                         console.log('[AuthContext] Authentication failed, clearing session');
