@@ -67,7 +67,7 @@ export const shadows = {
 export const typography = {
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: colors.black,
   },
   subtitle: {
