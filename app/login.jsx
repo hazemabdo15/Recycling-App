@@ -36,7 +36,7 @@ export default function LoginScreen() {
       return () => {
         isActive = false;
       };
-    }, [])
+    }, [setUser])
   );
 
   if (checkingUser) return null;
@@ -62,9 +62,9 @@ export default function LoginScreen() {
       setUser(user);
 
       router.replace('/home');
-    } catch (error) {
-      console.error('Login error:', error);
-      Alert.alert('Login failed', error.message || 'Please check your credentials and try again.');
+    } catch {
+      // console.error('Login error:', error);
+      Alert.alert('Login failed', 'Please check your credentials and try again.');
     } finally {
       setLoading(false);
     }
