@@ -22,10 +22,9 @@ const Explore = () => {
         setSearchText(text);
     };
     const handleFilter = () => {
-        console.log('Filter button pressed');
+        // Filter functionality placeholder
     };
     const handleCategoryPress = (category) => {
-        console.log(`Navigate to ${category.name} details`);
         router.push({
             pathname: '/category-details',
             params: { categoryName: category.name }

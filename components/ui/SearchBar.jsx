@@ -1,5 +1,5 @@
 ﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 const colors = {
   primary: "#0E9F6E",
@@ -20,18 +20,42 @@ const borderRadius = {
 };
 const SearchBar = ({ placeholder = "Search categories...", onSearch, onFilter }) => {
   const [searchText, setSearchText] = useState('');
-  const handleSearchChange = (text) => {
-    setSearchText(text);
-    if (onSearch) {
-      onSearch(text);
+  const debounceTimer = useRef(null);
+
+  const debouncedSearch = useCallback((text) => {
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
     }
-  };
-  const clearSearch = () => {
+    
+    debounceTimer.current = setTimeout(() => {
+      if (onSearch) {
+        onSearch(text);
+      }
+    }, 300);
+  }, [onSearch]);
+
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+  }, []);
+
+  const handleSearchChange = useCallback((text) => {
+    setSearchText(text);
+    debouncedSearch(text);
+  }, [debouncedSearch]);
+
+  const clearSearch = useCallback(() => {
     setSearchText('');
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
     if (onSearch) {
       onSearch('');
     }
-  };
+  }, [onSearch]);
   return (
     <View style={styles.container}>
       <View style={styles.searchInputContainer}>

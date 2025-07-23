@@ -14,7 +14,6 @@ const CategoriesGrid = ({ searchText = '', onCategoryPress, onFilteredCountChang
         }
     }, [filteredCategories.length, onFilteredCountChange]);
     const handleCategoryPress = (category) => {
-        console.log(`${category.name} category pressed`);
         if (onCategoryPress) {
             onCategoryPress(category);
         }

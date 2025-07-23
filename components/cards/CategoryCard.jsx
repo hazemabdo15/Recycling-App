@@ -1,4 +1,5 @@
-﻿import { StyleSheet, Text, View } from 'react-native';
+﻿import { memo, useCallback } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import { getCategoryImageProps } from '../../utils/categoryUtils';
 import { CategoryImage } from '../ui';
 
@@ -32,25 +33,30 @@ const borderRadius = {
     xl: 32,
 };
 
-const CategoryCard = ({ category, onPress }) => {
+const CategoryCard = memo(({ category, onPress }) => {
     const scale = useSharedValue(1);
     const shadowOpacity = useSharedValue(0.1);
     const imageProps = getCategoryImageProps(category);
 
-    const handlePressIn = () => {
+    const handlePressIn = useCallback(() => {
         scale.value = withSpring(0.96, { damping: 20, stiffness: 300 });
         shadowOpacity.value = withTiming(0.2, { duration: 100 });
-    };
+    }, [scale, shadowOpacity]);
 
-    const handlePressOut = () => {
+    const handlePressOut = useCallback(() => {
         scale.value = withSpring(1, { damping: 20, stiffness: 300 });
         shadowOpacity.value = withTiming(0.1, { duration: 100 });
-    };
+    }, [scale, shadowOpacity]);
 
     const animatedStyle = useAnimatedStyle(() => ({
         transform: [{ scale: scale.value }],
         shadowOpacity: shadowOpacity.value,
     }));
+
+    const handleResponderRelease = useCallback(() => {
+        handlePressOut();
+        onPress && onPress();
+    }, [handlePressOut, onPress]);
 
     return (
         <Animated.View style={[styles.categoryCard, animatedStyle]}>
@@ -64,10 +70,7 @@ const CategoryCard = ({ category, onPress }) => {
                     style={styles.cardContent}
                     onStartShouldSetResponder={() => true}
                     onResponderGrant={handlePressIn}
-                    onResponderRelease={() => {
-                        handlePressOut();
-                        onPress && onPress();
-                    }}
+                    onResponderRelease={handleResponderRelease}
                     onResponderTerminate={handlePressOut}
                 >
                     <CategoryImage
@@ -80,7 +83,9 @@ const CategoryCard = ({ category, onPress }) => {
             </Animated.View>
         </Animated.View>
     );
-};
+});
+
+CategoryCard.displayName = 'CategoryCard';
 
 const styles = StyleSheet.create({
     categoryCard: {

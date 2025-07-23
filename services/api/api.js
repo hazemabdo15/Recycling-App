@@ -7,7 +7,6 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
- console.log('📥 Sending request to', config.baseURL + config.url);
   return config;
 });
 
@@ -26,8 +25,6 @@ api.interceptors.response.use(
       !original.url.includes("/auth/refresh")
     ) {
       original._retry = true;
-      console.warn("🔁 Unauthorized. You may need to log in again.");
-
     }
 
     return Promise.reject(error);

@@ -1,5 +1,6 @@
-﻿import { API_ENDPOINTS } from './config';
-import itemsData from '../../data/items.json';
+﻿import itemsData from '../../data/items.json';
+import apiCache from '../../utils/apiCache';
+import { API_ENDPOINTS } from './config';
 
 const fallbackCategories = [
   { _id: '1', name: 'Paper', arname: 'ورق', image: 'paper.png' },
@@ -29,15 +30,23 @@ const generateFallbackItems = () => {
 
 export const categoriesAPI = {
   getAllCategories: async () => {
+    const cacheKey = apiCache.generateKey('categories');
+    const cached = apiCache.get(cacheKey);
+    
+    if (cached) {
+      return cached;
+    }
+
     try {
       const response = await fetch(API_ENDPOINTS.CATEGORIES);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
+      apiCache.set(cacheKey, data, 10 * 60 * 1000); // Cache for 10 minutes
       return data;
-    } catch (error) {
-      console.warn('Error fetching categories, using fallback data:', error.message);
+    } catch (_error) {
+      // Use fallback data but don't cache it (so we retry on next call)
       return fallbackCategories;
     }
   },

@@ -34,11 +34,11 @@ export const shadows = {
     shadowColor: colors.black,
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 1,
     },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 13,
+    shadowRadius: 3,
+    elevation: 2,
   },
   medium: {
     shadowColor: colors.black,
@@ -46,8 +46,8 @@ export const shadows = {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
     elevation: 16,
   },
   large: {

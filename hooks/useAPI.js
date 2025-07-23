@@ -1,10 +1,10 @@
-﻿import { useEffect, useState } from 'react';
+﻿import { useCallback, useEffect, useState } from 'react';
 import { categoriesAPI } from '../services/api';
 export const useCategories = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -15,10 +15,10 @@ export const useCategories = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
   useEffect(() => {
     fetchCategories();
-  }, []);
+  }, [fetchCategories]);
   return {
     categories,
     loading,
@@ -30,29 +30,24 @@ export const useAllItems = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const fetchAllItems = async () => {
+  const fetchAllItems = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      console.log('[useAllItems] Starting to fetch all items...');
       const data = await categoriesAPI.getAllItems();
-      console.log('[useAllItems] Received data:', data);
-      console.log('[useAllItems] Data type:', typeof data, 'Array?', Array.isArray(data));
 
       const itemsArray = data?.items || data;
-      console.log('[useAllItems] Items array:', itemsArray, 'Length:', itemsArray?.length);
       setItems(Array.isArray(itemsArray) ? itemsArray : []);
     } catch (err) {
-      console.error('[useAllItems] Error fetching items:', err);
       setError(err.message);
     } finally {
       setLoading(false);
-      console.log('[useAllItems] Loading completed');
     }
-  };
+  }, []);
+
   useEffect(() => {
     fetchAllItems();
-  }, []);
+  }, [fetchAllItems]);
   return {
     items,
     loading,

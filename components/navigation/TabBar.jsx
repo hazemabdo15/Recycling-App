@@ -88,8 +88,6 @@ export function TabBar({ state, descriptors, navigation }) {
       canPreventDefault: true,
     });
     if (state.index !== index && !event.defaultPrevented) {
-      // Add haptic feedback for tab transition
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       navigation.navigate(route.name, route.params);
     }
   };

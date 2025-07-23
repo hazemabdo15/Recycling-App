@@ -1,34 +1,47 @@
 ﻿import { router } from 'expo-router';
+import { memo, useCallback } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useCategories } from '../../hooks/useAPI';
 import { colors } from '../../styles/theme';
 import { CategoryCard } from '../cards';
-const CategoriesSection = () => {
+import { CategoriesGridSkeleton } from '../ui';
+const CategoriesSection = memo(() => {
     const { categories, loading, error } = useCategories();
-    const handleCategoryPress = (category) => {
-        console.log(`${category.name} category pressed`);
+
+    const handleCategoryPress = useCallback((category) => {
         router.push({
             pathname: '/category-details',
             params: { categoryName: category.name }
         });
-    };
-    const handleViewAllPress = () => {
-        console.log('View all categories pressed');
+    }, []);
+
+    const handleViewAllPress = useCallback(() => {
         router.push('/explore');
-    };
+    }, []);
+
     const limitedCategories = categories.slice(0, 4);
     if (loading) {
         return (
             <View style={styles.categoriesSection}>
-                <Text style={styles.categoriesTitle}>Categories</Text>
-                <Text style={styles.loadingText}>Loading...</Text>
+                <View style={styles.categoriesHeader}>
+                    <Text style={styles.categoriesTitle}>What are you recycling today?</Text>
+                    <TouchableOpacity onPress={handleViewAllPress}>
+                        <Text style={styles.viewAllText}>View all</Text>
+                    </TouchableOpacity>
+                </View>
+                <CategoriesGridSkeleton />
             </View>
         );
     }
     if (error) {
         return (
             <View style={styles.categoriesSection}>
-                <Text style={styles.categoriesTitle}>Categories</Text>
+                <View style={styles.categoriesHeader}>
+                    <Text style={styles.categoriesTitle}>What are you recycling today?</Text>
+                    <TouchableOpacity onPress={handleViewAllPress}>
+                        <Text style={styles.viewAllText}>View all</Text>
+                    </TouchableOpacity>
+                </View>
                 <Text style={styles.errorText}>Error loading categories</Text>
             </View>
         );
@@ -55,7 +68,9 @@ const CategoriesSection = () => {
             </View>
         </View>
     );
-};
+});
+
+CategoriesSection.displayName = 'CategoriesSection';
 const styles = StyleSheet.create({
     categoriesSection: {
         marginBottom: 30,
