@@ -12,10 +12,10 @@ import {
   View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AnimatedButton, AnimatedListItem, FadeInView } from '../../components/common';
+import { AnimatedButton, AnimatedListItem } from '../../components/common';
 import { useAllItems } from '../../hooks/useAPI';
 import { useCart } from '../../hooks/useCart';
-import { borderRadius, shadows, spacing, typography } from '../../styles';
+import { borderRadius, spacing, typography } from '../../styles';
 import { colors } from '../../styles/theme';
 import { normalizeItemData } from '../../utils/cartUtils';
 
@@ -270,50 +270,46 @@ const Cart = () => {
             <Text style={styles.heroSubtitle}>
               {cartArray.length} items ready for pickup
             </Text>
-          </View>
-          {cartArray.length > 0 && (
-            <TouchableOpacity
-              style={styles.clearButton}
-              onPress={handleClearAll}
-              activeOpacity={0.7}
-            >
-              <MaterialCommunityIcons
-                name="delete-sweep"
-                size={20}
-                color={colors.white}
-              />
-            </TouchableOpacity>
-          )}
-        </View>
-      </LinearGradient>
-      
-      <View style={[styles.contentContainer, { backgroundColor: colors.base100 }]}>
-        <FadeInView delay={100}>
-          <View style={styles.checkoutBarTop}> 
-            <View style={styles.checkoutSummaryRow}>
-              <View style={styles.checkoutSummaryItem}>
+            <View style={styles.checkoutSummaryRowHero}>
+              <View style={styles.checkoutSummaryItemHero}>
                 <MaterialCommunityIcons name="star" size={22} color={colors.accent} />
-                <Text style={styles.checkoutSummaryLabel}>Eco Points</Text>
-                <Text style={styles.checkoutSummaryValue}>{totalPoints}</Text>
+                <Text style={styles.checkoutSummaryLabelHero}>Eco Points</Text>
+                <Text style={styles.checkoutSummaryValueHero}>{totalPoints}</Text>
               </View>
-              <View style={styles.checkoutSummaryItem}>
+              <View style={styles.checkoutSummaryItemHero}>
                 <MaterialCommunityIcons name="cash" size={22} color={colors.secondary} />
-                <Text style={styles.checkoutSummaryLabel}>You&apos;ll Earn</Text>
-                <Text style={styles.checkoutSummaryValue}>{totalValue.toFixed(2)} EGP</Text>
+                <Text style={styles.checkoutSummaryLabelHero}>You'll Earn</Text>
+                <Text style={styles.checkoutSummaryValueHero}>{totalValue.toFixed(2)} EGP</Text>
               </View>
             </View>
-            <AnimatedButton style={styles.checkoutBtnBar} onPress={() => router.push('/checkout')}>
-              <MaterialCommunityIcons name="truck-fast" size={24} color={colors.white} />
-              <Text style={styles.checkoutBtnBarText}>Schedule Pickup</Text>
-            </AnimatedButton>
+            <View style={styles.heroActionRow}>
+              <AnimatedButton style={styles.checkoutBtnBarHero} onPress={() => router.push('/checkout')}>
+                <MaterialCommunityIcons name="truck-fast" size={24} color={colors.white} />
+                <Text style={styles.checkoutBtnBarTextHero}>Schedule Pickup</Text>
+              </AnimatedButton>
+              {cartArray.length > 0 && (
+                <TouchableOpacity
+                  style={styles.clearButtonHero}
+                  onPress={handleClearAll}
+                  activeOpacity={0.7}
+                >
+                  <MaterialCommunityIcons
+                    name="delete-sweep"
+                    size={22}
+                    color={colors.white}
+                  />
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
-        </FadeInView>
-        
+        </View>
+      </LinearGradient>
+      <View style={[styles.contentContainer, { backgroundColor: colors.base100 }]}> 
         <FlatList
           data={cartArray}
           renderItem={renderCartItem}
           keyExtractor={(item) => item.categoryId || item._id || String(Math.random())}
-          contentContainerStyle={[styles.listContainerModern, { paddingBottom: spacing.xxl + 32 }]}
+          contentContainerStyle={[styles.listContainerModern, { paddingBottom: spacing.xxl * 2 + 64 }]}
           showsVerticalScrollIndicator={false}
           extraData={cartItems}
         />
@@ -328,9 +324,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   heroSection: {
-    height: 140 ,
+    minHeight: 170,
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing.md,
+    paddingTop: spacing.xl,
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
     shadowColor: colors.primary,
@@ -338,6 +335,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: 8,
+    justifyContent: 'flex-end',
   },
   heroRowHeader: {
     flexDirection: 'row',
@@ -348,6 +346,9 @@ const styles = StyleSheet.create({
   heroContent: {
     flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    paddingBottom: spacing.sm,
   },
   heroTitle: {
     fontSize: 24,
@@ -582,66 +583,75 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     paddingBottom: spacing.xxl,
   },
-  checkoutBarTop: {
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.lg,
-    ...shadows.large,
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.xl,
-    alignItems: 'center',
-    marginHorizontal: spacing.xl,
-    marginTop: spacing.lg,
-    marginBottom: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.base200,
-  },
-  checkoutSummaryRow: {
+  // ...existing code...
+  checkoutSummaryRowHero: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    marginBottom: spacing.md,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
+    gap: 12,
   },
-  checkoutSummaryItem: {
+  checkoutSummaryItemHero: {
     flexDirection: 'column',
     alignItems: 'center',
     flex: 1,
     marginHorizontal: spacing.md,
   },
-  checkoutSummaryLabel: {
+  checkoutSummaryLabelHero: {
     ...typography.caption,
-    color: colors.neutral,
+    color: colors.white,
     marginTop: 2,
     marginBottom: 2,
     fontSize: 13,
   },
-  checkoutSummaryValue: {
+  checkoutSummaryValueHero: {
     ...typography.title,
     fontSize: 18,
-    color: colors.primary,
+    color: colors.white,
     fontWeight: '700',
     marginTop: 2,
   },
-  checkoutBtnBar: {
+  heroActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    width: '100%',
+    marginTop: spacing.sm,
+    gap: 12,
+  },
+  checkoutBtnBarHero: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.primary,
     borderRadius: borderRadius.lg,
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.xxl,
-    marginTop: spacing.sm,
     shadowColor: colors.primary,
     shadowOpacity: 0.12,
     shadowRadius: 8,
     elevation: 4,
-    width: '100%',
     justifyContent: 'center',
+    flex: 1,
+    minWidth: 0,
   },
-  checkoutBtnBarText: {
+  checkoutBtnBarTextHero: {
     ...typography.subtitle,
     color: colors.white,
     fontWeight: '700',
     fontSize: 18,
     marginLeft: spacing.sm,
+  },
+  clearButtonHero: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: spacing.sm,
+    height: 40,
+    minWidth: 40,
   },
 });
 
