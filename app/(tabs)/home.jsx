@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
   },
   section: {
     paddingHorizontal: spacing.lg,
-    maxHeight: 250,
+    maxHeight: 280,
     justifyContent: "flex-start",
   },
   sectionHeader: {
