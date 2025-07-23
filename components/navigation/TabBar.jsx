@@ -1,4 +1,4 @@
-﻿import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useLinkBuilder } from "@react-navigation/native";
 import { BlurView } from "expo-blur";
 import * as Haptics from 'expo-haptics';

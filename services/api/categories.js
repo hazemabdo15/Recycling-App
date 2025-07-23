@@ -1,4 +1,4 @@
-﻿import itemsData from '../../data/items.json';
+import itemsData from '../../data/items.json';
 import apiCache from '../../utils/apiCache';
 import { API_ENDPOINTS } from './config';
 

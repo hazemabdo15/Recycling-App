@@ -1,4 +1,4 @@
-﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 import { getCategoryIcon } from '../../utils/categoryUtils';

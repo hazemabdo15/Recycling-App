@@ -488,14 +488,14 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.xl,
     borderRadius: borderRadius.lg,
-    backgroundColor: colors.base100,
+    backgroundColor: colors.error,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.base200,
   },
   backButtonText: {
     ...typography.subtitle,
-    color: colors.neutral,
+    color: colors.white,
     fontWeight: '600',
   },
   confirmButton: {

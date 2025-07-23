@@ -1,4 +1,4 @@
-﻿import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_ENDPOINTS, BASE_URLS } from './config';
 
 const BASE_URL = BASE_URLS.CART;

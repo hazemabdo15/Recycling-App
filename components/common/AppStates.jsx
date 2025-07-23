@@ -1,4 +1,4 @@
-﻿import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { errorStateStyles, loadingStateStyles } from '../../styles/components/commonStyles';
 import { colors } from '../../styles/theme';
 const LoadingState = ({ message = "Loading..." }) => {

@@ -1,4 +1,4 @@
-﻿
+
 let withSpring, withTiming;
 
 try {

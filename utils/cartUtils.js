@@ -1,4 +1,4 @@
-﻿
+
 export const getUnitDisplay = (measurementUnit) => {
     return measurementUnit === 1 ? 'KG' : 'Piece';
 };
