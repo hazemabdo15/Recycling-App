@@ -1,17 +1,20 @@
-﻿import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, Pressable } from 'react-native';
+﻿import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { colors } from '../../styles/theme';
+
 
 export default function LoginForm({ onSubmit, loading }) {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async () => {
     if (loading) return;
     console.log('Login button pressed', email, password);
-    await onSubmit({email, password});
+    await onSubmit({ email, password });
   };
 
   const handleSkip = () => {
@@ -30,13 +33,28 @@ export default function LoginForm({ onSubmit, loading }) {
         onChangeText={setEmail}
       />
 
-      <TextInput
+      <View style={styles.passwordContainer}>
+        <TextInput
+          style={styles.passwordInput}
+          placeholder="Password"
+          secureTextEntry={!showPassword}
+          value={password}
+          onChangeText={setPassword}
+        />
+        <Pressable
+          onPress={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: 10, top: 12 }}
+          accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+        >
+          <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={20} color="#666" />
+        </Pressable>
+      </View>
+      {/* <TextInput
         style={styles.input}
         placeholder="Password"
         secureTextEntry
         value={password}
         onChangeText={setPassword}
-      />
+      /> */}
 
       <Pressable
         style={[styles.loginButton, loading && { opacity: 0.5 }]}
@@ -112,5 +130,19 @@ const styles = StyleSheet.create({
   skipText: {
     color: colors.neutral,
     textDecorationLine: 'underline',
+  },
+  passwordContainer: {
+    width: '100%',
+    maxWidth: 350,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    marginBottom: 15,
+  },
+  passwordInput: {
+    flex: 1,
+    padding: 12,
   },
 });

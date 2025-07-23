@@ -3,6 +3,7 @@ import { Picker } from '@react-native-picker/picker';
 import React, { useState } from 'react';
 import { colors } from '../../styles/theme';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 const RegisterForm = ({ onSubmit, loading}) => {
     const [name, setName] = useState('');
@@ -10,13 +11,14 @@ const RegisterForm = ({ onSubmit, loading}) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [confirmShowPassword, setConfirmShowPassword] = useState(false);
     const [role, setRole] = useState('user');
     const router = useRouter();
 
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Sign Up Now!</Text>
-            <Text>Create Account</Text>
             <TextInput
                 style={styles.input}
                 placeholder="Name"
@@ -38,20 +40,50 @@ const RegisterForm = ({ onSubmit, loading}) => {
                 keyboardType="email-address"
                 onChangeText={setEmail}
             />
-            <TextInput
+            <View style={styles.passwordContainer}>
+                    <TextInput
+                      style={styles.passwordInput}
+                      placeholder="Password"
+                      secureTextEntry={!showPassword}
+                      value={password}
+                      onChangeText={setPassword}
+                    />
+                    <Pressable
+                      onPress={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: 10, top: 12 }}
+                      accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={20} color="#666" />
+                    </Pressable>
+            </View>
+            {/* <TextInput
                 style={styles.input}
                 placeholder="Password"
                 value={password}
                 secureTextEntry
                 onChangeText={setPassword}
-            />
-            <TextInput
+            /> */}
+            <View style={styles.passwordContainer}>
+                    <TextInput
+                      style={styles.passwordInput}
+                      placeholder="Confirm Password"
+                      secureTextEntry={!confirmShowPassword}
+                      value={confirmPassword}
+                      onChangeText={setConfirmPassword}
+                    />
+                    <Pressable
+                      onPress={() => setConfirmShowPassword(!confirmShowPassword)} style={{ position: 'absolute', right: 10, top: 12 }}
+                      accessibilityLabel={confirmShowPassword ? 'Hide password' : 'Show password'}
+                    >
+                      <Ionicons name={confirmShowPassword ? 'eye-off' : 'eye'} size={20} color="#666" />
+                    </Pressable>
+            </View>
+            {/* <TextInput
                 style={styles.input}
                 placeholder="Confirm Password"
                 value={confirmPassword}
                 secureTextEntry
                 onChangeText={setConfirmPassword}
-            />
+            /> */}
 
             <Text style={styles.label}>Registering as:</Text>
                 <View style={styles.pickerContainer}>
@@ -85,7 +117,7 @@ const RegisterForm = ({ onSubmit, loading}) => {
 const styles = StyleSheet.create({
     container: { padding: 20, marginTop: 100 },
     title: { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 20, color: colors.primary },
-    input: { borderWidth: 1, borderColor: '#ccc', padding: 10, marginBottom: 10, borderRadius: 5 },
+    input: { borderWidth: 1, borderColor: '#ccc', padding: 12, marginBottom: 10, borderRadius: 5 },
     label: { fontSize: 16, marginBottom: 5 },
     pickerContainer: {
         borderWidth: 1,
@@ -114,7 +146,21 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         color: colors.primary,
         textDecorationLine: 'underline'
-    }
+    },
+    passwordContainer: {
+        width: '100%',
+        maxWidth: 350,
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 5,
+        marginBottom: 15,
+    },
+    passwordInput: {
+        flex: 1,
+        padding: 12,
+    },
 })
 
 export default RegisterForm;
