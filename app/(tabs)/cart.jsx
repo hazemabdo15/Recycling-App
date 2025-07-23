@@ -618,7 +618,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     width: '100%',
     marginTop: spacing.sm,
-    gap: 12,
+    gap: 5,
   },
   checkoutBtnBarHero: {
     flexDirection: 'row',
@@ -650,7 +650,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: spacing.sm,
-    height: 40,
+    height: 55,
     minWidth: 40,
   },
 });
