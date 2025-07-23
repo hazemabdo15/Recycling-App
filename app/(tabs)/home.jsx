@@ -2,11 +2,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback } from 'react';
-import { ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EarnPointsCard } from '../../components/cards';
 import { ErrorBoundary } from '../../components/common';
-import { CategoriesSection, TopRecycledSection } from '../../components/sections';
+import { TopRecycledSection } from '../../components/sections';
 import { useAuth } from '../../context/AuthContext';
 import { colors, spacing } from '../../styles/theme';
 
@@ -23,6 +23,9 @@ const Index = () => {
         // TODO: Navigate to notifications screen
         console.log('Navigate to notifications');
     };
+
+    // Tab bar height is typically around 80-90px, adding safe area bottom
+    const tabBarHeight = 140 + insets.bottom;
 
     return (
         <ErrorBoundary>
@@ -63,12 +66,7 @@ const Index = () => {
                     </View>
                 </LinearGradient>
 
-                <ScrollView
-                    style={styles.scrollContainer}
-                    showsVerticalScrollIndicator={false}
-                    contentContainerStyle={styles.scrollContent}
-                    bounces={true}
-                >
+                <View style={[styles.contentContainer, { paddingBottom: tabBarHeight }]}>
                     {/* Quick Stats Section */}
                     <View style={styles.statsSection}>
                         <EarnPointsCard />
@@ -82,19 +80,7 @@ const Index = () => {
                         </View>
                         <TopRecycledSection />
                     </View>
-
-                    {/* Categories Section */}
-                    <View style={styles.section}>
-                        <View style={styles.sectionHeader}>
-                            <Text style={styles.sectionTitle}>🌱 Start Recycling</Text>
-                            <Text style={styles.sectionSubtitle}>Choose what you want to recycle today</Text>
-                        </View>
-                        <CategoriesSection />
-                    </View>
-
-                    {/* Bottom Spacing */}
-                    <View style={styles.bottomSpacer} />
-                </ScrollView>
+                </View>
             </View>
         </ErrorBoundary>
     );
@@ -106,9 +92,8 @@ const styles = StyleSheet.create({
         backgroundColor: colors.background,
     },
     heroSection: {
-        marginBottom: spacing.md,
         paddingHorizontal: spacing.lg,
-        paddingBottom: spacing.xl,
+        paddingBottom: spacing.lg,
         borderBottomLeftRadius: 32,
         borderBottomRightRadius: 32,
         shadowColor: colors.primary,
@@ -121,7 +106,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: spacing.lg,
+        marginBottom: spacing.md,
     },
     appName: {
         fontSize: 24,
@@ -155,7 +140,7 @@ const styles = StyleSheet.create({
     },
     heroContent: {
         alignItems: 'center',
-        paddingTop: spacing.lg,
+        paddingTop: spacing.sm,
     },
     welcomeText: {
         fontSize: 16,
@@ -165,7 +150,7 @@ const styles = StyleSheet.create({
         marginBottom: spacing.xs,
     },
     heroTitle: {
-        fontSize: 28,
+        fontSize: 26,
         fontWeight: 'bold',
         color: colors.white,
         textAlign: 'center',
@@ -173,48 +158,48 @@ const styles = StyleSheet.create({
         letterSpacing: -0.5,
     },
     heroSubtitle: {
-        fontSize: 16,
+        fontSize: 15,
         color: colors.white,
         textAlign: 'center',
         opacity: 0.85,
-        lineHeight: 24,
+        lineHeight: 22,
         maxWidth: 280,
     },
-    scrollContainer: {
+    contentContainer: {
         flex: 1,
-        marginTop: -16, // Overlap with hero section
-    },
-    scrollContent: {
-        paddingBottom: 120,
+        paddingTop: spacing.md,
+        justifyContent: 'space-between',
     },
     statsSection: {
         paddingHorizontal: spacing.lg,
-        paddingTop: spacing.lg,
-        marginBottom: spacing.md,
     },
     section: {
         paddingHorizontal: spacing.lg,
-        marginBottom: spacing.xl,
+        maxHeight: 250, 
+        justifyContent: 'flex-start',
     },
     sectionHeader: {
-        marginBottom: spacing.lg,
+        marginBottom: spacing.sm,
         paddingHorizontal: spacing.xs,
+        paddingBottom: spacing.xs,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.base200,
+        alignItems: 'center',
     },
     sectionTitle: {
-        fontSize: 22,
+        fontSize: 18,
         fontWeight: 'bold',
         color: colors.text,
-        marginBottom: spacing.xs,
+        marginBottom: spacing.xs / 2,
         letterSpacing: -0.3,
+        textAlign: 'center',
     },
     sectionSubtitle: {
-        fontSize: 15,
+        fontSize: 13,
         color: colors.textSecondary,
-        lineHeight: 22,
+        lineHeight: 18,
         fontWeight: '400',
-    },
-    bottomSpacer: {
-        height: spacing.xl,
+        textAlign: 'center',
     },
 });
 

@@ -87,13 +87,46 @@ const EarnPointsCard = () => {
         };
     });
     
-    const iconAnimatedStyle = useAnimatedStyle(() => {
-        if (!isReanimatedAvailable) return {};
-        return {
-            transform: [{ scale: iconScale.value }],
-        };
-    });
     
+    // Array of fun environmental facts
+    const facts = [
+        "Recycling one aluminum can saves enough energy to run a TV for 3 hours!",
+        "Plastic bottles can take up to 450 years to decompose in a landfill.",
+        "Turning off the tap while brushing your teeth can save up to 8 gallons of water a day.",
+        "Every ton of recycled paper saves 17 trees.",
+        "Composting food scraps reduces landfill waste and creates nutrient-rich soil.",
+        "LED bulbs use at least 75% less energy than traditional incandescent lighting.",
+        "One mature tree can absorb carbon dioxide at a rate of 48 pounds per year.",
+        "Glass can be recycled endlessly without loss in quality or purity.",
+        "Producing new plastic from recycled material uses two-thirds less energy than making it from raw materials.",
+        "Earthworms improve soil health and help plants grow!",
+        "Recycling one ton of plastic saves the equivalent of 1,000–2,000 gallons of gasoline.",
+        "A single drip per second from a leaky faucet wastes over 3,000 gallons of water per year.",
+        "The average person generates over 4 pounds of trash every day.",
+        "Recycling a stack of newspapers just 3 feet high saves one tree.",
+        "Bamboo is one of the fastest-growing plants and is a sustainable alternative to wood.",
+        "Up to 80% of what Americans throw away is recyclable, yet the recycling rate is only about 30%.",
+        "If every American recycled just one-tenth of their newspapers, we could save about 25 million trees each year.",
+        "It takes 500,000 trees to produce the Sunday newspapers each week in the U.S.",
+        "Recycling one glass bottle saves enough energy to power a computer for 30 minutes.",
+        "Aluminum is 100% recyclable and can be recycled indefinitely without losing quality.",
+        "The energy saved from recycling one glass bottle will power a 100-watt light bulb for 4 hours.",
+        "Recycling cardboard only takes 75% of the energy needed to make new cardboard.",
+        "More than 60% of the trash that ends up in the dustbin could be recycled.",
+        "Recycling one ton of paper saves 7,000 gallons of water.",
+        "Americans use 2,500,000 plastic bottles every hour, most of which are thrown away.",
+        "A single recycled tin can saves enough energy to power a television for 3 hours.",
+        "The world’s largest landfill is actually in the Pacific Ocean, known as the Great Pacific Garbage Patch.",
+        "Recycling helps reduce greenhouse gas emissions that contribute to climate change.",
+        "The average glass bottle takes 4,000 years to decompose if not recycled.",
+        "Recycling one ton of aluminum saves 14,000 kWh of energy.",
+        "Recycled paper produces 73% less air pollution than if it was made from raw materials."
+    ];
+
+    // Pick a random fact on each app open
+    const randomIndex = Math.floor(Math.random() * facts.length);
+    const fact = facts[randomIndex];
+
     return (
         <Animated.View style={[styles.earnPointsCard, cardAnimatedStyle]}>
             <LinearGradient
@@ -103,36 +136,18 @@ const EarnPointsCard = () => {
                 style={styles.cardGradient}
             >
                 <View style={styles.cardContent}>
-                    <View style={styles.textSection}>
-                        <Text style={styles.earnPointsTitle}>🍃 Start Your Journey</Text>
-                        <Text style={styles.earnPointsSubtitle}>
-                            Every item you recycle makes a difference. Begin your eco-friendly journey today!
-                        </Text>
-                        <View style={styles.benefitsRow}>
-                            <View style={styles.benefitItem}>
-                                <Text style={styles.benefitIcon}>🏆</Text>
-                                <Text style={styles.benefitText}>Earn Rewards</Text>
-                            </View>
-                            <View style={styles.benefitItem}>
-                                <Text style={styles.benefitIcon}>🌍</Text>
-                                <Text style={styles.benefitText}>Save Planet</Text>
-                            </View>
-                            <View style={styles.benefitItem}>
-                                <Text style={styles.benefitIcon}>📈</Text>
-                                <Text style={styles.benefitText}>Track Impact</Text>
-                            </View>
-                        </View>
-                    </View>
-                    <Animated.View style={[styles.iconSection, iconAnimatedStyle]}>
+                    <View style={styles.factHeader}>
                         <LinearGradient
                             colors={[colors.primary, colors.secondary]}
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1, y: 1 }}
-                            style={styles.iconGradient}
+                            style={styles.factIcon}
                         >
-                            <Ionicons name="rocket" size={28} color={colors.white} />
+                            <Ionicons name="bulb" size={28} color={colors.white} />
                         </LinearGradient>
-                    </Animated.View>
+                        <Text style={styles.factTitle}>Did You Know?</Text>
+                    </View>
+                    <Text style={styles.factText}>{fact}</Text>
                 </View>
             </LinearGradient>
         </Animated.View>
@@ -141,7 +156,7 @@ const EarnPointsCard = () => {
 
 const styles = StyleSheet.create({
     earnPointsCard: {
-        marginVertical: spacing.md,
+        marginVertical: spacing.xs,
         borderRadius: borderRadius.lg,
         overflow: 'hidden',
         shadowColor: colors.primary,
@@ -149,67 +164,41 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.15,
         shadowRadius: 12,
         elevation: 8,
+        backgroundColor: colors.white,
     },
     cardGradient: {
         padding: spacing.lg,
     },
     cardContent: {
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    factHeader: {
         flexDirection: 'row',
-        alignItems: 'flex-start',
-        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: spacing.md,
     },
-    textSection: {
-        flex: 1,
-        paddingRight: spacing.md,
+    factIcon: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: spacing.md,
+        backgroundColor: colors.primary,
     },
-    earnPointsTitle: {
-        fontSize: 20,
+    factTitle: {
+        fontSize: 18,
         fontWeight: 'bold',
         color: colors.text,
-        marginBottom: spacing.xs,
         letterSpacing: -0.3,
     },
-    earnPointsSubtitle: {
-        fontSize: 14,
+    factText: {
+        fontSize: 15,
         color: colors.textSecondary,
-        lineHeight: 20,
-        marginBottom: spacing.lg,
-        fontWeight: '400',
-    },
-    benefitsRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        paddingRight: spacing.md,
-    },
-    benefitItem: {
-        alignItems: 'center',
-        flex: 1,
-    },
-    benefitIcon: {
-        fontSize: 20,
-        marginBottom: spacing.xs / 2,
-    },
-    benefitText: {
-        fontSize: 11,
-        color: colors.textSecondary,
-        fontWeight: '600',
         textAlign: 'center',
-    },
-    iconSection: {
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    iconGradient: {
-        width: 56,
-        height: 56,
-        borderRadius: 28,
-        alignItems: 'center',
-        justifyContent: 'center',
-        shadowColor: colors.primary,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 6,
+        fontWeight: '500',
     },
 });
 

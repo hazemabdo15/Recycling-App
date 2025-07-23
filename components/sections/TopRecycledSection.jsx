@@ -67,10 +67,6 @@ const TopRecycledSection = memo(() => {
     return (
         <View style={styles.section}>
             <View style={styles.headerContainer}>
-                <Text style={styles.sectionTitle}>🌟 Most Recycled This Month</Text>
-                <TouchableOpacity onPress={() => console.log('View all top items')}>
-                    <Text style={styles.viewAllText}>View all</Text>
-                </TouchableOpacity>
             </View>
             <ScrollView
                 horizontal
@@ -121,33 +117,25 @@ const TopRecycledSection = memo(() => {
 TopRecycledSection.displayName = 'TopRecycledSection';
 const styles = StyleSheet.create({
     section: {
-        marginBottom: 30,
-        paddingBottom: 10,
+        marginBottom: 15,
+        paddingBottom: 8,
         marginHorizontal: -20,
         paddingHorizontal: 20,
     },
     headerContainer: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        justifyContent: 'flex-start',
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: 12,
         paddingHorizontal: 0,
     },
     sectionTitle: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: colors.primary,
-        letterSpacing: -0.5,
-        lineHeight: 34,
-        marginBottom: 8,
-        textTransform: 'uppercase',
-        includeFontPadding: false,
-    },
-    viewAllText: {
         fontSize: 16,
-        color: colors.primary,
         fontWeight: '700',
-        lineHeight: 34,
+        color: colors.primary,
+        letterSpacing: -0.3,
+        lineHeight: 22,
+        marginBottom: 0,
     },
     scrollContainer: {
         paddingLeft: 20,
@@ -160,7 +148,7 @@ const styles = StyleSheet.create({
         padding: 16,
         marginRight: 15,
         width: 150,
-        minHeight: 180,
+        minHeight: 160,
         shadowColor: colors.black,
         shadowOffset: {
             width: 0,
