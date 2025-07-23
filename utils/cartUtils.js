@@ -18,16 +18,17 @@ export const normalizeItemData = (item) => {
         } else if (lowerUnit === 'piece' || lowerUnit === 'pieces') {
             normalized.measurement_unit = 2;
         } else {
-
-            console.warn('[normalizeItemData] Unknown measurement unit string:', item.measurement_unit);
+            // Unknown unit, default to KG
+            normalized.measurement_unit = 1;
         }
     } else if (typeof item.measurement_unit === 'number') {
-
+        // Validate numeric measurement unit
         if (item.measurement_unit !== 1 && item.measurement_unit !== 2) {
-            console.warn('[normalizeItemData] Invalid numeric measurement unit:', item.measurement_unit);
+            normalized.measurement_unit = 1; // Default to KG
         }
     } else {
-        console.warn('[normalizeItemData] Invalid measurement unit type:', typeof item.measurement_unit, item.measurement_unit);
+        // Invalid type, default to KG
+        normalized.measurement_unit = 1;
     }
     
     return normalized;

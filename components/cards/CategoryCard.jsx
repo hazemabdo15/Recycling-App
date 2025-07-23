@@ -65,6 +65,10 @@ const CategoryCard = memo(({ category, onPress }) => {
                 onTouchStart={handlePressIn}
                 onTouchEnd={handlePressOut}
                 onTouchCancel={handlePressOut}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={`${category.name} category`}
+                accessibilityHint={`Navigate to ${category.name} recycling items`}
             >
                 <Animated.View
                     style={styles.cardContent}

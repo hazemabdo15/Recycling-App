@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import { ScrollView, StatusBar, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EarnPointsCard } from '../../components/cards';
-import { Header } from '../../components/common';
+import { ErrorBoundary, Header } from '../../components/common';
 import { CategoriesSection, TopRecycledSection } from '../../components/sections';
 import { colors } from '../../styles/theme';
 
@@ -17,21 +17,23 @@ const Index = () => {
     }, []));
 
     return (
-        <View style={[styles.container, { paddingTop: insets.top }]}>
-            <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
-            <View style={[styles.headerContainer]}>
-                <Header/>
+        <ErrorBoundary>
+            <View style={[styles.container, { paddingTop: insets.top }]}>
+                <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+                <View style={[styles.headerContainer]}>
+                    <Header/>
+                </View>
+                <ScrollView
+                    style={[styles.content]}
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={styles.scrollContent}
+                >
+                    <EarnPointsCard />
+                    <TopRecycledSection />
+                    <CategoriesSection />
+                </ScrollView>
             </View>
-            <ScrollView
-                style={[styles.content]}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.scrollContent}
-            >
-                <EarnPointsCard />
-                <TopRecycledSection />
-                <CategoriesSection />
-            </ScrollView>
-        </View>
+        </ErrorBoundary>
     );
 }
 const styles = StyleSheet.create({

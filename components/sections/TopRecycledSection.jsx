@@ -1,4 +1,5 @@
 ﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { memo } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 const colors = {
   primary: "#0E9F6E",
@@ -17,7 +18,7 @@ const borderRadius = {
   lg: 24,
   xl: 32,
 };
-const TopRecycledSection = () => {
+const TopRecycledSection = memo(() => {
     const topItems = [
         {
             id: 1,
@@ -115,7 +116,9 @@ const TopRecycledSection = () => {
             </ScrollView>
         </View>
     );
-};
+});
+
+TopRecycledSection.displayName = 'TopRecycledSection';
 const styles = StyleSheet.create({
     section: {
         marginBottom: 30,

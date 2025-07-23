@@ -8,11 +8,9 @@ export async function fetchDatabaseItems() {
   try {
 
     if (cachedDatabaseItems && cacheTimestamp && (Date.now() - cacheTimestamp < CACHE_DURATION)) {
-      console.log('📦 Using cached database items');
       return cachedDatabaseItems;
     }
 
-    console.log('🔄 Fetching categories and items from database...');
     const response = await api.get('/categories');
     
     if (!response.data || !Array.isArray(response.data)) {

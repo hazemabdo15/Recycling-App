@@ -14,7 +14,6 @@ const Header = () => {
         const loadUser = async () => {
             const user = await getLoggedInUser();
             setUser(user);
-            console.log('Header user:', user);
         };
         loadUser();
     }, []);

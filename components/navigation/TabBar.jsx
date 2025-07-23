@@ -9,7 +9,7 @@ import { useCart } from "../../hooks/useCart";
 import { useVoiceModal } from "../../hooks/useVoiceModal";
 import { colors, shadows } from "../../styles/theme";
 
-let Animated, useSharedValue, useAnimatedStyle, withTiming, withSpring, withRepeat, withSequence, runOnJS;
+let Animated, useSharedValue, useAnimatedStyle, withTiming, withSpring, withRepeat, withSequence;
 
 try {
   const reanimated = require('react-native-reanimated');
@@ -20,10 +20,8 @@ try {
   withSpring = reanimated.withSpring;
   withRepeat = reanimated.withRepeat;
   withSequence = reanimated.withSequence;
-  runOnJS = reanimated.runOnJS;
 } catch (_error) {
-  console.warn('React Native Reanimated not available in TabBar, using fallbacks');
-
+  // React Native Reanimated not available, using fallbacks
   Animated = { 
     View: View,
     createAnimatedComponent: (Component) => Component 
@@ -34,7 +32,6 @@ try {
   withSpring = (value) => value;
   withRepeat = (value) => value;
   withSequence = (...values) => values[0];
-  runOnJS = (fn) => fn;
 }
 
 const { width } = Dimensions.get("window");
@@ -136,6 +133,10 @@ export function TabBar({ state, descriptors, navigation }) {
         style={styles.mainActionButtonContainer}
         onPress={handleMainActionPress}
         activeOpacity={1}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel="Voice input"
+        accessibilityHint="Open voice recording to add recycling items"
       >
         <Animated.View style={[styles.mainActionButton, mainButtonAnimatedStyle]}>
           <MaterialCommunityIcons
@@ -237,7 +238,15 @@ function TabBarItem({ route, label, isFocused, index, onPress, onLongPress, buil
   const textColor = isFocused ? colors.primary : colors.neutral;
   
   return (
-    <TouchableWithoutFeedback onPress={onPress} onLongPress={onLongPress}>
+    <TouchableWithoutFeedback 
+      onPress={onPress} 
+      onLongPress={onLongPress}
+      accessible={true}
+      accessibilityRole="tab"
+      accessibilityLabel={`${label} tab`}
+      accessibilityState={{ selected: isFocused }}
+      accessibilityHint={`Navigate to ${label} screen`}
+    >
       <Animated.View style={[styles.tabItem, animatedStyle]}>
         <Animated.View style={styles.iconContainer}>
           <MaterialCommunityIcons

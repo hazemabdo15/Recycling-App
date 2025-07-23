@@ -71,6 +71,9 @@ const SearchBar = ({ placeholder = "Search categories...", onSearch, onFilter })
           placeholderTextColor={colors.neutral}
           value={searchText}
           onChangeText={handleSearchChange}
+          accessible={true}
+          accessibilityLabel="Search input"
+          accessibilityHint="Type to search through categories"
         />
         {searchText.length > 0 && (
           <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
