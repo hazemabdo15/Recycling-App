@@ -14,7 +14,6 @@ import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-g
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCart } from '../hooks/useCart';
 import { borderRadius, colors, spacing, typography } from '../styles/theme';
-import { getMinimumQuantity } from '../utils/cartUtils';
 
 let Reanimated, interpolate, runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming;
 
@@ -88,19 +87,36 @@ export default function AIResultsModal() {
     
     safeMaterials.forEach((material, index) => {
       if (material.available !== false) {
-        const measurementUnit = material.databaseItem?.measurement_unit || 
-                               (material.unit === 'KG' ? 1 : 2);
-        const minQuantity = getMinimumQuantity(measurementUnit);
+        // Use the actual measurement unit from database, not the AI extracted unit
+        const measurementUnit = material.databaseItem?.measurement_unit;
         
-        if (material.quantity < minQuantity) {
-          validationErrors.push({
-            index,
-            material: material.material,
-            currentQuantity: material.quantity,
-            minQuantity,
-            unit: material.unit
-          });
+        console.log(`[AI Results Modal] Validating material ${index}:`, {
+          material: material.material,
+          quantity: material.quantity,
+          unit: material.unit,
+          databaseMeasurementUnit: measurementUnit,
+          databaseItemName: material.databaseItem?.name
+        });
+        
+        // Only validate if we have database item with measurement unit
+        if (measurementUnit !== undefined) {
+          const minQuantity = 1; // Minimum quantity is always 1
+          
+          console.log(`[AI Results Modal] Min quantity for measurement_unit ${measurementUnit}:`, minQuantity);
+          
+          if (material.quantity < minQuantity) {
+            validationErrors.push({
+              index,
+              material: material.material,
+              currentQuantity: material.quantity,
+              minQuantity,
+              unit: material.unit
+            });
+          } else {
+            validItems.push(material);
+          }
         } else {
+          // If no database item, consider it valid (will be filtered out in addToCart anyway)
           validItems.push(material);
         }
       }
@@ -151,8 +167,10 @@ export default function AIResultsModal() {
   const updateQuantity = useCallback((index, delta) => {
     setMaterials(prev => prev.map((item, i) => {
       if (i === index) {
-        const step = item.unit === 'KG' ? 0.25 : 1;
-        const minValue = 1; // All items now have minimum quantity of 1
+        // Use database measurement unit to determine step
+        const measurementUnit = item.databaseItem?.measurement_unit;
+        const step = measurementUnit === 1 ? 0.25 : 1; // KG uses 0.25, pieces use 1
+        const minValue = 1; // Minimum quantity is always 1 regardless of unit
         const newQuantity = Math.max(minValue, item.quantity + (delta * step));
         return { ...item, quantity: newQuantity };
       }
@@ -182,6 +200,7 @@ export default function AIResultsModal() {
 
     const cartItems = availableMaterials.map(item => ({
       categoryId: item.databaseItem.categoryId,
+      categoryName: item.databaseItem.categoryName, // Add categoryName for backend
       name: item.databaseItem.name,
       image: item.databaseItem.image,
       points: item.databaseItem.points,
@@ -194,6 +213,20 @@ export default function AIResultsModal() {
     console.log('📦 [AI Results Modal] Items to add:', cartItems);
     console.log('📋 [AI Results Modal] Available materials from AI:', availableMaterials);
     console.log('🔄 [AI Results Modal] These items will be merged with existing cart items');
+    
+    // Log detailed item information for debugging
+    cartItems.forEach((item, index) => {
+      console.log(`[AI Results Modal] Cart item ${index + 1}:`, {
+        name: item.name,
+        categoryName: item.categoryName,
+        quantity: item.quantity,
+        measurement_unit: item.measurement_unit,
+        measurementUnitType: typeof item.measurement_unit,
+        categoryId: item.categoryId
+      });
+    });
+
+    console.log('🔄 [AI Results Modal] Calling handleAddToCart with items:', cartItems);
 
     handleAddToCart(cartItems);
 

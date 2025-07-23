@@ -118,13 +118,24 @@ const ReviewPhase = ({
               "[ReviewPhase] Found real item for",
               categoryId,
               ":",
-              realItem.name
+              realItem.name,
+              "with measurement_unit:",
+              realItem.measurement_unit,
+              "type:",
+              typeof realItem.measurement_unit
             );
+            
+            const measurementUnit = typeof realItem.measurement_unit === 'string' 
+              ? (realItem.measurement_unit === "KG" ? 1 : 2) 
+              : Number(realItem.measurement_unit);
+              
+            console.log("[ReviewPhase] Converted measurement_unit to:", measurementUnit);
+            
             return {
               categoryId: categoryId,
               quantity: quantity,
               itemName: realItem.name,
-              measurement_unit: realItem.measurement_unit === "KG" ? 1 : 2, // Convert string to number format expected by backend
+              measurement_unit: measurementUnit,
               points: realItem.points || 10,
               price: realItem.price || 5.0,
               image:

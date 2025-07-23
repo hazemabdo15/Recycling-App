@@ -81,10 +81,20 @@ export const CartProvider = ({ children }) => {
 
       const itemsToMerge = {};
       items.forEach(item => {
+        console.log(`[CartContext] Processing item for merge:`, {
+          name: item.name,
+          categoryId: item.categoryId,
+          quantity: item.quantity,
+          measurement_unit: item.measurement_unit,
+          measurementUnitType: typeof item.measurement_unit
+        });
+        
         if (itemsToMerge[item.categoryId]) {
           itemsToMerge[item.categoryId].quantity += item.quantity;
+          console.log(`[CartContext] Merged with existing item, new quantity:`, itemsToMerge[item.categoryId].quantity);
         } else {
           itemsToMerge[item.categoryId] = { ...item };
+          console.log(`[CartContext] Added new item to merge:`, itemsToMerge[item.categoryId]);
         }
       });
 
@@ -103,7 +113,16 @@ export const CartProvider = ({ children }) => {
         
         if (actualCurrentQuantity > 0) {
           const newTotalQuantity = actualCurrentQuantity + mergedItem.quantity;
-          const result = await updateCartItem(mergedItem.categoryId, newTotalQuantity, isLoggedIn);
+          console.log(`[CartContext] Updating existing item:`, {
+            categoryId: mergedItem.categoryId,
+            name: mergedItem.name,
+            currentQuantity: actualCurrentQuantity,
+            addingQuantity: mergedItem.quantity,
+            newTotalQuantity,
+            measurement_unit: mergedItem.measurement_unit,
+            measurementUnitType: typeof mergedItem.measurement_unit
+          });
+          const result = await updateCartItem(mergedItem.categoryId, newTotalQuantity, isLoggedIn, mergedItem.measurement_unit);
           results.push(result);
         } else {
           const result = await addItemToCart(mergedItem, isLoggedIn);

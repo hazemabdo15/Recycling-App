@@ -157,6 +157,14 @@ export const usePickupWorkflow = () => {
     setError(null);
     try {
       console.log('[Pickup Workflow] Creating pickup order');
+      console.log('[Pickup Workflow] Raw cart items received:', cartItems.map(item => ({
+        name: item.itemName || item.name,
+        categoryId: item.categoryId,
+        measurement_unit: item.measurement_unit,
+        measurement_unit_type: typeof item.measurement_unit,
+        quantity: item.quantity,
+        quantityType: typeof item.quantity
+      })));
       
       // Prepare order data according to backend specification
       const orderData = {
@@ -170,15 +178,28 @@ export const usePickupWorkflow = () => {
           landmark: selectedAddress.landmark || '',
           isDefault: false
         },
-        items: cartItems.map(item => ({
-          categoryId: item.categoryId,
-          image: item.image,
-          itemName: item.itemName || item.name,
-          measurement_unit: Number(item.measurement_unit), // Ensure it's a number
-          points: Number(item.points) || 10,
-          price: Number(item.price) || 5.0,
-          quantity: Number(item.quantity) // Ensure it's a number
-        })),
+        items: cartItems.map((item, index) => {
+          const mappedItem = {
+            categoryId: item.categoryId,
+            image: item.image,
+            itemName: item.itemName || item.name,
+            measurement_unit: Number(item.measurement_unit), // Ensure it's a number
+            points: Number(item.points) || 10,
+            price: Number(item.price) || 5.0,
+            quantity: Number(item.quantity) // Ensure it's a number
+          };
+          
+          console.log(`[Pickup Workflow] Validating item ${index + 1}:`, {
+            categoryId: mappedItem.categoryId,
+            itemName: mappedItem.itemName,
+            measurement_unit: mappedItem.measurement_unit,
+            measurement_unit_type: typeof mappedItem.measurement_unit,
+            quantity: mappedItem.quantity,
+            quantityType: typeof mappedItem.quantity
+          });
+          
+          return mappedItem;
+        }),
         phoneNumber: userData.phoneNumber || userData.phone || '',
         userName: userData.name || userData.userName || '',
         imageUrl: userData.imageUrl || userData.avatar || '',
