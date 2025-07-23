@@ -1,5 +1,4 @@
-﻿import api from './api/api';
-
+﻿import apiService from "./api/apiService";
 let cachedDatabaseItems = null;
 let cacheTimestamp = null;
 const CACHE_DURATION = 5 * 60 * 1000;
@@ -11,7 +10,7 @@ export async function fetchDatabaseItems() {
       return cachedDatabaseItems;
     }
 
-    const response = await api.get('/categories');
+    const response = await apiService.get('/categories');
     
     if (!response.data || !Array.isArray(response.data)) {
       throw new Error('Invalid response format from categories API');
