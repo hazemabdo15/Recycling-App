@@ -29,7 +29,8 @@ export const useCart = () => {
     console.log('[useCart] handleIncreaseQuantity - Normalized item:', {
       categoryId,
       measurement_unit,
-      itemName: normalizedItem.name
+      itemName: normalizedItem.name,
+      categoryName: normalizedItem.categoryName
     });
     
     const step = getIncrementStep(measurement_unit);
@@ -55,7 +56,7 @@ export const useCart = () => {
     
     try {
       if (currentQuantity === 0) {
-
+        // Format quantity properly
         let formattedQuantity = newQuantity;
 
         if (measurement_unit === 1) {
@@ -64,6 +65,7 @@ export const useCart = () => {
         
         const cartItem = {
           categoryId,
+          categoryName: normalizedItem.categoryName, // Include categoryName
           name: normalizedItem.name,
           image: normalizedItem.image,
           points: normalizedItem.points,
@@ -76,7 +78,7 @@ export const useCart = () => {
         await handleAddSingleItem(cartItem);
       } else {
         console.log('[useCart] Updating existing item quantity:', { categoryId, newQuantity });
-        const result = await handleUpdateQuantity(categoryId, newQuantity);
+        const result = await handleUpdateQuantity(categoryId, newQuantity, measurement_unit);
 
         if (result && !result.success && result.reason === 'Operation already pending') {
           console.log('⏸️ [useCart] Update skipped - operation already pending');
@@ -85,7 +87,7 @@ export const useCart = () => {
       }
     } catch (error) {
       console.error('[useCart] handleIncreaseQuantity error:', error);
-
+      // Could show user-friendly error here
     }
   };
 
@@ -96,7 +98,8 @@ export const useCart = () => {
     console.log('[useCart] handleDecreaseQuantity - Normalized item:', {
       categoryId,
       measurement_unit,
-      itemName: normalizedItem.name
+      itemName: normalizedItem.name,
+      categoryName: normalizedItem.categoryName
     });
     
     const step = getIncrementStep(measurement_unit);
@@ -107,6 +110,7 @@ export const useCart = () => {
     
     console.log('[useCart] handleDecreaseQuantity:', { categoryId, currentQuantity, newQuantity, minValue, measurement_unit });
 
+    // For KG items, if new quantity is below minimum but greater than 0, set to 0
     if (measurement_unit === 1 && newQuantity < minValue && newQuantity > 0) {
       newQuantity = 0;
     }
@@ -115,7 +119,7 @@ export const useCart = () => {
       if (newQuantity <= 0) {
         await handleRemoveFromCart(categoryId);
       } else {
-        const result = await handleUpdateQuantity(categoryId, newQuantity);
+        const result = await handleUpdateQuantity(categoryId, newQuantity, measurement_unit);
 
         if (result && !result.success && result.reason === 'Operation already pending') {
           console.log('⏸️ [useCart] Update skipped - operation already pending');
@@ -124,7 +128,7 @@ export const useCart = () => {
       }
     } catch (error) {
       console.error('[useCart] handleDecreaseQuantity error:', error);
-
+      // Could show user-friendly error here
     }
   };
 
@@ -148,7 +152,7 @@ export const useCart = () => {
     
     try {
       if (currentQuantity === 0) {
-
+        // Format quantity properly
         let formattedQuantity = newQuantity;
         
         if (measurement_unit === 1) {
@@ -157,6 +161,7 @@ export const useCart = () => {
         
         const cartItem = {
           categoryId,
+          categoryName: normalizedItem.categoryName, // Include categoryName
           name: normalizedItem.name,
           image: normalizedItem.image,
           points: normalizedItem.points,
@@ -169,7 +174,7 @@ export const useCart = () => {
         await handleAddSingleItem(cartItem);
       } else {
         console.log('[useCart] Fast updating existing item quantity:', { categoryId, newQuantity });
-        const result = await handleUpdateQuantity(categoryId, newQuantity);
+        const result = await handleUpdateQuantity(categoryId, newQuantity, measurement_unit);
         
         if (result && !result.success && result.reason === 'Operation already pending') {
           console.log('⏸️ [useCart] Fast update skipped - operation already pending');
@@ -199,6 +204,7 @@ export const useCart = () => {
       measurement_unit 
     });
 
+    // If new quantity is below minimum, set to 0
     if (newQuantity < minValue) {
       newQuantity = 0;
     }
@@ -207,7 +213,7 @@ export const useCart = () => {
       if (newQuantity <= 0) {
         await handleRemoveFromCart(categoryId);
       } else {
-        const result = await handleUpdateQuantity(categoryId, newQuantity);
+        const result = await handleUpdateQuantity(categoryId, newQuantity, measurement_unit);
         
         if (result && !result.success && result.reason === 'Operation already pending') {
           console.log('⏸️ [useCart] Fast decrease skipped - operation already pending');

@@ -136,7 +136,7 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  const handleUpdateQuantity = async (categoryId, quantity) => {
+  const handleUpdateQuantity = async (categoryId, quantity, measurementUnit = null) => {
     const operationKey = `update-${categoryId}`;
     if (pendingOperations.has(operationKey)) {
       return { success: false, reason: 'Operation already pending' };
@@ -151,7 +151,7 @@ export const CartProvider = ({ children }) => {
     setCartItems(optimisticUpdate);
     
     try {
-      const result = await updateCartItem(categoryId, quantity, isLoggedIn);
+      const result = await updateCartItem(categoryId, quantity, isLoggedIn, measurementUnit);
 
       if (result.items) {
         const itemsObj = {};

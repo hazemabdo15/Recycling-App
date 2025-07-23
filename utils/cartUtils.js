@@ -9,8 +9,18 @@ export const getIncrementStep = (measurementUnit) => {
 export const normalizeItemData = (item) => {
     const normalized = { ...item };
 
+    // Ensure categoryId exists
     normalized.categoryId = item.categoryId || item._id;
+    
+    // Ensure categoryName exists - try multiple sources
+    if (!normalized.categoryName) {
+        normalized.categoryName = item.categoryName || 
+                                  item.category?.name || 
+                                  item.categoryType || 
+                                  'Unknown Category';
+    }
 
+    // Normalize measurement_unit to numbers
     if (typeof item.measurement_unit === 'string') {
         const lowerUnit = item.measurement_unit.toLowerCase();
         if (lowerUnit === 'kg' || lowerUnit === 'kilogram') {
@@ -18,16 +28,16 @@ export const normalizeItemData = (item) => {
         } else if (lowerUnit === 'piece' || lowerUnit === 'pieces') {
             normalized.measurement_unit = 2;
         } else {
-
+            // Default to KG for unknown string units
             normalized.measurement_unit = 1;
         }
     } else if (typeof item.measurement_unit === 'number') {
-
+        // Validate and default invalid numbers
         if (item.measurement_unit !== 1 && item.measurement_unit !== 2) {
             normalized.measurement_unit = 1;
         }
     } else {
-
+        // Default to KG for null/undefined
         normalized.measurement_unit = 1;
     }
     

@@ -266,167 +266,227 @@ export async function getCart(isLoggedIn) {
   }
 }
 
-export async function addItemToCart(item, isLoggedIn) {
-  try {
-    const sessionId = isLoggedIn ? null : await getSessionId();
-    let headers = await getAuthHeaders(isLoggedIn, sessionId);
-
-  if (!isLoggedIn && !sessionId) {
-    console.log('[cart API] No sessionId found for guest user, attempting to create session...');
-    try {
-      const sessionResponse = await fetch(BASE_URL, { 
-        method: 'GET', 
-        headers: { 'Content-Type': 'application/json' }, 
-        credentials: 'include' 
-      });
-      await setSessionIdFromResponse(sessionResponse);
-      const newSessionId = await getSessionId();
-      if (newSessionId) {
-        console.log('[cart API] Session created successfully:', newSessionId);
-        headers = await getAuthHeaders(isLoggedIn, newSessionId);
-      } else {
-        console.warn('[cart API] Failed to create session for guest user');
-      }
-    } catch (sessionError) {
-      console.error('[cart API] Error creating session:', sessionError.message);
+// Validation function for quantity based on measurement unit
+export function validateQuantity(item) {
+  if (item.measurement_unit === 1) {
+    // KG - must be in 0.25 increments
+    if (item.quantity % 0.25 !== 0) {
+      throw new Error("For KG items, quantity must be in 0.25 increments (e.g., 0.25, 0.5, 0.75, 1.0).");
     }
-  }
-  
-  console.log('[cart API] addItemToCart - Request:', {
-    item,
-    isLoggedIn,
-    headers,
-    url: BASE_URL
-  });
-
-  const fixedPayload = {
-    categoryId: item.categoryId,
-    itemName: item.name,
-    image: item.image,
-    points: item.points,
-    price: item.price,
-    measurement_unit: item.measurement_unit,
-    quantity: item.quantity
-  };
-  
-  console.log('[cart API] FIXED: Using correct field names:', fixedPayload);
-  
-  const response = await fetch(BASE_URL, {
-    method: 'POST',
-    headers,
-    credentials: 'include',
-    body: JSON.stringify(fixedPayload),
-  });
-  
-  console.log('[cart API] addItemToCart - Response status:', response.status);
-  console.log('[cart API] addItemToCart - Response headers:', Object.fromEntries(response.headers.entries()));
-  
-  await setSessionIdFromResponse(response);
-  
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('[cart API] addItemToCart - Error response:', errorText);
-    console.error('[cart API] addItemToCart - Full request details:', {
-      method: 'POST',
-      url: BASE_URL,
-      headers,
-      body: JSON.stringify(item),
-      status: response.status,
-      statusText: response.statusText
-    });
-
-    if (response.status === 401) {
-      console.error('[cart API] Authentication failed - token may be expired');
-
-      await AsyncStorage.removeItem('accessToken');
-      cachedToken = null;
-      tokenCacheTime = 0;
-      throw new Error('Authentication failed - please login again');
+    if (item.quantity <= 0) {
+      throw new Error("Quantity must be greater than 0.");
     }
-    
-    throw new Error(`HTTP ${response.status}: ${errorText}`);
-  }
-  
-  const result = await response.json();
-  console.log('✅ [cart API] addItemToCart - Success response:', result);
-
-  if (result.items && Array.isArray(result.items)) {
-    console.log('🔍 [cart API] Current cart after adding item:');
-    result.items.forEach(item => {
-      console.log(`   - ${item.categoryId}: ${item.quantity} (${item.itemName || item.name})`);
-    });
-  }
-  
-  return result;
-  } catch (error) {
-    console.warn('[cart API] addItemToCart network error:', error.message);
-    throw error;
+  } else if (item.measurement_unit === 2) {
+    // Piece - must be whole numbers >= 1
+    if (!Number.isInteger(item.quantity) || item.quantity < 1) {
+      throw new Error("For Piece items, quantity must be whole numbers >= 1.");
+    }
+  } else {
+    throw new Error("Invalid measurement unit. Must be 1 (KG) or 2 (Piece).");
   }
 }
 
-export async function updateCartItem(categoryId, quantity, isLoggedIn) {
+export async function addItemToCart(item, isLoggedIn) {
   try {
+    // Validate quantity before sending request
+    validateQuantity(item);
+    
+    const sessionId = isLoggedIn ? null : await getSessionId();
+    let headers = await getAuthHeaders(isLoggedIn, sessionId);
+
+    if (!isLoggedIn && !sessionId) {
+      console.log('[cart API] No sessionId found for guest user, attempting to create session...');
+      try {
+        const sessionResponse = await fetch(BASE_URL, { 
+          method: 'GET', 
+          headers: { 'Content-Type': 'application/json' }, 
+          credentials: 'include' 
+        });
+        await setSessionIdFromResponse(sessionResponse);
+        const newSessionId = await getSessionId();
+        if (newSessionId) {
+          console.log('[cart API] Session created successfully:', newSessionId);
+          headers = await getAuthHeaders(isLoggedIn, newSessionId);
+        } else {
+          console.warn('[cart API] Failed to create session for guest user');
+        }
+      } catch (sessionError) {
+        console.error('[cart API] Error creating session:', sessionError.message);
+      }
+    }
+    
+    console.log('[cart API] addItemToCart - Request:', {
+      item,
+      isLoggedIn,
+      headers,
+      url: BASE_URL
+    });
+
+    // Fixed payload structure according to backend API requirements
+    const fixedPayload = {
+      categoryId: item.categoryId,
+      categoryName: item.categoryName, // Required by backend
+      itemName: item.name, // Backend expects itemName, not name
+      image: item.image,
+      points: item.points,
+      price: item.price,
+      measurement_unit: item.measurement_unit,
+      quantity: item.quantity
+    };
+    
+    console.log('[cart API] FIXED: Using correct field names with validation:', fixedPayload);
+  
+    
+    const response = await fetch(BASE_URL, {
+      method: 'POST',
+      headers,
+      credentials: 'include',
+      body: JSON.stringify(fixedPayload),
+    });
+    
+    console.log('[cart API] addItemToCart - Response status:', response.status);
+    console.log('[cart API] addItemToCart - Response headers:', Object.fromEntries(response.headers.entries()));
+    
+    await setSessionIdFromResponse(response);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[cart API] addItemToCart - Error response:', errorText);
+      console.error('[cart API] addItemToCart - Full request details:', {
+        method: 'POST',
+        url: BASE_URL,
+        headers,
+        body: JSON.stringify(fixedPayload),
+        status: response.status,
+        statusText: response.statusText
+      });
+
+      if (response.status === 401) {
+        console.error('[cart API] Authentication failed - token may be expired');
+        await AsyncStorage.removeItem('accessToken');
+        cachedToken = null;
+        tokenCacheTime = 0;
+        throw new Error('Authentication failed - please login again');
+      }
+      
+      // Try to parse backend error message
+      let backendError = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorData = JSON.parse(errorText);
+        if (errorData.message) {
+          backendError = errorData.message;
+        } else if (errorData.error) {
+          backendError = errorData.error;
+        }
+      } catch (_parseError) {
+        // If parsing fails, use the raw error text
+        if (errorText && errorText.trim()) {
+          backendError = errorText;
+        }
+      }
+      
+      throw new Error(backendError);
+    }
+    
+    const result = await response.json();
+    console.log('✅ [cart API] addItemToCart - Success response:', result);
+
+    if (result.items && Array.isArray(result.items)) {
+      console.log('🔍 [cart API] Current cart after adding item:');
+      result.items.forEach(item => {
+        console.log(`   - ${item.categoryId}: ${item.quantity} (${item.itemName || item.name})`);
+      });
+    }
+    
+    return result;
+  } catch (error) {
+    console.warn('[cart API] addItemToCart error:', error.message);
+    throw error;
+  }
+}export async function updateCartItem(categoryId, quantity, isLoggedIn, measurementUnit = null) {
+  try {
+    // If measurement unit is provided, validate quantity
+    if (measurementUnit !== null) {
+      validateQuantity({ quantity, measurement_unit: measurementUnit });
+    }
+    
     const sessionId = isLoggedIn ? null : await getSessionId();
     const headers = await getAuthHeaders(isLoggedIn, sessionId);
   
-  console.log('🔄 [cart API] updateCartItem - Request:', {
-    categoryId,
-    quantity,
-    isLoggedIn,
-    headers,
-    url: BASE_URL
-  });
-  
-  console.log(`📝 [cart API] UPDATING: ${categoryId} to quantity ${quantity}`);
-  
-  const response = await fetch(BASE_URL, {
-    method: 'PUT',
-    headers,
-    credentials: 'include',
-    body: JSON.stringify({ categoryId, quantity }),
-  });
-  
-  console.log('📊 [cart API] updateCartItem - Response status:', response.status);
-  
-  await setSessionIdFromResponse(response);
-  
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('❌ [cart API] updateCartItem - Error response:', errorText);
-    console.error('❌ [cart API] updateCartItem - Full request details:', {
-      method: 'PUT',
-      url: BASE_URL,
+    console.log('🔄 [cart API] updateCartItem - Request:', {
+      categoryId,
+      quantity,
+      isLoggedIn,
+      measurementUnit,
       headers,
-      body: JSON.stringify({ categoryId, quantity }),
-      status: response.status,
-      statusText: response.statusText
+      url: BASE_URL
     });
+    
+    console.log(`📝 [cart API] UPDATING: ${categoryId} to quantity ${quantity}`);
+    
+    const response = await fetch(BASE_URL, {
+      method: 'PUT',
+      headers,
+      credentials: 'include',
+      body: JSON.stringify({ categoryId, quantity }),
+    });
+    
+    console.log('📊 [cart API] updateCartItem - Response status:', response.status);
+    
+    await setSessionIdFromResponse(response);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ [cart API] updateCartItem - Error response:', errorText);
+      console.error('❌ [cart API] updateCartItem - Full request details:', {
+        method: 'PUT',
+        url: BASE_URL,
+        headers,
+        body: JSON.stringify({ categoryId, quantity }),
+        status: response.status,
+        statusText: response.statusText
+      });
 
-    if (response.status === 401) {
-      console.error('🔒 [cart API] Authentication failed - token may be expired');
-
-      await AsyncStorage.removeItem('accessToken');
-      cachedToken = null;
-      tokenCacheTime = 0;
-      throw new Error('Authentication failed - please login again');
+      if (response.status === 401) {
+        console.error('🔒 [cart API] Authentication failed - token may be expired');
+        await AsyncStorage.removeItem('accessToken');
+        cachedToken = null;
+        tokenCacheTime = 0;
+        throw new Error('Authentication failed - please login again');
+      }
+      
+      // Try to parse backend error message
+      let backendError = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorData = JSON.parse(errorText);
+        if (errorData.message) {
+          backendError = errorData.message;
+        } else if (errorData.error) {
+          backendError = errorData.error;
+        }
+      } catch (_parseError) {
+        // If parsing fails, use the raw error text
+        if (errorText && errorText.trim()) {
+          backendError = errorText;
+        }
+      }
+      
+      throw new Error(backendError);
     }
     
-    throw new Error(`HTTP ${response.status}: ${errorText}`);
-  }
-  
-  const result = await response.json();
-  console.log('✅ [cart API] updateCartItem - Success response:', result);
+    const result = await response.json();
+    console.log('✅ [cart API] updateCartItem - Success response:', result);
 
-  if (result.items && Array.isArray(result.items)) {
-    console.log('🔍 [cart API] Updated cart items:');
-    result.items.forEach(item => {
-      console.log(`   - ${item.categoryId}: ${item.quantity} (${item.itemName || item.name})`);
-    });
-  }
-  
-  return result;
+    if (result.items && Array.isArray(result.items)) {
+      console.log('🔍 [cart API] Updated cart items:');
+      result.items.forEach(item => {
+        console.log(`   - ${item.categoryId}: ${item.quantity} (${item.itemName || item.name})`);
+      });
+    }
+    
+    return result;
   } catch (error) {
-    console.warn('[cart API] updateCartItem network error:', error.message);
+    console.warn('[cart API] updateCartItem error:', error.message);
     throw error;
   }
 }
