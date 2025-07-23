@@ -1,20 +1,12 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import {
-    Alert,
-    FlatList,
-    Image,
-    ScrollView,
-    StyleSheet,
     Text,
-    TextInput,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
 
 import { AuthContext } from '../../context/AuthContext';
 import { useAllItems } from '../../hooks/useAPI';
-import { borderRadius, spacing, typography } from '../../styles';
 import { colors } from '../../styles/theme';
 import { normalizeItemData } from '../../utils/cartUtils';
 

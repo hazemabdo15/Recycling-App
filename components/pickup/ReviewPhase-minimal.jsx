@@ -1,13 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useEffect, useState } from 'react';
 import {
+    Image,
+    ScrollView,
+    StyleSheet,
     Text,
     TouchableOpacity,
     View,
-    ScrollView,
-    Image,
-    StyleSheet,
 } from 'react-native';
+
 import { categoriesAPI } from '../../services/api';
+import { borderRadius, spacing, typography } from '../../styles';
+import { colors } from '../../styles/theme';
+import { AnimatedButton } from '../common';
 
 const ReviewPhase = ({ selectedAddress, cartItems, onConfirm, onBack, loading }) => {
   console.log('[ReviewPhase] MINIMAL component starting');
@@ -54,7 +59,7 @@ const ReviewPhase = ({ selectedAddress, cartItems, onConfirm, onBack, loading })
             categoryId,
             quantity,
             itemName: realItem.name,
-            measurement_unit: realItem.measurement_unit,
+            measurement_unit: realItem.measurement_unit === 1 ? 'KG' : 'Piece', // Convert string to number format expected by backend
             points: realItem.points || 10,
             price: realItem.price || 5.0,
             image: realItem.image,
@@ -155,46 +160,67 @@ const ReviewPhase = ({ selectedAddress, cartItems, onConfirm, onBack, loading })
           />
         ) : (
           <View style={styles.placeholderImage}>
-            <Text style={styles.placeholderText}>📦</Text>
+            <MaterialCommunityIcons name="package-variant" size={24} color={colors.base300} />
           </View>
         )}
         
         <View style={styles.itemDetails}>
           <Text style={styles.itemName}>{item.itemName}</Text>
-          <Text style={styles.itemUnit}>
-            {item.quantity} {item.measurement_unit}
-          </Text>
-          <View style={styles.itemStats}>
-            <Text style={styles.points}>{item.totalPoints} pts</Text>
-            <Text style={styles.price}>{item.totalPrice.toFixed(2)} EGP</Text>
+          <View style={styles.itemMeta}>
+            <Text style={styles.itemUnit}>
+              {item.quantity} {item.measurement_unit}
+            </Text>
+            <View style={styles.separator} />
+            <View style={styles.pointsRow}>
+              <MaterialCommunityIcons name="star" size={14} color={colors.accent} />
+              <Text style={styles.points}>{item.totalPoints} pts</Text>
+            </View>
           </View>
+          <Text style={styles.price}>{item.totalPrice.toFixed(2)} EGP</Text>
+        </View>
+        
+        <View style={styles.quantityBadge}>
+          <Text style={styles.quantityText}>{item.quantity}</Text>
         </View>
       </View>
     </View>
   );
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Review Your Order</Text>
         <Text style={styles.subtitle}>
-          {selectedAddress?.street ? `Delivery to ${selectedAddress.street}` : 'No address selected'}
+          {selectedAddress?.street 
+            ? `Delivery to ${selectedAddress.street}, ${selectedAddress.area || selectedAddress.city}` 
+            : 'No address selected'
+          }
         </Text>
       </View>
 
       {!itemsLoaded ? (
         <View style={styles.loadingContainer}>
+          <MaterialCommunityIcons name="loading" size={32} color={colors.primary} />
           <Text style={styles.loadingText}>Loading items...</Text>
         </View>
       ) : (
-        <>
-          <View style={styles.itemsSection}>
-            <Text style={styles.sectionTitle}>Items in your cart:</Text>
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Items Section */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <MaterialCommunityIcons name="package-variant" size={20} color={colors.primary} />
+              <Text style={styles.sectionTitle}>Items in your cart</Text>
+            </View>
             {cartItemsDisplay.map((item, index) => renderCartItem(item, index))}
           </View>
 
-          <View style={styles.summarySection}>
-            <Text style={styles.sectionTitle}>Order Summary:</Text>
+          {/* Summary Section */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <MaterialCommunityIcons name="calculator" size={20} color={colors.primary} />
+              <Text style={styles.sectionTitle}>Order Summary</Text>
+            </View>
             <View style={styles.summaryCard}>
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Total Items:</Text>
@@ -202,228 +228,294 @@ const ReviewPhase = ({ selectedAddress, cartItems, onConfirm, onBack, loading })
               </View>
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Total Points:</Text>
-                <Text style={[styles.summaryValue, styles.pointsText]}>{totalPoints}</Text>
+                <View style={styles.pointsContainer}>
+                  <MaterialCommunityIcons name="star" size={16} color={colors.accent} />
+                  <Text style={[styles.summaryValue, styles.pointsText]}>{totalPoints}</Text>
+                </View>
               </View>
               <View style={[styles.summaryRow, styles.totalRow]}>
-                <Text style={styles.totalLabel}>Total Price:</Text>
+                <Text style={styles.totalLabel}>Total Value:</Text>
                 <Text style={styles.totalValue}>{totalPrice.toFixed(2)} EGP</Text>
               </View>
             </View>
           </View>
-
-          <View style={styles.actionsSection}>
-            <TouchableOpacity 
-              style={styles.confirmButton}
-              onPress={handleConfirm}
-              disabled={!itemsLoaded}
-            >
-              <Text style={styles.confirmButtonText}>
-                Confirm Order
-              </Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.backButton}
-              onPress={() => {
-                console.log('[ReviewPhase] Back pressed');
-                if (typeof onBack === 'function') {
-                  onBack();
-                }
-              }}
-            >
-              <Text style={styles.backButtonText}>
-                Back to Address
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </>
+        </ScrollView>
       )}
-    </ScrollView>
+
+      {/* Footer */}
+      <View style={styles.footer}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => {
+            console.log('[ReviewPhase] Back pressed');
+            if (typeof onBack === 'function') {
+              onBack();
+            }
+          }}
+        >
+          <Text style={styles.backButtonText}>Back to Address</Text>
+        </TouchableOpacity>
+
+        <AnimatedButton
+          style={[styles.confirmButton, !itemsLoaded && styles.disabledButton]}
+          onPress={handleConfirm}
+          disabled={!itemsLoaded}
+        >
+          <MaterialCommunityIcons name="check" size={20} color={colors.white} />
+          <Text style={styles.confirmButtonText}>Confirm Order</Text>
+        </AnimatedButton>
+      </View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.base100,
   },
+  
+  // Header
   header: {
-    padding: 20,
-    backgroundColor: '#fff',
+    padding: spacing.xl,
+    backgroundColor: colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: colors.base200,
   },
   title: {
-    fontSize: 24,
+    ...typography.title,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 5,
+    color: colors.primary,
+    marginBottom: spacing.sm,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666',
+    ...typography.body,
+    color: colors.neutral,
+    lineHeight: 20,
   },
+  
+  // Loading
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 40,
+    gap: spacing.md,
   },
   loadingText: {
-    fontSize: 16,
-    color: '#666',
+    ...typography.body,
+    color: colors.neutral,
   },
-  itemsSection: {
-    padding: 20,
+  
+  // Content
+  content: {
+    flex: 1,
+  },
+  section: {
+    marginBottom: spacing.lg,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.md,
+    gap: spacing.sm,
   },
   sectionTitle: {
-    fontSize: 18,
+    ...typography.subtitle,
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 15,
+    color: colors.primary,
   },
+  
+  // Item Cards
   itemCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    marginBottom: 12,
-    elevation: 2,
-    shadowColor: '#000',
+    backgroundColor: colors.white,
+    marginHorizontal: spacing.xl,
+    marginBottom: spacing.md,
+    borderRadius: borderRadius.lg,
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    elevation: 3,
   },
   itemContent: {
     flexDirection: 'row',
-    padding: 15,
+    padding: spacing.lg,
     alignItems: 'center',
   },
   itemImage: {
     width: 60,
     height: 60,
-    borderRadius: 8,
-    backgroundColor: '#f0f0f0',
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.base100,
   },
   placeholderImage: {
     width: 60,
     height: 60,
-    borderRadius: 8,
-    backgroundColor: '#e0e0e0',
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.base100,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  placeholderText: {
-    fontSize: 24,
-  },
   itemDetails: {
     flex: 1,
-    marginLeft: 15,
+    marginLeft: spacing.lg,
   },
   itemName: {
-    fontSize: 16,
+    ...typography.subtitle,
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 4,
+    color: colors.black,
+    marginBottom: spacing.xs,
+  },
+  itemMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
   },
   itemUnit: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 8,
+    ...typography.body,
+    color: colors.neutral,
+    fontSize: 13,
   },
-  itemStats: {
+  separator: {
+    width: 1,
+    height: 12,
+    backgroundColor: colors.base200,
+    marginHorizontal: spacing.sm,
+  },
+  pointsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
   points: {
-    fontSize: 14,
-    color: '#4CAF50',
+    ...typography.body,
+    color: colors.accent,
     fontWeight: '600',
+    fontSize: 13,
   },
   price: {
-    fontSize: 14,
-    color: '#2196F3',
-    fontWeight: '600',
+    ...typography.subtitle,
+    color: colors.secondary,
+    fontWeight: 'bold',
   },
-  summarySection: {
-    padding: 20,
-    paddingTop: 0,
+  quantityBadge: {
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    minWidth: 24,
+    alignItems: 'center',
   },
+  quantityText: {
+    ...typography.caption,
+    color: colors.white,
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+  
+  // Summary Card
   summaryCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    elevation: 2,
-    shadowColor: '#000',
+    backgroundColor: colors.white,
+    marginHorizontal: spacing.xl,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    elevation: 3,
   },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.base100,
   },
   summaryLabel: {
-    fontSize: 16,
-    color: '#666',
+    ...typography.body,
+    color: colors.neutral,
+    fontWeight: '500',
   },
   summaryValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    ...typography.subtitle,
+    fontWeight: 'bold',
+    color: colors.black,
+  },
+  pointsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
   pointsText: {
-    color: '#4CAF50',
+    color: colors.accent,
   },
   totalRow: {
+    borderBottomWidth: 0,
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-    paddingTop: 12,
-    marginTop: 8,
-    marginBottom: 0,
+    borderTopColor: colors.base200,
+    paddingTop: spacing.md,
+    marginTop: spacing.sm,
   },
   totalLabel: {
-    fontSize: 18,
+    ...typography.subtitle,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.primary,
+    fontSize: 16,
   },
   totalValue: {
-    fontSize: 18,
+    ...typography.title,
     fontWeight: 'bold',
-    color: '#2196F3',
-  },
-  actionsSection: {
-    padding: 20,
-    paddingTop: 0,
-  },
-  confirmButton: {
-    backgroundColor: '#4CAF50',
-    padding: 18,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  confirmButtonText: {
-    color: '#fff',
+    color: colors.secondary,
     fontSize: 18,
-    fontWeight: 'bold',
+  },
+  
+  // Footer
+  footer: {
+    flexDirection: 'row',
+    padding: spacing.xl,
+    backgroundColor: colors.white,
+    borderTopWidth: 1,
+    borderTopColor: colors.base200,
+    gap: spacing.md,
   },
   backButton: {
-    backgroundColor: '#fff',
-    padding: 18,
-    borderRadius: 12,
+    flex: 1,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.xl,
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.base100,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: colors.base200,
   },
   backButtonText: {
-    color: '#666',
-    fontSize: 16,
+    ...typography.subtitle,
+    color: colors.neutral,
     fontWeight: '600',
+  },
+  confirmButton: {
+    flex: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.xl,
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.primary,
+    gap: spacing.sm,
+  },
+  confirmButtonText: {
+    ...typography.subtitle,
+    color: colors.white,
+    fontWeight: '700',
+  },
+  disabledButton: {
+    backgroundColor: colors.base300,
   },
 });
 
