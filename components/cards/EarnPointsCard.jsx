@@ -1,6 +1,7 @@
 ﻿import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect } from 'react';
-import { ImageBackground, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 let Animated, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming, isReanimatedAvailable;
 
@@ -31,6 +32,25 @@ try {
   };
 }
 
+const colors = {
+    primary: "#0E9F6E",
+    secondary: "#8BC34A",
+    accent: "#FFC107",
+    white: "#ffffff",
+    background: "#FAFAFA",
+    text: "#171717",
+    textSecondary: "#607D8B",
+};
+
+const spacing = {
+    xs: 4,
+    sm: 8,
+    md: 16,
+    lg: 20,
+    xl: 24,
+    xxl: 32,
+};
+
 const borderRadius = {
     xs: 6,
     sm: 12,
@@ -42,29 +62,22 @@ const borderRadius = {
 const EarnPointsCard = () => {
     const cardScale = useSharedValue(0.9);
     const cardOpacity = useSharedValue(0);
-    const leafRotation = useSharedValue(0);
+    const iconScale = useSharedValue(0.8);
     
     useEffect(() => {
         if (!isReanimatedAvailable) return;
         
-        cardOpacity.value = withDelay(300, withTiming(1, { duration: 600 }));
-        cardScale.value = withDelay(300, withSpring(1, {
+        cardOpacity.value = withDelay(200, withTiming(1, { duration: 600 }));
+        cardScale.value = withDelay(200, withSpring(1, {
             damping: 15,
             stiffness: 150,
         }));
         
-        const leafAnimation = () => {
-            leafRotation.value = withTiming(15, { duration: 1500 }, () => {
-                leafRotation.value = withTiming(-15, { duration: 1500 }, () => {
-                    leafRotation.value = withTiming(0, { duration: 1500 });
-                });
-            });
-        };
-        
-        const timer = setTimeout(leafAnimation, 1000);
-        
-        return () => clearTimeout(timer);
-    }, [cardOpacity, cardScale, leafRotation]);
+        iconScale.value = withDelay(800, withSpring(1, {
+            damping: 12,
+            stiffness: 200,
+        }));
+    }, [cardOpacity, cardScale, iconScale]);
     
     const cardAnimatedStyle = useAnimatedStyle(() => {
         if (!isReanimatedAvailable) return {};
@@ -74,112 +87,129 @@ const EarnPointsCard = () => {
         };
     });
     
-    const leafAnimatedStyle = useAnimatedStyle(() => {
+    const iconAnimatedStyle = useAnimatedStyle(() => {
         if (!isReanimatedAvailable) return {};
         return {
-            transform: [{ rotate: `${leafRotation.value}deg` }],
+            transform: [{ scale: iconScale.value }],
         };
     });
     
     return (
         <Animated.View style={[styles.earnPointsCard, cardAnimatedStyle]}>
-            <ImageBackground
-                source={require('../../assets/images/leaves.jpg')}
-                resizeMode="cover"
-                style={styles.imageBackground}
-                imageStyle={styles.imageStyle}
+            <LinearGradient
+                colors={[colors.white, '#F8FFFE']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.cardGradient}
             >
-                <View style={styles.overlay} />
                 <View style={styles.cardContent}>
                     <View style={styles.textSection}>
-                        <Text style={styles.earnPointsTitle}>📦 Ready to Recycle?</Text>
-                        <Text style={styles.earnPointsSubtitle}>Turn your recyclables into rewards & help save the planet!</Text>
-                    </View>
-                    <View style={styles.illustrationSection}>
-                        <View style={styles.glowContainer}>
-                            <Animated.View style={[styles.leafIcon, leafAnimatedStyle]}>
-                                <Ionicons name="earth" size={30} color="white" />
-                            </Animated.View>
+                        <Text style={styles.earnPointsTitle}>🍃 Start Your Journey</Text>
+                        <Text style={styles.earnPointsSubtitle}>
+                            Every item you recycle makes a difference. Begin your eco-friendly journey today!
+                        </Text>
+                        <View style={styles.benefitsRow}>
+                            <View style={styles.benefitItem}>
+                                <Text style={styles.benefitIcon}>🏆</Text>
+                                <Text style={styles.benefitText}>Earn Rewards</Text>
+                            </View>
+                            <View style={styles.benefitItem}>
+                                <Text style={styles.benefitIcon}>🌍</Text>
+                                <Text style={styles.benefitText}>Save Planet</Text>
+                            </View>
+                            <View style={styles.benefitItem}>
+                                <Text style={styles.benefitIcon}>📈</Text>
+                                <Text style={styles.benefitText}>Track Impact</Text>
+                            </View>
                         </View>
                     </View>
+                    <Animated.View style={[styles.iconSection, iconAnimatedStyle]}>
+                        <LinearGradient
+                            colors={[colors.primary, colors.secondary]}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            style={styles.iconGradient}
+                        >
+                            <Ionicons name="rocket" size={28} color={colors.white} />
+                        </LinearGradient>
+                    </Animated.View>
                 </View>
-                {}
-            </ImageBackground>
+            </LinearGradient>
         </Animated.View>
     );
 };
 
 const styles = StyleSheet.create({
     earnPointsCard: {
-        backgroundColor: '#E8F5E9',
-        borderRadius: borderRadius.md,
-        marginVertical: 20,
+        marginVertical: spacing.md,
+        borderRadius: borderRadius.lg,
         overflow: 'hidden',
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+        elevation: 8,
     },
-    imageBackground: {
-        flex: 1,
-        padding: 20,
-        justifyContent: 'space-between',
-    },
-    imageStyle: {
-        borderRadius: borderRadius.md,
-        
-    },
-    overlay: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        borderRadius: borderRadius.md,
+    cardGradient: {
+        padding: spacing.lg,
     },
     cardContent: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
         alignItems: 'flex-start',
+        justifyContent: 'space-between',
     },
     textSection: {
         flex: 1,
-        paddingRight: 10,
+        paddingRight: spacing.md,
     },
     earnPointsTitle: {
-        fontSize: 22,
+        fontSize: 20,
         fontWeight: 'bold',
-        color: 'white',
-        marginBottom: 5,
-        textShadowColor: 'rgba(0, 0, 0, 0.3)',
-        textShadowOffset: { width: 1, height: 1 },
-        textShadowRadius: 2,
+        color: colors.text,
+        marginBottom: spacing.xs,
+        letterSpacing: -0.3,
     },
     earnPointsSubtitle: {
-        fontSize: 16,
-        color: 'rgba(255, 255, 255, 0.9)',
-        textShadowColor: 'rgba(0, 0, 0, 0.3)',
-        textShadowOffset: { width: 1, height: 1 },
-        textShadowRadius: 2,
+        fontSize: 14,
+        color: colors.textSecondary,
+        lineHeight: 20,
+        marginBottom: spacing.lg,
+        fontWeight: '400',
     },
-    illustrationSection: {
-        alignItems: 'flex-end',
+    benefitsRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingRight: spacing.md,
     },
-    glowContainer: {
-        borderRadius: 25,
-        padding: 5,
-        shadowColor: '#0E9F6E',
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.6,
-        shadowRadius: 20,
-        elevation: 10,
+    benefitItem: {
+        alignItems: 'center',
+        flex: 1,
     },
-    leafIcon: {
-        backgroundColor: 'rgba(255, 255, 255, 0.15)',
-        borderRadius: 20,
-        padding: 10,
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.3)',
-        shadowColor: '#0E9F6E',
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.8,
-        shadowRadius: 15,
-        elevation: 8,
-
-        backdropFilter: 'blur(10px)',
+    benefitIcon: {
+        fontSize: 20,
+        marginBottom: spacing.xs / 2,
+    },
+    benefitText: {
+        fontSize: 11,
+        color: colors.textSecondary,
+        fontWeight: '600',
+        textAlign: 'center',
+    },
+    iconSection: {
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    iconGradient: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 6,
     },
 });
 
