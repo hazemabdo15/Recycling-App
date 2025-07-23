@@ -2,17 +2,17 @@
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
-  FlatList,
-  Image,
-  SafeAreaView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    FlatList,
+    Image,
+    SafeAreaView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AnimatedButton, AnimatedListItem, FadeInView } from '../../components/common';
+import { AnimatedButton, AnimatedListItem, FadeInView, TabScreenWrapper } from '../../components/common';
 import { useAllItems } from '../../hooks/useAPI';
 import { useCart } from '../../hooks/useCart';
 import { borderRadius, shadows, spacing, typography } from '../../styles';
@@ -240,9 +240,10 @@ const Cart = () => {
   }, 0);
 
   return (
-    <SafeAreaView style={[styles.filledContainer, { backgroundColor: colors.base100 }]}> 
-      <StatusBar barStyle="dark-content" backgroundColor={colors.base100} />
-      <View style={[styles.headerMerged, { paddingTop: insets.top }]}> 
+    <TabScreenWrapper>
+      <SafeAreaView style={[styles.filledContainer, { backgroundColor: colors.base100 }]}> 
+        <StatusBar barStyle="dark-content" backgroundColor={colors.base100} />
+        <View style={[styles.headerMerged, { paddingTop: insets.top }]}> 
         <View style={styles.headerRowMerged}>
           <View style={styles.headerLeftSection}>
             <MaterialCommunityIcons name="truck-delivery" size={32} color={colors.primary} style={{ marginRight: spacing.sm }} />
@@ -290,6 +291,7 @@ const Cart = () => {
         extraData={cartItems}
       />
     </SafeAreaView>
+    </TabScreenWrapper>
   );
 };
 

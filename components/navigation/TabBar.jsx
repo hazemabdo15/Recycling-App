@@ -88,6 +88,8 @@ export function TabBar({ state, descriptors, navigation }) {
       canPreventDefault: true,
     });
     if (state.index !== index && !event.defaultPrevented) {
+      // Add haptic feedback for tab transition
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       navigation.navigate(route.name, route.params);
     }
   };
@@ -207,8 +209,8 @@ function TabBarItem({ route, label, isFocused, index, onPress, onLongPress, buil
   const badgeScale = useSharedValue(1);
   
   React.useEffect(() => {
-    scale.value = withSpring(isFocused ? 1.1 : 1, { damping: 15, stiffness: 200 });
-    opacity.value = withTiming(isFocused ? 1 : 0.6, { duration: 200 });
+    scale.value = withSpring(isFocused ? 1.1 : 1, { damping: 20, stiffness: 300 });
+    opacity.value = withTiming(isFocused ? 1 : 0.6, { duration: 150 });
   }, [isFocused, scale, opacity]);
 
   React.useEffect(() => {

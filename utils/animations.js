@@ -19,6 +19,12 @@ export const ANIMATION_CONFIG = {
     easing: 'ease-out',
   },
 
+  tabTransition: {
+    duration: 250,
+    damping: 20,
+    stiffness: 300,
+  },
+
   cardPress: {
     scale: {
       pressed: 0.96,
@@ -108,6 +114,18 @@ export const PRESET_ANIMATIONS = {
     toValue: 0, 
     damping: 20, 
     stiffness: 100 
+  }),
+
+  slideInLeft: () => createSpringAnimation({ 
+    toValue: 0, 
+    damping: 20, 
+    stiffness: 150 
+  }),
+  
+  slideInRight: () => createSpringAnimation({ 
+    toValue: 0, 
+    damping: 20, 
+    stiffness: 150 
   }),
   
   scaleIn: () => createSpringAnimation({ 

@@ -34,6 +34,14 @@ const CategoriesGrid = ({ searchText = '', onCategoryPress, onFilteredCountChang
             </View>
         );
     }
+    
+    if (!categories || categories.length === 0) {
+        return (
+            <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>No categories available</Text>
+            </View>
+        );
+    }
     return (
         <FadeInView delay={100}>
             <ScrollView
@@ -91,6 +99,17 @@ const styles = StyleSheet.create({
     errorText: {
         fontSize: 16,
         color: '#F44336',
+        textAlign: 'center',
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingVertical: 50,
+    },
+    emptyText: {
+        fontSize: 16,
+        color: '#666',
         textAlign: 'center',
     },
 });

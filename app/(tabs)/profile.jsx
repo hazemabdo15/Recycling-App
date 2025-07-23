@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { TabScreenWrapper } from '../../components/common';
 import { ProfileHeader, ProfileMenu, StatsCard } from '../../components/profile';
 import { useAuth } from '../../context/AuthContext';
 import { colors } from '../../styles/theme';
@@ -56,7 +57,7 @@ const Profile = () => {
             }, 200);
 
             return () => { };
-        }, [])
+        }, [contentOpacity, contentTranslateY, headerOpacity])
     );
 
     const headerAnimatedStyle = useAnimatedStyle(() => ({
@@ -116,21 +117,22 @@ const Profile = () => {
     const isGuest = !loggedUser || loggedUser.isGuest;
 
     return (
-        <Animated.View style={[styles.container, { paddingTop: insets.top }]}>
-            <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
-            <Animated.ScrollView
-                style={[styles.scrollView, contentAnimatedStyle]}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.scrollContent}
-            >
-                <Animated.View style={headerAnimatedStyle}>
-                    <ProfileHeader
-                        name={loggedUser?.name || 'Guest'}
-                        email={loggedUser?.email || 'Not logged in'}
-                        points={!isGuest ? 2847 : 0}
-                        level={!isGuest ? 'Eco Champion' : 'Guest Mode'}
-                    />
-                </Animated.View>
+        <TabScreenWrapper>
+            <Animated.View style={[styles.container, { paddingTop: insets.top }]}>
+                <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+                <Animated.ScrollView
+                    style={[styles.scrollView, contentAnimatedStyle]}
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={styles.scrollContent}
+                >
+                    <Animated.View style={headerAnimatedStyle}>
+                        <ProfileHeader
+                            name={loggedUser?.name || 'Guest'}
+                            email={loggedUser?.email || 'Not logged in'}
+                            points={!isGuest ? 2847 : 0}
+                            level={!isGuest ? 'Eco Champion' : 'Guest Mode'}
+                        />
+                    </Animated.View>
 
                 {!isGuest ? (
                     <>
@@ -175,6 +177,7 @@ const Profile = () => {
                 )}
             </Animated.ScrollView>
         </Animated.View>
+        </TabScreenWrapper>
     );
 };
 
