@@ -173,10 +173,10 @@ export const usePickupWorkflow = () => {
           categoryId: item.categoryId,
           image: item.image,
           itemName: item.itemName || item.name,
-          measurement_unit: item.measurement_unit,
-          points: item.points,
-          price: item.price,
-          quantity: item.quantity
+          measurement_unit: Number(item.measurement_unit), // Ensure it's a number
+          points: Number(item.points) || 10,
+          price: Number(item.price) || 5.0,
+          quantity: Number(item.quantity) // Ensure it's a number
         })),
         phoneNumber: userData.phoneNumber || userData.phone || '',
         userName: userData.name || userData.userName || '',
@@ -234,6 +234,15 @@ export const usePickupWorkflow = () => {
 
     // Validate each item
     orderData.items.forEach((item, index) => {
+      console.log(`[Pickup Workflow] Validating item ${index + 1}:`, {
+        categoryId: item.categoryId,
+        quantity: item.quantity,
+        quantityType: typeof item.quantity,
+        measurement_unit: item.measurement_unit,
+        measurement_unit_type: typeof item.measurement_unit,
+        itemName: item.itemName
+      });
+      
       const requiredItemFields = ['categoryId', 'image', 'itemName', 'measurement_unit', 'points', 'price', 'quantity'];
       const missingItemFields = requiredItemFields.filter(field => 
         item[field] === undefined || item[field] === null
@@ -243,17 +252,29 @@ export const usePickupWorkflow = () => {
         throw new Error(`Item ${index + 1} missing required fields: ${missingItemFields.join(', ')}`);
       }
 
+      // Convert quantity to number if it's a string
+      const quantity = Number(item.quantity);
+      const measurementUnit = Number(item.measurement_unit);
+      
+      if (isNaN(quantity) || quantity <= 0) {
+        throw new Error(`Item ${index + 1}: Invalid quantity (${item.quantity})`);
+      }
+      
+      if (isNaN(measurementUnit)) {
+        throw new Error(`Item ${index + 1}: Invalid measurement unit (${item.measurement_unit})`);
+      }
+
       // Validate quantity based on measurement unit
-      if (item.measurement_unit === 1) {
+      if (measurementUnit === 1) {
         // For KG items, must be in 0.25 increments
-        const multiplied = Math.round(item.quantity * 4);
-        if (item.quantity < 0.25 || Math.abs(item.quantity * 4 - multiplied) >= 0.0001) {
-          throw new Error(`Item ${index + 1}: For KG items, quantity must be in 0.25 increments`);
+        const multiplied = Math.round(quantity * 4);
+        if (quantity < 0.25 || Math.abs(quantity * 4 - multiplied) >= 0.0001) {
+          throw new Error(`Item ${index + 1}: For KG items, quantity must be in 0.25 increments (current: ${quantity})`);
         }
-      } else if (item.measurement_unit === 2) {
+      } else if (measurementUnit === 2) {
         // For piece items, must be whole numbers >= 1
-        if (!Number.isInteger(item.quantity) || item.quantity < 1) {
-          throw new Error(`Item ${index + 1}: For piece items, quantity must be whole numbers >= 1`);
+        if (!Number.isInteger(quantity) || quantity < 1) {
+          throw new Error(`Item ${index + 1}: For piece items, quantity must be whole numbers >= 1 (current: ${quantity}, type: ${typeof quantity})`);
         }
       }
     });

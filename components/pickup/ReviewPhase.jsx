@@ -161,6 +161,18 @@ const ReviewPhase = ({
         cartItemsArray,
         userData,
       });
+      
+      // Add detailed logging for each item
+      cartItemsArray.forEach((item, index) => {
+        console.log(`[ReviewPhase] Item ${index + 1}:`, {
+          categoryId: item.categoryId,
+          quantity: item.quantity,
+          quantityType: typeof item.quantity,
+          measurement_unit: item.measurement_unit,
+          measurement_unit_type: typeof item.measurement_unit,
+          itemName: item.itemName
+        });
+      });
 
       if (typeof onConfirm === "function") {
         onConfirm(cartItemsArray, userData);

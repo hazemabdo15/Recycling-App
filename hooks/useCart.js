@@ -33,15 +33,15 @@ export const useCart = () => {
       categoryName: normalizedItem.categoryName
     });
     
-    const step = getIncrementStep(measurement_unit);
-
-    const minValue = measurement_unit === 1 ? 0.25 : 1;
     const currentQuantity = getItemQuantity(categoryId);
-    
     let newQuantity;
+    
     if (currentQuantity === 0) {
-      newQuantity = minValue;
+      // First increment is always 1 (regardless of measurement unit)
+      newQuantity = 1;
     } else {
+      // After reaching 1, apply granular increments
+      const step = getIncrementStep(measurement_unit);
       newQuantity = calculateQuantity(currentQuantity, step, 'add');
     }
     
@@ -50,31 +50,24 @@ export const useCart = () => {
       currentQuantity, 
       newQuantity, 
       measurement_unit,
-      step,
-      minValue
+      isFirstIncrement: currentQuantity === 0
     });
     
     try {
       if (currentQuantity === 0) {
-        // Format quantity properly
-        let formattedQuantity = newQuantity;
-
-        if (measurement_unit === 1) {
-          formattedQuantity = parseFloat(newQuantity.toFixed(2));
-        }
-        
+        // Adding new item with quantity 1
         const cartItem = {
           categoryId,
-          categoryName: normalizedItem.categoryName, // Include categoryName
+          categoryName: normalizedItem.categoryName,
           name: normalizedItem.name,
           image: normalizedItem.image,
           points: normalizedItem.points,
           price: normalizedItem.price,
           measurement_unit,
-          quantity: formattedQuantity
+          quantity: 1 // Always start with 1
         };
         
-        console.log('[useCart] Adding new item to cart (FAST PATH):', cartItem);
+        console.log('[useCart] Adding new item to cart with quantity 1:', cartItem);
         await handleAddSingleItem(cartItem);
       } else {
         console.log('[useCart] Updating existing item quantity:', { categoryId, newQuantity });
@@ -87,7 +80,6 @@ export const useCart = () => {
       }
     } catch (error) {
       console.error('[useCart] handleIncreaseQuantity error:', error);
-      // Could show user-friendly error here
     }
   };
 
@@ -102,18 +94,30 @@ export const useCart = () => {
       categoryName: normalizedItem.categoryName
     });
     
-    const step = getIncrementStep(measurement_unit);
-    const minValue = measurement_unit === 1 ? 0.25 : 1;
     const currentQuantity = getItemQuantity(categoryId);
+    let newQuantity;
     
-    let newQuantity = calculateQuantity(currentQuantity, step, 'subtract');
-    
-    console.log('[useCart] handleDecreaseQuantity:', { categoryId, currentQuantity, newQuantity, minValue, measurement_unit });
-
-    // For KG items, if new quantity is below minimum but greater than 0, set to 0
-    if (measurement_unit === 1 && newQuantity < minValue && newQuantity > 0) {
+    if (currentQuantity <= 1) {
+      // If current quantity is 1 or less, remove the item
       newQuantity = 0;
+    } else {
+      // Apply granular decrements only after quantity > 1
+      const step = getIncrementStep(measurement_unit);
+      newQuantity = calculateQuantity(currentQuantity, step, 'subtract');
+      
+      // Ensure we don't go below 1
+      if (newQuantity < 1) {
+        newQuantity = 1;
+      }
     }
+    
+    console.log('[useCart] handleDecreaseQuantity:', { 
+      categoryId, 
+      currentQuantity, 
+      newQuantity, 
+      measurement_unit,
+      willRemove: newQuantity <= 0
+    });
     
     try {
       if (newQuantity <= 0) {
@@ -128,7 +132,6 @@ export const useCart = () => {
       }
     } catch (error) {
       console.error('[useCart] handleDecreaseQuantity error:', error);
-      // Could show user-friendly error here
     }
   };
 
@@ -138,15 +141,21 @@ export const useCart = () => {
     const normalizedItem = normalizeItemData(item);
     const { categoryId, measurement_unit } = normalizedItem;
 
-    const fastStep = 5;
     const currentQuantity = getItemQuantity(categoryId);
-    let newQuantity = currentQuantity + fastStep;
+    let newQuantity;
+    
+    if (currentQuantity === 0) {
+      // If item not in cart, add 5 units initially
+      newQuantity = 5;
+    } else {
+      // Apply fast increment of 5 units
+      newQuantity = currentQuantity + 5;
+    }
     
     console.log('[useCart] handleFastIncreaseQuantity:', { 
       categoryId, 
       currentQuantity, 
-      newQuantity, 
-      fastStep,
+      newQuantity,
       measurement_unit
     });
     
@@ -190,24 +199,21 @@ export const useCart = () => {
     const normalizedItem = normalizeItemData(item);
     const { categoryId, measurement_unit } = normalizedItem;
 
-    const fastStep = 5;
-    const minValue = measurement_unit === 1 ? 0.25 : 1;
     const currentQuantity = getItemQuantity(categoryId);
-    let newQuantity = currentQuantity - fastStep;
+    let newQuantity = currentQuantity - 5;
+    
+    // Ensure we don't go below 1 unless removing the item
+    if (newQuantity < 1) {
+      newQuantity = 0; // Remove the item if fast decrease would go below 1
+    }
     
     console.log('[useCart] handleFastDecreaseQuantity:', { 
       categoryId, 
       currentQuantity, 
       newQuantity, 
-      fastStep, 
-      minValue, 
-      measurement_unit 
+      measurement_unit,
+      willRemove: newQuantity <= 0
     });
-
-    // If new quantity is below minimum, set to 0
-    if (newQuantity < minValue) {
-      newQuantity = 0;
-    }
     
     try {
       if (newQuantity <= 0) {
