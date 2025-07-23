@@ -286,7 +286,7 @@ const Cart = () => {
               </View>
             </View>
             <View style={styles.heroActionRow}>
-              <AnimatedButton style={styles.checkoutBtnBarHero} onPress={() => router.push('/checkout')}>
+              <AnimatedButton style={styles.checkoutBtnBarHero} onPress={() => router.push('/pickup')}>
                 <MaterialCommunityIcons name="truck-fast" size={24} color={colors.white} />
                 <Text style={styles.checkoutBtnBarTextHero}>Schedule Pickup</Text>
               </AnimatedButton>

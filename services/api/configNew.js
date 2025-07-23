@@ -11,12 +11,12 @@ export const API_ENDPOINTS = {
   // Authentication endpoints
   AUTH: {
     LOGIN: `${API_BASE_URL}/api/auth/login`,
-    REGISTER_INIT: `${API_BASE_URL}/api/auth/initiateSignup`, // Correct endpoint
-    REGISTER_VERIFY: `${API_BASE_URL}/api/auth/verifyRegisterToken`, // Correct endpoint
-    REFRESH: `${API_BASE_URL}/api/auth/refresh`, // Correct endpoint (not refresh-token)
+    REGISTER_INIT: `${API_BASE_URL}/api/auth/initiate-signup`,
+    REGISTER_VERIFY: `${API_BASE_URL}/api/auth/verify-otp-register`,
+    REFRESH: `${API_BASE_URL}/api/auth/refresh-token`,
     LOGOUT: `${API_BASE_URL}/api/auth/logout`,
-    FORGOT_PASSWORD: `${API_BASE_URL}/api/auth/forgotPassword`, // Correct endpoint (camelCase)
-    RESET_PASSWORD: `${API_BASE_URL}/api/auth/resetPassword`, // Correct endpoint (camelCase)
+    FORGOT_PASSWORD: `${API_BASE_URL}/api/auth/forgot-password`,
+    RESET_PASSWORD: `${API_BASE_URL}/api/auth/reset-password`,
   },
   
   // Data endpoints

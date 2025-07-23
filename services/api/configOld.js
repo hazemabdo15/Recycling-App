@@ -1,3 +1,4 @@
+﻿
 // Backend API Configuration
 // Update this URL to match your backend server
 const API_BASE_URL = 'http://192.168.0.165:5000';
@@ -11,19 +12,19 @@ export const API_ENDPOINTS = {
   // Authentication endpoints
   AUTH: {
     LOGIN: `${API_BASE_URL}/api/auth/login`,
-    REGISTER_INIT: `${API_BASE_URL}/api/auth/initiateSignup`, // Correct endpoint
-    REGISTER_VERIFY: `${API_BASE_URL}/api/auth/verifyRegisterToken`, // Correct endpoint
-    REFRESH: `${API_BASE_URL}/api/auth/refresh`, // Correct endpoint (not refresh-token)
+    REGISTER_INIT: `${API_BASE_URL}/api/auth/initiate-signup`,
+    REGISTER_VERIFY: `${API_BASE_URL}/api/auth/verify-otp-register`,
+    REFRESH: `${API_BASE_URL}/api/auth/refresh-token`,
     LOGOUT: `${API_BASE_URL}/api/auth/logout`,
-    FORGOT_PASSWORD: `${API_BASE_URL}/api/auth/forgotPassword`, // Correct endpoint (camelCase)
-    RESET_PASSWORD: `${API_BASE_URL}/api/auth/resetPassword`, // Correct endpoint (camelCase)
+    FORGOT_PASSWORD: `${API_BASE_URL}/api/auth/forgot-password`,
+    RESET_PASSWORD: `${API_BASE_URL}/api/auth/reset-password`,
   },
   
   // Data endpoints
   CATEGORIES: `${API_BASE_URL}/api/categories`,
   ALL_ITEMS: `${API_BASE_URL}/api/categories/get-items`,
   CATEGORY_ITEMS: (categoryName) => `${API_BASE_URL}/api/categories/get-items/${categoryName}`,
-  CART: `${API_BASE_URL}/api/cart`,
+  CART: BASE_URLS.CART,
   ADDRESSES: `${API_BASE_URL}/api/addresses`,
   ORDERS: `${API_BASE_URL}/api/orders`,
   
@@ -49,3 +50,9 @@ export const TOKEN_CONFIG = {
   REFRESH_TOKEN_EXPIRES: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
   ACCESS_TOKEN_EXPIRES: 60 * 1000, // 1 minute in milliseconds
 };
+  },
+  timeout: 10000,
+};
+
+export { API_BASE_URL };
+

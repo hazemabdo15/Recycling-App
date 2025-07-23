@@ -3,11 +3,11 @@ import { useFocusEffect } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback } from "react";
 import {
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { EarnPointsCard } from "../../components/cards";
@@ -18,7 +18,7 @@ import { colors, spacing } from "../../styles/theme";
 
 const Index = () => {
   const insets = useSafeAreaInsets();
-  const { user, isLoggedIn } = useAuth();
+  const { user, isLoggedIn, loading: authLoading } = useAuth();
 
   useFocusEffect(
     useCallback(() => {
@@ -49,7 +49,7 @@ const Index = () => {
         >
           <View style={styles.headerRow}>
             <Text style={styles.appName}>EcoPickup</Text>
-            {isLoggedIn && user && !user.isGuest && (
+            {isLoggedIn && user && !user.isGuest && !authLoading && (
               <TouchableOpacity
                 style={styles.notificationButton}
                 onPress={handleNotificationPress}

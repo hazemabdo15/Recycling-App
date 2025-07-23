@@ -1,16 +1,15 @@
-﻿import { View, StyleSheet, Alert } from 'react-native';
+﻿import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { Alert, StyleSheet, View } from 'react-native';
 import LoginForm from '../components/auth/LoginForm';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useState, useCallback } from 'react';
-import { loginUser } from '../services/auth';
-import { router, useFocusEffect } from 'expo-router';
 import { useAuth } from '../context/AuthContext';
+import { loginUser } from '../services/auth';
 import { getLoggedInUser } from '../utils/authUtils';
 
 export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [checkingUser, setCheckingUser] = useState(true);
-  const { setUser } = useAuth();
+  const { login, setUser } = useAuth();
 
   useFocusEffect(
     useCallback(() => {
@@ -52,14 +51,11 @@ export default function LoginScreen() {
     }
 
     try {
+      console.log('Login button pressed', email, password);
       const { user, accessToken } = await loginUser({ email, password });
 
-      await AsyncStorage.multiSet([
-        ['accessToken', accessToken],
-        ['user', JSON.stringify(user)],
-      ]);
-
-      setUser(user);
+      // Use AuthContext login function to properly update all state
+      await login(user, accessToken);
 
       router.replace('/home');
     } catch {
