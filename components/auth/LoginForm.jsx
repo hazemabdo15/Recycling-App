@@ -12,7 +12,7 @@ export default function LoginForm({ onSubmit, loading }) {
   const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async () => {
-    if (loading) return;
+    if (loading) return; // Prevent multiple submissions
     console.log('Login button pressed', email, password);
     await onSubmit({ email, password });
   };
@@ -60,6 +60,7 @@ export default function LoginForm({ onSubmit, loading }) {
         style={[styles.loginButton, loading && { opacity: 0.5 }]}
         onPress={handleLogin}
         disabled={loading}
+        android_ripple={{ color: 'rgba(255,255,255,0.3)' }}
       >
         <Text style={styles.loginText}>{loading ? 'Please Wait..' : 'Login'}</Text>
       </Pressable>

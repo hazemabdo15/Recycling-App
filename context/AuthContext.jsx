@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import apiService from "../services/api/apiService";
 import { isAuthenticated, logoutUser } from "../services/auth";
 
@@ -16,12 +16,11 @@ export function AuthProvider({ children }) {
   const [periodicCheckRunning, setPeriodicCheckRunning] = useState(false);
 
   // Create stable auth context methods
-  const handleTokenExpired = () => {
-    console.log("[AuthContext] Token expired - clearing session");
+  const handleTokenExpired = useCallback(() => {
     setUser(null);
     setAccessToken(null);
     setIsLoggedIn(false);
-  };
+  }, []);
 
   // Set global reference for APIService to use
   useEffect(() => {
@@ -29,7 +28,7 @@ export function AuthProvider({ children }) {
     return () => {
       authContextInstance = null;
     };
-  }, []);
+  }, [handleTokenExpired]);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -119,16 +118,23 @@ export function AuthProvider({ children }) {
         setLoading(false);
       }
     };
-    loadUser();
-  }, []);
 
-  // Periodic token refresh (every 5 minutes when user is logged in)
+    // Only load user once on mount
+    loadUser();
+  }, []); // Empty dependency array - only run once on mount
+
+  // Periodic token refresh (every 10 minutes when user is logged in)
   useEffect(() => {
     if (!isLoggedIn || !accessToken) return;
 
+    console.log("[AuthContext] Setting up periodic token refresh (10 min intervals)");
+
     const interval = setInterval(async () => {
       // Prevent multiple simultaneous checks
-      if (periodicCheckRunning) return;
+      if (periodicCheckRunning) {
+        console.log("[AuthContext] Periodic check already running, skipping");
+        return;
+      }
       
       try {
         setPeriodicCheckRunning(true);
@@ -163,10 +169,13 @@ export function AuthProvider({ children }) {
       } finally {
         setPeriodicCheckRunning(false);
       }
-    }, 5 * 60 * 1000); // Check every 5 minutes (more reasonable interval)
+    }, 10 * 60 * 1000); // Check every 10 minutes (less aggressive)
 
-    return () => clearInterval(interval);
-  }, [isLoggedIn, accessToken, periodicCheckRunning]);
+    return () => {
+      console.log("[AuthContext] Clearing periodic token refresh interval");
+      clearInterval(interval);
+    };
+  }, [isLoggedIn, accessToken, periodicCheckRunning, handleTokenExpired]);
 
   const login = async (userData, token) => {
     try {

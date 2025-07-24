@@ -1,14 +1,20 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URLS } from './config';
 
-// Import function to notify AuthContext of token expiration
+// Avoid circular dependency - get notifyTokenExpired function dynamically
 let notifyTokenExpired = null;
-try {
-  const authContextModule = require('../../context/AuthContext');
-  notifyTokenExpired = authContextModule.notifyTokenExpired;
-} catch (error) {
-  console.warn('[APIService] Could not import notifyTokenExpired:', error.message);
-}
+
+const getNotifyTokenExpired = () => {
+  if (!notifyTokenExpired) {
+    try {
+      const authContextModule = require('../../context/AuthContext');
+      notifyTokenExpired = authContextModule.notifyTokenExpired;
+    } catch (error) {
+      console.warn('[APIService] Could not import notifyTokenExpired:', error.message);
+    }
+  }
+  return notifyTokenExpired;
+};
 
 /**
  * Enhanced API Service with proper JWT token handling and automatic refresh
@@ -20,12 +26,17 @@ class APIService {
     this.accessToken = null;
     this.isRefreshing = false;
     this.failedQueue = [];
+    this.isInitialized = false; // Add initialization flag
   }
 
   /**
    * Initialize tokens from storage and refresh if needed
    */
   async initialize() {
+    if (this.isInitialized) {
+      return; // Prevent multiple initializations
+    }
+    
     try {
       this.accessToken = await AsyncStorage.getItem('accessToken');
       console.log('[APIService] Initializing...', this.accessToken ? 'Token found' : 'No token');
@@ -34,6 +45,8 @@ class APIService {
         // Check if token needs refresh proactively on startup
         await this.refreshIfNeeded();
       }
+      
+      this.isInitialized = true;
     } catch (error) {
       console.error('Failed to initialize API service:', error);
     }
@@ -59,8 +72,9 @@ class APIService {
     await AsyncStorage.multiRemove(['accessToken', 'user']);
     
     // Notify AuthContext that tokens have been cleared
-    if (notifyTokenExpired) {
-      notifyTokenExpired();
+    const notify = getNotifyTokenExpired();
+    if (notify) {
+      notify();
     }
   }
 
@@ -98,7 +112,7 @@ class APIService {
           return isExpired;
         }
         console.log('[APIService] Mock token format issue, treating as valid');
-        return false; // Mock token format issue, but don't expire it
+        return false;
       }
       
       // Handle real JWT tokens
@@ -118,7 +132,12 @@ class APIService {
       
       // Check if token expires in the next 30 seconds (proactive refresh)
       const willExpireSoon = currentTime >= (payload.exp - 30);
-      console.log('[APIService] JWT token - current time:', currentTime, 'expires:', payload.exp, 'will expire soon:', willExpireSoon);
+      
+      // Only log if status changed or first check
+      if (!this._lastTokenStatus || this._lastTokenStatus.expired !== willExpireSoon) {
+        console.log('[APIService] JWT token - current time:', currentTime, 'expires:', payload.exp, 'will expire soon:', willExpireSoon);
+        this._lastTokenStatus = { expired: willExpireSoon, timestamp: Date.now() };
+      }
       
       return willExpireSoon;
     } catch (error) {
@@ -156,8 +175,6 @@ class APIService {
     this.isRefreshing = true;
 
     try {
-      console.log('[API] Attempting to refresh token...');
-      
       const response = await fetch(`${this.baseURL}/auth/refresh`, {
         method: 'POST',
         credentials: 'include', // Important: Send refresh token cookie
@@ -168,7 +185,6 @@ class APIService {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('[API] Token refreshed successfully, new token:', data.accessToken ? 'present' : 'missing');
         
         await this.setAccessToken(data.accessToken);
         this.processQueue(null, data.accessToken);
@@ -219,8 +235,6 @@ class APIService {
 
       // If access token expired, try to refresh
       if (response.status === 401 && this.accessToken && !endpoint.includes('/auth/refresh')) {
-        console.log('[API] Access token expired, attempting refresh...');
-        
         const newToken = await this.refreshToken();
         if (newToken) {
           // Retry the original request with new token
@@ -300,39 +314,27 @@ class APIService {
   }
 
   /**
-   * Check if user is authenticated (async - loads token if needed)
-   */
-  /**
    * Check if user is authenticated, attempting refresh if token is expired
    */
   async isAuthenticated() {
-    console.log('[APIService] Checking authentication...');
-    
     // Make sure token is loaded from storage
     if (!this.accessToken) {
       await this.initialize();
     }
     
-    console.log('[APIService] accessToken:', this.accessToken ? 'present' : 'null');
-    
     if (!this.accessToken) {
-      console.log('[APIService] No access token found');
       return false;
     }
     
     const isExpired = this.isTokenExpired(this.accessToken);
-    console.log('[APIService] Token expired:', isExpired);
     
     // If token is expired, try to refresh it
     if (isExpired) {
-      console.log('[APIService] Token expired, attempting refresh...');
       try {
         const newToken = await this.refreshToken();
         if (newToken) {
-          console.log('[APIService] Token refreshed successfully during auth check');
           return true;
         } else {
-          console.log('[APIService] Token refresh failed during auth check');
           return false;
         }
       } catch (error) {
@@ -342,7 +344,6 @@ class APIService {
     }
     
     const result = this.accessToken && !isExpired;
-    console.log('[APIService] Authentication result:', result);
     
     return result;
   }
@@ -362,9 +363,6 @@ class APIService {
       // Import TOKEN_CONFIG for refresh threshold
       const REFRESH_THRESHOLD = 5 * 60 * 1000; // 5 minutes in milliseconds
       
-      console.log('[APIService] Time until token expiry:', Math.round(timeUntilExpiry / 1000), 'seconds');
-      console.log('[APIService] Should refresh token:', timeUntilExpiry <= REFRESH_THRESHOLD);
-      
       return timeUntilExpiry <= REFRESH_THRESHOLD && timeUntilExpiry > 0;
     } catch (error) {
       console.error('[APIService] Error checking token refresh need:', error);
@@ -377,7 +375,6 @@ class APIService {
    */
   async refreshIfNeeded() {
     if (this.shouldRefreshToken()) {
-      console.log('[APIService] Proactively refreshing token...');
       try {
         await this.refreshToken();
         return true;

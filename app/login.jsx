@@ -41,8 +41,13 @@ export default function LoginScreen() {
   if (checkingUser) return null;
 
   const handleLogin = async ({ email, password }) => {
-    if (loading) return;
+    if (loading) {
+      console.log('[Login] Already processing login, ignoring duplicate request');
+      return;
+    }
+    
     setLoading(true);
+    console.log('[Login] Starting login process for:', email);
 
     if (!email || !password) {
       Alert.alert('Missing Fields', 'Email and password are required.');
@@ -51,15 +56,16 @@ export default function LoginScreen() {
     }
 
     try {
-      console.log('Login button pressed', email, password);
       const { user, accessToken } = await loginUser({ email, password });
+      console.log('[Login] Login API call successful');
 
       // Use AuthContext login function to properly update all state
       await login(user, accessToken);
+      console.log('[Login] AuthContext updated successfully');
 
       router.replace('/home');
-    } catch {
-      // console.error('Login error:', error);
+    } catch (error) {
+      console.error('[Login] Login failed:', error?.message || 'Unknown error');
       Alert.alert('Login failed', 'Please check your credentials and try again.');
     } finally {
       setLoading(false);
