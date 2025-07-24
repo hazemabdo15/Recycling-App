@@ -258,6 +258,11 @@ const Cart = () => {
     return sum + value * (item.quantity || 1);
   }, 0);
 
+  // Check if minimum order value is met
+  const MINIMUM_ORDER_VALUE = 100; // EGP
+  const canSchedulePickup = totalValue >= MINIMUM_ORDER_VALUE;
+  const remainingAmount = MINIMUM_ORDER_VALUE - totalValue;
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
@@ -285,10 +290,34 @@ const Cart = () => {
                 <Text style={styles.checkoutSummaryValueHero}>{totalValue.toFixed(2)} EGP</Text>
               </View>
             </View>
+            {!canSchedulePickup && (
+              <View style={styles.minimumOrderWarning}>
+                <MaterialCommunityIcons name="alert-circle" size={16} color={colors.warning} />
+                <Text style={styles.minimumOrderText}>
+                  Add {remainingAmount.toFixed(2)} EGP more to schedule pickup
+                </Text>
+              </View>
+            )}
             <View style={styles.heroActionRow}>
-              <AnimatedButton style={styles.checkoutBtnBarHero} onPress={() => router.push('/pickup')}>
-                <MaterialCommunityIcons name="truck-fast" size={24} color={colors.white} />
-                <Text style={styles.checkoutBtnBarTextHero}>Schedule Pickup</Text>
+              <AnimatedButton 
+                style={[
+                  styles.checkoutBtnBarHero, 
+                  !canSchedulePickup && styles.checkoutBtnBarDisabled
+                ]} 
+                onPress={canSchedulePickup ? () => router.push('/pickup') : null}
+                disabled={!canSchedulePickup}
+              >
+                <MaterialCommunityIcons 
+                  name={canSchedulePickup ? "truck-fast" : "lock"} 
+                  size={24} 
+                  color={canSchedulePickup ? colors.white : colors.white} 
+                />
+                <Text style={[
+                  styles.checkoutBtnBarTextHero,
+                  !canSchedulePickup && styles.checkoutBtnBarTextDisabled
+                ]}>
+                  {canSchedulePickup ? "Schedule Pickup" : "Minimum 100 EGP Required"}
+                </Text>
               </AnimatedButton>
               {cartArray.length > 0 && (
                 <TouchableOpacity
@@ -666,6 +695,34 @@ const styles = StyleSheet.create({
     marginLeft: spacing.sm,
     height: 55,
     minWidth: 40,
+  },
+  minimumOrderWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: 'rgba(255, 193, 7, 0.15)',
+    borderRadius: borderRadius.md,
+    marginHorizontal: spacing.md,
+  },
+  minimumOrderText: {
+    ...typography.caption,
+    color: colors.warning,
+    fontWeight: '600',
+    fontSize: 13,
+    marginLeft: spacing.xs,
+    textAlign: 'center',
+  },
+  checkoutBtnBarDisabled: {
+    backgroundColor: colors.base300,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  checkoutBtnBarTextDisabled: {
+    color: colors.white,
+    fontWeight: '600',
   },
 });
 
