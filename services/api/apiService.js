@@ -1,6 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URLS } from './config';
 
+// Import function to notify AuthContext of token expiration
+let notifyTokenExpired = null;
+try {
+  const authContextModule = require('../../context/AuthContext');
+  notifyTokenExpired = authContextModule.notifyTokenExpired;
+} catch (error) {
+  console.warn('[APIService] Could not import notifyTokenExpired:', error.message);
+}
+
 /**
  * Enhanced API Service with proper JWT token handling and automatic refresh
  * Follows the backend API specification for dual-token system
@@ -42,6 +51,11 @@ class APIService {
   async clearTokens() {
     this.accessToken = null;
     await AsyncStorage.multiRemove(['accessToken', 'user']);
+    
+    // Notify AuthContext that tokens have been cleared
+    if (notifyTokenExpired) {
+      notifyTokenExpired();
+    }
   }
 
   /**

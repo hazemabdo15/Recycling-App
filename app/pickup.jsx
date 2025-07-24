@@ -1,14 +1,14 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
-    Alert,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -28,6 +28,8 @@ export default function Pickup() {
   
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState(null);
+  const [dialogShown, setDialogShown] = useState(false); // Prevent multiple dialogs
+  const [isFocused, setIsFocused] = useState(false); // Track if screen is focused
   
   // Log auth state changes for debugging
   useEffect(() => {
@@ -38,8 +40,27 @@ export default function Pickup() {
     console.log('  - authContextLoading:', authContextLoading);
   }, [isLoggedIn, user, accessToken, authContextLoading]);
   
-  // Check authentication status on mount
+  // Track focus state using navigation focus effect
+  useFocusEffect(
+    useCallback(() => {
+      console.log('[Pickup] Screen focused');
+      setIsFocused(true);
+      
+      return () => {
+        console.log('[Pickup] Screen unfocused');
+        setIsFocused(false);
+        setDialogShown(false); // Reset dialog state when leaving screen
+      };
+    }, [])
+  );
+  
+  // Check authentication status only when screen is focused
   useEffect(() => {
+    if (!isFocused) {
+      console.log('[Pickup] Screen not focused, skipping auth check');
+      return;
+    }
+    
     const checkAuth = async () => {
       try {
         console.log('[Pickup] Starting auth check...');
@@ -84,7 +105,7 @@ export default function Pickup() {
     };
 
     checkAuth();
-  }, [isLoggedIn, user, accessToken, authContextLoading]);
+  }, [isLoggedIn, user, accessToken, authContextLoading, isFocused]);
 
   // Initialize pickup workflow with proper token
   const workflowHook = usePickupWorkflow();
@@ -118,15 +139,27 @@ export default function Pickup() {
     nextPhase();
   }, [nextPhase, currentPhase]);
 
-  // Handle authentication errors
+  // Handle authentication errors only when screen is focused
   useEffect(() => {
+    if (!isFocused || !authError || dialogShown) {
+      return;
+    }
+    
+    setDialogShown(true); // Prevent multiple dialogs
+    
     if (authError === 'LOGIN_REQUIRED') {
       Alert.alert(
         'Login Required',
         'You need to be logged in to schedule a pickup. Please log in to continue.',
         [
-          { text: 'Cancel', onPress: () => router.back() },
-          { text: 'Login', onPress: () => router.push('/login') }
+          { text: 'Cancel', onPress: () => {
+            setDialogShown(false);
+            router.back();
+          }},
+          { text: 'Login', onPress: () => {
+            setDialogShown(false);
+            router.push('/login');
+          }}
         ]
       );
     } else if (authError === 'TOKEN_EXPIRED') {
@@ -134,7 +167,10 @@ export default function Pickup() {
         'Session Expired',
         'Your session has expired. Please log in again to schedule a pickup.',
         [
-          { text: 'OK', onPress: () => router.push('/login') }
+          { text: 'OK', onPress: () => {
+            setDialogShown(false);
+            router.push('/login');
+          }}
         ]
       );
     } else if (authError === 'AUTH_ERROR') {
@@ -142,11 +178,14 @@ export default function Pickup() {
         'Authentication Error',
         'There was an issue verifying your session. Please try logging in again.',
         [
-          { text: 'OK', onPress: () => router.push('/login') }
+          { text: 'OK', onPress: () => {
+            setDialogShown(false);
+            router.push('/login');
+          }}
         ]
       );
     }
-  }, [authError]);
+  }, [authError, dialogShown, isFocused]);
 
   // Reset workflow when component unmounts
   useEffect(() => {

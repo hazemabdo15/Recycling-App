@@ -1,13 +1,11 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { router } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ProfileHeader, ProfileMenu, StatsCard } from '../../components/profile';
 import { useAuth } from '../../context/AuthContext';
 import { colors } from '../../styles/theme';
-import { getLoggedInUser } from '../../utils/authUtils';
 
 let Animated, useAnimatedStyle, useSharedValue, withSpring, withTiming;
 
@@ -32,20 +30,21 @@ const Profile = () => {
     const headerOpacity = useSharedValue(0);
     const contentTranslateY = useSharedValue(50);
     const contentOpacity = useSharedValue(0);
-    const { setUser } = useAuth();
+    const { logout, user, isLoggedIn } = useAuth();
 
     const [loggedUser, setloggedUser] = useState(null);
 
+    // Listen to AuthContext changes in real-time
+    useEffect(() => {
+        console.log('Profile: AuthContext state changed');
+        console.log('Profile: AuthContext user:', user);
+        console.log('Profile: AuthContext isLoggedIn:', isLoggedIn);
+        setloggedUser(user);
+    }, [user, isLoggedIn]);
+
     useFocusEffect(
         useCallback(() => {
-            const loadUser = async () => {
-                const user = await getLoggedInUser();
-                setloggedUser(user);
-                console.log('Header user:', user);
-            };
-
-            loadUser();
-
+            // Animation on focus
             headerOpacity.value = withTiming(1, { duration: 600 });
             setTimeout(() => {
                 contentOpacity.value = withTiming(1, { duration: 800 });
@@ -100,12 +99,8 @@ const Profile = () => {
 
     const handleLogout = async () => {
         try {
-            await AsyncStorage.removeItem('accessToken');
-            await AsyncStorage.removeItem('user');
-            const token = await AsyncStorage.getItem('accessToken');
-            const savedUser = await AsyncStorage.getItem('user');
-            console.log('Still exists:', { token, savedUser });
-            setUser(null);
+            console.log('Logging out user...');
+            await logout(); // Use AuthContext logout method
             setloggedUser(null);
             router.replace('/login');
         } catch (error) {
