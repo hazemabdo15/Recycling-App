@@ -76,10 +76,33 @@
 ## Session Duration Information
 
 Based on the configuration in `services/api/config.js`:
-- **Access Token Duration**: 1 minute (60,000 ms)
+- **Access Token Duration**: 15 minutes (increased from 1 minute for better UX)
 - **Refresh Token Duration**: 7 days
-- **Token Refresh**: Happens automatically when access token expires
-- **Proactive Refresh**: Tokens are refreshed 30 seconds before expiration
+- **Refresh Threshold**: Tokens are refreshed 5 minutes before expiry
+- **Proactive Refresh**: Tokens are automatically refreshed in the background
+- **Periodic Refresh Check**: Every 5 minutes (reduced frequency, more efficient)
+
+## Enhanced Refresh Token Strategy
+
+### New Proactive Refresh System:
+1. **Startup Refresh**: App checks and refreshes tokens on initialization
+2. **Background Refresh**: Every 5 minutes, tokens are refreshed if within 5 minutes of expiry
+3. **API Call Refresh**: Automatic refresh during API calls when tokens expire
+4. **Smart Authentication**: `isAuthenticated()` now attempts refresh before failing
+
+### User Experience Improvements:
+- **Seamless Sessions**: Users can work for hours without interruption
+- **Extended Duration**: 15-minute tokens instead of 1-minute
+- **Background Management**: Token refresh happens silently in the background
+- **Graceful Degradation**: Only logs out when refresh tokens expire (7 days)
+
+## Expected Behavior Now
+
+1. **User logs in** → Gets 15-minute access token
+2. **Background refresh** → Token automatically refreshed every ~10 minutes
+3. **Seamless usage** → No authentication interruptions during normal use
+4. **Long sessions** → Users can work for hours/days without re-login
+5. **Only logout when** → Refresh token expires (7 days) or manual logout
 
 ## Expected Behavior Now
 
@@ -91,17 +114,19 @@ Based on the configuration in `services/api/config.js`:
 
 ## Testing Recommendations
 
-1. **Login and wait 1-2 minutes** → UI should update to logged-out state
-2. **Try pickup scheduling after token expiry** → Should show single dialog, not multiple stacked ones
-3. **Check profile page after expiry** → Should immediately show guest mode
-4. **Manual logout** → Should work consistently from profile page
-5. **Test rapid navigation** → Should not create multiple auth dialogs
+1. **Login and use normally** → Should work seamlessly for hours without interruption
+2. **Long session test** → Leave app open for 1+ hour → Should remain authenticated
+3. **App restart test** → Close and reopen app → Should still be logged in
+4. **Check profile page** → Should always show accurate authentication state
+5. **Test pickup scheduling** → Should work smoothly without auth dialogs
+6. **Manual logout** → Should work consistently from profile page
 
 ## Additional Notes
 
-- The 1-minute token duration seems very short for production use
-- Consider increasing it to 15-30 minutes for better user experience
-- Refresh tokens handle longer sessions (7 days) automatically
-- The system now handles token expiration gracefully without user confusion
-- Periodic validation runs every 2 minutes to balance responsiveness with performance
-- Dialog prevention ensures users don't get overwhelmed with multiple auth prompts
+- **Production-Ready Duration**: 15 minutes provides excellent user experience
+- **Can be extended further**: Consider 30-60 minutes for production use
+- **Automatic refresh system**: Handles token management transparently
+- **Background processing**: Users never see token refresh operations
+- **Graceful error handling**: Falls back to logout only when necessary
+- **Enhanced security**: Shorter-lived tokens with automatic refresh
+- **Better performance**: Reduced frequency of authentication checks (every 5 minutes)

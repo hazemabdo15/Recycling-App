@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, useContext, useEffect, useState } from "react";
+import apiService from "../services/api/apiService";
 import { isAuthenticated, logoutUser } from "../services/auth";
 
 const AuthContext = createContext(null);
@@ -121,7 +122,7 @@ export function AuthProvider({ children }) {
     loadUser();
   }, []);
 
-  // Periodic token validation (every 2 minutes when user is logged in)
+  // Periodic token refresh (every 5 minutes when user is logged in)
   useEffect(() => {
     if (!isLoggedIn || !accessToken) return;
 
@@ -131,17 +132,38 @@ export function AuthProvider({ children }) {
       
       try {
         setPeriodicCheckRunning(true);
-        const authStatus = await isAuthenticated();
-        if (!authStatus) {
-          console.log("[AuthContext] Token expired during periodic check - clearing session");
-          handleTokenExpired();
+        console.log("[AuthContext] Performing periodic token refresh check...");
+        
+        // Try to proactively refresh the token if needed
+        const refreshSuccess = await apiService.refreshIfNeeded();
+        
+        if (!refreshSuccess) {
+          console.log("[AuthContext] Token refresh failed - checking authentication");
+          const authStatus = await isAuthenticated();
+          if (!authStatus) {
+            console.log("[AuthContext] Authentication failed during periodic check - clearing session");
+            handleTokenExpired();
+          }
+        } else {
+          console.log("[AuthContext] Periodic token check completed successfully");
         }
       } catch (error) {
         console.error("[AuthContext] Error during periodic token check:", error);
+        // If there's an error, do a final auth check
+        try {
+          const authStatus = await isAuthenticated();
+          if (!authStatus) {
+            console.log("[AuthContext] Authentication failed after error - clearing session");
+            handleTokenExpired();
+          }
+        } catch (finalError) {
+          console.error("[AuthContext] Final auth check failed:", finalError);
+          handleTokenExpired();
+        }
       } finally {
         setPeriodicCheckRunning(false);
       }
-    }, 120000); // Check every 2 minutes instead of 30 seconds
+    }, 5 * 60 * 1000); // Check every 5 minutes (more reasonable interval)
 
     return () => clearInterval(interval);
   }, [isLoggedIn, accessToken, periodicCheckRunning]);

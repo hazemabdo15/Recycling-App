@@ -47,5 +47,6 @@ export const API_CONFIG = {
 export const TOKEN_CONFIG = {
   ACCESS_TOKEN_KEY: 'accessToken',
   REFRESH_TOKEN_EXPIRES: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
-  ACCESS_TOKEN_EXPIRES: 60 * 1000, // 1 minute in milliseconds
+  ACCESS_TOKEN_EXPIRES: 15 * 60 * 1000, // 15 minutes in milliseconds (more reasonable)
+  REFRESH_THRESHOLD: 5 * 60 * 1000, // Refresh token 5 minutes before expiry
 };
