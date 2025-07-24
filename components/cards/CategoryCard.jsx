@@ -3,14 +3,13 @@ import { StyleSheet, Text, View } from 'react-native';
 import { getCategoryImageProps } from '../../utils/categoryUtils';
 import { CategoryImage } from '../ui';
 
-let Animated, useSharedValue, useAnimatedStyle, withTiming, withSpring;
+let Animated, useSharedValue, useAnimatedStyle, withSpring;
 
 try {
   const reanimated = require('react-native-reanimated');
   Animated = reanimated.default;
   useSharedValue = reanimated.useSharedValue;
   useAnimatedStyle = reanimated.useAnimatedStyle;
-  withTiming = reanimated.withTiming;
   withSpring = reanimated.withSpring;
 } catch (_error) {
   console.warn('React Native Reanimated not available in CategoryCard, using fallbacks');
@@ -21,7 +20,6 @@ try {
   };
   useSharedValue = (value) => ({ value });
   useAnimatedStyle = () => ({});
-  withTiming = (value) => value;
   withSpring = (value) => value;
 }
 
@@ -35,22 +33,18 @@ const borderRadius = {
 
 const CategoryCard = memo(({ category, onPress }) => {
     const scale = useSharedValue(1);
-    const shadowOpacity = useSharedValue(0.1);
     const imageProps = getCategoryImageProps(category);
 
     const handlePressIn = useCallback(() => {
         scale.value = withSpring(0.96, { damping: 20, stiffness: 300 });
-        shadowOpacity.value = withTiming(0.2, { duration: 100 });
-    }, [scale, shadowOpacity]);
+    }, [scale]);
 
     const handlePressOut = useCallback(() => {
         scale.value = withSpring(1, { damping: 20, stiffness: 300 });
-        shadowOpacity.value = withTiming(0.1, { duration: 100 });
-    }, [scale, shadowOpacity]);
+    }, [scale]);
 
     const animatedStyle = useAnimatedStyle(() => ({
         transform: [{ scale: scale.value }],
-        shadowOpacity: shadowOpacity.value,
     }));
 
     const handleResponderRelease = useCallback(() => {
@@ -97,14 +91,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFFFFF',
         borderRadius: borderRadius.md,
         marginBottom: 15,
-
-        shadowColor: '#000000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowRadius: 3,
-        shadowOpacity: 0.1,
-
-        elevation: 2,
-
         borderWidth: 1,
         borderColor: '#F3F4F6',
     },
