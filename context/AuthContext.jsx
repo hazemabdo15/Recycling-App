@@ -1,7 +1,7 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import apiService from "../services/api/apiService";
 import { isAuthenticated, logoutUser } from "../services/auth";
+import { clearSession, getAccessToken, getLoggedInUser, setLoggedInUser } from '../utils/authUtils';
 
 const AuthContext = createContext(null);
 
@@ -36,18 +36,8 @@ export function AuthProvider({ children }) {
         console.log("[AuthContext] Starting user load...");
 
         // Get stored user data
-        const storedUser = await AsyncStorage.getItem("user");
-        console.log(
-          "[AuthContext] Stored user:",
-          storedUser ? "present" : "null"
-        );
-
-        // Get stored token directly from AsyncStorage to avoid race conditions
-        const storedToken = await AsyncStorage.getItem("accessToken");
-        console.log(
-          "[AuthContext] Stored token:",
-          storedToken ? "present" : "null"
-        );
+        const storedUser = await getLoggedInUser();
+        const storedToken = await getAccessToken();
 
         if (storedUser && storedToken) {
           console.log(
@@ -57,7 +47,7 @@ export function AuthProvider({ children }) {
           // Set the token in API service first
           const apiService = (await import("../services/api/apiService"))
             .default;
-          await apiService.setAccessToken(storedToken);
+          await setAccessToken(storedToken);
 
           // Check if authenticated (this will try to refresh if token is expired)
           let authStatus = await isAuthenticated();
@@ -74,7 +64,7 @@ export function AuthProvider({ children }) {
               if (newToken) {
                 console.log("[AuthContext] Token refreshed successfully");
                 authStatus = true; // Refresh was successful
-                await AsyncStorage.setItem("accessToken", newToken);
+            await setAccessToken(newToken);
               } else {
                 console.log("[AuthContext] Token refresh failed");
                 authStatus = false;
@@ -88,7 +78,7 @@ export function AuthProvider({ children }) {
           if (authStatus) {
             console.log("[AuthContext] User authenticated successfully");
             const currentToken = await apiService.getAccessToken();
-            setUser(JSON.parse(storedUser));
+            setUser(storedUser);
             setAccessToken(currentToken);
             setIsLoggedIn(true);
           } else {
@@ -96,7 +86,7 @@ export function AuthProvider({ children }) {
               "[AuthContext] Authentication failed, clearing session"
             );
             // Clear invalid session
-            await AsyncStorage.multiRemove(["user", "accessToken"]);
+            await clearSession();
             setUser(null);
             setAccessToken(null);
             setIsLoggedIn(false);
@@ -104,7 +94,7 @@ export function AuthProvider({ children }) {
         } else {
           console.log("[AuthContext] No stored user or token found");
           // Clear any partial data
-          await AsyncStorage.multiRemove(["user", "accessToken"]);
+          await clearSession();
           setUser(null);
           setAccessToken(null);
           setIsLoggedIn(false);
@@ -179,23 +169,14 @@ export function AuthProvider({ children }) {
 
   const login = async (userData, token) => {
     try {
-      console.log("[AuthContext] Login function called");
-      console.log("[AuthContext] User data:", userData ? "present" : "null");
-      console.log("[AuthContext] Token:", token ? "present" : "null");
-
-      // Store user data
-      await AsyncStorage.setItem("user", JSON.stringify(userData));
-
-      // Set the token in API service
-      const apiService = (await import("../services/api/apiService")).default;
-      await apiService.setAccessToken(token);
+      // Store user data and token using centralized helpers
+      await setLoggedInUser(userData);
+      await setAccessToken(token);
 
       // Update context state
       setUser(userData);
       setAccessToken(token);
       setIsLoggedIn(true);
-
-      console.log("[AuthContext] Login completed successfully");
     } catch (error) {
       console.error("[AuthContext] Error in login function:", error);
       throw error;

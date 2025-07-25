@@ -1,4 +1,5 @@
 import { Alert } from 'react-native';
+import { clearSession, setAccessToken } from '../utils/authUtils';
 import apiService from './api/apiService';
 
 /**
@@ -19,7 +20,7 @@ export const loginUser = async ({ email, password }) => {
     
     // Store access token
     if (response.accessToken) {
-      await apiService.setAccessToken(response.accessToken);
+      await setAccessToken(response.accessToken);
     }
 
     return response;
@@ -69,7 +70,7 @@ export const completeRegister = async (
     
     // Store access token
     if (response.accessToken) {
-      await apiService.setAccessToken(response.accessToken);
+      await setAccessToken(response.accessToken);
     }
 
     return response;
@@ -114,24 +115,12 @@ export const resetPassword = async (email, otpCode, newPassword) => {
 
 export const logoutUser = async () => {
   try {
-    console.log('[Auth] Logging out user');
-    
-    // Try to logout from backend (this will clear refresh token cookie)
     try {
       await apiService.post('/auth/logout');
-    } catch (_error) {
-      // Even if backend logout fails, we should clear local tokens
-      console.warn('[Auth] Backend logout failed, clearing local tokens anyway');
-    }
-    
-    // Clear local tokens
-    await apiService.clearTokens();
-    console.log('[Auth] Logout successful');
-    
+    } catch (_error) {}
+    await clearSession();
   } catch (error) {
-    console.error('[Auth] Logout error:', error.message);
-    // Still clear local tokens even if there's an error
-    await apiService.clearTokens();
+    await clearSession();
     throw error;
   }
 };

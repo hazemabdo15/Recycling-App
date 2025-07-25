@@ -9,6 +9,7 @@ import {
   testMinimalPost,
   updateCartItem,
 } from "../services/api/cart.js";
+import { normalizeItemData, validateQuantity } from '../utils/cartUtils';
 import { useAuth } from "./AuthContext";
 
 const CartContext = createContext();
@@ -46,13 +47,19 @@ export const CartProvider = ({ children }) => {
   }, [isLoggedIn]);
 
   const handleAddSingleItem = async (item) => {
+    const normalizedItem = normalizeItemData(item);
+    try {
+      validateQuantity(normalizedItem);
+    } catch (err) {
+      setError(err.message);
+      return { success: false, error: err.message };
+    }
     const optimisticUpdate = { ...cartItems };
-    optimisticUpdate[item.categoryId] = item.quantity;
+    optimisticUpdate[normalizedItem.categoryId] = normalizedItem.quantity;
     setCartItems(optimisticUpdate);
 
     try {
-      const result = await addItemToCart(item, isLoggedIn);
-
+      const result = await addItemToCart(normalizedItem, isLoggedIn);
       if (result.items) {
         const itemsObj = {};
         result.items.forEach((backendItem) => {
@@ -71,66 +78,40 @@ export const CartProvider = ({ children }) => {
 
   const handleAddToCart = async (itemOrItems) => {
     const items = Array.isArray(itemOrItems) ? itemOrItems : [itemOrItems];
-
+    const normalizedItems = items.map(normalizeItemData);
+    try {
+      normalizedItems.forEach(validateQuantity);
+    } catch (err) {
+      setError(err.message);
+      return { success: false, error: err.message };
+    }
     try {
       const currentBackendCart = await getCart(isLoggedIn);
       const actualCartItems = {};
       (currentBackendCart.items || []).forEach((item) => {
         actualCartItems[item.categoryId] = item.quantity;
       });
-
       setCartItems(actualCartItems);
-
       const itemsToMerge = {};
-      items.forEach((item) => {
-        console.log(`[CartContext] Processing item for merge:`, {
-          name: item.name,
-          categoryId: item.categoryId,
-          quantity: item.quantity,
-          measurement_unit: item.measurement_unit,
-          measurementUnitType: typeof item.measurement_unit,
-        });
-
+      normalizedItems.forEach((item) => {
         if (itemsToMerge[item.categoryId]) {
           itemsToMerge[item.categoryId].quantity += item.quantity;
-          console.log(
-            `[CartContext] Merged with existing item, new quantity:`,
-            itemsToMerge[item.categoryId].quantity
-          );
         } else {
           itemsToMerge[item.categoryId] = { ...item };
-          console.log(
-            `[CartContext] Added new item to merge:`,
-            itemsToMerge[item.categoryId]
-          );
         }
       });
-
       const optimisticUpdate = { ...actualCartItems };
       Object.values(itemsToMerge).forEach((item) => {
         const currentQuantity = actualCartItems[item.categoryId] || 0;
         const newQuantity = currentQuantity + item.quantity;
         optimisticUpdate[item.categoryId] = newQuantity;
       });
-
       setCartItems(optimisticUpdate);
-
       const results = [];
       for (const mergedItem of Object.values(itemsToMerge)) {
-        const actualCurrentQuantity =
-          actualCartItems[mergedItem.categoryId] || 0;
-
+        const actualCurrentQuantity = actualCartItems[mergedItem.categoryId] || 0;
         if (actualCurrentQuantity > 0) {
           const newTotalQuantity = actualCurrentQuantity + mergedItem.quantity;
-          console.log(`[CartContext] Updating existing item:`, {
-            categoryId: mergedItem.categoryId,
-            name: mergedItem.name,
-            currentQuantity: actualCurrentQuantity,
-            addingQuantity: mergedItem.quantity,
-            newTotalQuantity,
-            measurement_unit: mergedItem.measurement_unit,
-            measurementUnitType: typeof mergedItem.measurement_unit,
-          });
           const result = await updateCartItem(
             mergedItem.categoryId,
             newTotalQuantity,
@@ -143,13 +124,11 @@ export const CartProvider = ({ children }) => {
           results.push(result);
         }
       }
-
       const finalCart = await getCart(isLoggedIn);
       const finalItemsObj = {};
       (finalCart.items || []).forEach((backendItem) => {
         finalItemsObj[backendItem.categoryId] = backendItem.quantity;
       });
-
       setCartItems(finalItemsObj);
       setError(null);
     } catch (err) {
