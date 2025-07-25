@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -28,10 +28,9 @@ export default function Pickup() {
   
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState(null);
-  const [dialogShown, setDialogShown] = useState(false); // Prevent multiple dialogs
-  const [isFocused, setIsFocused] = useState(false); // Track if screen is focused
-  
-  // Log auth state changes for debugging
+  const [dialogShown, setDialogShown] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+
   useEffect(() => {
     console.log('[Pickup] Auth state changed:');
     console.log('  - isLoggedIn:', isLoggedIn);
@@ -39,8 +38,7 @@ export default function Pickup() {
     console.log('  - accessToken:', accessToken ? 'present' : 'null');
     console.log('  - authContextLoading:', authContextLoading);
   }, [isLoggedIn, user, accessToken, authContextLoading]);
-  
-  // Track focus state using navigation focus effect
+
   useFocusEffect(
     useCallback(() => {
       console.log('[Pickup] Screen focused');
@@ -49,12 +47,11 @@ export default function Pickup() {
       return () => {
         console.log('[Pickup] Screen unfocused');
         setIsFocused(false);
-        setDialogShown(false); // Reset dialog state when leaving screen
+        setDialogShown(false);
       };
     }, [])
   );
-  
-  // Check authentication status only when screen is focused
+
   useEffect(() => {
     if (!isFocused) {
       console.log('[Pickup] Screen not focused, skipping auth check');
@@ -65,8 +62,7 @@ export default function Pickup() {
       try {
         console.log('[Pickup] Starting auth check...');
         console.log('[Pickup] authContextLoading:', authContextLoading);
-        
-        // Wait for AuthContext to finish loading first
+
         if (authContextLoading) {
           console.log('[Pickup] Waiting for AuthContext to finish loading...');
           return;
@@ -83,7 +79,6 @@ export default function Pickup() {
           return;
         }
 
-        // Check if we have a valid token
         const authStatus = await isAuthenticated();
         console.log('[Pickup] isAuthenticated() result:', authStatus);
         
@@ -107,10 +102,8 @@ export default function Pickup() {
     checkAuth();
   }, [isLoggedIn, user, accessToken, authContextLoading, isFocused]);
 
-  // Initialize pickup workflow with proper token
   const workflowHook = usePickupWorkflow();
-  
-  // Safely destructure with defaults to prevent undefined errors
+
   const {
     currentPhase = 1,
     selectedAddress = null,
@@ -122,13 +115,11 @@ export default function Pickup() {
     reset = () => {}
   } = workflowHook || {};
 
-  // Add debugging for phase changes
   useEffect(() => {
     console.log('[Pickup] Phase changed to:', currentPhase);
     console.log('[Pickup] Selected address:', selectedAddress ? 'present' : 'null');
   }, [currentPhase, selectedAddress]);
 
-  // Wrapper functions with debugging
   const handleAddressSelect = useCallback((address) => {
     console.log('[Pickup] handleAddressSelect called with:', address);
     setSelectedAddress(address);
@@ -139,13 +130,12 @@ export default function Pickup() {
     nextPhase();
   }, [nextPhase, currentPhase]);
 
-  // Handle authentication errors only when screen is focused
   useEffect(() => {
     if (!isFocused || !authError || dialogShown) {
       return;
     }
     
-    setDialogShown(true); // Prevent multiple dialogs
+    setDialogShown(true);
     
     if (authError === 'LOGIN_REQUIRED') {
       Alert.alert(
@@ -187,12 +177,10 @@ export default function Pickup() {
     }
   }, [authError, dialogShown, isFocused]);
 
-  // Reset workflow when component unmounts
   useEffect(() => {
     return () => reset();
   }, [reset]);
 
-  // Show loading while checking authentication or while AuthContext is loading
   if (authLoading || authContextLoading) {
     return (
       <View style={styles.container}>
@@ -224,7 +212,6 @@ export default function Pickup() {
     );
   }
 
-  // Show error state if authentication failed
   if (authError) {
     return (
       <View style={styles.container}>
@@ -256,7 +243,6 @@ export default function Pickup() {
     );
   }
 
-  // Phase header titles
   const getPhaseTitle = () => {
     switch (currentPhase) {
       case 1:
@@ -270,7 +256,6 @@ export default function Pickup() {
     }
   };
 
-  // Progress indicator
   const renderProgressIndicator = () => (
     <View style={styles.progressContainer}>
       {[1, 2, 3].map((phase) => (
@@ -297,7 +282,6 @@ export default function Pickup() {
     </View>
   );
 
-  // Render current phase
   const renderCurrentPhase = (phase = currentPhase) => {
     console.log('[Pickup] Rendering phase:', phase);
     
@@ -315,7 +299,7 @@ export default function Pickup() {
           />
         );
       case 2:
-        // Add safety checks for ReviewPhase
+
         if (!selectedAddress) {
           console.log('[Pickup] No selected address, staying in phase 1');
           return renderCurrentPhase(1);
@@ -335,8 +319,7 @@ export default function Pickup() {
           userType: typeof user,
           cartItemsType: typeof cartItems
         });
-        
-        // Additional validation for props
+
         if (typeof createOrder !== 'function') {
           console.error('[Pickup] createOrder is not a function:', typeof createOrder);
           return (
@@ -358,8 +341,7 @@ export default function Pickup() {
             </View>
           );
         }
-        
-        // Return component directly without try-catch wrapper
+
         console.log('[Pickup] Creating ReviewPhase directly...');
         return (
           <ReviewPhase
@@ -401,7 +383,7 @@ export default function Pickup() {
             }}
             onPress={() => {
               console.log('[Pickup] Retrying phase render');
-              // Force re-render by resetting phase
+
               if (phase > 1) {
                 previousPhase();
               }
@@ -480,7 +462,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginBottom: spacing.lg,
   },
-  // Progress indicator styles
+
   progressContainer: {
     flexDirection: 'row',
     justifyContent: 'center',

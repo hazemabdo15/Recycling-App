@@ -1,4 +1,4 @@
-import { router, useFocusEffect } from 'expo-router';
+﻿import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 import LoginForm from '../components/auth/LoginForm';
@@ -59,7 +59,6 @@ export default function LoginScreen() {
       const { user, accessToken } = await loginUser({ email, password });
       console.log('[Login] Login API call successful');
 
-      // Use AuthContext login function to properly update all state
       await login(user, accessToken);
       console.log('[Login] AuthContext updated successfully');
 

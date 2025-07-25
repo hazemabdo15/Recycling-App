@@ -1,9 +1,8 @@
-import { Ionicons } from '@expo/vector-icons';
+﻿import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { colors } from '../../styles/theme';
-
 
 export default function LoginForm({ onSubmit, loading }) {
   const router = useRouter();
@@ -12,7 +11,7 @@ export default function LoginForm({ onSubmit, loading }) {
   const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async () => {
-    if (loading) return; // Prevent multiple submissions
+    if (loading) return;
     console.log('Login button pressed', email, password);
     await onSubmit({ email, password });
   };
@@ -48,14 +47,6 @@ export default function LoginForm({ onSubmit, loading }) {
           <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={20} color="#666" />
         </Pressable>
       </View>
-      {/* <TextInput
-        style={styles.input}
-        placeholder="Password"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      /> */}
-
       <Pressable
         style={[styles.loginButton, loading && { opacity: 0.5 }]}
         onPress={handleLogin}

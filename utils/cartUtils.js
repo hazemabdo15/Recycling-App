@@ -1,4 +1,4 @@
-
+﻿
 export const getUnitDisplay = (measurementUnit) => {
     return measurementUnit === 1 ? 'KG' : 'Piece';
 };
@@ -8,11 +8,10 @@ export const getIncrementStep = (measurementUnit) => {
 };
 
 export const getMinimumQuantity = (measurementUnit) => {
-    // All items now have minimum quantity of 1
+
     return 1;
 };
 
-// Centralized validation function for quantity based on measurement unit
 export const validateQuantity = (item) => {
     const quantity = Number(item.quantity);
     const measurementUnit = Number(item.measurement_unit);
@@ -26,16 +25,16 @@ export const validateQuantity = (item) => {
     }
     
     if (measurementUnit === 1) {
-        // KG - must be >= 1 and in 0.25 increments after 1
+
         if (quantity < 1) {
             throw new Error("For KG items, minimum quantity is 1.");
         }
-        // Only validate 0.25 increments if quantity > 1
+
         if (quantity > 1 && quantity % 0.25 !== 0) {
             throw new Error("For KG items, quantity must be in 0.25 increments (e.g., 1.0, 1.25, 1.5, 1.75, 2.0).");
         }
     } else if (measurementUnit === 2) {
-        // Piece - must be whole numbers >= 1
+
         if (!Number.isInteger(quantity) || quantity < 1) {
             throw new Error("For piece items, quantity must be whole numbers >= 1.");
         }
@@ -47,10 +46,8 @@ export const validateQuantity = (item) => {
 export const normalizeItemData = (item) => {
     const normalized = { ...item };
 
-    // Ensure categoryId exists
     normalized.categoryId = item.categoryId || item._id;
-    
-    // Ensure categoryName exists - try multiple sources
+
     if (!normalized.categoryName) {
         normalized.categoryName = item.categoryName || 
                                   item.category?.name || 
@@ -58,7 +55,6 @@ export const normalizeItemData = (item) => {
                                   'Unknown Category';
     }
 
-    // Normalize measurement_unit to numbers
     if (typeof item.measurement_unit === 'string') {
         const lowerUnit = item.measurement_unit.toLowerCase();
         if (lowerUnit === 'kg' || lowerUnit === 'kilogram') {
@@ -66,16 +62,16 @@ export const normalizeItemData = (item) => {
         } else if (lowerUnit === 'piece' || lowerUnit === 'pieces') {
             normalized.measurement_unit = 2;
         } else {
-            // Default to KG for unknown string units
+
             normalized.measurement_unit = 1;
         }
     } else if (typeof item.measurement_unit === 'number') {
-        // Validate and default invalid numbers
+
         if (item.measurement_unit !== 1 && item.measurement_unit !== 2) {
             normalized.measurement_unit = 1;
         }
     } else {
-        // Default to KG for null/undefined
+
         normalized.measurement_unit = 1;
     }
     

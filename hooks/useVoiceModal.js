@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+﻿import { router } from 'expo-router';
 import { useCallback } from 'react';
 export const useVoiceModal = () => {
   const openVoiceModal = useCallback(() => {

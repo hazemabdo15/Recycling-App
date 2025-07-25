@@ -1,4 +1,4 @@
-import { useFocusEffect } from '@react-navigation/native';
+﻿import { useFocusEffect } from '@react-navigation/native';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
@@ -34,7 +34,6 @@ const Profile = () => {
 
     const [loggedUser, setloggedUser] = useState(null);
 
-    // Listen to AuthContext changes in real-time
     useEffect(() => {
         console.log('Profile: AuthContext state changed');
         console.log('Profile: AuthContext user:', user);
@@ -44,7 +43,7 @@ const Profile = () => {
 
     useFocusEffect(
         useCallback(() => {
-            // Animation on focus
+
             headerOpacity.value = withTiming(1, { duration: 600 });
             setTimeout(() => {
                 contentOpacity.value = withTiming(1, { duration: 800 });
@@ -100,7 +99,7 @@ const Profile = () => {
     const handleLogout = async () => {
         try {
             console.log('Logging out user...');
-            await logout(); // Use AuthContext logout method
+            await logout();
             setloggedUser(null);
             router.replace('/login');
         } catch (error) {

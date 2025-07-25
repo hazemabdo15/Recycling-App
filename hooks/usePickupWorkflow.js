@@ -1,25 +1,22 @@
-import { useCallback, useState } from 'react';
+﻿import { useCallback, useState } from 'react';
 import { addressService } from '../services/api/addresses';
 import { orderService } from '../services/api/orders';
 import { validateQuantity } from '../utils/cartUtils';
 import { useCart } from './useCart';
 
 export const usePickupWorkflow = () => {
-  // Get cart clearing function
+
   const { handleClearCart } = useCart();
-  
-  // API state
+
   const [addresses, setAddresses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [fetchingAddresses, setFetchingAddresses] = useState(false);
 
-  // Workflow state
   const [currentPhase, setCurrentPhase] = useState(1);
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [orderData, setOrderData] = useState(null);
 
-  // Phase navigation
   const nextPhase = useCallback(() => {
     setCurrentPhase(prev => Math.min(prev + 1, 3));
   }, []);
@@ -28,7 +25,6 @@ export const usePickupWorkflow = () => {
     setCurrentPhase(prev => Math.max(prev - 1, 1));
   }, []);
 
-  // Reset workflow
   const reset = useCallback(() => {
     setCurrentPhase(1);
     setSelectedAddress(null);
@@ -36,9 +32,8 @@ export const usePickupWorkflow = () => {
     setError(null);
   }, []);
 
-  // Fetch user addresses using new service
   const fetchAddresses = useCallback(async () => {
-    // Prevent multiple simultaneous fetches
+
     if (fetchingAddresses) {
       console.log('[Pickup Workflow] Already fetching addresses, skipping...');
       return;
@@ -50,8 +45,7 @@ export const usePickupWorkflow = () => {
     try {
       console.log('[Pickup Workflow] Fetching user addresses');
       const addressData = await addressService.getAddresses();
-      
-      // Handle both array response and object response with data property
+
       const addressList = Array.isArray(addressData) ? addressData : (addressData.data || []);
       setAddresses(addressList);
       
@@ -66,15 +60,13 @@ export const usePickupWorkflow = () => {
     }
   }, [fetchingAddresses]);
 
-  // Create new address
   const createAddress = useCallback(async (addressData) => {
     setLoading(true);
     setError(null);
     try {
       console.log('[Pickup Workflow] Creating new address');
       const newAddress = await addressService.createAddress(addressData);
-      
-      // Add new address to the list
+
       setAddresses(prev => [...prev, newAddress]);
       console.log('[Pickup Workflow] Address created successfully');
       
@@ -88,20 +80,17 @@ export const usePickupWorkflow = () => {
     }
   }, []);
 
-  // Update existing address
   const updateAddress = useCallback(async (addressId, addressData) => {
     setLoading(true);
     setError(null);
     try {
       console.log('[Pickup Workflow] Updating address:', addressId);
       const updatedAddress = await addressService.updateAddress(addressId, addressData);
-      
-      // Update address in the list
+
       setAddresses(prev => prev.map(addr => 
         addr._id === addressId ? updatedAddress : addr
       ));
-      
-      // Update selected address if it was the one being updated
+
       if (selectedAddress && selectedAddress._id === addressId) {
         setSelectedAddress(updatedAddress);
       }
@@ -117,18 +106,15 @@ export const usePickupWorkflow = () => {
     }
   }, [selectedAddress]);
 
-  // Delete address
   const deleteAddress = useCallback(async (addressId) => {
     setLoading(true);
     setError(null);
     try {
       console.log('[Pickup Workflow] Deleting address:', addressId);
       await addressService.deleteAddress(addressId);
-      
-      // Remove address from the list
+
       setAddresses(prev => prev.filter(addr => addr._id !== addressId));
-      
-      // Clear selected address if it was deleted
+
       if (selectedAddress && selectedAddress._id === addressId) {
         setSelectedAddress(null);
       }
@@ -143,7 +129,6 @@ export const usePickupWorkflow = () => {
     }
   }, [selectedAddress]);
 
-  // Create pickup order
   const createOrder = useCallback(async (cartItems, userData) => {
     if (!selectedAddress) {
       throw new Error('Please select an address first');
@@ -165,8 +150,7 @@ export const usePickupWorkflow = () => {
         quantity: item.quantity,
         quantityType: typeof item.quantity
       })));
-      
-      // Prepare order data according to backend specification
+
       const orderData = {
         address: {
           city: selectedAddress.city || '',
@@ -183,10 +167,10 @@ export const usePickupWorkflow = () => {
             categoryId: item.categoryId,
             image: item.image,
             itemName: item.itemName || item.name,
-            measurement_unit: Number(item.measurement_unit), // Ensure it's a number
+            measurement_unit: Number(item.measurement_unit),
             points: Number(item.points) || 10,
             price: Number(item.price) || 5.0,
-            quantity: Number(item.quantity) // Ensure it's a number
+            quantity: Number(item.quantity)
           };
           
           console.log(`[Pickup Workflow] Validating item ${index + 1}:`, {
@@ -206,27 +190,23 @@ export const usePickupWorkflow = () => {
         email: userData.email || ''
       };
 
-      // Validate order data before sending
       validateOrderData(orderData);
 
       const response = await orderService.createOrder(orderData);
-      
-      // Handle both direct order response and wrapped response
+
       const order = response.data || response;
       setOrderData(order);
       
       console.log('[Pickup Workflow] Order created successfully:', order._id);
-      
-      // Clear the cart after successful order creation
+
       try {
         handleClearCart();
         console.log('[Pickup Workflow] Cart cleared after successful order creation');
       } catch (cartError) {
         console.warn('[Pickup Workflow] Failed to clear cart:', cartError.message);
-        // Don't throw here - order was successful, cart clearing is secondary
+
       }
-      
-      // Move to confirmation phase
+
       setCurrentPhase(3);
       
       return order;
@@ -239,7 +219,6 @@ export const usePickupWorkflow = () => {
     }
   }, [selectedAddress, handleClearCart]);
 
-  // Validate order data
   const validateOrderData = (orderData) => {
     const requiredFields = ['address', 'items', 'phoneNumber', 'userName', 'email'];
     const missingFields = requiredFields.filter(field => 
@@ -254,7 +233,6 @@ export const usePickupWorkflow = () => {
       throw new Error('Address must include at least city');
     }
 
-    // Validate each item
     orderData.items.forEach((item, index) => {
       console.log(`[Pickup Workflow] Validating item ${index + 1}:`, {
         categoryId: item.categoryId,
@@ -274,7 +252,6 @@ export const usePickupWorkflow = () => {
         throw new Error(`Item ${index + 1} missing required fields: ${missingItemFields.join(', ')}`);
       }
 
-      // Validate each item using centralized validation
       validateQuantity({
         quantity: Number(item.quantity),
         measurement_unit: Number(item.measurement_unit)
@@ -283,15 +260,14 @@ export const usePickupWorkflow = () => {
   };
 
   return {
-    // State
+
     addresses,
     loading,
     error,
     currentPhase,
     selectedAddress,
     orderData,
-    
-    // Actions
+
     nextPhase,
     previousPhase,
     reset,
@@ -301,8 +277,7 @@ export const usePickupWorkflow = () => {
     deleteAddress,
     createOrder,
     setSelectedAddress,
-    
-    // Setters for manual state management if needed
+
     setError,
     setCurrentPhase
   };

@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {
     ScrollView,
     StyleSheet,
@@ -14,8 +14,7 @@ import { AnimatedButton } from '../common';
 const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
   const generateTrackingNumber = (orderId) => {
     if (!orderId) return 'REC' + Date.now().toString().slice(-8);
-    
-    // Extract last 8 characters of the order ID for tracking
+
     const shortId = orderId.length > 8 ? orderId.slice(-8) : orderId;
     return `REC${shortId.toUpperCase()}`;
   };
@@ -23,7 +22,7 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
   const trackingNumber = generateTrackingNumber(order?._id);
 
   const handleDone = () => {
-    // Use onFinish if provided (from pickup.jsx), otherwise use onNewRequest
+
     if (onFinish && typeof onFinish === 'function') {
       onFinish();
     } else if (onNewRequest && typeof onNewRequest === 'function') {
@@ -35,7 +34,6 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
     <View style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
-        {/* Success Icon */}
         <View style={styles.iconContainer}>
           <View style={styles.successCircle}>
             <MaterialCommunityIcons 
@@ -46,13 +44,11 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
           </View>
         </View>
 
-        {/* Success Message */}
         <Text style={styles.title}>Pickup Request Confirmed!</Text>
         <Text style={styles.subtitle}>
           Your request has been sent. We will contact you soon for pickup scheduling.
         </Text>
 
-        {/* Tracking Information */}
         <View style={styles.trackingCard}>
           <View style={styles.trackingHeader}>
             <MaterialCommunityIcons 
@@ -89,7 +85,6 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
           </View>
         </View>
 
-        {/* Order Details */}
         {order && (
           <View style={styles.orderCard}>
             <Text style={styles.orderTitle}>Order Summary</Text>
@@ -112,7 +107,6 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
           </View>
         )}
 
-        {/* Next Steps */}
         <View style={styles.stepsCard}>
           <Text style={styles.stepsTitle}>What happens next?</Text>
           <View style={styles.stepItem}>
@@ -137,7 +131,6 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
         </View>
       </ScrollView>
 
-      {/* Footer */}
       <View style={styles.footer}>
         <AnimatedButton style={styles.newRequestButton} onPress={handleDone}>
           <MaterialCommunityIcons name="check" size={20} color={colors.white} />
@@ -162,8 +155,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
     alignItems: 'center',
   },
-  
-  // Success icon
+
   iconContainer: {
     marginBottom: spacing.xxl,
   },
@@ -180,8 +172,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 6,
   },
-  
-  // Text content
+
   title: {
     ...typography.title,
     fontSize: 24,
@@ -198,8 +189,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xxl,
     paddingHorizontal: spacing.lg,
   },
-  
-  // Tracking card
+
   trackingCard: {
     backgroundColor: colors.white,
     borderRadius: borderRadius.xl,
@@ -272,8 +262,7 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.neutral,
   },
-  
-  // Order card
+
   orderCard: {
     backgroundColor: colors.white,
     borderRadius: borderRadius.xl,
@@ -310,8 +299,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.black,
   },
-  
-  // Steps card
+
   stepsCard: {
     backgroundColor: colors.white,
     borderRadius: borderRadius.xl,
@@ -354,8 +342,7 @@ const styles = StyleSheet.create({
     color: colors.neutral,
     flex: 1,
   },
-  
-  // Footer
+
   footer: {
     padding: spacing.xl,
     backgroundColor: colors.white,

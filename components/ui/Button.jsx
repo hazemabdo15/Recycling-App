@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text, TouchableOpacity } from 'react-native';
 import { buttonStyles } from '../../styles/components/commonStyles';
 import { colors } from '../../styles/theme';

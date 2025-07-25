@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+﻿import { StyleSheet } from 'react-native';
 import { colors, spacing, typography } from '../theme';
 export const exploreStyles = StyleSheet.create({
   container: {

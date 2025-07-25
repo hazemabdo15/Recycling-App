@@ -1,12 +1,7 @@
-import apiService from './apiService';
-
-/**
- * Address Service with proper backend integration
- * Follows the backend API specification exactly
- */
+﻿import apiService from './apiService';
 
 export const addressService = {
-  // Get all user addresses
+
   async getAddresses() {
     try {
       console.log('[Address Service] Fetching user addresses');
@@ -21,7 +16,6 @@ export const addressService = {
     }
   },
 
-  // Create new address
   async createAddress(addressData) {
     try {
       console.log('[Address Service] Creating new address');
@@ -36,7 +30,6 @@ export const addressService = {
     }
   },
 
-  // Update existing address
   async updateAddress(addressId, addressData) {
     try {
       console.log('[Address Service] Updating address:', addressId);
@@ -51,7 +44,6 @@ export const addressService = {
     }
   },
 
-  // Delete address
   async deleteAddress(addressId) {
     try {
       console.log('[Address Service] Deleting address:', addressId);

@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
 import { useEffect, useState } from 'react';
 import {
@@ -42,13 +42,13 @@ const AddressPhase = ({ onNext, onBack, onAddressSelect, pickupWorkflow }) => {
   });
 
   useEffect(() => {
-    // Only fetch addresses once when component mounts
+
     console.log('AddressPhase mounted, fetching addresses...');
     if (pickupWorkflow?.fetchAddresses) {
       pickupWorkflow.fetchAddresses();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty dependency array to run only once
+
+  }, []);
 
   const handleAddressSelect = (address) => {
     console.log('[AddressPhase] Address selected:', address);
@@ -56,22 +56,21 @@ const AddressPhase = ({ onNext, onBack, onAddressSelect, pickupWorkflow }) => {
     console.log('[AddressPhase] onNext type:', typeof onNext);
     
     try {
-      // First set the selected address
+
       if (onAddressSelect && typeof onAddressSelect === 'function') {
         console.log('[AddressPhase] Calling onAddressSelect...');
         onAddressSelect(address);
         console.log('[AddressPhase] onAddressSelect completed');
       }
-      
-      // Add delay before phase transition to prevent race conditions
+
       setTimeout(() => {
-        // Then proceed to next phase
+
         if (onNext && typeof onNext === 'function') {
           console.log('[AddressPhase] Calling onNext after delay...');
           onNext();
           console.log('[AddressPhase] onNext completed');
         }
-      }, 100); // Small delay to ensure state update completes
+      }, 100);
     } catch (error) {
       console.error('[AddressPhase] Error in handleAddressSelect:', error);
     }
@@ -483,7 +482,7 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontWeight: '600',
   },
-  // Form styles
+
   formContainer: {
     padding: spacing.xl,
   },

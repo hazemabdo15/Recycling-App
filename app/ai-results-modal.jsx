@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
@@ -80,14 +80,13 @@ export default function AIResultsModal() {
   const availableCount = safeMaterials.filter(material => material.available !== false).length;
   const unavailableCount = safeMaterials.length - availableCount;
 
-  // Validation logic for minimum quantities
   const validationResults = useMemo(() => {
     const validationErrors = [];
     const validItems = [];
     
     safeMaterials.forEach((material, index) => {
       if (material.available !== false) {
-        // Use the actual measurement unit from database, not the AI extracted unit
+
         const measurementUnit = material.databaseItem?.measurement_unit;
         
         console.log(`[AI Results Modal] Validating material ${index}:`, {
@@ -97,10 +96,9 @@ export default function AIResultsModal() {
           databaseMeasurementUnit: measurementUnit,
           databaseItemName: material.databaseItem?.name
         });
-        
-        // Only validate if we have database item with measurement unit
+
         if (measurementUnit !== undefined) {
-          const minQuantity = 1; // Minimum quantity is always 1
+          const minQuantity = 1;
           
           console.log(`[AI Results Modal] Min quantity for measurement_unit ${measurementUnit}:`, minQuantity);
           
@@ -116,7 +114,7 @@ export default function AIResultsModal() {
             validItems.push(material);
           }
         } else {
-          // If no database item, consider it valid (will be filtered out in addToCart anyway)
+
           validItems.push(material);
         }
       }
@@ -167,10 +165,10 @@ export default function AIResultsModal() {
   const updateQuantity = useCallback((index, delta) => {
     setMaterials(prev => prev.map((item, i) => {
       if (i === index) {
-        // Use database measurement unit to determine step
+
         const measurementUnit = item.databaseItem?.measurement_unit;
-        const step = measurementUnit === 1 ? 0.25 : 1; // KG uses 0.25, pieces use 1
-        const minValue = 1; // Minimum quantity is always 1 regardless of unit
+        const step = measurementUnit === 1 ? 0.25 : 1;
+        const minValue = 1;
         const newQuantity = Math.max(minValue, item.quantity + (delta * step));
         return { ...item, quantity: newQuantity };
       }
@@ -183,7 +181,7 @@ export default function AIResultsModal() {
   }, []);
 
   const addToCart = useCallback(() => {
-    // Check for validation errors
+
     if (validationResults.hasErrors) {
       const errorMessage = `Please fix quantity issues:\n${validationResults.errors.map(error => 
         `• ${error.material}: minimum ${error.minQuantity} ${error.unit}`
@@ -200,7 +198,7 @@ export default function AIResultsModal() {
 
     const cartItems = availableMaterials.map(item => ({
       categoryId: item.databaseItem.categoryId,
-      categoryName: item.databaseItem.categoryName, // Add categoryName for backend
+      categoryName: item.databaseItem.categoryName,
       name: item.databaseItem.name,
       image: item.databaseItem.image,
       points: item.databaseItem.points,
@@ -213,8 +211,7 @@ export default function AIResultsModal() {
     console.log('📦 [AI Results Modal] Items to add:', cartItems);
     console.log('📋 [AI Results Modal] Available materials from AI:', availableMaterials);
     console.log('🔄 [AI Results Modal] These items will be merged with existing cart items');
-    
-    // Log detailed item information for debugging
+
     cartItems.forEach((item, index) => {
       console.log(`[AI Results Modal] Cart item ${index + 1}:`, {
         name: item.name,
@@ -246,7 +243,6 @@ export default function AIResultsModal() {
       ? item.databaseItem.name 
       : item.material;
 
-    // Check if this item has validation errors
     const validationError = validationResults.errors.find(error => error.index === index);
     const hasValidationError = !!validationError;
 
@@ -926,13 +922,12 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontWeight: '500',
   },
-  
-  // Validation error styles
+
   materialItemValidationError: {
     borderColor: colors.warning + '60',
     borderWidth: 1,
     backgroundColor: colors.white,
-    // Remove all shadows for clean appearance
+
     shadowColor: 'transparent',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0,

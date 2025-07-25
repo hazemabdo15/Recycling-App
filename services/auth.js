@@ -1,11 +1,6 @@
-import { Alert } from 'react-native';
+﻿import { Alert } from 'react-native';
 import { clearSession, setAccessToken } from '../utils/authUtils';
 import apiService from './api/apiService';
-
-/**
- * Enhanced Authentication Service with proper JWT token handling
- * Integrates with backend API specification
- */
 
 export const loginUser = async ({ email, password }) => {
   try {
@@ -17,8 +12,7 @@ export const loginUser = async ({ email, password }) => {
     });
 
     console.log('[Auth] Login successful');
-    
-    // Store access token
+
     if (response.accessToken) {
       await setAccessToken(response.accessToken);
     }
@@ -67,8 +61,7 @@ export const completeRegister = async (
     });
 
     console.log('[Auth] Registration successful');
-    
-    // Store access token
+
     if (response.accessToken) {
       await setAccessToken(response.accessToken);
     }

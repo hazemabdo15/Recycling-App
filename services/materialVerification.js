@@ -1,4 +1,4 @@
-import apiService from "./api/apiService";
+﻿import apiService from "./api/apiService";
 let cachedDatabaseItems = null;
 let cacheTimestamp = null;
 const CACHE_DURATION = 5 * 60 * 1000;
@@ -20,17 +20,16 @@ export async function fetchDatabaseItems() {
       hasData: response && response.data,
       dataIsArray: response && response.data && Array.isArray(response.data)
     });
-    
-    // Handle different response formats
+
     let categoriesData;
     if (Array.isArray(response)) {
-      // Direct array response
+
       categoriesData = response;
     } else if (response && Array.isArray(response.data)) {
-      // Response with data property
+
       categoriesData = response.data;
     } else if (response && Array.isArray(response.categories)) {
-      // Response with categories property
+
       categoriesData = response.categories;
     } else {
       console.error('🔥 [Material Verification] Unexpected response format:', response);
@@ -40,7 +39,6 @@ export async function fetchDatabaseItems() {
     const allItems = [];
     const itemsIndex = new Map();
 
-    // Process categories to extract items
     categoriesData.forEach(category => {
       console.log('🔍 [Material Verification] Processing category:', {
         name: category.name,
@@ -82,7 +80,7 @@ export async function fetchDatabaseItems() {
           }
         });
       } else if (category.subcategories && Array.isArray(category.subcategories)) {
-        // Handle subcategories structure if it exists
+
         category.subcategories.forEach(subcategory => {
           const itemData = {
             ...subcategory,
@@ -115,7 +113,6 @@ export async function fetchDatabaseItems() {
       categories: categoriesData
     };
 
-    // Validate that we have items
     if (allItems.length === 0) {
       console.warn('⚠️ [Material Verification] No items found in categories response');
       console.log('📊 [Material Verification] Categories structure:', categoriesData.map(cat => ({

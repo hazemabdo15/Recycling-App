@@ -1,4 +1,4 @@
-import { useFocusEffect } from "@react-navigation/native";
+﻿import { useFocusEffect } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useCallback, useState } from "react";
@@ -11,7 +11,7 @@ import { colors, spacing } from "../../styles/theme";
 const Explore = () => {
   const [searchText, setSearchText] = useState("");
   const [filteredCount, setFilteredCount] = useState(0);
-  const [showItemsMode, setShowItemsMode] = useState(false); // false: show categories, true: show all items
+  const [showItemsMode, setShowItemsMode] = useState(false);
   const insets = useSafeAreaInsets();
 
   useFocusEffect(
@@ -35,7 +35,7 @@ const Explore = () => {
   const handleFilteredCountChange = (count) => {
     setFilteredCount(count);
   };
-  // Unify hero section height with home page
+
   const tabBarHeight = 140 + insets.bottom;
 
   return (

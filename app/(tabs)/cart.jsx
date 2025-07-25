@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+﻿import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -357,8 +357,7 @@ const Cart = () => {
     return sum + value * (item.quantity || 1);
   }, 0);
 
-  // Check if minimum order value is met
-  const MINIMUM_ORDER_VALUE = 100; // EGP
+  const MINIMUM_ORDER_VALUE = 100;
   const canSchedulePickup = totalValue >= MINIMUM_ORDER_VALUE;
   const remainingAmount = MINIMUM_ORDER_VALUE - totalValue;
 
@@ -760,7 +759,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     paddingBottom: spacing.xxl,
   },
-  // ...existing code...
+
   checkoutSummaryRowHero: {
     flexDirection: "row",
     justifyContent: "space-between",

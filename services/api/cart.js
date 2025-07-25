@@ -1,10 +1,9 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+﻿import AsyncStorage from "@react-native-async-storage/async-storage";
 import { validateQuantity } from "../../utils/cartUtils.js";
 import { BASE_URLS } from "./config";
 
 const BASE_URL = BASE_URLS.CART;
 
-// Token caching variables
 let cachedToken = null;
 let tokenCacheTime = 0;
 const TOKEN_CACHE_DURATION = 30000;
@@ -106,9 +105,8 @@ function isTokenExpired(token) {
     const payload = JSON.parse(decoded);
     const currentTime = Math.floor(Date.now() / 1000);
 
-    // Only log token expiration check occasionally to avoid spam
     if (Math.random() < 0.1) {
-      // Log 10% of checks
+
       console.log("[cart API] Token expiration check:", {
         currentTime,
         tokenExp: payload.exp,
@@ -146,7 +144,7 @@ async function setSessionIdFromResponse(response) {
         await AsyncStorage.setItem("sessionId", responseData.sessionId);
       }
     } catch (_parseErr) {
-      // Ignore parsing errors
+
     }
   } catch (_err) {
     console.error("[cart API] Error setting sessionId:", _err.message);
@@ -173,7 +171,6 @@ async function getAuthHeaders(isLoggedIn, sessionId) {
     console.log("[cart API] Using session cookie for guest user");
   }
 
-  // Only log headers in debug mode or when there's an issue
   if (process.env.NODE_ENV === "development") {
     console.log("[cart API] Final headers:", headers);
   }
@@ -211,9 +208,6 @@ export async function addItemToCart(item, isLoggedIn) {
   try {
     console.log("[cart API] addItemToCart - Starting request for:", item.name);
 
-    // if (!validateQuantity(item.quantity, item.measurement_unit)) {
-    //   throw new Error('Invalid quantity for the selected measurement unit');
-    // }
 
     validateQuantity(item);
 
@@ -244,7 +238,6 @@ export async function addItemToCart(item, isLoggedIn) {
       }
     }
 
-    // Fixed payload structure according to backend API requirements
     const fixedPayload = {
       categoryId: item.categoryId,
       categoryName: item.categoryName,
@@ -283,7 +276,6 @@ export async function addItemToCart(item, isLoggedIn) {
         throw new Error("Authentication failed - please login again");
       }
 
-      // Try to parse backend error message
       let backendError = `HTTP ${response.status}: ${response.statusText}`;
       try {
         const errorData = JSON.parse(errorText);
@@ -323,13 +315,12 @@ export async function updateCartItem(
   measurementUnit = null
 ) {
   try {
-    // Use correct validation: pass item object
+
     validateQuantity({ quantity, measurement_unit: measurementUnit });
 
     const sessionId = isLoggedIn ? null : await getSessionId();
     const headers = await getAuthHeaders(isLoggedIn, sessionId);
 
-    // Log payload for debugging
     console.log('[cart API] updateCartItem - Payload:', { quantity, measurement_unit: measurementUnit });
 
     const response = await fetch(BASE_URL, {

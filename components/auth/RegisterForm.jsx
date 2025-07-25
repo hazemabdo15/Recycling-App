@@ -1,4 +1,4 @@
-import { View, TextInput, Text, StyleSheet, Pressable } from 'react-native';
+﻿import { View, TextInput, Text, StyleSheet, Pressable } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import React, { useState } from 'react';
 import { colors } from '../../styles/theme';
@@ -55,13 +55,6 @@ const RegisterForm = ({ onSubmit, loading}) => {
                       <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={20} color="#666" />
                     </Pressable>
             </View>
-            {/* <TextInput
-                style={styles.input}
-                placeholder="Password"
-                value={password}
-                secureTextEntry
-                onChangeText={setPassword}
-            /> */}
             <View style={styles.passwordContainer}>
                     <TextInput
                       style={styles.passwordInput}
@@ -77,14 +70,6 @@ const RegisterForm = ({ onSubmit, loading}) => {
                       <Ionicons name={confirmShowPassword ? 'eye-off' : 'eye'} size={20} color="#666" />
                     </Pressable>
             </View>
-            {/* <TextInput
-                style={styles.input}
-                placeholder="Confirm Password"
-                value={confirmPassword}
-                secureTextEntry
-                onChangeText={setConfirmPassword}
-            /> */}
-
             <Text style={styles.label}>Registering as:</Text>
                 <View style={styles.pickerContainer}>
                     <Picker

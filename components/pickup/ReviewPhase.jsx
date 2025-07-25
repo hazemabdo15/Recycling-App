@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+﻿import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import {
   Image,
@@ -47,14 +47,13 @@ const ReviewPhase = ({
         console.log("[ReviewPhase] Items loaded:", items.length);
       } catch (error) {
         console.error("[ReviewPhase] Failed to fetch items:", error);
-        setItemsLoaded(true); // Set to true even on error to avoid infinite loading
+        setItemsLoaded(true);
       }
     };
 
     fetchItems();
   }, []);
 
-  // Update cart display items when allItems or cartItems change
   useEffect(() => {
     if (itemsLoaded && cartItems && allItems.length > 0) {
       const displayItems = Object.entries(cartItems).map(
@@ -69,7 +68,7 @@ const ReviewPhase = ({
               quantity,
               itemName: realItem.name,
               measurement_unit:
-                realItem.measurement_unit === 1 ? "KG" : "Piece", // Convert string to number format expected by backend
+                realItem.measurement_unit === 1 ? "KG" : "Piece",
               points: realItem.points || 10,
               price: realItem.price || 5.0,
               image: realItem.image,
@@ -101,14 +100,11 @@ const ReviewPhase = ({
     console.log("[ReviewPhase] Processing cart items:", cartItems);
     console.log("[ReviewPhase] Available items for lookup:", allItems.length);
 
-    // Convert cart object to array format expected by createOrder
-    // cartItems is likely in format: { categoryId: quantity, ... }
-    // We need to convert it to array of item objects
     if (cartItems && typeof cartItems === "object") {
-      // Convert using real item data
+
       const cartItemsArray = Object.entries(cartItems).map(
         ([categoryId, quantity]) => {
-          // Find the real item data
+
           const realItem = allItems.find(
             (item) => item._id === categoryId || item.categoryId === categoryId
           );
@@ -152,10 +148,10 @@ const ReviewPhase = ({
               categoryId: categoryId,
               quantity: quantity,
               itemName: `Item ${categoryId}`,
-              measurement_unit: 1, // Default to KG (1)
+              measurement_unit: 1,
               points: 10,
               price: 5.0,
-              image: `item-${categoryId.slice(-4)}.png`, // Generate a valid image filename
+              image: `item-${categoryId.slice(-4)}.png`,
             };
           }
         }
@@ -165,15 +161,14 @@ const ReviewPhase = ({
         phoneNumber: "123456789",
         name: "Test User",
         email: "test@example.com",
-        imageUrl: "https://via.placeholder.com/150/0000FF/808080?text=TestUser", // Add required imageUrl field
+        imageUrl: "https://via.placeholder.com/150/0000FF/808080?text=TestUser",
       };
 
       console.log("[ReviewPhase] Calling onConfirm with:", {
         cartItemsArray,
         userData,
       });
-      
-      // Add detailed logging for each item
+
       cartItemsArray.forEach((item, index) => {
         console.log(`[ReviewPhase] Item ${index + 1}:`, {
           categoryId: item.categoryId,
@@ -193,7 +188,6 @@ const ReviewPhase = ({
     }
   };
 
-  // Calculate totals
   const totalItems = cartItemsDisplay.reduce(
     (sum, item) => sum + item.quantity,
     0
@@ -254,7 +248,6 @@ const ReviewPhase = ({
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Review Your Order</Text>
         <Text style={styles.subtitle}>
@@ -277,7 +270,6 @@ const ReviewPhase = ({
         </View>
       ) : (
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Items Section */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <MaterialCommunityIcons
@@ -290,7 +282,6 @@ const ReviewPhase = ({
             {cartItemsDisplay.map((item, index) => renderCartItem(item, index))}
           </View>
 
-          {/* Summary Section */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <MaterialCommunityIcons
@@ -329,7 +320,6 @@ const ReviewPhase = ({
         </ScrollView>
       )}
 
-      {/* Footer */}
       <View style={styles.footer}>
         <TouchableOpacity
           style={styles.backButton}
@@ -362,7 +352,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.base100,
   },
 
-  // Header
   header: {
     padding: spacing.xl,
     backgroundColor: colors.white,
@@ -382,7 +371,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 
-  // Loading
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
@@ -394,7 +382,6 @@ const styles = StyleSheet.create({
     color: colors.neutral,
   },
 
-  // Content
   content: {
     flex: 1,
   },
@@ -415,7 +402,6 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
 
-  // Item Cards
   itemCard: {
     backgroundColor: colors.white,
     marginHorizontal: spacing.xl,
@@ -503,7 +489,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
 
-  // Summary Card
   summaryCard: {
     backgroundColor: colors.white,
     marginHorizontal: spacing.xl,
@@ -561,7 +546,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
 
-  // Footer
   footer: {
     flexDirection: "row",
     padding: spacing.xl,

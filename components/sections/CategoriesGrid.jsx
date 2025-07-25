@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import {
     ActivityIndicator,
     ScrollView,
@@ -32,12 +32,11 @@ const CategoriesGrid = ({
   const { showSuccess, showError } = useToast();
   const [pendingOperations, setPendingOperations] = useState({});
 
-  // If showItemsMode, flatten all items from all categories
   let filteredCategories = [];
   let filteredItems = [];
 
   if (showItemsMode) {
-    // Flatten all items from all categories
+
     filteredItems = categories
       .flatMap(
         (category) =>
@@ -102,7 +101,7 @@ const CategoriesGrid = ({
       </View>
     );
   }
-  // Show items grid if showItemsMode, else show categories grid
+
   return (
     <FadeInView delay={0}>
       <ScrollView

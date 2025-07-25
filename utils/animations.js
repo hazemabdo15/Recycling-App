@@ -1,4 +1,4 @@
-
+﻿
 let withSpring, withTiming;
 
 try {
@@ -6,7 +6,6 @@ try {
   withSpring = reanimated.withSpring;
   withTiming = reanimated.withTiming;
 } catch (_error) {
-
 
   withSpring = (value, config) => value;
   withTiming = (value, config) => value;

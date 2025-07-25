@@ -1,18 +1,12 @@
-import { validateQuantity } from '../../utils/cartUtils';
+﻿import { validateQuantity } from '../../utils/cartUtils';
 import apiService from './apiService';
 
-/**
- * Enhanced Order Service with proper backend integration
- * Follows the backend API specification exactly
- */
-
 export const orderService = {
-  // Create new order
+
   async createOrder(orderData) {
     try {
       console.log('[Order Service] Creating order');
-      
-      // Validate order data according to backend requirements
+
       this.validateOrderData(orderData);
       
       const response = await apiService.post('/orders', orderData);
@@ -25,7 +19,6 @@ export const orderService = {
     }
   },
 
-  // Get all user orders
   async getOrders() {
     try {
       console.log('[Order Service] Fetching user orders');
@@ -40,7 +33,6 @@ export const orderService = {
     }
   },
 
-  // Get single order by ID
   async getOrder(orderId) {
     try {
       console.log('[Order Service] Fetching order:', orderId);
@@ -55,7 +47,6 @@ export const orderService = {
     }
   },
 
-  // Get orders by status
   async getOrdersByStatus(status) {
     try {
       console.log('[Order Service] Fetching orders with status:', status);
@@ -70,7 +61,6 @@ export const orderService = {
     }
   },
 
-  // Update order status (customer can only cancel)
   async updateOrderStatus(orderId, status) {
     try {
       console.log('[Order Service] Updating order status:', orderId, status);
@@ -85,7 +75,6 @@ export const orderService = {
     }
   },
 
-  // Cancel order
   async cancelOrder(orderId) {
     try {
       console.log('[Order Service] Cancelling order:', orderId);
@@ -100,7 +89,6 @@ export const orderService = {
     }
   },
 
-  // Delete order
   async deleteOrder(orderId) {
     try {
       console.log('[Order Service] Deleting order:', orderId);
@@ -115,7 +103,6 @@ export const orderService = {
     }
   },
 
-  // Delete all user orders
   async deleteAllOrders() {
     try {
       console.log('[Order Service] Deleting all user orders');
@@ -130,7 +117,6 @@ export const orderService = {
     }
   },
 
-  // Get order analytics
   async getOrderAnalytics() {
     try {
       console.log('[Order Service] Fetching order analytics');
@@ -145,7 +131,6 @@ export const orderService = {
     }
   },
 
-  // Get top cities by order volume
   async getTopCities() {
     try {
       console.log('[Order Service] Fetching top cities');
@@ -160,7 +145,6 @@ export const orderService = {
     }
   },
 
-  // Get top materials recycled
   async getTopMaterials(category = null) {
     try {
       console.log('[Order Service] Fetching top materials', category ? `for category: ${category}` : '');
@@ -179,7 +163,6 @@ export const orderService = {
     }
   },
 
-  // Get top users by points
   async getTopUsers() {
     try {
       console.log('[Order Service] Fetching top users');
@@ -194,7 +177,6 @@ export const orderService = {
     }
   },
 
-  // Validate order data according to backend requirements
   validateOrderData(orderData) {
     const requiredFields = ['address', 'items', 'phoneNumber', 'userName', 'imageUrl', 'email'];
     const missingFields = requiredFields.filter(field => !orderData[field]);
@@ -211,13 +193,11 @@ export const orderService = {
       throw new Error('Address must include at least city');
     }
 
-    // Validate each item
     orderData.items.forEach((item, index) => {
       this.validateOrderItem(item, index);
     });
   },
 
-  // Validate individual order item
   validateOrderItem(item, index) {
     const requiredItemFields = ['categoryId', 'image', 'itemName', 'measurement_unit', 'points', 'price', 'quantity'];
     const missingFields = requiredItemFields.filter(field => item[field] === undefined || item[field] === null);
@@ -226,7 +206,6 @@ export const orderService = {
       throw new Error(`Item ${index + 1} missing required fields: ${missingFields.join(', ')}`);
     }
 
-    // Use centralized validation from cartUtils
     try {
       validateQuantity({
         quantity: item.quantity,
