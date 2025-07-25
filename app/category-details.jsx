@@ -107,7 +107,7 @@ const CategoryDetails = () => {
                         const normalizedItem = normalizeItemData(item);
                         const step = getIncrementStep(normalizedItem.measurement_unit);
                         const unit = normalizedItem.measurement_unit === 1 ? 'kg' : '';
-                        showSuccess(`Added ${step}${unit} ${item.name || 'item'} to pickup`, 2500);
+                        showSuccess(`Added ${step}${unit} ${item.name || 'item'} to pickup`, 1000);
                     } catch (err) {
                         console.error('[CategoryDetails] Error increasing quantity:', err);
                         showError('Failed to add item to pickup');
@@ -140,9 +140,9 @@ const CategoryDetails = () => {
                         const step = getIncrementStep(normalizedItem.measurement_unit);
                         const unit = normalizedItem.measurement_unit === 1 ? 'kg' : '';
                         if (item.quantity > step) {
-                            showSuccess(`Reduced ${item.name || 'item'} by ${step}${unit}`, 2000);
+                            showSuccess(`Reduced ${item.name || 'item'} by ${step}${unit}`, 1000);
                         } else {
-                            showSuccess(`Removed ${item.name || 'item'} from pickup`, 2000);
+                            showSuccess(`Removed ${item.name || 'item'} from pickup`, 1000);
                         }
                     } catch (err) {
                         console.error('[CategoryDetails] Error decreasing quantity:', err);

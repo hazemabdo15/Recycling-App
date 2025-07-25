@@ -1,15 +1,15 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from "react";
 import {
   addItemToCart,
   clearCart as apiClearCart,
   clearAuthData,
   getCart,
-  removeCartItem,
+  removeItemFromCart,
   testBackendConnectivity,
   testMinimalPost,
-  updateCartItem
-} from '../services/api/cart.js';
-import { useAuth } from './AuthContext';
+  updateCartItem,
+} from "../services/api/cart.js";
+import { useAuth } from "./AuthContext";
 
 const CartContext = createContext();
 
@@ -27,16 +27,18 @@ export const CartProvider = ({ children }) => {
     setLoading(true);
     getCart(isLoggedIn)
       .then((cart) => {
-
         const itemsObj = {};
-                (cart.items || []).forEach((item) => {
-                    itemsObj[item.categoryId] = item.quantity;
-                });
+        (cart.items || []).forEach((item) => {
+          itemsObj[item.categoryId] = item.quantity;
+        });
         setCartItems(itemsObj);
         setError(null);
       })
       .catch((err) => {
-        console.warn('Failed to fetch cart from backend, using empty cart:', err.message);
+        console.warn(
+          "Failed to fetch cart from backend, using empty cart:",
+          err.message
+        );
         setCartItems({});
         setError(null);
       })
@@ -47,7 +49,7 @@ export const CartProvider = ({ children }) => {
     const optimisticUpdate = { ...cartItems };
     optimisticUpdate[item.categoryId] = item.quantity;
     setCartItems(optimisticUpdate);
-    
+
     try {
       const result = await addItemToCart(item, isLoggedIn);
 
@@ -62,14 +64,14 @@ export const CartProvider = ({ children }) => {
       return { success: true, result };
     } catch (err) {
       setCartItems(cartItems);
-      setError(err.message || 'Failed to add item');
+      setError(err.message || "Failed to add item");
       return { success: false, error: err.message };
     }
   };
 
   const handleAddToCart = async (itemOrItems) => {
     const items = Array.isArray(itemOrItems) ? itemOrItems : [itemOrItems];
-    
+
     try {
       const currentBackendCart = await getCart(isLoggedIn);
       const actualCartItems = {};
@@ -80,37 +82,44 @@ export const CartProvider = ({ children }) => {
       setCartItems(actualCartItems);
 
       const itemsToMerge = {};
-      items.forEach(item => {
+      items.forEach((item) => {
         console.log(`[CartContext] Processing item for merge:`, {
           name: item.name,
           categoryId: item.categoryId,
           quantity: item.quantity,
           measurement_unit: item.measurement_unit,
-          measurementUnitType: typeof item.measurement_unit
+          measurementUnitType: typeof item.measurement_unit,
         });
-        
+
         if (itemsToMerge[item.categoryId]) {
           itemsToMerge[item.categoryId].quantity += item.quantity;
-          console.log(`[CartContext] Merged with existing item, new quantity:`, itemsToMerge[item.categoryId].quantity);
+          console.log(
+            `[CartContext] Merged with existing item, new quantity:`,
+            itemsToMerge[item.categoryId].quantity
+          );
         } else {
           itemsToMerge[item.categoryId] = { ...item };
-          console.log(`[CartContext] Added new item to merge:`, itemsToMerge[item.categoryId]);
+          console.log(
+            `[CartContext] Added new item to merge:`,
+            itemsToMerge[item.categoryId]
+          );
         }
       });
 
       const optimisticUpdate = { ...actualCartItems };
-      Object.values(itemsToMerge).forEach(item => {
+      Object.values(itemsToMerge).forEach((item) => {
         const currentQuantity = actualCartItems[item.categoryId] || 0;
         const newQuantity = currentQuantity + item.quantity;
         optimisticUpdate[item.categoryId] = newQuantity;
       });
-      
+
       setCartItems(optimisticUpdate);
 
       const results = [];
       for (const mergedItem of Object.values(itemsToMerge)) {
-        const actualCurrentQuantity = actualCartItems[mergedItem.categoryId] || 0;
-        
+        const actualCurrentQuantity =
+          actualCartItems[mergedItem.categoryId] || 0;
+
         if (actualCurrentQuantity > 0) {
           const newTotalQuantity = actualCurrentQuantity + mergedItem.quantity;
           console.log(`[CartContext] Updating existing item:`, {
@@ -120,9 +129,14 @@ export const CartProvider = ({ children }) => {
             addingQuantity: mergedItem.quantity,
             newTotalQuantity,
             measurement_unit: mergedItem.measurement_unit,
-            measurementUnitType: typeof mergedItem.measurement_unit
+            measurementUnitType: typeof mergedItem.measurement_unit,
           });
-          const result = await updateCartItem(mergedItem.categoryId, newTotalQuantity, isLoggedIn, mergedItem.measurement_unit);
+          const result = await updateCartItem(
+            mergedItem.categoryId,
+            newTotalQuantity,
+            isLoggedIn,
+            mergedItem.measurement_unit
+          );
           results.push(result);
         } else {
           const result = await addItemToCart(mergedItem, isLoggedIn);
@@ -135,10 +149,9 @@ export const CartProvider = ({ children }) => {
       (finalCart.items || []).forEach((backendItem) => {
         finalItemsObj[backendItem.categoryId] = backendItem.quantity;
       });
-      
+
       setCartItems(finalItemsObj);
       setError(null);
-      
     } catch (err) {
       try {
         const revertCart = await getCart(isLoggedIn);
@@ -150,27 +163,36 @@ export const CartProvider = ({ children }) => {
       } catch (_revertErr) {
         setCartItems({});
       }
-      setError(err.message || 'Failed to add items');
+      setError(err.message || "Failed to add items");
       throw err;
     }
   };
 
-  const handleUpdateQuantity = async (categoryId, quantity, measurementUnit = null) => {
+  const handleUpdateQuantity = async (
+    categoryId,
+    quantity,
+    measurementUnit = null
+  ) => {
     const operationKey = `update-${categoryId}`;
     if (pendingOperations.has(operationKey)) {
-      return { success: false, reason: 'Operation already pending' };
+      return { success: false, reason: "Operation already pending" };
     }
 
-    setPendingOperations(prev => new Set([...prev, operationKey]));
+    setPendingOperations((prev) => new Set([...prev, operationKey]));
 
     const previousCartItems = { ...cartItems };
 
     const optimisticUpdate = { ...cartItems };
     optimisticUpdate[categoryId] = quantity;
     setCartItems(optimisticUpdate);
-    
+
     try {
-      const result = await updateCartItem(categoryId, quantity, isLoggedIn, measurementUnit);
+      const result = await updateCartItem(
+        categoryId,
+        quantity,
+        isLoggedIn,
+        measurementUnit
+      );
 
       if (result.items) {
         const itemsObj = {};
@@ -184,18 +206,18 @@ export const CartProvider = ({ children }) => {
     } catch (err) {
       setCartItems(previousCartItems);
 
-      if (err.message.includes('Item not found in cart')) {
+      if (err.message.includes("Item not found in cart")) {
         const updatedItems = { ...previousCartItems };
         delete updatedItems[categoryId];
         setCartItems(updatedItems);
-        setError('Item was removed from cart');
+        setError("Item was removed from cart");
       } else {
-        setError(err.message || 'Failed to update item');
+        setError(err.message || "Failed to update item");
       }
       return { success: false, error: err.message };
     } finally {
       setTimeout(() => {
-        setPendingOperations(prev => {
+        setPendingOperations((prev) => {
           const newSet = new Set(prev);
           newSet.delete(operationKey);
           return newSet;
@@ -205,16 +227,16 @@ export const CartProvider = ({ children }) => {
   };
 
   const handleRemoveFromCart = async (categoryId) => {
-    setRemovingItems(prev => new Set([...prev, categoryId]));
+    setRemovingItems((prev) => new Set([...prev, categoryId]));
 
     const optimisticUpdate = { ...cartItems };
     delete optimisticUpdate[categoryId];
     setCartItems(optimisticUpdate);
-    
-    try {
-      const result = await removeCartItem(categoryId, isLoggedIn);
 
-      if (result.items) {
+    try {
+      const result = await removeItemFromCart(categoryId, isLoggedIn);
+
+      if (result && result.items) {
         const itemsObj = {};
         result.items.forEach((backendItem) => {
           itemsObj[backendItem.categoryId] = backendItem.quantity;
@@ -224,9 +246,9 @@ export const CartProvider = ({ children }) => {
       setError(null);
     } catch (err) {
       setCartItems(cartItems);
-      setError(err.message || 'Failed to remove item');
+      setError(err.message || "Failed to remove item");
     } finally {
-      setRemovingItems(prev => {
+      setRemovingItems((prev) => {
         const newSet = new Set(prev);
         newSet.delete(categoryId);
         return newSet;
@@ -235,17 +257,15 @@ export const CartProvider = ({ children }) => {
   };
 
   const handleClearCart = async () => {
-
     const originalCart = { ...cartItems };
     setCartItems({});
-    
+
     try {
       await apiClearCart(isLoggedIn);
       setError(null);
     } catch (err) {
-
       setCartItems(originalCart);
-      setError(err.message || 'Failed to clear cart');
+      setError(err.message || "Failed to clear cart");
     }
   };
 
@@ -269,7 +289,10 @@ export const CartProvider = ({ children }) => {
       const cart = await getCart(isLoggedIn);
       return cart;
     } catch (error) {
-      console.warn('Error fetching backend cart, using local cart data:', error.message);
+      console.warn(
+        "Error fetching backend cart, using local cart data:",
+        error.message
+      );
       return { items: cartItems };
     }
   };
@@ -290,22 +313,26 @@ export const CartProvider = ({ children }) => {
     const startTime = Date.now();
     try {
       const testItem = {
-        categoryId: 'perf-test-' + Date.now(),
-        name: 'Performance Test Item',
+        categoryId: "perf-test-" + Date.now(),
+        name: "Performance Test Item",
         quantity: 1,
         measurement_unit: 1,
         points: 10,
         price: 5,
-        image: 'test.jpg'
+        image: "test.jpg",
       };
-      
+
       await handleAddToCart(testItem);
       await handleUpdateQuantity(testItem.categoryId, 2);
       await handleRemoveFromCart(testItem.categoryId);
-      
+
       const endTime = Date.now();
       const duration = endTime - startTime;
-      return { success: true, duration, message: `Operations completed in ${duration}ms` };
+      return {
+        success: true,
+        duration,
+        message: `Operations completed in ${duration}ms`,
+      };
     } catch (err) {
       return { success: false, error: err.message };
     }
