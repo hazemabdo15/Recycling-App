@@ -6,13 +6,16 @@ import { ScrollView, StatusBar, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CategoriesGrid } from "../../components/sections";
 import { SearchBar } from "../../components/ui";
+import { useAuth } from "../../context/AuthContext";
 import { colors, spacing } from "../../styles/theme";
+import { getLabel } from "../../utils/roleLabels";
 
 const Explore = () => {
   const [searchText, setSearchText] = useState("");
   const [filteredCount, setFilteredCount] = useState(0);
   const [showItemsMode, setShowItemsMode] = useState(false);
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
 
   useFocusEffect(
     useCallback(() => {
@@ -58,18 +61,20 @@ const Explore = () => {
           style={[StyleSheet.absoluteFill, styles.heroSectionBg]}
         />
         <View style={styles.heroContent}>
-          <Text style={styles.heroTitle}>🔍 What Can You Recycle?</Text>
+          <Text style={styles.heroTitle}>
+            {getLabel('exploreTitle', user?.role)}
+          </Text>
           <Text style={styles.heroSubtitle}>
             {searchText
               ? `${filteredCount} ${
                   showItemsMode ? "items" : "categories"
                 } found`
-              : "Browse materials and find what you can recycle at home"}
+              : getLabel('exploreSubtitle', user?.role)}
           </Text>
         </View>
         <View style={styles.searchBarWrapper}>
           <SearchBar
-            placeholder="Search recyclable materials..."
+            placeholder={getLabel('searchPlaceholder', user?.role)}
             onSearch={handleSearch}
             onFilter={handleFilter}
           />

@@ -47,23 +47,46 @@ class APIService {
 
   
   async setAccessToken(token) {
+    console.log('[APIService] setAccessToken called with:', token ? 'token provided' : 'no token');
     this.accessToken = token;
     if (token) {
       await AsyncStorage.setItem('accessToken', token);
+      console.log('[APIService] Token stored in memory and AsyncStorage');
     } else {
       await AsyncStorage.removeItem('accessToken');
+      console.log('[APIService] Token removed from memory and AsyncStorage');
     }
   }
 
   
   async clearTokens() {
+    console.log('[APIService] clearTokens() called');
+    console.log('[APIService] Stack trace:', new Error().stack);
+    
     this.accessToken = null;
     await AsyncStorage.multiRemove(['accessToken', 'user']);
 
     const notify = getNotifyTokenExpired();
     if (notify) {
+      console.log('[APIService] Calling notifyTokenExpired()');
       notify();
     }
+  }
+
+  // Reset all authentication state (used during logout)
+  async resetAuthState() {
+    console.log('[APIService] Resetting authentication state...');
+    
+    // Clear tokens and storage
+    this.accessToken = null;
+    this.isRefreshing = false;
+    this.failedQueue = [];
+    this.isInitialized = false;
+    
+    // Clear AsyncStorage
+    await AsyncStorage.multiRemove(['accessToken', 'user']);
+    
+    console.log('[APIService] Authentication state reset complete');
   }
 
   
@@ -314,7 +337,10 @@ class APIService {
 
   
   shouldRefreshToken() {
-    if (!this.accessToken) return false;
+    if (!this.accessToken) {
+      console.log('[APIService] shouldRefreshToken: No token available');
+      return false;
+    }
     
     try {
       const payload = JSON.parse(atob(this.accessToken.split('.')[1]));
@@ -324,7 +350,17 @@ class APIService {
 
       const REFRESH_THRESHOLD = 5 * 60 * 1000;
       
-      return timeUntilExpiry <= REFRESH_THRESHOLD && timeUntilExpiry > 0;
+      const shouldRefresh = timeUntilExpiry <= REFRESH_THRESHOLD && timeUntilExpiry > 0;
+      
+      console.log('[APIService] shouldRefreshToken check:', {
+        tokenExpiry: new Date(exp).toISOString(),
+        currentTime: new Date(now).toISOString(),
+        timeUntilExpiry: Math.round(timeUntilExpiry / 1000 / 60) + ' minutes',
+        refreshThreshold: Math.round(REFRESH_THRESHOLD / 1000 / 60) + ' minutes',
+        shouldRefresh
+      });
+      
+      return shouldRefresh;
     } catch (error) {
       console.error('[APIService] Error checking token refresh need:', error);
       return false;
@@ -333,15 +369,21 @@ class APIService {
 
   
   async refreshIfNeeded() {
+    console.log('[APIService] refreshIfNeeded called');
+    
     if (this.shouldRefreshToken()) {
+      console.log('[APIService] Token needs refresh, attempting refresh...');
       try {
         await this.refreshToken();
+        console.log('[APIService] Token refresh successful');
         return true;
       } catch (error) {
         console.error('[APIService] Proactive token refresh failed:', error);
         return false;
       }
     }
+    
+    console.log('[APIService] Token refresh not needed');
     return true;
   }
   isAuthenticatedSync() {

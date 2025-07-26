@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, Image, TouchableOpacity, ActivityIndicator, Alert, StyleSheet } from 'react-native';
-import { useAuth } from '../../context/AuthContext';
-import { orderService } from '../../services/api/orders';
 import { useRouter } from 'expo-router';
-import { useUserPoints } from '../../hooks/useUserPoints'
-import RecyclingModal from '../../components/Modals/RecyclingModal'
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useAuth } from '../../context/AuthContext';
+import { useUserPoints } from '../../hooks/useUserPoints';
+import { orderService } from '../../services/api/orders';
+// import RecyclingModal from '../../components/Modals/RecyclingModal'
+import { getLabel } from '../../utils/roleLabels';
 
 const tabs = ['incoming', 'completed', 'cancelled'];
 
@@ -20,28 +21,59 @@ function ProfileContent() {
   const [activeTab, setActiveTab] = useState('incoming');
   const [menuVisible, setMenuVisible] = useState(false);
   const { userPoints, pointsLoading, getUserPoints } = useUserPoints({
-    userId: user?._id,
-    name: user?.name,
-    email: user?.email,
+    userId: isLoggedIn && user?._id ? user._id : null,
+    name: isLoggedIn && user?.name ? user.name : null,
+    email: isLoggedIn && user?.email ? user.email : null,
   });
   const [modalVisible, setModalVisible] = useState(false);
+
+  const getTabDisplayName = (tab) => {
+    switch (tab) {
+      case 'incoming':
+        return getLabel('profileLabels.incomingTab', user?.role);
+      case 'completed':
+        return getLabel('profileLabels.completedTab', user?.role);
+      case 'cancelled':
+        return getLabel('profileLabels.cancelledTab', user?.role);
+      default:
+        return tab;
+    }
+  };
 
   useEffect(() => {
     console.log("AuthContext user:", user);
     console.log("AuthContext isLoggedIn:", isLoggedIn);
+    console.log("User role:", user?.role);
 
     if (isLoggedIn && user?.email) {
-      fetchOrders();
+      // Only fetch orders for customers, buyers don't have pickup orders
+      if (user?.role === 'customer') {
+        console.log('[Profile] Customer role detected, fetching orders');
+        fetchOrders();
+      } else if (user?.role === 'buyer') {
+        console.log('[Profile] Buyer role detected, skipping order fetch (buyers use purchase orders)');
+        setAllOrders([]);
+        setLoading(false);
+      } else {
+        console.log('[Profile] Unknown role, attempting to fetch orders');
+        fetchOrders();
+      }
     } else {
+      // User is not logged in, clear orders and loading state
+      console.log('[Profile] User not logged in, clearing orders');
+      setAllOrders([]);
       setLoading(false);
     }
   }, [user, isLoggedIn]);
 
   useEffect(() => {
-    if (user?._id) {
-        getUserPoints();
+    if (isLoggedIn && user?._id) {
+      console.log('[Profile] User is logged in, fetching points');
+      getUserPoints();
+    } else {
+      console.log('[Profile] User not logged in or no user ID, skipping points fetch');
     }
-  }, [user?._id, getUserPoints]);
+  }, [isLoggedIn, user?._id, getUserPoints]);
 
   const fetchOrders = async () => {
     try {
@@ -50,6 +82,13 @@ function ProfileContent() {
       setAllOrders(response.data);
     } catch (error) {
       console.error('Failed to fetch orders', error);
+      
+      // Handle authentication errors specifically
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        console.error('[Profile] Authentication error while fetching orders - user may need to re-login');
+        // Clear orders on auth error to prevent stale data
+        setAllOrders([]);
+      }
     } finally {
       setLoading(false);
     }
@@ -237,12 +276,12 @@ function ProfileContent() {
             <Text style={styles.redeemButtonText}>Redeem and Return</Text>
           </TouchableOpacity>
 
-          <RecyclingModal 
+          {/* <RecyclingModal 
             visible={modalVisible}
             onClose={() => setModalVisible(false)}
             totalPoints={userPoints}
             onPointsUpdated={getUserPoints}
-          />
+          /> */}
 
           <View style={styles.tabsContainer}>
             {tabs.map((tab) => (
@@ -256,7 +295,7 @@ function ProfileContent() {
                     activeTab === tab ? styles.activeTabText : styles.tabText
                   }
                 >
-                  {tab}
+                  {getTabDisplayName(tab)}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -268,8 +307,30 @@ function ProfileContent() {
               color="green"
               style={{ marginTop: 20 }}
             />
+          ) : user?.role === 'buyer' ? (
+            <View style={styles.buyerMessageContainer}>
+              <Text style={styles.buyerMessageTitle}>
+                {getLabel('profileLabels.noOrdersMessage', user?.role)}
+              </Text>
+              <Text style={styles.buyerMessageSubtitle}>
+                Your purchase history will appear here once you start shopping
+              </Text>
+              <TouchableOpacity
+                onPress={() => router.push('/explore')}
+                style={styles.startShoppingButton}
+              >
+                <Text style={styles.startShoppingButtonText}>Start Shopping</Text>
+              </TouchableOpacity>
+            </View>
           ) : filteredOrders.length === 0 ? (
-            <Text style={styles.emptyText}>No orders in this tab yet.</Text>
+            <View style={styles.emptyStateContainer}>
+              <Text style={styles.emptyText}>
+                {getLabel('profileLabels.noOrdersMessage', user?.role)}
+              </Text>
+              <Text style={styles.emptySubtext}>
+                {getLabel('profileLabels.startOrderingMessage', user?.role)}
+              </Text>
+            </View>
           ) : (
             filteredOrders.map((order) => (
               <View key={order._id} style={styles.orderCard}>
@@ -344,6 +405,42 @@ const styles = StyleSheet.create({
   tabText: { color: '#6b7280', fontWeight: '500' },
   activeTabText: { color: '#065f46', fontWeight: '600' },
   emptyText: { textAlign: 'center', color: '#9ca3af', marginTop: 20 },
+  emptyStateContainer: { alignItems: 'center', marginTop: 20 },
+  emptySubtext: { textAlign: 'center', color: '#6b7280', marginTop: 8, fontSize: 14 },
+  buyerMessageContainer: { 
+    alignItems: 'center', 
+    marginTop: 30, 
+    paddingHorizontal: 20,
+    backgroundColor: '#f0f9ff',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20
+  },
+  buyerMessageTitle: { 
+    textAlign: 'center', 
+    color: '#0369a1', 
+    fontSize: 16, 
+    fontWeight: '600',
+    marginBottom: 8
+  },
+  buyerMessageSubtitle: { 
+    textAlign: 'center', 
+    color: '#075985', 
+    fontSize: 14,
+    marginBottom: 16
+  },
+  startShoppingButton: {
+    backgroundColor: '#0ea5e9',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginTop: 8
+  },
+  startShoppingButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600'
+  },
   orderCard: { backgroundColor: '#e6f4ea', padding: 12, borderRadius: 12, marginBottom: 12 },
   orderText: { fontSize: 12, color: '#6b7280' },
   orderStatus: { fontSize: 14, fontWeight: '600', color: '#047857' },

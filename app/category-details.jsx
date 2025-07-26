@@ -5,12 +5,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CategoryHeader, EmptyState, ItemCard } from '../components/category';
 import { ErrorState, LoadingState } from '../components/common';
 import { Toast } from '../components/ui';
+import { useAuth } from '../context/AuthContext';
 import { useCategoryItems } from '../hooks/useAPI';
 import { useCart } from '../hooks/useCart';
 import { useToast } from '../hooks/useToast';
 import { layoutStyles } from '../styles/components/commonStyles';
 import { colors } from '../styles/theme';
 import { calculateCartStats, getIncrementStep, normalizeItemData } from '../utils/cartUtils';
+import { getLabel } from '../utils/roleLabels';
 
 let Animated, useAnimatedStyle, useSharedValue, withSpring, withTiming;
 
@@ -34,6 +36,7 @@ const CategoryDetails = () => {
     const { categoryName } = useLocalSearchParams();
     const navigation = useNavigation();
     const { toast, showSuccess, showError, hideToast } = useToast();
+    const { user } = useAuth();
 
     const [pendingOperations, setPendingOperations] = useState({});
 
@@ -107,10 +110,17 @@ const CategoryDetails = () => {
                         const normalizedItem = normalizeItemData(item);
                         const step = getIncrementStep(normalizedItem.measurement_unit);
                         const unit = normalizedItem.measurement_unit === 1 ? 'kg' : '';
-                        showSuccess(`Added ${step}${unit} ${item.name || 'item'} to pickup`, 1000);
+                        
+                        const message = getLabel('categoryToastMessages.itemAdded', user?.role, {
+                            quantity: step,
+                            unit: unit,
+                            itemName: item.name || 'item'
+                        });
+                        showSuccess(message, 1000);
                     } catch (err) {
                         console.error('[CategoryDetails] Error increasing quantity:', err);
-                        showError('Failed to add item to pickup');
+                        const message = getLabel('categoryToastMessages.addFailed', user?.role);
+                        showError(message);
                     } finally {
                         clearTimeout(timeoutId);
                         setPendingOperations(prev => {
@@ -140,13 +150,22 @@ const CategoryDetails = () => {
                         const step = getIncrementStep(normalizedItem.measurement_unit);
                         const unit = normalizedItem.measurement_unit === 1 ? 'kg' : '';
                         if (item.quantity > step) {
-                            showSuccess(`Reduced ${item.name || 'item'} by ${step}${unit}`, 1000);
+                            const message = getLabel('categoryToastMessages.itemReduced', user?.role, {
+                                itemName: item.name || 'item',
+                                quantity: step,
+                                unit: unit
+                            });
+                            showSuccess(message, 1000);
                         } else {
-                            showSuccess(`Removed ${item.name || 'item'} from pickup`, 1000);
+                            const message = getLabel('categoryToastMessages.itemRemoved', user?.role, {
+                                itemName: item.name || 'item'
+                            });
+                            showSuccess(message, 1000);
                         }
                     } catch (err) {
                         console.error('[CategoryDetails] Error decreasing quantity:', err);
-                        showError('Failed to update item quantity');
+                        const message = getLabel('categoryToastMessages.updateFailed', user?.role);
+                        showError(message);
                     } finally {
                         clearTimeout(timeoutId);
                         setPendingOperations(prev => {
@@ -174,10 +193,16 @@ const CategoryDetails = () => {
 
                         const normalizedItem = normalizeItemData(item);
                         const unit = normalizedItem.measurement_unit === 1 ? 'kg' : '';
-                        showSuccess(`Added 5${unit} ${item.name || 'items'} to pickup`, 2500);
+                        const message = getLabel('categoryToastMessages.itemAdded', user?.role, {
+                            quantity: '5',
+                            unit: unit,
+                            itemName: item.name || 'items'
+                        });
+                        showSuccess(message, 2500);
                     } catch (err) {
                         console.error('[CategoryDetails] Error fast increasing quantity:', err);
-                        showError('Failed to add items to pickup');
+                        const message = getLabel('categoryToastMessages.addFailed', user?.role);
+                        showError(message);
                     } finally {
                         clearTimeout(timeoutId);
                         setPendingOperations(prev => {
@@ -207,13 +232,22 @@ const CategoryDetails = () => {
                         const unit = normalizedItem.measurement_unit === 1 ? 'kg' : '';
                         const remainingQuantity = item.quantity - 5;
                         if (remainingQuantity > 0) {
-                            showSuccess(`Reduced ${item.name || 'item'} by 5${unit}`, 2000);
+                            const message = getLabel('categoryToastMessages.itemReduced', user?.role, {
+                                itemName: item.name || 'item',
+                                quantity: '5',
+                                unit: unit
+                            });
+                            showSuccess(message, 2000);
                         } else {
-                            showSuccess(`Removed ${item.name || 'item'} from pickup`, 2000);
+                            const message = getLabel('categoryToastMessages.itemRemoved', user?.role, {
+                                itemName: item.name || 'item'
+                            });
+                            showSuccess(message, 2000);
                         }
                     } catch (err) {
                         console.error('[CategoryDetails] Error fast decreasing quantity:', err);
-                        showError('Failed to update item quantity');
+                        const message = getLabel('categoryToastMessages.updateFailed', user?.role);
+                        showError(message);
                     } finally {
                         clearTimeout(timeoutId);
                         setPendingOperations(prev => {

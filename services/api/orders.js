@@ -29,6 +29,12 @@ export const orderService = {
       return response;
     } catch (error) {
       console.error('[Order Service] Failed to fetch orders:', error.message);
+      
+      // If it's a 401/403 error, the user is not properly authenticated
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        console.error('[Order Service] Authentication error, user may need to re-login');
+      }
+      
       throw error;
     }
   },

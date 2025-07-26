@@ -1,11 +1,20 @@
-import React, { useEffect, useState, useContext } from 'react';
-import { Modal, View, Text, TextInput, TouchableOpacity, Alert, ScrollView, StyleSheet } from 'react-native';
-import QRCode from 'react-native-qrcode-svg';
-import { useUserPoints } from '../../hooks/useUserPoints';
-import { useAuth } from '../../context/AuthContext';
-import apiService from '../../services/api/apiService';
 import { MaterialIcons } from '@expo/vector-icons';
-import {colors} from '../../styles/theme';
+import { useEffect, useState } from 'react';
+import {
+  Alert,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from 'react-native';
+import QRCode from 'react-native-qrcode-svg';
+import { useAuth } from '../../context/AuthContext';
+import { useUserPoints } from '../../hooks/useUserPoints';
+import apiService from '../../services/api/apiService';
+import { colors } from '../../styles/theme';
 
 const vouchers = [
   { id: '1', name: 'Talabat Mart', value: '50 EGP', points: 500, icon: 'local-grocery-store' },
@@ -21,11 +30,11 @@ const RecyclingModal = ({ visible, onClose, onPointsUpdated }) => {
   const [qrValue, setQrValue] = useState('');
   const [redeemedVouchers, setRedeemedVouchers] = useState([]);
 
-  const { user } = useAuth();
+  const { user, isLoggedIn } = useAuth();
   const { userPoints, getUserPoints } = useUserPoints({
-    userId: user?._id,
-    name: user?.name,
-    email: user?.email,
+    userId: isLoggedIn && user?._id ? user._id : null,
+    name: isLoggedIn && user?.name ? user.name : null,
+    email: isLoggedIn && user?.email ? user.email : null,
   });
 
   const totalPoints = userPoints || 0;
@@ -34,7 +43,7 @@ const RecyclingModal = ({ visible, onClose, onPointsUpdated }) => {
 
   useEffect(() => {
     if (visible) getUserPoints();
-  }, [visible]);
+  }, [visible, getUserPoints]);
 
   const handleRedeem = async () => {
     if (!activeOption) return;

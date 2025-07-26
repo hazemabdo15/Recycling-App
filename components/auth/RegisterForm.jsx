@@ -1,9 +1,9 @@
-import { View, TextInput, Text, StyleSheet, Pressable } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
-import React, { useState } from 'react';
-import { colors } from '../../styles/theme';
-import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { Picker } from '@react-native-picker/picker';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { colors } from '../../styles/theme';
 
 const RegisterForm = ({ onSubmit, loading}) => {
     const [name, setName] = useState('');
@@ -13,7 +13,7 @@ const RegisterForm = ({ onSubmit, loading}) => {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [confirmShowPassword, setConfirmShowPassword] = useState(false);
-    const [role, setRole] = useState('user');
+    const [role, setRole] = useState('customer');
     const router = useRouter();
 
     return (
@@ -77,7 +77,7 @@ const RegisterForm = ({ onSubmit, loading}) => {
                     onValueChange={(itemValue) => setRole(itemValue)}
                     style={styles.picker}
                     >
-                    <Picker.Item label="User" value="user" />
+                    <Picker.Item label="Customer" value="customer" />
                     <Picker.Item label="Buyer" value="buyer" />
                     </Picker>
                 </View>

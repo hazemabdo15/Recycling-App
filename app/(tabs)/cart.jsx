@@ -3,24 +3,56 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
-  FlatList,
-  Image,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Alert,
+    FlatList,
+    Image,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AnimatedButton, AnimatedListItem } from "../../components/common";
+import { useAuth } from "../../context/AuthContext";
 import { useAllItems } from "../../hooks/useAPI";
 import { useCart } from "../../hooks/useCart";
 import { borderRadius, spacing, typography } from "../../styles";
 import { colors } from "../../styles/theme";
 import { normalizeItemData } from "../../utils/cartUtils";
+import { getLabel } from "../../utils/roleLabels";
+
+// Helper function to get role-based icons
+const getRoleBasedIcon = (iconType, userRole = 'customer') => {
+  const iconMappings = {
+    // Main action button icon
+    scheduleAction: {
+      customer: 'truck-fast', // Pickup truck
+      buyer: 'credit-card-fast' // Fast checkout/payment
+    },
+    // Empty cart icon
+    emptyCart: {
+      customer: 'truck-delivery-outline', // Delivery truck
+      buyer: 'cart-outline' // Shopping cart
+    },
+    // Find items button icon
+    findItems: {
+      customer: 'recycle', // Recycle symbol
+      buyer: 'store' // Store/shop
+    },
+    // Locked state icon (same for both)
+    locked: {
+      customer: 'lock',
+      buyer: 'lock'
+    }
+  };
+  
+  return iconMappings[iconType]?.[userRole] || iconMappings[iconType]?.customer || 'help-circle';
+};
 
 const Cart = () => {
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
   const {
     cartItems,
     handleIncreaseQuantity,
@@ -301,34 +333,36 @@ const Cart = () => {
           style={[styles.heroSection, { paddingTop: insets.top + 20 }]}
         >
           <View style={styles.heroContent}>
-            <Text style={styles.heroTitle}>🛒 Your Pickup Cart</Text>
-            <Text style={styles.heroSubtitle}>No pickup items yet</Text>
+            <Text style={styles.heroTitle}>{getLabel('cartTitle', user?.role)}</Text>
+            <Text style={styles.heroSubtitle}>No items yet</Text>
             <AnimatedButton
               style={styles.heroFindBtn}
               onPress={() => router.push("/(tabs)/explore")}
             >
               <MaterialCommunityIcons
-                name="recycle"
+                name={getRoleBasedIcon('findItems', user?.role)}
                 size={28}
                 color={colors.white}
               />
-              <Text style={styles.heroFindBtnText}>Find Recyclables</Text>
+              <Text style={styles.heroFindBtnText}>
+                {getLabel('cartPage.findItemsButton', user?.role)}
+              </Text>
             </AnimatedButton>
           </View>
         </LinearGradient>
         <View style={styles.emptyCartContainer}>
           <View style={styles.emptyCartIconWrapper}>
             <MaterialCommunityIcons
-              name="truck-delivery-outline"
+              name={getRoleBasedIcon('emptyCart', user?.role)}
               size={80}
               color={colors.base300}
             />
           </View>
           <Text style={styles.emptyCartTitle}>
-            Add recyclable items to get started
+            {getLabel('emptyCartTitle', user?.role)}
           </Text>
           <Text style={styles.emptyCartSubtitle}>
-            Schedule your pickup and earn rewards!
+            {getLabel('emptyCartSubtitle', user?.role)}
           </Text>
         </View>
       </View>
@@ -359,7 +393,12 @@ const Cart = () => {
   }, 0);
 
   const MINIMUM_ORDER_VALUE = 100;
-  const canSchedulePickup = totalValue >= MINIMUM_ORDER_VALUE;
+  
+  // Role-based logic: customers can schedule pickup, buyers proceed to purchase
+  const canSchedulePickup = totalValue >= MINIMUM_ORDER_VALUE && user?.role === 'customer';
+  const canProceedToPurchase = totalValue >= MINIMUM_ORDER_VALUE && user?.role === 'buyer';
+  const canProceed = canSchedulePickup || canProceedToPurchase;
+  
   const remainingAmount = MINIMUM_ORDER_VALUE - totalValue;
 
   return (
@@ -377,9 +416,9 @@ const Cart = () => {
       >
         <View style={styles.heroRowHeader}>
           <View style={styles.heroContent}>
-            <Text style={styles.heroTitle}>🛒 Your Pickup Cart</Text>
+            <Text style={styles.heroTitle}>{getLabel('cartTitle', user?.role)}</Text>
             <Text style={styles.heroSubtitle}>
-              {cartArray.length} items ready for pickup
+              {cartArray.length} {getLabel('itemsReadyFor', user?.role)}
             </Text>
             <View style={styles.checkoutSummaryRowHero}>
               <View style={styles.checkoutSummaryItemHero}>
@@ -415,7 +454,7 @@ const Cart = () => {
                   color={colors.warning}
                 />
                 <Text style={styles.minimumOrderText}>
-                  Add {remainingAmount.toFixed(2)} EGP more to schedule pickup
+                  {getLabel('minimumOrderMessage', user?.role, { amount: remainingAmount.toFixed(2) })}
                 </Text>
               </View>
             )}
@@ -423,27 +462,34 @@ const Cart = () => {
               <AnimatedButton
                 style={[
                   styles.checkoutBtnBarHero,
-                  !canSchedulePickup && styles.checkoutBtnBarDisabled,
+                  !canProceed && styles.checkoutBtnBarDisabled,
                 ]}
                 onPress={
-                  canSchedulePickup ? () => router.push("/pickup") : null
+                  canSchedulePickup 
+                    ? () => router.push("/pickup")
+                    : canProceedToPurchase
+                    ? () => {
+                        // TODO: Implement buyer purchase flow
+                        Alert.alert('Purchase', 'Buyer purchase flow coming soon!');
+                      }
+                    : null
                 }
-                disabled={!canSchedulePickup}
+                disabled={!canProceed}
               >
                 <MaterialCommunityIcons
-                  name={canSchedulePickup ? "truck-fast" : "lock"}
+                  name={canProceed ? getRoleBasedIcon('scheduleAction', user?.role) : getRoleBasedIcon('locked', user?.role)}
                   size={24}
-                  color={canSchedulePickup ? colors.white : colors.white}
+                  color={canProceed ? colors.white : colors.white}
                 />
                 <Text
                   style={[
                     styles.checkoutBtnBarTextHero,
-                    !canSchedulePickup && styles.checkoutBtnBarTextDisabled,
+                    !canProceed && styles.checkoutBtnBarTextDisabled,
                   ]}
                 >
-                  {canSchedulePickup
-                    ? "Schedule Pickup"
-                    : "Minimum 100 EGP Required"}
+                  {canProceed
+                    ? getLabel('schedulePickup', user?.role)
+                    : getLabel('minimumOrderButton', user?.role)}
                 </Text>
               </AnimatedButton>
               {cartArray.length > 0 && (

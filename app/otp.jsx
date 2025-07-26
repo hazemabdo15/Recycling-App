@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import { View, Text, TextInput, Pressable, StyleSheet, Alert } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+import { useState } from 'react';
+import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { completeRegister } from '../services/auth';
 import { colors } from '../styles/theme';
 
 export default function OtpScreen() {
-  const { name, email, password, number } = useLocalSearchParams();
+  const { name, email, password, number, role } = useLocalSearchParams();
   const [otpCode, setOtpCode] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -13,7 +13,7 @@ export default function OtpScreen() {
     if (loading) return;
     setLoading(true);
     try {
-      await completeRegister(name, email, password, number, otpCode);
+      await completeRegister(name, email, password, number, otpCode, role || 'customer');
       Alert.alert('Success', 'Account created successfully!', [
         { text: 'OK', onPress: () => router.replace('/login') }
       ]);

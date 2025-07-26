@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
     Alert,
     FlatList,
@@ -12,8 +12,10 @@ import {
     View,
 } from 'react-native';
 
+import { useAuth } from '../../context/AuthContext';
 import { borderRadius, spacing, typography } from '../../styles';
 import { colors } from '../../styles/theme';
+import { getLabel } from '../../utils/roleLabels';
 import { AnimatedButton } from '../common';
 
 const CITIES = [
@@ -27,7 +29,9 @@ const AREAS = {
   'Giza': ['Dokki', 'Mohandessin', 'Agouza', '6th October', 'Sheikh Zayed'],
 };
 
-const AddressPhase = ({ onNext, onBack, onAddressSelect, pickupWorkflow }) => {
+const AddressPhase = ({ onNext, onAddressSelect, onBack, pickupWorkflow }) => {
+  const { isLoggedIn, user } = useAuth();
+  const hasFetchedAddresses = useRef(false);
   const [showForm, setShowForm] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
   const [formData, setFormData] = useState({
@@ -42,13 +46,34 @@ const AddressPhase = ({ onNext, onBack, onAddressSelect, pickupWorkflow }) => {
   });
 
   useEffect(() => {
-
-    console.log('AddressPhase mounted, fetching addresses...');
-    if (pickupWorkflow?.fetchAddresses) {
-      pickupWorkflow.fetchAddresses();
+    console.log('AddressPhase mounted, checking authentication...');
+    console.log('isLoggedIn:', isLoggedIn, 'user:', user?.email, 'role:', user?.role);
+    
+    // Buyers don't need addresses - they purchase materials, don't schedule pickups
+    if (user?.role === 'buyer') {
+      console.log('Buyer role detected, skipping address functionality');
+      hasFetchedAddresses.current = true; // Prevent further attempts
+      return;
     }
+    
+    // Only fetch addresses if user is properly authenticated and we haven't fetched yet
+    if (isLoggedIn && user?.email && pickupWorkflow?.fetchAddresses && !hasFetchedAddresses.current) {
+      console.log('Fetching addresses for authenticated customer...');
+      hasFetchedAddresses.current = true;
+      pickupWorkflow.fetchAddresses();
+    } else if (!isLoggedIn) {
+      console.log('User not authenticated, skipping address fetch');
+      hasFetchedAddresses.current = false;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoggedIn, user?.email, user?.role]);
 
-  }, []);
+  // Reset the fetch flag when component unmounts or user changes
+  useEffect(() => {
+    return () => {
+      hasFetchedAddresses.current = false;
+    };
+  }, [user?.email]);
 
   const handleAddressSelect = (address) => {
     console.log('[AddressPhase] Address selected:', address);
@@ -320,7 +345,7 @@ const AddressPhase = ({ onNext, onBack, onAddressSelect, pickupWorkflow }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Select Delivery Address</Text>
+        <Text style={styles.title}>{getLabel('selectAddress', user?.role)}</Text>
         <TouchableOpacity
           style={styles.addButton}
           onPress={() => setShowForm(true)}

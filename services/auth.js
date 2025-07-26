@@ -12,9 +12,15 @@ export const loginUser = async ({ email, password }) => {
     });
 
     console.log('[Auth] Login successful');
+    console.log('[Auth] Login response user data:', response.user);
+    console.log('[Auth] User role from backend:', response.user?.role);
+    console.log('[Auth] Full login response:', JSON.stringify(response, null, 2));
 
     if (response.accessToken) {
       await setAccessToken(response.accessToken);
+      // Also update the APIService instance
+      await apiService.setAccessToken(response.accessToken);
+      console.log('[Auth] Token set in both AsyncStorage and APIService');
     }
 
     return response;
@@ -49,6 +55,14 @@ export const completeRegister = async (
 ) => {
   try {
     console.log('[Auth] Completing registration for:', email);
+    console.log('[Auth] Registration data:', { 
+      name: fullName, 
+      email, 
+      phoneNumber: number, 
+      otpCode, 
+      role, 
+      provider 
+    });
     
     const response = await apiService.post('/auth/verifyRegisterToken', {
       name: fullName,
@@ -61,6 +75,7 @@ export const completeRegister = async (
     });
 
     console.log('[Auth] Registration successful');
+    console.log('[Auth] Registration response:', response);
 
     if (response.accessToken) {
       await setAccessToken(response.accessToken);
@@ -108,12 +123,35 @@ export const resetPassword = async (email, otpCode, newPassword) => {
 
 export const logoutUser = async () => {
   try {
+    console.log('[Auth] Starting logout process...');
+    
+    // Notify backend about logout (don't fail if this fails)
     try {
       await apiService.post('/auth/logout');
-    } catch (_error) {}
+      console.log('[Auth] Backend logout successful');
+    } catch (backendError) {
+      console.warn('[Auth] Backend logout failed, continuing with local cleanup:', backendError.message);
+    }
+    
+    // Clear all local session data
     await clearSession();
+    
+    // Reset API service state
+    if (apiService.resetAuthState) {
+      apiService.resetAuthState();
+    }
+    
+    console.log('[Auth] Logout process completed');
   } catch (error) {
+    console.error('[Auth] Critical error during logout, forcing cleanup:', error.message);
+    
+    // Force cleanup even if everything fails
     await clearSession();
+    
+    if (apiService.resetAuthState) {
+      apiService.resetAuthState();
+    }
+    
     throw error;
   }
 };

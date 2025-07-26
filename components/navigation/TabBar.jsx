@@ -5,9 +5,11 @@ import * as Haptics from 'expo-haptics';
 import React from "react";
 import { Dimensions, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../hooks/useCart";
 import { useVoiceModal } from "../../hooks/useVoiceModal";
 import { colors, shadows } from "../../styles/theme";
+import { getLabel } from "../../utils/roleLabels";
 
 let Animated, useSharedValue, useAnimatedStyle, withTiming, withSpring, withRepeat, withSequence;
 
@@ -35,20 +37,36 @@ try {
 }
 
 const { width } = Dimensions.get("window");
-const getIconName = (routeName, isFocused) => {
-  const icons = {
+
+const getIconName = (routeName, isFocused, userRole = 'customer') => {
+  // Role-based icon mappings
+  const customerIcons = {
     home: isFocused ? "home" : "home-outline",
     explore: isFocused ? "magnify" : "magnify",
-    cart: isFocused ? "truck-delivery" : "truck-delivery-outline",
+    cart: isFocused ? "truck-delivery" : "truck-delivery-outline", // Pickup/delivery truck
     profile: isFocused ? "account" : "account-outline",
   };
+  
+  const buyerIcons = {
+    home: isFocused ? "home" : "home-outline",
+    explore: isFocused ? "store" : "store-outline", // Store/shop icon
+    cart: isFocused ? "cart" : "cart-outline", // Shopping cart icon
+    profile: isFocused ? "account" : "account-outline",
+  };
+  
+  const icons = userRole === 'buyer' ? buyerIcons : customerIcons;
   return icons[routeName] || "circle-outline";
 };
 export function TabBar({ state, descriptors, navigation }) {
   const { buildHref } = useLinkBuilder();
   const insets = useSafeAreaInsets();
   const { openVoiceModal } = useVoiceModal();
+  const { user } = useAuth();
   const { cartItems } = useCart();
+
+  const getTabLabel = (routeName) => {
+    return getLabel(`tabLabels.${routeName}`, user?.role) || routeName;
+  };
 
   const cartItemsCount = cartItems ? Object.keys(cartItems).filter(key => {
     const quantity = cartItems[key];
@@ -156,7 +174,7 @@ export function TabBar({ state, descriptors, navigation }) {
             <View style={styles.sideTabsContainer}>
               {leftRoutes.map((route, index) => {
                 const { options } = descriptors[route.key];
-                const label = options.tabBarLabel !== undefined ? options.tabBarLabel : options.title !== undefined ? options.title : route.name;
+                const label = getTabLabel(route.name);
                 const isFocused = state.index === index;
                 return (
                   <TabBarItem
@@ -170,6 +188,7 @@ export function TabBar({ state, descriptors, navigation }) {
                     buildHref={buildHref}
                     options={options}
                     badgeCount={route.name === 'cart' ? cartItemsCount : 0}
+                    userRole={user?.role}
                   />
                 );
               })}
@@ -179,7 +198,7 @@ export function TabBar({ state, descriptors, navigation }) {
               {rightRoutes.map((route, originalIndex) => {
                 const index = originalIndex + 2;
                 const { options } = descriptors[route.key];
-                const label = options.tabBarLabel !== undefined ? options.tabBarLabel : options.title !== undefined ? options.title : route.name;
+                const label = getTabLabel(route.name);
                 const isFocused = state.index === index;
                 return (
                   <TabBarItem
@@ -193,6 +212,7 @@ export function TabBar({ state, descriptors, navigation }) {
                     buildHref={buildHref}
                     options={options}
                     badgeCount={route.name === 'cart' ? cartItemsCount : 0}
+                    userRole={user?.role}
                   />
                 );
               })}
@@ -202,7 +222,7 @@ export function TabBar({ state, descriptors, navigation }) {
       </View>
     );
   }
-function TabBarItem({ route, label, isFocused, index, onPress, onLongPress, buildHref, options, badgeCount = 0 }) {
+function TabBarItem({ route, label, isFocused, index, onPress, onLongPress, buildHref, options, badgeCount = 0, userRole = 'customer' }) {
   const scale = useSharedValue(1);
   const opacity = useSharedValue(isFocused ? 1 : 0.6);
   const badgeScale = useSharedValue(1);
@@ -250,7 +270,7 @@ function TabBarItem({ route, label, isFocused, index, onPress, onLongPress, buil
       <Animated.View style={[styles.tabItem, animatedStyle]}>
         <Animated.View style={styles.iconContainer}>
           <MaterialCommunityIcons
-            name={getIconName(route.name, isFocused)}
+            name={getIconName(route.name, isFocused, userRole)}
             size={24}
             color={iconColor}
           />

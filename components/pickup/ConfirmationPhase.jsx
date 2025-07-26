@@ -7,11 +7,14 @@ import {
     View,
 } from 'react-native';
 
+import { useAuth } from '../../context/AuthContext';
 import { borderRadius, spacing, typography } from '../../styles';
 import { colors } from '../../styles/theme';
+import { getLabel } from '../../utils/roleLabels';
 import { AnimatedButton } from '../common';
 
 const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
+  const { user } = useAuth();
   const generateTrackingNumber = (orderId) => {
     if (!orderId) return 'REC' + Date.now().toString().slice(-8);
 
@@ -44,9 +47,9 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
           </View>
         </View>
 
-        <Text style={styles.title}>Pickup Request Confirmed!</Text>
+        <Text style={styles.title}>{getLabel('orderConfirmation', user?.role)}</Text>
         <Text style={styles.subtitle}>
-          Your request has been sent. We will contact you soon for pickup scheduling.
+          {getLabel('orderStatus', user?.role)}
         </Text>
 
         <View style={styles.trackingCard}>
@@ -56,7 +59,7 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
               size={24} 
               color={colors.primary} 
             />
-            <Text style={styles.trackingTitle}>Tracking Information</Text>
+            <Text style={styles.trackingTitle}>{getLabel('trackingInfo', user?.role)}</Text>
           </View>
           
           <View style={styles.trackingContent}>
@@ -79,7 +82,7 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
             </View>
             
             <View style={styles.trackingRow}>
-              <Text style={styles.trackingLabel}>Estimated Pickup</Text>
+              <Text style={styles.trackingLabel}>{getLabel('estimatedTime', user?.role)}</Text>
               <Text style={styles.trackingValue}>Within 24-48 hours</Text>
             </View>
           </View>

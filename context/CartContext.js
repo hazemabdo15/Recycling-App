@@ -1,13 +1,13 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import {
-  addItemToCart,
-  clearCart as apiClearCart,
-  clearAuthData,
-  getCart,
-  removeItemFromCart,
-  testBackendConnectivity,
-  testMinimalPost,
-  updateCartItem,
+    addItemToCart,
+    clearCart as apiClearCart,
+    clearAuthData,
+    getCart,
+    removeItemFromCart,
+    testBackendConnectivity,
+    testMinimalPost,
+    updateCartItem,
 } from "../services/api/cart.js";
 import { normalizeItemData, validateQuantity } from '../utils/cartUtils';
 import { useAuth } from "./AuthContext";
@@ -25,6 +25,20 @@ export const CartProvider = ({ children }) => {
   const [removingItems, setRemovingItems] = useState(new Set());
 
   useEffect(() => {
+    console.log('[CartContext] Auth state changed, isLoggedIn:', isLoggedIn);
+    
+    if (!isLoggedIn) {
+      // User logged out, clear all cart state immediately
+      console.log('[CartContext] User logged out, clearing cart state');
+      setCartItems({});
+      setError(null);
+      setPendingOperations(new Set());
+      setRemovingItems(new Set());
+      setLoading(false);
+      return;
+    }
+    
+    // User is logged in, fetch cart
     setLoading(true);
     getCart(isLoggedIn)
       .then((cart) => {
@@ -36,6 +50,7 @@ export const CartProvider = ({ children }) => {
         });
         setCartItems(itemsObj);
         setError(null);
+        console.log('[CartContext] Cart loaded successfully');
       })
       .catch((err) => {
         console.warn(

@@ -12,6 +12,12 @@ export const addressService = {
       return response;
     } catch (error) {
       console.error('[Address Service] Failed to fetch addresses:', error.message);
+      
+      // If it's a 401/403 error, the user is not properly authenticated
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        console.error('[Address Service] Authentication error, user may need to re-login');
+      }
+      
       throw error;
     }
   },

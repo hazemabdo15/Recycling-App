@@ -3,12 +3,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
-  Alert,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Alert,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -20,6 +20,7 @@ import { useCart } from '../hooks/useCart';
 import { usePickupWorkflow } from '../hooks/usePickupWorkflow';
 import { isAuthenticated } from '../services/auth';
 import { colors, spacing, typography } from '../styles/theme';
+import { getProgressStepLabel } from '../utils/roleLabels';
 
 export default function Pickup() {
   const insets = useSafeAreaInsets();
@@ -246,11 +247,11 @@ export default function Pickup() {
   const getPhaseTitle = () => {
     switch (currentPhase) {
       case 1:
-        return 'Select Address';
+        return getProgressStepLabel(1, user?.role);
       case 2:
-        return 'Review Order';
+        return getProgressStepLabel(2, user?.role);
       case 3:
-        return 'Order Confirmed';
+        return getProgressStepLabel(3, user?.role);
       default:
         return 'Schedule Pickup';
     }

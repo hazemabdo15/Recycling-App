@@ -6,11 +6,13 @@ import {
     Text,
     View,
 } from "react-native";
+import { useAuth } from "../../context/AuthContext";
 import { useCategories } from "../../hooks/useAPI";
 import { useCart } from "../../hooks/useCart";
 import { useToast } from "../../hooks/useToast";
 import { spacing } from "../../styles";
 import { getIncrementStep, normalizeItemData } from "../../utils/cartUtils";
+import { getLabel } from "../../utils/roleLabels";
 import { CategoryCard } from "../cards";
 import { ItemCard } from "../category";
 import { FadeInView } from "../common";
@@ -21,6 +23,7 @@ const CategoriesGrid = ({
   onFilteredCountChange,
   showItemsMode = false,
 }) => {
+  const { user } = useAuth();
   const { categories, loading, error } = useCategories();
   const {
     cartItems,
@@ -147,7 +150,7 @@ const CategoriesGrid = ({
                       const unit =
                         normalizedItem.measurement_unit === 1 ? "kg" : "";
                       showSuccess(
-                        `Added ${step}${unit} ${item.name || "item"} to pickup`,
+                        `Added ${step}${unit} ${item.name || "item"} ${getLabel('addToPickup', user?.role)}`,
                         2500
                       );
                     } catch (err) {
@@ -155,7 +158,7 @@ const CategoriesGrid = ({
                         "[CategoriesGrid] Error increasing quantity:",
                         err
                       );
-                      showError("Failed to add item to pickup");
+                      showError(`Failed to add item ${getLabel('addToPickup', user?.role)}`);
                     } finally {
                       clearTimeout(timeoutId);
                       setPendingOperations((prev) => {
@@ -237,7 +240,7 @@ const CategoriesGrid = ({
                       const unit =
                         normalizedItem.measurement_unit === 1 ? "kg" : "";
                       showSuccess(
-                        `Added 5${unit} ${item.name || "items"} to pickup`,
+                        `Added 5${unit} ${item.name || "items"} ${getLabel('addToPickup', user?.role)}`,
                         2500
                       );
                     } catch (err) {
@@ -245,7 +248,7 @@ const CategoriesGrid = ({
                         "[CategoriesGrid] Error fast increasing quantity:",
                         err
                       );
-                      showError("Failed to add items to pickup");
+                      showError(`Failed to add items ${getLabel('addToPickup', user?.role)}`);
                     } finally {
                       clearTimeout(timeoutId);
                       setPendingOperations((prev) => {

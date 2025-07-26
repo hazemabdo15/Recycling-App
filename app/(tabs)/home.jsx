@@ -3,11 +3,11 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useRef } from "react";
 import {
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { EarnPointsCard } from "../../components/cards";
@@ -16,6 +16,7 @@ import { TopRecycledSection } from "../../components/sections";
 import { useAuth } from "../../context/AuthContext";
 import { useNotifications } from "../../context/NotificationContext";
 import { colors, spacing } from "../../styles/theme";
+import { getLabel } from "../../utils/roleLabels";
 
 const Index = () => {
   const insets = useSafeAreaInsets();
@@ -51,7 +52,7 @@ const Index = () => {
           style={[styles.heroSection, { paddingTop: insets.top + 20 }]}
         >
           <View style={styles.headerRow}>
-            <Text style={styles.appName}>EcoPickup</Text>
+            <Text style={styles.appName}>{getLabel('appName', user?.role)}</Text>
             {isLoggedIn && user && !user.isGuest && !authLoading && (
               <TouchableOpacity
                 style={styles.notificationButton}
@@ -78,7 +79,7 @@ const Index = () => {
             <Text style={styles.welcomeText}>Welcome Back!</Text>
             <Text style={styles.heroTitle}>Make Every Item Count</Text>
             <Text style={styles.heroSubtitle}>
-              Turn your recyclables into rewards and help save our planet
+              {getLabel('welcomeMessage', user?.role)}
             </Text>
           </View>
         </LinearGradient>

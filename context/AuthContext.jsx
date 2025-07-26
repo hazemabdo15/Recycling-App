@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import apiService from "../services/api/apiService";
 import { isAuthenticated, logoutUser } from "../services/auth";
-import { clearSession, getAccessToken, getLoggedInUser, setLoggedInUser } from '../utils/authUtils';
+import { getAccessToken, getLoggedInUser, setLoggedInUser } from '../utils/authUtils';
 
 const AuthContext = createContext(null);
 
@@ -15,6 +15,9 @@ export function AuthProvider({ children }) {
   const [periodicCheckRunning, setPeriodicCheckRunning] = useState(false);
 
   const handleTokenExpired = useCallback(() => {
+    console.log('[AuthContext] handleTokenExpired() called - clearing auth state');
+    console.log('[AuthContext] Stack trace:', new Error().stack);
+    
     setUser(null);
     setAccessToken(null);
     setIsLoggedIn(false);
@@ -28,81 +31,29 @@ export function AuthProvider({ children }) {
   }, [handleTokenExpired]);
 
   useEffect(() => {
-    const loadUser = async () => {
+    const loadStoredUser = async () => {
       try {
-        console.log("[AuthContext] Starting user load...");
+        const [storedUser, storedToken] = await Promise.all([
+          getLoggedInUser(),
+          getAccessToken(),
+        ]);
 
-        const storedUser = await getLoggedInUser();
-        const storedToken = await getAccessToken();
+        console.log('[AuthContext] Loading stored user:', storedUser);
+        console.log('[AuthContext] Stored user role:', storedUser?.role);
 
         if (storedUser && storedToken) {
-          console.log(
-            "[AuthContext] Both user and token found, checking authentication..."
-          );
-
-          const apiService = (await import("../services/api/apiService"))
-            .default;
-          await setAccessToken(storedToken);
-
-          let authStatus = await isAuthenticated();
-          console.log(
-            "[AuthContext] Initial authentication status:",
-            authStatus
-          );
-
-          if (!authStatus) {
-            console.log("[AuthContext] Token expired, attempting refresh...");
-            try {
-              const newToken = await apiService.refreshToken();
-              if (newToken) {
-                console.log("[AuthContext] Token refreshed successfully");
-                authStatus = true;
-            await setAccessToken(newToken);
-              } else {
-                console.log("[AuthContext] Token refresh failed");
-                authStatus = false;
-              }
-            } catch (error) {
-              console.log("[AuthContext] Token refresh error:", error.message);
-              authStatus = false;
-            }
-          }
-
-          if (authStatus) {
-            console.log("[AuthContext] User authenticated successfully");
-            const currentToken = await apiService.getAccessToken();
-            setUser(storedUser);
-            setAccessToken(currentToken);
-            setIsLoggedIn(true);
-          } else {
-            console.log(
-              "[AuthContext] Authentication failed, clearing session"
-            );
-
-            await clearSession();
-            setUser(null);
-            setAccessToken(null);
-            setIsLoggedIn(false);
-          }
-        } else {
-          console.log("[AuthContext] No stored user or token found");
-
-          await clearSession();
-          setUser(null);
-          setAccessToken(null);
-          setIsLoggedIn(false);
+          setUser(storedUser);
+          setAccessToken(storedToken);
+          setIsLoggedIn(true);
         }
       } catch (error) {
-        console.error("[AuthContext] Error loading user:", error);
-        setUser(null);
-        setAccessToken(null);
-        setIsLoggedIn(false);
+        console.error("[AuthContext] Error loading stored user:", error);
       } finally {
         setLoading(false);
       }
     };
-
-    loadUser();
+    
+    loadStoredUser();
   }, []);
 
   useEffect(() => {
@@ -110,55 +61,70 @@ export function AuthProvider({ children }) {
 
     console.log("[AuthContext] Setting up periodic token refresh (10 min intervals)");
 
-    const interval = setInterval(async () => {
+    // Add a delay before starting the periodic checks to let the fresh token settle
+    const initialDelay = setTimeout(() => {
+      const interval = setInterval(async () => {
 
-      if (periodicCheckRunning) {
-        console.log("[AuthContext] Periodic check already running, skipping");
-        return;
-      }
-      
-      try {
-        setPeriodicCheckRunning(true);
-        console.log("[AuthContext] Performing periodic token refresh check...");
-
-        const refreshSuccess = await apiService.refreshIfNeeded();
+        if (periodicCheckRunning) {
+          console.log("[AuthContext] Periodic check already running, skipping");
+          return;
+        }
         
-        if (!refreshSuccess) {
-          console.log("[AuthContext] Token refresh failed - checking authentication");
-          const authStatus = await isAuthenticated();
-          if (!authStatus) {
-            console.log("[AuthContext] Authentication failed during periodic check - clearing session");
-            handleTokenExpired();
-          }
-        } else {
-          console.log("[AuthContext] Periodic token check completed successfully");
-        }
-      } catch (error) {
-        console.error("[AuthContext] Error during periodic token check:", error);
-
         try {
-          const authStatus = await isAuthenticated();
-          if (!authStatus) {
-            console.log("[AuthContext] Authentication failed after error - clearing session");
+          setPeriodicCheckRunning(true);
+          console.log("[AuthContext] Performing periodic token refresh check...");
+
+          const refreshSuccess = await apiService.refreshIfNeeded();
+          console.log("[AuthContext] Periodic refreshIfNeeded result:", refreshSuccess);
+          
+          if (!refreshSuccess) {
+            console.log("[AuthContext] Token refresh failed - checking authentication");
+            const authStatus = await isAuthenticated();
+            console.log("[AuthContext] Authentication status after refresh failure:", authStatus);
+            if (!authStatus) {
+              console.log("[AuthContext] Authentication failed during periodic check - clearing session");
+              handleTokenExpired();
+            }
+          } else {
+            console.log("[AuthContext] Periodic token check completed successfully");
+          }
+        } catch (error) {
+          console.error("[AuthContext] Error during periodic token check:", error);
+
+          try {
+            const authStatus = await isAuthenticated();
+            console.log("[AuthContext] Authentication status after error:", authStatus);
+            if (!authStatus) {
+              console.log("[AuthContext] Authentication failed after error - clearing session");
+              handleTokenExpired();
+            }
+          } catch (finalError) {
+            console.error("[AuthContext] Final auth check failed:", finalError);
             handleTokenExpired();
           }
-        } catch (finalError) {
-          console.error("[AuthContext] Final auth check failed:", finalError);
-          handleTokenExpired();
+        } finally {
+          setPeriodicCheckRunning(false);
         }
-      } finally {
-        setPeriodicCheckRunning(false);
-      }
-    }, 10 * 60 * 1000);
+      }, 10 * 60 * 1000);
+
+      // Store interval reference for cleanup
+      initialDelay.intervalRef = interval;
+    }, 30 * 1000); // Wait 30 seconds before starting periodic checks
 
     return () => {
-      console.log("[AuthContext] Clearing periodic token refresh interval");
-      clearInterval(interval);
+      console.log("[AuthContext] Clearing periodic token refresh interval and initial delay");
+      clearTimeout(initialDelay);
+      if (initialDelay.intervalRef) {
+        clearInterval(initialDelay.intervalRef);
+      }
     };
   }, [isLoggedIn, accessToken, periodicCheckRunning, handleTokenExpired]);
 
   const login = async (userData, token) => {
     try {
+      console.log('[AuthContext] Login called with userData:', userData);
+      console.log('[AuthContext] User role from login:', userData?.role);
+      console.log('[AuthContext] Full user data:', JSON.stringify(userData, null, 2));
 
       await setLoggedInUser(userData);
       await setAccessToken(token);
@@ -166,6 +132,10 @@ export function AuthProvider({ children }) {
       setUser(userData);
       setAccessToken(token);
       setIsLoggedIn(true);
+      
+      console.log('[AuthContext] Login completed successfully');
+      console.log('[AuthContext] Final user state:', userData);
+      console.log('[AuthContext] Final user role:', userData?.role);
     } catch (error) {
       console.error("[AuthContext] Error in login function:", error);
       throw error;
@@ -174,16 +144,30 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     try {
-      await logoutUser();
+      console.log("[AuthContext] Starting logout process...");
+      console.log("[AuthContext] Current user before logout:", user);
+      console.log("[AuthContext] Current user role before logout:", user?.role);
+      
+      // Clear local state IMMEDIATELY first to prevent any further API calls
+      console.log("[AuthContext] Clearing user state immediately...");
       setUser(null);
       setAccessToken(null);
       setIsLoggedIn(false);
+      
+      // Then call backend logout API
+      await logoutUser();
+      
+      console.log("[AuthContext] Logout completed successfully");
     } catch (error) {
       console.error("Logout error:", error);
 
+      // Ensure local state is cleared even if backend logout fails
+      console.log("[AuthContext] Ensuring local state is cleared despite logout error...");
       setUser(null);
       setAccessToken(null);
       setIsLoggedIn(false);
+      
+      console.log("[AuthContext] Logout completed with errors (local state cleared)");
     }
   };
 
@@ -239,7 +223,11 @@ export function useAuth() {
 }
 
 export const notifyTokenExpired = () => {
+  console.log('[AuthContext] notifyTokenExpired() called');
+  console.log('[AuthContext] Stack trace:', new Error().stack);
+  
   if (authContextInstance && authContextInstance.handleTokenExpired) {
+    console.log('[AuthContext] Calling handleTokenExpired()');
     authContextInstance.handleTokenExpired();
   }
 };

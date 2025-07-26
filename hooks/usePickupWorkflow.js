@@ -1,11 +1,12 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { addressService } from '../services/api/addresses';
 import { orderService } from '../services/api/orders';
 import { validateQuantity } from '../utils/cartUtils';
 import { useCart } from './useCart';
 
 export const usePickupWorkflow = () => {
-
+  const { user } = useAuth();
   const { handleClearCart } = useCart();
 
   const [addresses, setAddresses] = useState([]);
@@ -33,6 +34,16 @@ export const usePickupWorkflow = () => {
   }, []);
 
   const fetchAddresses = useCallback(async () => {
+    console.log('[Pickup Workflow] fetchAddresses called, user role:', user?.role);
+    
+    // Buyers don't need addresses - they purchase materials, don't schedule pickups
+    if (user?.role === 'buyer') {
+      console.log('[Pickup Workflow] Skipping address fetch for buyer role');
+      setAddresses([]);
+      setLoading(false);
+      setFetchingAddresses(false);
+      return;
+    }
 
     if (fetchingAddresses) {
       console.log('[Pickup Workflow] Already fetching addresses, skipping...');
@@ -52,13 +63,21 @@ export const usePickupWorkflow = () => {
       console.log(`[Pickup Workflow] Fetched ${addressList.length} addresses`);
     } catch (err) {
       console.error('[Pickup Workflow] Failed to fetch addresses:', err.message);
-      setError(`Failed to load addresses: ${err.message}`);
+      
+      // Handle authentication errors specifically
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        setError('Authentication required. Please log in again.');
+        console.error('[Pickup Workflow] Authentication error - user may need to re-login');
+      } else {
+        setError(`Failed to load addresses: ${err.message}`);
+      }
+      
       setAddresses([]);
     } finally {
       setLoading(false);
       setFetchingAddresses(false);
     }
-  }, [fetchingAddresses]);
+  }, [fetchingAddresses, user?.role]);
 
   const createAddress = useCallback(async (addressData) => {
     setLoading(true);
@@ -259,8 +278,7 @@ export const usePickupWorkflow = () => {
     });
   };
 
-  return {
-
+  return useMemo(() => ({
     addresses,
     loading,
     error,
@@ -280,5 +298,23 @@ export const usePickupWorkflow = () => {
 
     setError,
     setCurrentPhase
-  };
+  }), [
+    addresses,
+    loading,
+    error,
+    currentPhase,
+    selectedAddress,
+    orderData,
+    nextPhase,
+    previousPhase,
+    reset,
+    fetchAddresses,
+    createAddress,
+    updateAddress,
+    deleteAddress,
+    createOrder,
+    setSelectedAddress,
+    setError,
+    setCurrentPhase
+  ]);
 };
