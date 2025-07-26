@@ -6,10 +6,6 @@ export function useUserPoints({ userId, name, email }) {
   const [pointsLoading, setPointsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-//   // Debug logging
-//   useEffect(() => {
-//     console.log('useUserPoints hook initialized with:', { userId, name, email });
-//   }, [userId, name, email]);
 
   const getUserPoints = useCallback(async () => {
     if (!userId) {
@@ -22,8 +18,7 @@ export function useUserPoints({ userId, name, email }) {
     try {
       setPointsLoading(true);
       setError(null);
-      
-      // Log the API call
+
       console.log(`Making API call to: /users/${userId}/points`);
       
       const res = await apiService.get(`/users/${userId}/points`);
@@ -40,8 +35,7 @@ export function useUserPoints({ userId, name, email }) {
       }
     } catch (err) {
       console.error('Error fetching user points:', err);
-      
-      // Log more details about the error
+
       if (err.response) {
         console.error('Error response data:', err.response.data);
         console.error('Error response status:', err.response.status);
@@ -53,8 +47,7 @@ export function useUserPoints({ userId, name, email }) {
       }
       
       setError(err);
-      
-      // Set fallback data
+
       const fallbackData = {
         userId: userId || '',
         name: name || '',
@@ -77,7 +70,6 @@ export function useUserPoints({ userId, name, email }) {
     }
   }, [userId, name, email]);
 
-  // Auto-fetch when userId changes and is available
   useEffect(() => {
     if (userId) {
       console.log('useUserPoints: userId changed, auto-fetching points');
@@ -90,7 +82,7 @@ export function useUserPoints({ userId, name, email }) {
     pointsLoading,
     error,
     getUserPoints,
-    // Helper function to check if points are loaded
+
     hasValidPoints: userPoints !== null && !pointsLoading,
   };
 }

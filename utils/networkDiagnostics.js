@@ -1,7 +1,7 @@
 import { API_BASE_URL } from '../services/api/config';
 
 export const NetworkDiagnostics = {
-  // Test basic API connectivity
+
   testAPIConnection: async () => {
     try {
       console.log('🔍 Testing API connection to:', API_BASE_URL);
@@ -24,7 +24,6 @@ export const NetworkDiagnostics = {
     }
   },
 
-  // Test notifications endpoint with token
   testNotificationsEndpoint: async (token) => {
     try {
       console.log('🔍 Testing notifications endpoint...');
@@ -49,18 +48,15 @@ export const NetworkDiagnostics = {
     }
   },
 
-  // Test Socket.IO endpoint
   testSocketEndpoint: async () => {
     try {
       console.log('🔍 Testing Socket.IO endpoint...');
-      
-      // Try to connect to socket.io endpoint
+
       const response = await fetch(`${API_BASE_URL}/socket.io/`, {
         method: 'GET',
         timeout: 10000,
       });
-      
-      // Socket.IO endpoint typically returns a specific response
+
       if (response.status === 400 || response.status === 200) {
         console.log('✅ Socket.IO endpoint is accessible');
         return { success: true, message: 'Socket.IO endpoint is accessible' };
@@ -74,7 +70,6 @@ export const NetworkDiagnostics = {
     }
   },
 
-  // Run full diagnostics
   runFullDiagnostics: async (token = null) => {
     console.log('🏥 Running full network diagnostics...');
     console.log('🌐 Target server:', API_BASE_URL);
@@ -85,13 +80,10 @@ export const NetworkDiagnostics = {
       tests: {}
     };
 
-    // Test 1: Basic API connection
     results.tests.apiConnection = await NetworkDiagnostics.testAPIConnection();
-    
-    // Test 2: Socket.IO endpoint
+
     results.tests.socketEndpoint = await NetworkDiagnostics.testSocketEndpoint();
-    
-    // Test 3: Notifications endpoint (if token provided)
+
     if (token) {
       results.tests.notificationsEndpoint = await NetworkDiagnostics.testNotificationsEndpoint(token);
     } else {
@@ -101,7 +93,6 @@ export const NetworkDiagnostics = {
       };
     }
 
-    // Summary
     const passedTests = Object.values(results.tests).filter(test => test.success).length;
     const totalTests = Object.keys(results.tests).length;
     

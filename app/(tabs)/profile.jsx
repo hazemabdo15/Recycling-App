@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, Image, TouchableOpacity, ActivityIndicator, Alert, StyleSheet } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { orderService } from '../../services/api/orders';
@@ -29,8 +29,7 @@ function ProfileContent() {
   useEffect(() => {
     console.log("AuthContext user:", user);
     console.log("AuthContext isLoggedIn:", isLoggedIn);
-    
-    // Fetch orders if user is logged in
+
     if (isLoggedIn && user?.email) {
       fetchOrders();
     } else {
@@ -93,7 +92,6 @@ function ProfileContent() {
     }
   };
 
-  // Show loading while AuthContext is initializing
   if (authLoading) {
     return (
       <View style={[styles.container, styles.centered]}>
@@ -114,13 +112,6 @@ function ProfileContent() {
     return true;
   });
 
-//   const totalPoints = allOrders
-//     .filter((o) => o.status === 'completed')
-//     .reduce(
-//       (acc, order) =>
-//         acc + order.items.reduce((sum, item) => sum + (item.points || 0), 0),
-//       0
-//     );
 
   const stats = {
     totalRecycles: allOrders.filter((o) => o.status === 'completed').length,
@@ -128,7 +119,6 @@ function ProfileContent() {
     tier: 50,
   };
 
-  // Use AuthContext state to determine if user is guest
   const isGuest = !isLoggedIn || !user?.email;
 
   return (
@@ -168,18 +158,15 @@ function ProfileContent() {
       {isGuest ? (
         <View style={styles.guestContainer}>
           <View style={styles.guestContent}>
-            {/* Guest Icon */}
             <View style={styles.guestIcon}>
               <Text style={styles.guestIconText}>👤</Text>
             </View>
             
-            {/* Welcome Message */}
             <Text style={styles.guestTitle}>Welcome, Guest!</Text>
             <Text style={styles.guestSubtitle}>
               You&apos;re browsing in guest mode
             </Text>
             
-            {/* Benefits List */}
             <View style={styles.benefitsContainer}>
               <Text style={styles.benefitsTitle}>Join us to enjoy:</Text>
               <View style={styles.benefitItem}>
@@ -200,7 +187,6 @@ function ProfileContent() {
               </View>
             </View>
             
-            {/* Action Buttons */}
             <View style={styles.guestActions}>
               <TouchableOpacity
                 onPress={() => {
@@ -223,7 +209,6 @@ function ProfileContent() {
               </TouchableOpacity>
             </View>
             
-            {/* Guest Browse Option */}
             <View style={styles.guestBrowse}>
               <Text style={styles.guestBrowseText}>
                 Or continue browsing as guest
@@ -343,7 +328,7 @@ function StatBox({ label, value }) {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 35, backgroundColor: '#f0fdf4', paddingBottom: 100 }, // Add bottom padding
+  container: { padding: 35, backgroundColor: '#f0fdf4', paddingBottom: 100 },
   centered: { justifyContent: 'center', alignItems: 'center' },
   profileHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 16, gap: 12 },
   userName: { fontSize: 20, fontWeight: '600', color: '#065f46' },
@@ -382,7 +367,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 10,
     paddingBottom: 75,
-    // minHeight: '100%',
+
   },
   guestContent: {
     alignItems: 'center',

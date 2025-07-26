@@ -27,7 +27,6 @@ const NotificationsScreen = () => {
     deleteNotification,
   } = useNotifications();
 
-  // Get notification icon based on type
   const getNotificationIcon = (type) => {
     switch (type?.toLowerCase()) {
       case "order_assigned":
@@ -51,7 +50,6 @@ const NotificationsScreen = () => {
     }
   };
 
-  // Get notification color based on type
   const getNotificationColor = (type) => {
     switch (type?.toLowerCase()) {
       case "order_assigned":
@@ -223,7 +221,6 @@ const NotificationsScreen = () => {
         translucent
       />
 
-      {/* Hero Section with Gradient - Same as Home */}
       <LinearGradient
         colors={[colors.primary, colors.secondary]}
         start={{ x: 0, y: 0 }}
@@ -240,7 +237,6 @@ const NotificationsScreen = () => {
           
           <Text style={styles.heroTitle}>Notifications</Text>
           
-          {/* Empty view to balance the layout */}
           <View style={styles.headerSpacer} />
         </View>
 
@@ -256,7 +252,6 @@ const NotificationsScreen = () => {
         </View>
       </LinearGradient>
 
-      {/* Content Container */}
       <View style={styles.contentContainer}>
         {unreadCount > 0 && (
           <View style={styles.unreadBanner}>
@@ -330,7 +325,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerSpacer: {
-    width: 40, // Same width as back button to balance layout
+    width: 40,
   },
   heroContent: {
     alignItems: "center",

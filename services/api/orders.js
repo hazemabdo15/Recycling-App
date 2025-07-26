@@ -1,4 +1,4 @@
-﻿import { validateQuantity } from '../../utils/cartUtils';
+import { validateQuantity } from '../../utils/cartUtils';
 import apiService from './apiService';
 
 export const orderService = {

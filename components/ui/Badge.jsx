@@ -1,4 +1,4 @@
-﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
 import { badgeStyles } from '../../styles/components/commonStyles';
 import { colors } from '../../styles/theme';

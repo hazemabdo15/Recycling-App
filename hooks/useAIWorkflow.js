@@ -1,4 +1,4 @@
-﻿import { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { extractMaterialsFromTranscription } from '../services/materialExtraction';
 import { verifyMaterialsAgainstDatabase } from '../services/materialVerification';
 import { useTranscription } from './useTranscription';

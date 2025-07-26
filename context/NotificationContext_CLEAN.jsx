@@ -6,7 +6,7 @@ import { useAuth } from './AuthContext';
 
 const NotificationContext = createContext();
 
-const SOCKET_URL = 'http://192.168.0.165:5000'; // Your backend URL
+const SOCKET_URL = 'http://192.168.0.165:5000';
 
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
@@ -14,19 +14,17 @@ export const NotificationProvider = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false);
   
   const { user, accessToken, isLoggedIn } = useAuth();
-  
-  // Use refs to prevent recreation in effects
+
   const currentSocket = useRef(null);
   const isConnecting = useRef(false);
-  const hasInitialized = useRef(null); // Track specific auth state
+  const hasInitialized = useRef(null);
   const lastRefreshTime = useRef(0);
 
-  // Throttled refresh function to prevent infinite loops
   const refreshNotifications = useCallback(async () => {
     const now = Date.now();
     const timeSinceLastRefresh = now - lastRefreshTime.current;
     
-    if (timeSinceLastRefresh < 5000) { // 5 second minimum between refreshes
+    if (timeSinceLastRefresh < 5000) {
       console.log('🔒 Throttling refresh, too soon since last refresh');
       return;
     }
@@ -56,18 +54,16 @@ export const NotificationProvider = ({ children }) => {
     } catch (error) {
       console.error('Error refreshing notifications:', error);
     }
-  }, []); // Remove all dependencies to prevent recreation
+  }, []);
 
-  // Main authentication and initialization effect
   useEffect(() => {
     const isAuthenticated = isLoggedIn && user && !user.isGuest && accessToken;
     const authKey = isAuthenticated ? `${user._id}-${accessToken.substring(0, 20)}` : null;
     
     if (isAuthenticated && (!hasInitialized.current || hasInitialized.current !== authKey)) {
       console.log('🚀 First time auth ready - initializing notifications');
-      hasInitialized.current = authKey; // Store auth key instead of just true/false
-      
-      // Fetch notifications function - inline to avoid dependencies
+      hasInitialized.current = authKey;
+
       const doFetch = async () => {
         try {
           console.log('📡 Fetching notifications from API...');
@@ -92,7 +88,6 @@ export const NotificationProvider = ({ children }) => {
         }
       };
 
-      // Socket connect function - Using correct backend format from investigation
       const doConnect = async () => {
         try {
           if (isConnecting.current || currentSocket.current) {
@@ -108,12 +103,10 @@ export const NotificationProvider = ({ children }) => {
 
           isConnecting.current = true;
           console.log('🔌 Connecting to notification server...');
-          
-          // Use the exact format your backend expects: { auth: { token: "jwt_token" } }
-          // NO "Bearer " prefix needed according to your backend investigation
+
           const socketConnection = io(SOCKET_URL, {
             auth: { 
-              token: token  // Raw JWT token, no Bearer prefix
+              token: token
             },
             transports: ['websocket', 'polling'],
             timeout: 10000,
@@ -156,16 +149,14 @@ export const NotificationProvider = ({ children }) => {
           isConnecting.current = false;
         }
       };
-      
-      // Execute once
+
       doFetch();
       doConnect();
       
     } else if (!isAuthenticated && hasInitialized.current) {
       console.log('🔒 Auth lost - cleaning up notifications');
-      hasInitialized.current = null; // Reset to null instead of false
-      
-      // Cleanup
+      hasInitialized.current = null;
+
       if (currentSocket.current) {
         currentSocket.current.disconnect();
         currentSocket.current = null;
@@ -176,7 +167,6 @@ export const NotificationProvider = ({ children }) => {
       setUnreadCount(0);
     }
 
-    // Cleanup on unmount
     return () => {
       if (currentSocket.current) {
         currentSocket.current.disconnect();
@@ -185,9 +175,8 @@ export const NotificationProvider = ({ children }) => {
       }
       isConnecting.current = false;
     };
-  }, [isLoggedIn, user, accessToken]); // Minimal dependencies
+  }, [isLoggedIn, user, accessToken]);
 
-  // Mark notifications as read
   const markAsRead = useCallback(async () => {
     if (!user || user.isGuest || !accessToken) return;
 

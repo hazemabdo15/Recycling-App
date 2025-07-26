@@ -1,4 +1,4 @@
-﻿import { StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { borderRadius, colors, shadows, spacing } from '../theme';
 export const layoutStyles = StyleSheet.create({
     container: {

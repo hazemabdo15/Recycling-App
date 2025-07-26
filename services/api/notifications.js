@@ -1,7 +1,7 @@
 import apiService from './apiService';
 
 export const notificationsAPI = {
-  // Get all notifications for the user
+
   getNotifications: async () => {
     try {
       const response = await apiService.get('/notifications');
@@ -12,7 +12,6 @@ export const notificationsAPI = {
     }
   },
 
-  // Mark all notifications as read
   markAllAsRead: async () => {
     try {
       const response = await apiService.patch('/notifications/mark-read');
@@ -23,7 +22,6 @@ export const notificationsAPI = {
     }
   },
 
-  // Mark a specific notification as read
   markAsRead: async (notificationId) => {
     try {
       const response = await apiService.patch(`/notifications/${notificationId}/mark-read`);
@@ -34,7 +32,6 @@ export const notificationsAPI = {
     }
   },
 
-  // Delete a specific notification
   deleteNotification: async (notificationId) => {
     try {
       const response = await apiService.delete(`/notifications/${notificationId}`);
@@ -45,7 +42,6 @@ export const notificationsAPI = {
     }
   },
 
-  // Delete all notifications
   deleteAllNotifications: async () => {
     try {
       const response = await apiService.delete('/notifications');

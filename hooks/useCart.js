@@ -1,4 +1,4 @@
-﻿import { useCartContext } from '../context/CartContext';
+import { useCartContext } from '../context/CartContext';
 import { calculateQuantity, getIncrementStep, normalizeItemData } from '../utils/cartUtils';
 
 export const useCart = () => {

@@ -1,4 +1,4 @@
-﻿import { Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useRef } from "react";
@@ -24,22 +24,9 @@ const Index = () => {
   const { unreadCount, fetchNotifications } = useNotifications();
   const fetchNotificationsRef = useRef(fetchNotifications);
 
-  // Update ref when fetchNotifications changes
   useEffect(() => {
     fetchNotificationsRef.current = fetchNotifications;
   }, [fetchNotifications]);
-
-  // TEMPORARY: Disable focus effect to stop infinite loops
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     // Refresh notifications when home screen comes into focus
-  //     if (isLoggedIn && user && !user.isGuest) {
-  //       console.log('🏠 Home screen focused - refreshing notifications');
-  //       fetchNotificationsRef.current();
-  //     }
-  //     return () => {};
-  //   }, [isLoggedIn, user])
-  // );
 
   const handleNotificationPress = () => {
     console.log("Navigate to notifications");

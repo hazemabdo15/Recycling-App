@@ -93,7 +93,6 @@ const RecyclingModal = ({ visible, onClose, onPointsUpdated }) => {
           <Text style={styles.pointsValue}>{totalPoints.toLocaleString()} Points</Text>
         </View>
 
-        {/* Options */}
         <View style={styles.optionContainer}>
           <TouchableOpacity 
             onPress={() => { setActiveOption('voucher'); setQrVisible(false); }} 
@@ -112,7 +111,6 @@ const RecyclingModal = ({ visible, onClose, onPointsUpdated }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Voucher UI */}
         {activeOption === 'voucher' && (
           <View style={styles.voucherContainer}>
             <Text style={styles.sectionTitle}>Available Vouchers</Text>
@@ -150,7 +148,6 @@ const RecyclingModal = ({ visible, onClose, onPointsUpdated }) => {
           </View>
         )}
 
-        {/* Money Input UI */}
         {activeOption === 'money' && (
           <View style={styles.moneyContainer}>
             <Text style={styles.sectionTitle}>Cash Out</Text>
@@ -177,7 +174,6 @@ const RecyclingModal = ({ visible, onClose, onPointsUpdated }) => {
           </View>
         )}
 
-        {/* QR Code */}
         {qrVisible && (
           <View style={styles.qrContainer}>
             <Text style={styles.qrTitle}>Your Voucher</Text>
@@ -189,7 +185,6 @@ const RecyclingModal = ({ visible, onClose, onPointsUpdated }) => {
           </View>
         )}
 
-        {/* Action Button */}
         {!qrVisible && (
           <TouchableOpacity 
             onPress={handleRedeem} 

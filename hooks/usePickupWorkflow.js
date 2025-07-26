@@ -1,4 +1,4 @@
-﻿import { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { addressService } from '../services/api/addresses';
 import { orderService } from '../services/api/orders';
 import { validateQuantity } from '../utils/cartUtils';
@@ -45,7 +45,7 @@ export const usePickupWorkflow = () => {
     try {
       console.log('[Pickup Workflow] Fetching user addresses');
       const addressData = await addressService.getAddresses();
-      // Handle the new backend structure where data is nested under data.data
+
       const addressList = Array.isArray(addressData) ? addressData : (addressData.data?.data || addressData.data || []);
       setAddresses(addressList);
       
@@ -193,7 +193,7 @@ export const usePickupWorkflow = () => {
       validateOrderData(orderData);
 
       const response = await orderService.createOrder(orderData);
-      // Handle the new backend structure where data is nested under data.data
+
       const order = response.data?.data || response.data || response;
       setOrderData(order);
       

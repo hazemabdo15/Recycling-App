@@ -1,4 +1,4 @@
-﻿export const CategoryType = {
+export const CategoryType = {
   _id: '',
   name: '',
   description: '',

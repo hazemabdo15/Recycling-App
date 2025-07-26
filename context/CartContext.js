@@ -1,4 +1,4 @@
-﻿import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import {
   addItemToCart,
   clearCart as apiClearCart,
@@ -29,7 +29,7 @@ export const CartProvider = ({ children }) => {
     getCart(isLoggedIn)
       .then((cart) => {
         const itemsObj = {};
-        // Handle the new backend structure where data is nested under data.data
+
         const cartItems = cart.data?.data?.items || cart.data?.items || cart.items || [];
         cartItems.forEach((item) => {
           itemsObj[item.categoryId] = item.quantity;

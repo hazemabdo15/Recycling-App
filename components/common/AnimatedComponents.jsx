@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { Pressable, View } from 'react-native';
 import { ANIMATION_CONFIG } from '../../utils/animations';
 

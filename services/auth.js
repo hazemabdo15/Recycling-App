@@ -1,4 +1,4 @@
-﻿import { Alert } from 'react-native';
+import { Alert } from 'react-native';
 import { clearSession, setAccessToken } from '../utils/authUtils';
 import apiService from './api/apiService';
 

@@ -1,4 +1,4 @@
-﻿import apiService from "./api/apiService";
+import apiService from "./api/apiService";
 let cachedDatabaseItems = null;
 let cacheTimestamp = null;
 const CACHE_DURATION = 5 * 60 * 1000;
@@ -23,13 +23,13 @@ export async function fetchDatabaseItems() {
 
     let categoriesData;
     if (Array.isArray(response)) {
-      // Direct array response (legacy)
+
       categoriesData = response;
     } else if (response && response.data && Array.isArray(response.data)) {
-      // New structure: response.data contains the array
+
       categoriesData = response.data;
     } else if (response && Array.isArray(response.categories)) {
-      // Alternative structure: response.categories
+
       categoriesData = response.categories;
     } else {
       console.error('🔥 [Material Verification] Unexpected response format:', response);

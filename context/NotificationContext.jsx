@@ -8,7 +8,7 @@ import { useAuth } from './AuthContext';
 
 const NotificationContext = createContext();
 
-const SOCKET_URL = API_BASE_URL; // Your backend URL
+const SOCKET_URL = API_BASE_URL;
 
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
@@ -16,19 +16,17 @@ export const NotificationProvider = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false);
   
   const { user, accessToken, isLoggedIn } = useAuth();
-  
-  // Use refs to prevent recreation in effects
+
   const currentSocket = useRef(null);
   const isConnecting = useRef(false);
-  const hasInitialized = useRef(null); // Track specific auth state
+  const hasInitialized = useRef(null);
   const lastRefreshTime = useRef(0);
 
-  // Throttled refresh function to prevent infinite loops
   const refreshNotifications = useCallback(async () => {
     const now = Date.now();
     const timeSinceLastRefresh = now - lastRefreshTime.current;
     
-    if (timeSinceLastRefresh < 5000) { // 5 second minimum between refreshes
+    if (timeSinceLastRefresh < 5000) {
       console.log('🔒 Throttling refresh, too soon since last refresh');
       return;
     }
@@ -52,18 +50,16 @@ export const NotificationProvider = ({ children }) => {
     } catch (error) {
       console.error('Error refreshing notifications:', error);
     }
-  }, [accessToken, user]); // Include dependencies
+  }, [accessToken, user]);
 
-  // Main authentication and initialization effect
   useEffect(() => {
     const isAuthenticated = isLoggedIn && user && !user.isGuest && accessToken;
     const authKey = isAuthenticated ? `${user._id}-${accessToken.substring(0, 20)}` : null;
     
     if (isAuthenticated && (!hasInitialized.current || hasInitialized.current !== authKey)) {
       console.log('🚀 First time auth ready - initializing notifications');
-      hasInitialized.current = authKey; // Store auth key instead of just true/false
-      
-      // Add a small delay to ensure auth is fully ready
+      hasInitialized.current = authKey;
+
       setTimeout(() => {
         doFetch();
         doConnect();
@@ -71,9 +67,8 @@ export const NotificationProvider = ({ children }) => {
       
     } else if (!isAuthenticated && hasInitialized.current) {
       console.log('🔒 Auth lost - cleaning up notifications');
-      hasInitialized.current = null; // Reset to null instead of false
-      
-      // Cleanup
+      hasInitialized.current = null;
+
       if (currentSocket.current) {
         currentSocket.current.disconnect();
         currentSocket.current = null;
@@ -84,7 +79,6 @@ export const NotificationProvider = ({ children }) => {
       setUnreadCount(0);
     }
 
-    // Cleanup on unmount
     return () => {
       if (currentSocket.current) {
         currentSocket.current.disconnect();
@@ -93,9 +87,8 @@ export const NotificationProvider = ({ children }) => {
       }
       isConnecting.current = false;
     };
-  }, [isLoggedIn, user, accessToken, doFetch, doConnect]); // Include all dependencies
+  }, [isLoggedIn, user, accessToken, doFetch, doConnect]);
 
-  // Fetch notifications function - moved outside useEffect for better reusability
   const doFetch = useCallback(async () => {
     try {
       console.log('📡 Fetching notifications from API...');
@@ -115,11 +108,10 @@ export const NotificationProvider = ({ children }) => {
       console.log('📋 Fetched', notificationsList.length, 'notifications,', count, 'unread');
     } catch (error) {
       console.error('❌ Error fetching notifications:', error.message || error);
-      // Don't throw - just log and continue
+
     }
   }, [accessToken]);
 
-  // Socket connect function - moved outside useEffect for better reusability  
   const doConnect = useCallback(async () => {
     try {
       if (isConnecting.current || currentSocket.current) {
@@ -135,15 +127,13 @@ export const NotificationProvider = ({ children }) => {
 
       isConnecting.current = true;
       console.log('🔌 Connecting to notification server at:', SOCKET_URL);
-      
-      // Use the exact format your backend expects: { auth: { token: "jwt_token" } }
-      // NO "Bearer " prefix needed according to your backend investigation
+
       const socketConnection = io(SOCKET_URL, {
         auth: { 
-          token: token  // Raw JWT token, no Bearer prefix
+          token: token
         },
         transports: ['websocket', 'polling'],
-        timeout: 15000, // Increase timeout
+        timeout: 15000,
         forceNew: true,
         reconnection: true,
         reconnectionAttempts: 3,
@@ -171,8 +161,7 @@ export const NotificationProvider = ({ children }) => {
         setIsConnected(false);
         currentSocket.current = null;
         isConnecting.current = false;
-        
-        // Don't retry immediately on error
+
         setTimeout(() => {
           isConnecting.current = false;
         }, 5000);
@@ -182,8 +171,7 @@ export const NotificationProvider = ({ children }) => {
         console.log('📢 New notification received:', notification);
         setNotifications(prev => [notification, ...prev]);
         setUnreadCount(prev => prev + 1);
-        
-        // Only show alert for non-order related notifications
+
         const orderTypes = [
           'order_assigned',
           'order_confirmed', 
@@ -209,7 +197,6 @@ export const NotificationProvider = ({ children }) => {
     }
   }, [accessToken]);
 
-  // Mark notifications as read
   const markAsRead = useCallback(async () => {
     if (!user || user.isGuest || !accessToken) {
       console.log('❌ Cannot mark all as read: missing user or token');
@@ -234,7 +221,6 @@ export const NotificationProvider = ({ children }) => {
     }
   }, [user, accessToken]);
 
-  // Mark individual notification as read
   const markNotificationAsRead = useCallback(async (notificationId) => {
     if (!user || user.isGuest || !accessToken) {
       console.log('❌ Cannot mark as read: missing user or token');
@@ -263,7 +249,6 @@ export const NotificationProvider = ({ children }) => {
     }
   }, [user, accessToken]);
 
-  // Delete a specific notification
   const deleteNotification = useCallback(async (notificationId) => {
     if (!user || user.isGuest || !accessToken) return;
 
