@@ -182,7 +182,23 @@ export const NotificationProvider = ({ children }) => {
         console.log('📢 New notification received:', notification);
         setNotifications(prev => [notification, ...prev]);
         setUnreadCount(prev => prev + 1);
-        Alert.alert(notification.title, notification.body, [{ text: 'OK' }]);
+        
+        // Only show alert for non-order related notifications
+        const orderTypes = [
+          'order_assigned',
+          'order_confirmed', 
+          'order_cancelled',
+          'order_failed',
+          'order_completed',
+          'order_picked_up'
+        ];
+        
+        const notificationType = notification.type?.toLowerCase();
+        const shouldShowAlert = !orderTypes.includes(notificationType);
+        
+        if (shouldShowAlert) {
+          Alert.alert(notification.title, notification.body, [{ text: 'OK' }]);
+        }
       });
 
       currentSocket.current = socketConnection;
