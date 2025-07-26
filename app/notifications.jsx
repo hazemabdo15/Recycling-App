@@ -1,16 +1,17 @@
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import {
     Alert,
     FlatList,
     RefreshControl,
+    StatusBar,
     StyleSheet,
     Text,
     TouchableOpacity,
     View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Header } from "../components/common";
 import { useNotifications } from "../context/NotificationContext";
 import { colors, spacing } from "../styles/theme";
 
@@ -215,14 +216,48 @@ const NotificationsScreen = () => {
   );
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <Header
-        title="Notifications"
-        showBack
-        onBackPress={() => router.back()}
+    <View style={styles.container}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="transparent"
+        translucent
       />
 
-      <View style={styles.content}>
+      {/* Hero Section with Gradient - Same as Home */}
+      <LinearGradient
+        colors={[colors.primary, colors.secondary]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.heroSection, { paddingTop: insets.top + 20 }]}
+      >
+        <View style={styles.headerRow}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Ionicons name="arrow-back" size={24} color={colors.white} />
+          </TouchableOpacity>
+          
+          <Text style={styles.heroTitle}>Notifications</Text>
+          
+          {/* Empty view to balance the layout */}
+          <View style={styles.headerSpacer} />
+        </View>
+
+        <View style={styles.heroContent}>
+          <Text style={styles.heroSubtitle}>
+            Stay updated with your recycling activities
+          </Text>
+          {unreadCount > 0 && (
+            <Text style={styles.unreadText}>
+              {unreadCount} unread notification{unreadCount > 1 ? "s" : ""}
+            </Text>
+          )}
+        </View>
+      </LinearGradient>
+
+      {/* Content Container */}
+      <View style={styles.contentContainer}>
         {unreadCount > 0 && (
           <View style={styles.unreadBanner}>
             <Text style={styles.unreadBannerText}>
@@ -264,18 +299,80 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  content: {
+  heroSection: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.lg,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: spacing.md,
+  },
+  backButton: {
+    padding: spacing.sm,
+    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+  },
+  heroTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: colors.white,
+    textAlign: "center",
+    letterSpacing: -0.5,
     flex: 1,
   },
+  headerSpacer: {
+    width: 40, // Same width as back button to balance layout
+  },
+  heroContent: {
+    alignItems: "center",
+    paddingTop: spacing.sm,
+  },
+  heroSubtitle: {
+    fontSize: 14,
+    color: colors.white,
+    textAlign: "center",
+    opacity: 0.85,
+    lineHeight: 22,
+    maxWidth: 280,
+    marginBottom: spacing.xs,
+  },
+  unreadText: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: colors.white,
+    opacity: 0.9,
+  },
+  contentContainer: {
+    flex: 1,
+    paddingTop: spacing.md,
+  },
   unreadBanner: {
-    backgroundColor: colors.primary + "15",
+    backgroundColor: colors.white,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.md,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    borderBottomWidth: 1,
-    borderBottomColor: colors.base200,
+    borderRadius: 12,
+    shadowColor: colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 3,
   },
   unreadBannerText: {
     fontSize: 14,
@@ -296,6 +393,7 @@ const styles = StyleSheet.create({
   listContainer: {
     flexGrow: 1,
     paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
   },
   separator: {
     height: spacing.xs,
@@ -303,7 +401,6 @@ const styles = StyleSheet.create({
   notificationWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    marginHorizontal: spacing.md,
     backgroundColor: colors.white,
     borderRadius: 12,
     shadowColor: colors.shadow,
