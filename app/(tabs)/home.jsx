@@ -1,7 +1,7 @@
 ﻿import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useCallback } from "react";
+import { useRouter } from "expo-router";
+import { useEffect, useRef } from "react";
 import {
   StatusBar,
   StyleSheet,
@@ -14,20 +14,36 @@ import { EarnPointsCard } from "../../components/cards";
 import { ErrorBoundary } from "../../components/common";
 import { TopRecycledSection } from "../../components/sections";
 import { useAuth } from "../../context/AuthContext";
+import { useNotifications } from "../../context/NotificationContext";
 import { colors, spacing } from "../../styles/theme";
 
 const Index = () => {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { user, isLoggedIn, loading: authLoading } = useAuth();
+  const { unreadCount, fetchNotifications } = useNotifications();
+  const fetchNotificationsRef = useRef(fetchNotifications);
 
-  useFocusEffect(
-    useCallback(() => {
-      return () => {};
-    }, [])
-  );
+  // Update ref when fetchNotifications changes
+  useEffect(() => {
+    fetchNotificationsRef.current = fetchNotifications;
+  }, [fetchNotifications]);
+
+  // TEMPORARY: Disable focus effect to stop infinite loops
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     // Refresh notifications when home screen comes into focus
+  //     if (isLoggedIn && user && !user.isGuest) {
+  //       console.log('🏠 Home screen focused - refreshing notifications');
+  //       fetchNotificationsRef.current();
+  //     }
+  //     return () => {};
+  //   }, [isLoggedIn, user])
+  // );
 
   const handleNotificationPress = () => {
     console.log("Navigate to notifications");
+    router.push("/notifications");
   };
 
   const tabBarHeight = 140 + insets.bottom;
@@ -60,9 +76,13 @@ const Index = () => {
                   size={24}
                   color={colors.white}
                 />
-                <View style={styles.notificationBadge}>
-                  <Text style={styles.badgeText}>3</Text>
-                </View>
+                {unreadCount > 0 && (
+                  <View style={styles.notificationBadge}>
+                    <Text style={styles.badgeText}>
+                      {unreadCount > 99 ? "99+" : unreadCount.toString()}
+                    </Text>
+                  </View>
+                )}
               </TouchableOpacity>
             )}
           </View>

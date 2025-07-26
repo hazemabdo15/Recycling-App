@@ -81,7 +81,7 @@ export const useCategoryItems = (categoryName) => {
       setLoading(true);
       setError(null);
       const data = await categoriesAPI.getCategoryItems(categoryName);
-      setItems(data);
+      setItems(data.data);
     } catch (err) {
       setError(err.message);
     } finally {

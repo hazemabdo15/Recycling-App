@@ -29,7 +29,9 @@ export const CartProvider = ({ children }) => {
     getCart(isLoggedIn)
       .then((cart) => {
         const itemsObj = {};
-        (cart.items || []).forEach((item) => {
+        // Handle the new backend structure where data is nested under data.data
+        const cartItems = cart.data?.data?.items || cart.data?.items || cart.items || [];
+        cartItems.forEach((item) => {
           itemsObj[item.categoryId] = item.quantity;
         });
         setCartItems(itemsObj);

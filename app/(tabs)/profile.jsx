@@ -176,7 +176,7 @@ function ProfileContent() {
             {/* Welcome Message */}
             <Text style={styles.guestTitle}>Welcome, Guest!</Text>
             <Text style={styles.guestSubtitle}>
-              You're browsing in guest mode
+              You&apos;re browsing in guest mode
             </Text>
             
             {/* Benefits List */}

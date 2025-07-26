@@ -46,7 +46,8 @@ const Cart = () => {
     try {
       const response = await fetchBackendCart();
       console.log("Backend cart response:", response);
-      setBackendCartItems(Array.isArray(response.items) ? response.items : []);
+      const cartItems = response.data?.data?.items || response.data?.items || response.items || [];
+      setBackendCartItems(Array.isArray(cartItems) ? cartItems : []);
     } catch (err) {
       console.error("Error in fetchBackendCart:", err);
       setBackendCartItems([]);

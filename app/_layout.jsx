@@ -1,21 +1,23 @@
 ﻿import { Stack } from "expo-router";
 import { AuthProvider } from '../context/AuthContext';
 import { CartProvider } from '../context/CartContext';
+import { NotificationProvider } from '../context/NotificationContext';
 
 export default function RootLayout() {
 
   return (
     <AuthProvider>
       <CartProvider>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            animation: 'slide_from_right',
-            animationDuration: 300,
-            gestureEnabled: true,
-            gestureDirection: 'horizontal',
-          }}
-        >
+        <NotificationProvider>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              animation: 'slide_from_right',
+              animationDuration: 300,
+              gestureEnabled: true,
+              gestureDirection: 'horizontal',
+            }}
+          >
           <Stack.Screen
             name="login"
             options={{ 
@@ -54,6 +56,15 @@ export default function RootLayout() {
             }}
           />
           <Stack.Screen
+            name="notifications"
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+              gestureEnabled: true,
+              gestureDirection: 'horizontal',
+            }}
+          />
+          <Stack.Screen
             name="voice-modal"
             options={{
               presentation: 'containedTransparentModal',
@@ -74,6 +85,7 @@ export default function RootLayout() {
             }}
           />
         </Stack>
+        </NotificationProvider>
         </CartProvider>
     </AuthProvider>
   );

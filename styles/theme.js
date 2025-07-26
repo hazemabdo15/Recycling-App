@@ -13,9 +13,12 @@
   error: "#EF4444",
   warning: "#F59E0B",
   success: "#10B981",
+  info: "#3B82F6",
   background: "#FAFAFA",
   text: "#171717",
   textSecondary: "#607D8B",
+  textTertiary: "#9CA3AF",
+  shadow: "#000000",
 };
 export const borderRadius = {
   xs: 6,

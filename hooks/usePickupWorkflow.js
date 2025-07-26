@@ -45,8 +45,8 @@ export const usePickupWorkflow = () => {
     try {
       console.log('[Pickup Workflow] Fetching user addresses');
       const addressData = await addressService.getAddresses();
-
-      const addressList = Array.isArray(addressData) ? addressData : (addressData.data || []);
+      // Handle the new backend structure where data is nested under data.data
+      const addressList = Array.isArray(addressData) ? addressData : (addressData.data?.data || addressData.data || []);
       setAddresses(addressList);
       
       console.log(`[Pickup Workflow] Fetched ${addressList.length} addresses`);
@@ -193,8 +193,8 @@ export const usePickupWorkflow = () => {
       validateOrderData(orderData);
 
       const response = await orderService.createOrder(orderData);
-
-      const order = response.data || response;
+      // Handle the new backend structure where data is nested under data.data
+      const order = response.data?.data || response.data || response;
       setOrderData(order);
       
       console.log('[Pickup Workflow] Order created successfully:', order._id);

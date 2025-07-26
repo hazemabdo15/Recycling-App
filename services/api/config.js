@@ -1,4 +1,4 @@
-﻿const API_BASE_URL = 'http://192.168.0.165:5000';
+﻿export const API_BASE_URL = 'http://192.168.0.165:5000';
 
 export const BASE_URLS = {
   API: `${API_BASE_URL}/api`,

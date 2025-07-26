@@ -41,7 +41,7 @@ const ReviewPhase = ({
       try {
         console.log("[ReviewPhase] Fetching all items...");
         const response = await categoriesAPI.getAllItems();
-        const items = response.items || response;
+        const items = response.data?.items || response.data || response.items || response;
         setAllItems(Array.isArray(items) ? items : []);
         setItemsLoaded(true);
         console.log("[ReviewPhase] Items loaded:", items.length);
