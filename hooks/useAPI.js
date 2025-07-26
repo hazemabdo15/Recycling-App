@@ -9,7 +9,7 @@ export const useCategories = () => {
       setLoading(true);
       setError(null);
       const data = await categoriesAPI.getAllCategories();
-      setCategories(data);
+      setCategories(data.data);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -36,7 +36,7 @@ export const useAllItems = () => {
       setError(null);
       const data = await categoriesAPI.getAllItems();
 
-      const itemsArray = data?.items || data;
+      const itemsArray = data.data?.items || data.data;
       setItems(Array.isArray(itemsArray) ? itemsArray : []);
     } catch (err) {
       setError(err.message);
@@ -66,7 +66,7 @@ export const useCategoryItems = (categoryName) => {
         setLoading(true);
         setError(null);
         const data = await categoriesAPI.getCategoryItems(categoryName);
-        setItems(data);
+        setItems(data.data);
       } catch (err) {
         setError(err.message);
       } finally {
