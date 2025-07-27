@@ -1,15 +1,17 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import {
-    Alert,
-    FlatList,
-    RefreshControl,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  FlatList,
+  RefreshControl,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNotifications } from "../context/NotificationContext";
@@ -18,6 +20,8 @@ import { colors, spacing } from "../styles/theme";
 const NotificationsScreen = () => {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
   const {
     notifications,
     unreadCount,
@@ -25,7 +29,31 @@ const NotificationsScreen = () => {
     markAsRead,
     markNotificationAsRead,
     deleteNotification,
+    isConnected,
+    reconnectSocket,
   } = useNotifications();
+
+  // Auto refresh notifications when screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      console.log('📱 Notifications screen focused - refreshing notifications');
+      refreshNotifications();
+    }, [refreshNotifications])
+  );
+
+  // Log notification changes for debugging
+  useEffect(() => {
+    console.log('📱 Notifications updated:', notifications.length, 'total,', unreadCount, 'unread');
+  }, [notifications, unreadCount]);
+
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshNotifications();
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [refreshNotifications]);
 
   const getNotificationIcon = (type) => {
     switch (type?.toLowerCase()) {
@@ -237,7 +265,11 @@ const NotificationsScreen = () => {
           
           <Text style={styles.heroTitle}>Notifications</Text>
           
-          <View style={styles.headerSpacer} />
+          <View style={styles.connectionStatus}>
+            <View style={[styles.connectionDot, { 
+              backgroundColor: isConnected ? '#10B981' : '#EF4444' 
+            }]} />
+          </View>
         </View>
 
         <View style={styles.heroContent}>
@@ -253,6 +285,23 @@ const NotificationsScreen = () => {
       </LinearGradient>
 
       <View style={styles.contentContainer}>
+        {!isConnected && (
+          <View style={styles.connectionBanner}>
+            <View style={styles.connectionBannerContent}>
+              <Ionicons name="warning-outline" size={20} color={colors.warning} />
+              <Text style={styles.connectionBannerText}>
+                Real-time notifications disconnected
+              </Text>
+              <TouchableOpacity 
+                style={styles.reconnectButton}
+                onPress={reconnectSocket}
+              >
+                <Text style={styles.reconnectButtonText}>Reconnect</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+        
         {unreadCount > 0 && (
           <View style={styles.unreadBanner}>
             <Text style={styles.unreadBannerText}>
@@ -275,8 +324,8 @@ const NotificationsScreen = () => {
           contentContainerStyle={styles.listContainer}
           refreshControl={
             <RefreshControl
-              refreshing={false}
-              onRefresh={refreshNotifications}
+              refreshing={isRefreshing}
+              onRefresh={handleRefresh}
               colors={[colors.primary]}
               tintColor={colors.primary}
             />
@@ -327,6 +376,18 @@ const styles = StyleSheet.create({
   headerSpacer: {
     width: 40,
   },
+  connectionStatus: {
+    width: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  connectionDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    borderWidth: 2,
+    borderColor: colors.white,
+  },
   heroContent: {
     alignItems: "center",
     paddingTop: spacing.sm,
@@ -349,6 +410,38 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     paddingTop: spacing.md,
+  },
+  connectionBanner: {
+    backgroundColor: '#FEF3C7',
+    borderRadius: 8,
+    padding: spacing.sm,
+    marginHorizontal: spacing.md,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+  },
+  connectionBannerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  connectionBannerText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#92400E',
+    marginLeft: spacing.xs,
+    fontWeight: '500',
+  },
+  reconnectButton: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: 6,
+  },
+  reconnectButtonText: {
+    color: colors.white,
+    fontSize: 12,
+    fontWeight: '600',
   },
   unreadBanner: {
     backgroundColor: colors.white,

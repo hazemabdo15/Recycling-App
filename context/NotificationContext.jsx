@@ -141,11 +141,29 @@ export const NotificationProvider = ({ children }) => {
       });
 
       socketConnection.on('connect', () => {
-        console.log('✅ Connected to notification server!');
-        console.log('✅ Socket ID:', socketConnection.id);
+        console.log('✅🔥 Connected to notification server!');
+        console.log('✅🔥 Socket ID:', socketConnection.id);
+        console.log('✅🔥 Socket is ready to receive notifications');
         setIsConnected(true);
         isConnecting.current = false;
         currentSocket.current = socketConnection;
+        
+        // Test the connection by emitting a test event
+        socketConnection.emit('test-connection', { userId: user?._id });
+        
+        // Add heartbeat to test connection
+        const heartbeatInterval = setInterval(() => {
+          if (socketConnection.connected) {
+            socketConnection.emit('ping', { timestamp: Date.now() });
+          } else {
+            clearInterval(heartbeatInterval);
+          }
+        }, 30000); // Every 30 seconds
+        
+        // Clean up interval on disconnect
+        socketConnection.on('disconnect', () => {
+          clearInterval(heartbeatInterval);
+        });
       });
 
       socketConnection.on('disconnect', (reason) => {
@@ -153,6 +171,16 @@ export const NotificationProvider = ({ children }) => {
         setIsConnected(false);
         currentSocket.current = null;
         isConnecting.current = false;
+        
+        // Attempt to reconnect after a short delay for certain disconnect reasons
+        if (reason === 'io server disconnect') {
+          console.log('🔄 Server disconnected us, attempting to reconnect in 5 seconds...');
+          setTimeout(() => {
+            if (!currentSocket.current && user && accessToken) {
+              doConnect();
+            }
+          }, 5000);
+        }
       });
 
       socketConnection.on('connect_error', (error) => {
@@ -162,14 +190,30 @@ export const NotificationProvider = ({ children }) => {
         currentSocket.current = null;
         isConnecting.current = false;
 
+        // Attempt to reconnect after a delay
         setTimeout(() => {
-          isConnecting.current = false;
-        }, 5000);
+          console.log('🔄 Attempting to reconnect after connection error...');
+          if (!currentSocket.current && user && accessToken) {
+            isConnecting.current = false;
+            doConnect();
+          }
+        }, 10000); // Wait 10 seconds before retrying
       });
 
       socketConnection.on('notification:new', (notification) => {
-        console.log('📢 New notification received:', notification);
-        setNotifications(prev => [notification, ...prev]);
+        console.log('📢 New notification received via socket:', notification);
+        
+        // Update notifications list with new notification at the top
+        setNotifications(prev => {
+          // Check if notification already exists to avoid duplicates
+          const exists = prev.some(n => (n.id || n._id) === (notification.id || notification._id));
+          if (exists) {
+            return prev;
+          }
+          return [notification, ...prev];
+        });
+        
+        // Increment unread count
         setUnreadCount(prev => prev + 1);
 
         const orderTypes = [
@@ -189,13 +233,56 @@ export const NotificationProvider = ({ children }) => {
         }
       });
 
+      // Add test event listeners for debugging
+      socketConnection.on('pong', (data) => {
+        // Server heartbeat response - connection is healthy
+      });
+
+      // Add listeners for common notification event names that servers might use
+      const commonNotificationEvents = [
+        'notification',
+        'newNotification', 
+        'notification:created',
+        'notification:received',
+        'notificationReceived',
+        'push-notification',
+        'realtime-notification',
+        'user-notification'
+      ];
+
+      commonNotificationEvents.forEach(eventName => {
+        socketConnection.on(eventName, (notification) => {
+          // Handle the notification the same way as notification:new
+          setNotifications(prev => {
+            const exists = prev.some(n => (n.id || n._id) === (notification.id || notification._id));
+            if (exists) {
+              return prev;
+            }
+            return [notification, ...prev];
+          });
+          
+          setUnreadCount(prev => prev + 1);
+
+          // Show alert for non-order notifications
+          const orderTypes = [
+            'order_assigned', 'order_confirmed', 'order_cancelled',
+            'order_failed', 'order_completed', 'order_picked_up'
+          ];
+          
+          const notificationType = notification.type?.toLowerCase();
+          if (!orderTypes.includes(notificationType)) {
+            Alert.alert(notification.title, notification.body, [{ text: 'OK' }]);
+          }
+        });
+      });
+
       currentSocket.current = socketConnection;
     } catch (error) {
       console.error('❌ Error in socket connection setup:', error.message || error);
       setIsConnected(false);
       isConnecting.current = false;
     }
-  }, [accessToken]);
+  }, [accessToken, user]);
 
   const markAsRead = useCallback(async () => {
     if (!user || user.isGuest || !accessToken) {
@@ -271,6 +358,26 @@ export const NotificationProvider = ({ children }) => {
     }
   }, [user, accessToken, notifications]);
 
+  const reconnectSocket = useCallback(async () => {
+    console.log('🔄 Manual socket reconnection requested');
+    
+    // Disconnect existing socket
+    if (currentSocket.current) {
+      currentSocket.current.disconnect();
+      currentSocket.current = null;
+    }
+    
+    setIsConnected(false);
+    isConnecting.current = false;
+    
+    // Wait a moment then reconnect
+    setTimeout(() => {
+      if (user && !user.isGuest && accessToken) {
+        doConnect();
+      }
+    }, 1000);
+  }, [user, accessToken, doConnect]);
+
   const value = {
     notifications,
     unreadCount,
@@ -279,6 +386,8 @@ export const NotificationProvider = ({ children }) => {
     markAsRead,
     markNotificationAsRead,
     deleteNotification,
+    reconnectSocket,
+    forceRefresh: refreshNotifications,
   };
 
   return (

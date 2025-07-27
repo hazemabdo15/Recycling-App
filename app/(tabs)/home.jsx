@@ -2,13 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useRef } from "react";
-import {
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { EarnPointsCard } from "../../components/cards";
 import { ErrorBoundary } from "../../components/common";
@@ -22,12 +16,12 @@ const Index = () => {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, isLoggedIn, loading: authLoading } = useAuth();
-  const { unreadCount, fetchNotifications } = useNotifications();
-  const fetchNotificationsRef = useRef(fetchNotifications);
+  const { unreadCount, refreshNotifications, isConnected } = useNotifications();
+  const refreshNotificationsRef = useRef(refreshNotifications);
 
   useEffect(() => {
-    fetchNotificationsRef.current = fetchNotifications;
-  }, [fetchNotifications]);
+    refreshNotificationsRef.current = refreshNotifications;
+  }, [refreshNotifications]);
 
   const handleNotificationPress = () => {
     console.log("Navigate to notifications");
@@ -39,12 +33,6 @@ const Index = () => {
   return (
     <ErrorBoundary>
       <View style={styles.container}>
-        <StatusBar
-          barStyle="light-content"
-          backgroundColor="transparent"
-          translucent
-        />
-
         <LinearGradient
           colors={[colors.primary, colors.secondary]}
           start={{ x: 0, y: 0 }}
@@ -64,6 +52,10 @@ const Index = () => {
                   size={24}
                   color={colors.white}
                 />
+                {/* Connection status indicator */}
+                <View style={[styles.connectionDot, { 
+                  backgroundColor: isConnected ? '#10B981' : '#EF4444' 
+                }]} />
                 {unreadCount > 0 && (
                   <View style={styles.notificationBadge}>
                     <Text style={styles.badgeText}>
@@ -92,7 +84,7 @@ const Index = () => {
           </View>
 
           <View style={styles.section}>
-            <View style={styles.sectionHeader}>
+            <View style={[styles.sectionHeader, styles.centeredHeader]}>
               <Text style={styles.sectionTitle}>🔥 Trending This Week</Text>
               <Text style={styles.sectionSubtitle}>
                 Most recycled items in your area
@@ -113,14 +105,7 @@ const styles = StyleSheet.create({
   },
   heroSection: {
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
+    paddingBottom: spacing.xl,
   },
   headerRow: {
     flexDirection: "row",
@@ -139,6 +124,16 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
     borderRadius: 20,
     backgroundColor: "rgba(255, 255, 255, 0.15)",
+  },
+  connectionDot: {
+    position: "absolute",
+    bottom: 2,
+    left: 2,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: colors.white,
   },
   notificationBadge: {
     position: "absolute",
@@ -164,61 +159,58 @@ const styles = StyleSheet.create({
   },
   welcomeText: {
     fontSize: 16,
-    fontWeight: "500",
     color: colors.white,
     opacity: 0.9,
     marginBottom: spacing.xs,
   },
   heroTitle: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: "bold",
     color: colors.white,
     textAlign: "center",
     marginBottom: spacing.sm,
-    letterSpacing: -0.5,
+    letterSpacing: -1,
   },
   heroSubtitle: {
-    fontSize: 14,
+    fontSize: 16,
     color: colors.white,
     textAlign: "center",
     opacity: 0.85,
-    lineHeight: 22,
+    lineHeight: 24,
     maxWidth: 280,
   },
   contentContainer: {
     flex: 1,
-    paddingTop: spacing.md,
-    justifyContent: "space-between",
+    backgroundColor: colors.background,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    marginTop: -20,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.lg,
   },
   statsSection: {
-    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
   },
   section: {
-    paddingHorizontal: spacing.lg,
-    maxHeight: 280,
-    justifyContent: "flex-start",
+    marginBottom: spacing.xl,
   },
   sectionHeader: {
-    marginBottom: spacing.sm,
-    paddingHorizontal: spacing.xs,
-    paddingBottom: spacing.xs,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.base200,
+    marginBottom: spacing.md,
+  },
+  centeredHeader: {
     alignItems: "center",
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
     color: colors.text,
-    marginBottom: spacing.xs / 2,
-    letterSpacing: -0.3,
+    marginBottom: spacing.xs,
     textAlign: "center",
   },
   sectionSubtitle: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    lineHeight: 18,
-    fontWeight: "400",
+    fontSize: 14,
+    color: colors.textLight,
+    lineHeight: 20,
     textAlign: "center",
   },
 });
