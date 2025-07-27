@@ -110,6 +110,7 @@ function ProfileContent() {
                   order._id === orderId ? { ...order, status: 'cancelled' } : order
                 )
               );
+              setActiveTab('cancelled');
             } catch {
               Alert.alert('Failed to cancel order');
             }
