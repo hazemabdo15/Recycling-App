@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useAuth } from "../../context/AuthContext";
 
 import { categoriesAPI } from "../../services/api";
 import { borderRadius, spacing, typography } from "../../styles";
@@ -35,6 +36,9 @@ const ReviewPhase = ({
   const [allItems, setAllItems] = useState([]);
   const [itemsLoaded, setItemsLoaded] = useState(false);
   const [cartItemsDisplay, setCartItemsDisplay] = useState([]);
+
+  // Get the real logged-in user from AuthContext
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -157,12 +161,18 @@ const ReviewPhase = ({
         }
       );
 
-      const userData = {
-        phoneNumber: "123456789",
-        name: "Test User",
-        email: "test@example.com",
-        imageUrl: "https://via.placeholder.com/150/0000FF/808080?text=TestUser",
-      };
+
+      // Use the real user data from context, always provide imageUrl as a string
+      const userData = user ? {
+        userId: user._id || user.userId,
+        phoneNumber: user.phoneNumber,
+        userName: user.name || user.userName,
+        email: user.email,
+        imageUrl: (typeof user.imageUrl === 'string' && user.imageUrl && user.imageUrl.trim())
+          || (typeof user.image === 'string' && user.image && user.image.trim())
+          || 'https://via.placeholder.com/150/0000FF/808080?text=User',
+        role: user.role,
+      } : null;
 
       console.log("[ReviewPhase] Calling onConfirm with:", {
         cartItemsArray,
