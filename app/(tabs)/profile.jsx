@@ -81,16 +81,12 @@ function ProfileContent() {
     try {
       setLoading(true);
       const response = await orderService.getOrders();
-      setAllOrders(response.data);
+      console.log('[Profile] Orders API response:', response);
+      // Always use response.data as the orders array (backend always returns orders in data)
+      setAllOrders(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error("Failed to fetch orders", error);
-
-      // Handle authentication errors specifically
       if (error.response?.status === 401 || error.response?.status === 403) {
-        console.error(
-          "[Profile] Authentication error while fetching orders - user may need to re-login"
-        );
-        // Clear orders on auth error to prevent stale data
         setAllOrders([]);
       }
     } finally {
@@ -325,32 +321,34 @@ function ProfileContent() {
               color="green"
               style={{ marginTop: 20 }}
             />
-          ) : user?.role === "buyer" ? (
-            <View style={styles.buyerMessageContainer}>
-              <Text style={styles.buyerMessageTitle}>
-                {getLabel("profileLabels.noOrdersMessage", user?.role)}
-              </Text>
-              <Text style={styles.buyerMessageSubtitle}>
-                Your purchase history will appear here once you start shopping
-              </Text>
-              <TouchableOpacity
-                onPress={() => router.push("/explore")}
-                style={styles.startShoppingButton}
-              >
-                <Text style={styles.startShoppingButtonText}>
-                  Start Shopping
-                </Text>
-              </TouchableOpacity>
-            </View>
           ) : filteredOrders.length === 0 ? (
-            <View style={styles.emptyStateContainer}>
-              <Text style={styles.emptyText}>
-                {getLabel("profileLabels.noOrdersMessage", user?.role)}
-              </Text>
-              <Text style={styles.emptySubtext}>
-                {getLabel("profileLabels.startOrderingMessage", user?.role)}
-              </Text>
-            </View>
+            user?.role === "buyer" ? (
+              <View style={styles.buyerMessageContainer}>
+                <Text style={styles.buyerMessageTitle}>
+                  {getLabel("profileLabels.noOrdersMessage", user?.role)}
+                </Text>
+                <Text style={styles.buyerMessageSubtitle}>
+                  Your purchase history will appear here once you start shopping
+                </Text>
+                <TouchableOpacity
+                  onPress={() => router.push("/explore")}
+                  style={styles.startShoppingButton}
+                >
+                  <Text style={styles.startShoppingButtonText}>
+                    Start Shopping
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.emptyStateContainer}>
+                <Text style={styles.emptyText}>
+                  {getLabel("profileLabels.noOrdersMessage", user?.role)}
+                </Text>
+                <Text style={styles.emptySubtext}>
+                  {getLabel("profileLabels.startOrderingMessage", user?.role)}
+                </Text>
+              </View>
+            )
           ) : (
             filteredOrders.map((order) => (
               <View key={order._id} style={styles.orderCard}>
