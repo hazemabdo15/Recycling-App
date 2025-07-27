@@ -41,11 +41,12 @@ export default function LoginScreen() {
   if (checkingUser) return null;
 
   const handleLogin = async ({ email, password }) => {
+    email = email.trim().toLowerCase();
     if (loading) {
       console.log('[Login] Already processing login, ignoring duplicate request');
       return;
     }
-    
+
     setLoading(true);
     console.log('[Login] Starting login process for:', email);
 
@@ -61,10 +62,16 @@ export default function LoginScreen() {
 
       await login(user, accessToken);
       console.log('[Login] AuthContext updated successfully');
-
-      router.replace('/home');
+      if (user.role === 'delivery') {
+        console.log('[Login] Redirecting to delivery dashboard');
+        router.replace('/delivery/dashboard');
+        return;
+      }
+      else {
+        router.replace('/home');
+      }
     } catch (error) {
-      console.error('[Login] Login failed:', error?.message || 'Unknown error');
+      // console.error('[Login] Login failed:', error?.message || 'Unknown error');
       Alert.alert('Login failed', 'Please check your credentials and try again.');
     } finally {
       setLoading(false);

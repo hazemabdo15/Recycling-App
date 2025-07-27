@@ -219,6 +219,10 @@ class APIService {
       headers.Authorization = `Bearer ${this.accessToken}`;
     }
 
+    if (options.body instanceof FormData) {
+      delete headers['Content-Type'];
+    }
+
     const requestOptions = {
       ...options,
       headers,
@@ -278,7 +282,7 @@ class APIService {
   async post(endpoint, data, options = {}) {
     return this.apiCall(endpoint, {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: data instanceof FormData ? data : JSON.stringify(data),
       ...options
     });
   }
