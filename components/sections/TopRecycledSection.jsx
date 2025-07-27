@@ -1,12 +1,14 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { memo } from "react";
+import { memo, useEffect, useState } from "react";
 import {
+  Image,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { orderService } from "../../services/api/orders";
 const colors = {
   primary: "#0E9F6E",
   secondary: "#8BC34A",
@@ -24,97 +26,110 @@ const borderRadius = {
   lg: 24,
   xl: 32,
 };
+
+const ICON_MAP = {
+  Plastic: { name: "bottle-soda", color: "#FF69B4" },
+  "Aluminum": { name: "cup", color: "#9E9E9E" },
+  "Cardboard": { name: "package-variant", color: "#8BC34A" },
+  "Glass": { name: "glass-fragile", color: "#4FC3F7" },
+  "Paper": { name: "file-document", color: "#FF9800" },
+  // Add more mappings as needed
+};
+
 const TopRecycledSection = memo(() => {
-  const topItems = [
-    {
-      id: 1,
-      name: "Plastic Bottles",
-      iconName: "bottle-soda",
-      iconColor: "#FF69B4",
-      recycleCount: "2.3M",
-      points: "+15 pts",
-    },
-    {
-      id: 2,
-      name: "Aluminum Cans",
-      iconName: "cup",
-      iconColor: "#9E9E9E",
-      recycleCount: "1.8M",
-      points: "+12 pts",
-    },
-    {
-      id: 3,
-      name: "Cardboard",
-      iconName: "package-variant",
-      iconColor: "#8BC34A",
-      recycleCount: "1.5M",
-      points: "+10 pts",
-    },
-    {
-      id: 4,
-      name: "Glass Jars",
-      iconName: "glass-fragile",
-      iconColor: "#4FC3F7",
-      recycleCount: "1.2M",
-      points: "+18 pts",
-    },
-    {
-      id: 5,
-      name: "Paper",
-      iconName: "file-document",
-      iconColor: "#FF9800",
-      recycleCount: "980K",
-      points: "+8 pts",
-    },
-  ];
+  const [topItems, setTopItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    setError(null);
+    orderService.getTopMaterials()
+      .then((res) => {
+        if (mounted && res?.success) {
+          setTopItems(res.data || []);
+        } else if (mounted) {
+          setError("Failed to load data");
+        }
+      })
+      .catch((err) => {
+        setError("Failed to load data");
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+    return () => { mounted = false; };
+  }, []);
+
   const handleItemPress = (item) => {
-    console.log(`${item.name} pressed`);
+    // You can add navigation or modal here
+    console.log(`${item._id?.itemName || item.itemName} pressed`);
   };
+
   return (
     <View style={styles.section}>
       <View style={styles.headerContainer}></View>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContainer}
-      >
-        {topItems.map((item, index) => (
-          <TouchableOpacity
-            key={item.id}
-            style={[
-              styles.itemCard,
-              index === topItems.length - 1 && { marginRight: 0 },
-            ]}
-            onPress={() => handleItemPress(item)}
-            activeOpacity={0.8}
-          >
-            <View style={styles.rankBadge}>
-              <Text style={styles.rankText}>#{index + 1}</Text>
-            </View>
-            <View style={styles.iconContainer}>
-              <MaterialCommunityIcons
-                name={item.iconName}
-                size={28}
-                color={item.iconColor}
-              />
-            </View>
-            <Text style={styles.itemName}>{item.name}</Text>
-            <View style={styles.statsContainer}>
-              <View style={styles.statItem}>
-                <MaterialCommunityIcons
-                  name="recycle"
-                  size={14}
-                  color={colors.primary}
-                />
-                <Text style={styles.recycleCount}>{item.recycleCount}</Text>
-              </View>
-              <View style={styles.pointsBadge}>
-                <Text style={styles.pointsText}>{item.points}</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+      {loading ? (
+        <Text style={{ textAlign: "center", color: colors.neutral, marginVertical: 16 }}>Loading...</Text>
+      ) : error ? (
+        <Text style={{ textAlign: "center", color: "#dc2626", marginVertical: 16 }}>{error}</Text>
+      ) : topItems.length === 0 ? (
+        <Text style={{ textAlign: "center", color: colors.neutral, marginVertical: 16 }}>No data available.</Text>
+      ) : (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContainer}
+        >
+          {topItems.map((item, index) => {
+            const iconInfo = ICON_MAP[item.categoryName] || { name: "recycle", color: colors.primary };
+            return (
+              <TouchableOpacity
+                key={item._id?.itemName || item._id || index}
+                style={[
+                  styles.itemCard,
+                  index === topItems.length - 1 && { marginRight: 0 },
+                ]}
+                onPress={() => handleItemPress(item)}
+                activeOpacity={0.8}
+              >
+                <View style={styles.rankBadge}>
+                  <Text style={styles.rankText}>#{index + 1}</Text>
+                </View>
+                {item.image ? (
+                  <Image
+                    source={{ uri: item.image }}
+                    style={styles.itemImage}
+                    resizeMode="contain"
+                  />
+                ) : null}
+                <View style={styles.iconContainer}>
+                  <MaterialCommunityIcons
+                    name={iconInfo.name}
+                    size={28}
+                    color={iconInfo.color}
+                  />
+                </View>
+                <Text style={styles.itemName}>{item._id?.itemName || item.itemName}</Text>
+                <View style={styles.statsContainer}>
+                  <View style={styles.statItem}>
+                    <MaterialCommunityIcons
+                      name="recycle"
+                      size={14}
+                      color={colors.primary}
+                    />
+                    <Text style={styles.recycleCount}>{item.totalQuantity}</Text>
+                  </View>
+                  <View style={styles.pointsBadge}>
+                    <Text style={styles.pointsText}>+{item.totalPoints} pts</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      )}
     </View>
   );
 });
@@ -179,9 +194,18 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "bold",
   },
+  itemImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 10,
+    alignSelf: "center",
+    marginTop: 8,
+    marginBottom: 4,
+    backgroundColor: colors.base100,
+  },
   iconContainer: {
     alignItems: "center",
-    marginVertical: 12,
+    marginVertical: 6,
   },
   itemName: {
     fontSize: 14,
