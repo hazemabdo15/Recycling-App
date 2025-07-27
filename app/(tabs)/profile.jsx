@@ -55,20 +55,9 @@ function ProfileContent() {
     console.log("User role:", user?.role);
 
     if (isLoggedIn && user?.email) {
-      // Only fetch orders for customers, buyers don't have pickup orders
-      if (user?.role === "customer") {
-        console.log("[Profile] Customer role detected, fetching orders");
-        fetchOrders();
-      } else if (user?.role === "buyer") {
-        console.log(
-          "[Profile] Buyer role detected, skipping order fetch (buyers use purchase orders)"
-        );
-        setAllOrders([]);
-        setLoading(false);
-      } else {
-        console.log("[Profile] Unknown role, attempting to fetch orders");
-        fetchOrders();
-      }
+      // Fetch orders for both customers and buyers
+      console.log(`[Profile] ${user?.role} role detected, fetching orders`);
+      fetchOrders();
     } else {
       // User is not logged in, clear orders and loading state
       console.log("[Profile] User not logged in, clearing orders");

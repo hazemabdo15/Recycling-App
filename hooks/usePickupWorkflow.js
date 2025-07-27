@@ -36,14 +36,7 @@ export const usePickupWorkflow = () => {
   const fetchAddresses = useCallback(async () => {
     console.log('[Pickup Workflow] fetchAddresses called, user role:', user?.role);
     
-    // Buyers don't need addresses - they purchase materials, don't schedule pickups
-    if (user?.role === 'buyer') {
-      console.log('[Pickup Workflow] Skipping address fetch for buyer role');
-      setAddresses([]);
-      setLoading(false);
-      setFetchingAddresses(false);
-      return;
-    }
+    // Buyers now can fetch and see their saved addresses
 
     if (fetchingAddresses) {
       console.log('[Pickup Workflow] Already fetching addresses, skipping...');

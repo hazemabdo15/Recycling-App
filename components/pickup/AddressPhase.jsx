@@ -2,14 +2,14 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
 import { useEffect, useRef, useState } from 'react';
 import {
-    Alert,
-    FlatList,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  FlatList,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 import { useAuth } from '../../context/AuthContext';
@@ -49,17 +49,13 @@ const AddressPhase = ({ onNext, onAddressSelect, onBack, pickupWorkflow }) => {
     console.log('AddressPhase mounted, checking authentication...');
     console.log('isLoggedIn:', isLoggedIn, 'user:', user?.email, 'role:', user?.role);
     
-    // Buyers don't need addresses - they purchase materials, don't schedule pickups
-    if (user?.role === 'buyer') {
-      console.log('Buyer role detected, skipping address functionality');
-      hasFetchedAddresses.current = true; // Prevent further attempts
-      return;
-    }
+    // Buyers now need to see their saved addresses as well
     
     // Only fetch addresses if user is properly authenticated and we haven't fetched yet
     if (isLoggedIn && user?.email && pickupWorkflow?.fetchAddresses && !hasFetchedAddresses.current) {
-      console.log('Fetching addresses for authenticated customer...');
+      console.log('Fetching addresses for authenticated user:', user?._id);
       hasFetchedAddresses.current = true;
+      // Call fetchAddresses with no params; backend uses authenticated user
       pickupWorkflow.fetchAddresses();
     } else if (!isLoggedIn) {
       console.log('User not authenticated, skipping address fetch');
@@ -359,21 +355,44 @@ const AddressPhase = ({ onNext, onAddressSelect, onBack, pickupWorkflow }) => {
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Loading addresses...</Text>
         </View>
-      ) : pickupWorkflow.addresses.length > 0 ? (
-        <FlatList
-          data={pickupWorkflow.addresses}
-          renderItem={renderAddressItem}
-          keyExtractor={(item) => item._id}
-          contentContainerStyle={styles.listContainer}
-          showsVerticalScrollIndicator={false}
-        />
-      ) : (
-        <View style={styles.emptyContainer}>
-          <MaterialCommunityIcons name="map-marker-off" size={64} color={colors.base300} />
-          <Text style={styles.emptyTitle}>No addresses found</Text>
-          <Text style={styles.emptySubtitle}>Add your first address to get started</Text>
-        </View>
-      )}
+      ) : (() => {
+        // Filter addresses for buyers to only their own
+        let addresses = pickupWorkflow.addresses;
+        if (user?.role === 'buyer' && user?._id) {
+          addresses = addresses.filter(addr => {
+            let addrUserId = addr.userId;
+            if (typeof addrUserId === 'object' && addrUserId.$oid) {
+              addrUserId = addrUserId.$oid;
+            }
+            const userIdStr = String(user._id);
+            const addrUserIdStr = String(addrUserId);
+            // Debug log
+            if (addrUserIdStr !== userIdStr) {
+              console.log('[AddressPhase] Skipping address:', addr, 'addrUserId:', addrUserIdStr, 'user._id:', userIdStr);
+            }
+            return addrUserIdStr === userIdStr;
+          });
+        }
+        if (addresses.length > 0) {
+          return (
+            <FlatList
+              data={addresses}
+              renderItem={renderAddressItem}
+              keyExtractor={(item) => item._id}
+              contentContainerStyle={styles.listContainer}
+              showsVerticalScrollIndicator={false}
+            />
+          );
+        } else {
+          return (
+            <View style={styles.emptyContainer}>
+              <MaterialCommunityIcons name="map-marker-off" size={64} color={colors.base300} />
+              <Text style={styles.emptyTitle}>No addresses found</Text>
+              <Text style={styles.emptySubtitle}>Add your first address to get started</Text>
+            </View>
+          );
+        }
+      })()}
 
       <View style={styles.footer}>
         <TouchableOpacity style={styles.backButton} onPress={onBack}>

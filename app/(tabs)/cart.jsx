@@ -3,14 +3,13 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
-    Alert,
-    FlatList,
-    Image,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  FlatList,
+  Image,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AnimatedButton, AnimatedListItem } from "../../components/common";
@@ -465,13 +464,10 @@ const Cart = () => {
                   !canProceed && styles.checkoutBtnBarDisabled,
                 ]}
                 onPress={
-                  canSchedulePickup 
+                  canSchedulePickup
                     ? () => router.push("/pickup")
                     : canProceedToPurchase
-                    ? () => {
-                        // TODO: Implement buyer purchase flow
-                        Alert.alert('Purchase', 'Buyer purchase flow coming soon!');
-                      }
+                    ? () => router.push("/pickup")
                     : null
                 }
                 disabled={!canProceed}
