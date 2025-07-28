@@ -4,13 +4,15 @@ import { useCallback, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 import LoginForm from '../components/auth/LoginForm';
 import { useAuth } from '../context/AuthContext';
+import { useCartContext } from '../context/CartContext';
 import { loginUser } from '../services/auth';
 import { getLoggedInUser } from '../utils/authUtils';
 
 export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [checkingUser, setCheckingUser] = useState(true);
-  const { login, setUser, isLoggedIn, user } = useAuth();
+  const { login, isLoggedIn, user } = useAuth();
+  const { refreshCart } = useCartContext();
 
   useFocusEffect(
     useCallback(() => {
@@ -84,12 +86,20 @@ export default function LoginScreen() {
 
       await login(user, accessToken);
       console.log('[Login] AuthContext updated successfully');
+
+      // Refresh cart after login to ensure merged items are shown
+      try {
+        await refreshCart();
+        console.log('[Login] Cart refreshed after login');
+      } catch (cartErr) {
+        console.warn('[Login] Failed to refresh cart after login:', cartErr);
+      }
+
       if (user.role === 'delivery') {
         console.log('[Login] Redirecting to delivery dashboard');
         router.replace('/delivery/dashboard');
         return;
-      }
-      else {
+      } else {
         router.replace('/home');
       }
     } catch (_error) {

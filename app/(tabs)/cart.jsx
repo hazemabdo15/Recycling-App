@@ -51,7 +51,7 @@ const getRoleBasedIcon = (iconType, userRole = 'customer') => {
 
 const Cart = () => {
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
+  const { user, isLoggedIn } = useAuth();
   const {
     cartItems,
     handleIncreaseQuantity,
@@ -61,6 +61,8 @@ const Cart = () => {
     fetchBackendCart,
     removingItems,
   } = useCart();
+  // const { refreshCart } = useCartContext();
+  // Removed refreshCart effect to prevent infinite fetch loop. CartContext handles cart fetching after login.
   const { items: allItems, loading: itemsLoading } = useAllItems();
   const [backendCartItems, setBackendCartItems] = useState([]);
   const [loading, setLoading] = useState(true);

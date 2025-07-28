@@ -23,6 +23,7 @@ export const CartProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [pendingOperations, setPendingOperations] = useState(new Set());
   const [removingItems, setRemovingItems] = useState(new Set());
+  // const [fetchingCart, setFetchingCart] = useState(false);
 
   useEffect(() => {
     let didCancel = false;
@@ -36,12 +37,14 @@ export const CartProvider = ({ children }) => {
       setPendingOperations(new Set());
       setRemovingItems(new Set());
       setLoading(false);
+      // setFetchingCart(false);
       // Clear sessionId and accessToken from storage
       clearAuthData();
       return;
     }
 
-    // User is logged in, fetch cart (including after login/merge)
+    // Always fetch cart after login, do not skip if fetchingCart is true
+    // setFetchingCart(true);
     setLoading(true);
     getCart(isLoggedIn)
       .then((cart) => {
@@ -67,6 +70,7 @@ export const CartProvider = ({ children }) => {
       .finally(() => {
         if (didCancel) return;
         setLoading(false);
+        // setFetchingCart(false);
       });
     return () => {
       didCancel = true;
@@ -366,7 +370,7 @@ export const CartProvider = ({ children }) => {
         handleUpdateQuantity,
         handleRemoveFromCart,
         handleClearCart,
-        refreshCart,
+        refreshCart, // <-- ensure this is exported
         fetchBackendCart,
         testConnectivity,
         testMinimalPostRequest,
