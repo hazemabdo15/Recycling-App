@@ -1,8 +1,8 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import * as Linking from 'expo-linking';
-import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import * as Linking from "expo-linking";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   StatusBar,
@@ -10,28 +10,77 @@ import {
   Text,
   TouchableOpacity,
   View,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import AddressPhase from '../components/pickup/AddressPhase';
-import ConfirmationPhase from '../components/pickup/ConfirmationPhase';
-import ReviewPhase from '../components/pickup/ReviewPhase';
-import { useAuth } from '../context/AuthContext';
-import { useCart } from '../hooks/useCart';
-import { usePickupWorkflow } from '../hooks/usePickupWorkflow';
-import { isAuthenticated } from '../services/auth';
-import { colors, spacing, typography } from '../styles/theme';
-import { getProgressStepLabel } from '../utils/roleLabels';
+import AddressPhase from "../components/pickup/AddressPhase";
+import ConfirmationPhase from "../components/pickup/ConfirmationPhase";
+import ReviewPhase from "../components/pickup/ReviewPhase";
+import { useAuth } from "../context/AuthContext";
+import { useCart } from "../hooks/useCart";
+import { usePickupWorkflow } from "../hooks/usePickupWorkflow";
+import { categoriesAPI } from "../services/api";
+import { isAuthenticated } from "../services/auth";
+import { colors, spacing, typography } from "../styles/theme";
+import { getProgressStepLabel } from "../utils/roleLabels";
 
 export default function Pickup() {
   const insets = useSafeAreaInsets();
-  const { user, isLoggedIn, accessToken, loading: authContextLoading } = useAuth();
+  const {
+    user,
+    isLoggedIn,
+    accessToken,
+    loading: authContextLoading,
+  } = useAuth();
   const { cartItems } = useCart();
-  
+
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState(null);
   const [dialogShown, setDialogShown] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const [creatingOrder, setCreatingOrder] = useState(false);
+  
+  // Store cart items in ref to prevent issues with state updates during order creation
+  const cartItemsRef = useRef(cartItems);
+  
+  // Update ref when cart items change
+  useEffect(() => {
+    cartItemsRef.current = cartItems;
+  }, [cartItems]);
+
+  // Check for recent order creation on component mount
+  useEffect(() => {
+    const checkRecentOrderCreation = async () => {
+      try {
+        const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
+        const lastOrderData = await AsyncStorage.getItem('lastOrderCreated');
+        if (lastOrderData) {
+          const orderInfo = JSON.parse(lastOrderData);
+          const timeDiff = Date.now() - orderInfo.timestamp;
+          
+          // If order was created within the last 5 minutes and was successful
+          if (timeDiff < 5 * 60 * 1000 && orderInfo.success) {
+            console.log('[Pickup] Recent successful order found:', orderInfo);
+            
+            // Clear the stored data
+            await AsyncStorage.removeItem('lastOrderCreated');
+            
+            // Set to confirmation phase if not already there
+            if (currentPhase !== 3 && typeof setCurrentPhase === 'function') {
+              console.log('[Pickup] Setting phase to confirmation due to recent order');
+              setCurrentPhase(3);
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('[Pickup] Could not check recent order creation:', error);
+      }
+    };
+
+    if (isFocused) {
+      checkRecentOrderCreation();
+    }
+  }, [isFocused, currentPhase, setCurrentPhase]);
 
   useEffect(() => {
     // Auth state tracking for debugging authentication issues
@@ -40,7 +89,7 @@ export default function Pickup() {
   useFocusEffect(
     useCallback(() => {
       setIsFocused(true);
-      
+
       return () => {
         setIsFocused(false);
         setDialogShown(false);
@@ -52,24 +101,24 @@ export default function Pickup() {
     if (!isFocused) {
       return;
     }
-    
+
     const checkAuth = async () => {
       try {
         if (authContextLoading) {
           return;
         }
-        
+
         if (!isLoggedIn || !user) {
-          setAuthError('LOGIN_REQUIRED');
+          setAuthError("LOGIN_REQUIRED");
           setAuthLoading(false);
           return;
         }
 
         const authStatus = await isAuthenticated();
-        console.log('[Pickup] isAuthenticated() result:', authStatus);
+        console.log("[Pickup] isAuthenticated() result:", authStatus);
 
         if (!authStatus) {
-          setAuthError('TOKEN_EXPIRED');
+          setAuthError("TOKEN_EXPIRED");
           setAuthLoading(false);
           return;
         }
@@ -77,8 +126,8 @@ export default function Pickup() {
         setAuthError(null);
         setAuthLoading(false);
       } catch (error) {
-        console.error('[Pickup] Authentication check failed:', error);
-        setAuthError('AUTH_ERROR');
+        console.error("[Pickup] Authentication check failed:", error);
+        setAuthError("AUTH_ERROR");
         setAuthLoading(false);
       }
     };
@@ -97,56 +146,181 @@ export default function Pickup() {
     setSelectedAddress = () => {},
     createOrder = () => {},
     reset = () => {},
-    setCurrentPhase = () => {}
+    setCurrentPhase = () => {},
   } = workflowHook || {};
 
   // Deep link handler for Stripe Checkout redirects
   useEffect(() => {
-    const handleDeepLink = (event) => {
-      const url = event.url;
-      console.log('[Pickup] Deep link received:', url);
-      
-      if (url.includes('confirmation')) {
-        console.log('[Pickup] Stripe payment successful, navigating to confirmation phase');
-        if (setCurrentPhase && typeof setCurrentPhase === 'function') {
-          setCurrentPhase(3);
+    const handleDeepLink = async (event) => {
+      const { queryParams } = Linking.parse(event.url);
+      if (
+        queryParams.phase === "confirmation" &&
+        queryParams.payment === "success"
+      ) {
+        if (setCurrentPhase && typeof setCurrentPhase === "function") {
+          setCurrentPhase(3); // confirmation phase
+        }
+        
+        // Create the order after successful payment
+        if (typeof createOrder === "function" && cartItemsRef.current && user && selectedAddress && !creatingOrder) {
+          setCreatingOrder(true);
+          console.log('[Pickup] Starting order creation after successful payment');
+          console.log('[Pickup] Cart items count:', Object.keys(cartItemsRef.current).length);
+          console.log('[Pickup] User info:', { id: user._id, name: user.name, role: user.role });
+          
+          try {
+            // Fetch all items to get full details
+            console.log('[Pickup] Fetching item details from API...');
+            const response = await categoriesAPI.getAllItems();
+            const allItems = response.data?.items || response.data || response.items || response;
+            const itemsArray = Array.isArray(allItems) ? allItems : [];
+            console.log('[Pickup] Fetched items count:', itemsArray.length);
+            
+            // Convert cartItems object to array with full item details
+            const cartItemsArray = Object.entries(cartItemsRef.current).map(([categoryId, quantity]) => {
+              const realItem = itemsArray.find(
+                (item) => item._id === categoryId || item.categoryId === categoryId
+              );
+
+              if (realItem) {
+                const measurementUnit = typeof realItem.measurement_unit === 'string' 
+                  ? (realItem.measurement_unit === "KG" ? 1 : 2) 
+                  : Number(realItem.measurement_unit);
+                  
+                return {
+                  categoryId: categoryId,
+                  quantity: Number(quantity),
+                  itemName: realItem.name,
+                  measurement_unit: measurementUnit,
+                  points: realItem.points || 10,
+                  price: realItem.price || 5.0,
+                  image: realItem.image || `${realItem.name.toLowerCase().replace(/\s+/g, "-")}.png`,
+                };
+              } else {
+                // Fallback for items not found
+                console.warn('[Pickup] Item not found in API response:', categoryId);
+                return {
+                  categoryId: categoryId,
+                  quantity: Number(quantity),
+                  itemName: `Item ${categoryId}`,
+                  measurement_unit: 1,
+                  points: 10,
+                  price: 5.0,
+                  image: `item-${categoryId.slice(-4)}.png`,
+                };
+              }
+            });
+
+            console.log('[Pickup] Processed cart items for order:', cartItemsArray.length);
+
+            // Format user data properly
+            const userData = {
+              userId: user._id || user.userId,
+              phoneNumber: user.phoneNumber || user.phone || '',
+              userName: user.name || user.userName || '',
+              email: user.email || '',
+              imageUrl: (typeof user.imageUrl === 'string' && user.imageUrl && user.imageUrl.trim())
+                || (typeof user.image === 'string' && user.image && user.image.trim())
+                || 'https://via.placeholder.com/150/0000FF/808080?text=User',
+              role: user.role,
+            };
+
+            console.log('[Pickup] Formatted user data for order');
+            console.log('[Pickup] Selected address available:', !!selectedAddress);
+
+            // Create the order with properly formatted data
+            console.log('[Pickup] Calling createOrder function...');
+            console.log('[Pickup] Order creation payload:', {
+              cartItemsCount: cartItemsArray.length,
+              userDataKeys: Object.keys(userData),
+              selectedAddressKeys: selectedAddress ? Object.keys(selectedAddress) : []
+            });
+            
+            const orderResult = await createOrder(cartItemsArray, userData);
+            
+            console.log('[Pickup] Order created successfully after Stripe payment:', orderResult);
+            
+            // Store success in localStorage to persist across app reloads
+            try {
+              await import('@react-native-async-storage/async-storage').then(({ default: AsyncStorage }) => {
+                AsyncStorage.setItem('lastOrderCreated', JSON.stringify({
+                  timestamp: Date.now(),
+                  success: true,
+                  orderId: orderResult?._id || orderResult?.id || 'unknown'
+                }));
+              });
+            } catch (storageError) {
+              console.warn('[Pickup] Could not store order success state:', storageError);
+            }
+          } catch (error) {
+            console.error('[Pickup] Failed to create order after payment:', error);
+            console.error('[Pickup] Error details:', {
+              message: error.message,
+              stack: error.stack,
+              name: error.name
+            });
+            
+            Alert.alert(
+              "Order Creation Failed", 
+              `Payment was successful but we couldn't create your order. Error: ${error.message}\n\nPlease contact support with this information.`
+            );
+          } finally {
+            setCreatingOrder(false);
+          }
+        } else if (creatingOrder) {
+          console.log('[Pickup] Order creation already in progress, skipping...');
         } else {
-          console.warn('[Pickup] setCurrentPhase not available, using nextPhase fallback');
-          nextPhase();
-          nextPhase(); // Move to phase 3
+          console.log('[Pickup] Order creation skipped - missing requirements:', {
+            createOrderFunction: typeof createOrder === "function",
+            cartItemsExists: !!cartItemsRef.current,
+            cartItemsCount: cartItemsRef.current ? Object.keys(cartItemsRef.current).length : 0,
+            userExists: !!user,
+            selectedAddressExists: !!selectedAddress,
+            creatingOrderInProgress: creatingOrder
+          });
         }
-      } else if (url.includes('review')) {
-        console.log('[Pickup] Stripe payment cancelled, staying on review phase');
-        if (setCurrentPhase && typeof setCurrentPhase === 'function') {
-          setCurrentPhase(2);
+      } else if (
+        queryParams.phase === "review" &&
+        queryParams.payment === "cancelled"
+      ) {
+        if (setCurrentPhase && typeof setCurrentPhase === "function") {
+          setCurrentPhase(2); // review phase
         }
-        Alert.alert(
-          'Payment Cancelled', 
-          'Your payment was cancelled. You can try again when ready.',
-          [{ text: 'OK' }]
-        );
+        Alert.alert("Payment Cancelled", "Your payment was cancelled.");
       }
     };
-
-    const subscription = Linking.addEventListener('url', handleDeepLink);
-    
-    return () => {
-      subscription?.remove();
-    };
-  }, [setCurrentPhase, nextPhase]);
+    const sub = Linking.addEventListener("url", handleDeepLink);
+    return () => sub.remove();
+  }, [
+    setCurrentPhase,
+    createOrder,
+    cartItems,
+    user,
+    selectedAddress,
+    creatingOrder,
+  ]);
 
   useEffect(() => {
-    console.log('[Pickup] Phase changed to:', currentPhase);
-    console.log('[Pickup] Selected address:', selectedAddress ? 'present' : 'null');
+    console.log("[Pickup] Phase changed to:", currentPhase);
+    console.log(
+      "[Pickup] Selected address:",
+      selectedAddress ? "present" : "null"
+    );
   }, [currentPhase, selectedAddress]);
 
-  const handleAddressSelect = useCallback((address) => {
-    console.log('[Pickup] handleAddressSelect called with:', address);
-    setSelectedAddress(address);
-  }, [setSelectedAddress]);
+  const handleAddressSelect = useCallback(
+    (address) => {
+      console.log("[Pickup] handleAddressSelect called with:", address);
+      setSelectedAddress(address);
+    },
+    [setSelectedAddress]
+  );
 
   const handleNextPhase = useCallback(() => {
-    console.log('[Pickup] handleNextPhase called, current phase:', currentPhase);
+    console.log(
+      "[Pickup] handleNextPhase called, current phase:",
+      currentPhase
+    );
     nextPhase();
   }, [nextPhase, currentPhase]);
 
@@ -154,44 +328,56 @@ export default function Pickup() {
     if (!isFocused || !authError || dialogShown) {
       return;
     }
-    
+
     setDialogShown(true);
-    
-    if (authError === 'LOGIN_REQUIRED') {
+
+    if (authError === "LOGIN_REQUIRED") {
       Alert.alert(
-        'Login Required',
-        'You need to be logged in to schedule a pickup. Please log in to continue.',
+        "Login Required",
+        "You need to be logged in to schedule a pickup. Please log in to continue.",
         [
-          { text: 'Cancel', onPress: () => {
-            setDialogShown(false);
-            router.back();
-          }},
-          { text: 'Login', onPress: () => {
-            setDialogShown(false);
-            router.push('/login');
-          }}
+          {
+            text: "Cancel",
+            onPress: () => {
+              setDialogShown(false);
+              router.back();
+            },
+          },
+          {
+            text: "Login",
+            onPress: () => {
+              setDialogShown(false);
+              router.push("/login");
+            },
+          },
         ]
       );
-    } else if (authError === 'TOKEN_EXPIRED') {
+    } else if (authError === "TOKEN_EXPIRED") {
       Alert.alert(
-        'Session Expired',
-        'Your session has expired. Please log in again to schedule a pickup.',
+        "Session Expired",
+        "Your session has expired. Please log in again to schedule a pickup.",
         [
-          { text: 'OK', onPress: () => {
-            setDialogShown(false);
-            router.push('/login');
-          }}
+          {
+            text: "OK",
+            onPress: () => {
+              setDialogShown(false);
+              router.push("/login");
+            },
+          },
         ]
       );
-    } else if (authError === 'AUTH_ERROR') {
+    } else if (authError === "AUTH_ERROR") {
       Alert.alert(
-        'Authentication Error',
-        'There was an issue verifying your session. Please try logging in again.',
+        "Authentication Error",
+        "There was an issue verifying your session. Please try logging in again.",
         [
-          { text: 'OK', onPress: () => {
-            setDialogShown(false);
-            router.push('/login');
-          }}
+          {
+            text: "OK",
+            onPress: () => {
+              setDialogShown(false);
+              router.push("/login");
+            },
+          },
         ]
       );
     }
@@ -204,8 +390,12 @@ export default function Pickup() {
   if (authLoading || authContextLoading) {
     return (
       <View style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-        
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor="transparent"
+          translucent
+        />
+
         <LinearGradient
           colors={[colors.primary, colors.secondary]}
           start={{ x: 0, y: 0 }}
@@ -217,10 +407,10 @@ export default function Pickup() {
 
         <View style={styles.content}>
           <View style={styles.messageContainer}>
-            <MaterialCommunityIcons 
-              name="loading" 
-              size={64} 
-              color={colors.primary} 
+            <MaterialCommunityIcons
+              name="loading"
+              size={64}
+              color={colors.primary}
             />
             <Text style={styles.messageTitle}>Preparing Pickup</Text>
             <Text style={styles.messageText}>
@@ -235,8 +425,12 @@ export default function Pickup() {
   if (authError) {
     return (
       <View style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-        
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor="transparent"
+          translucent
+        />
+
         <LinearGradient
           colors={[colors.primary, colors.secondary]}
           start={{ x: 0, y: 0 }}
@@ -248,10 +442,10 @@ export default function Pickup() {
 
         <View style={styles.content}>
           <View style={styles.messageContainer}>
-            <MaterialCommunityIcons 
-              name="account-alert" 
-              size={64} 
-              color={colors.primary} 
+            <MaterialCommunityIcons
+              name="account-alert"
+              size={64}
+              color={colors.primary}
             />
             <Text style={styles.messageTitle}>Login Required</Text>
             <Text style={styles.messageText}>
@@ -272,7 +466,7 @@ export default function Pickup() {
       case 3:
         return getProgressStepLabel(3, user?.role);
       default:
-        return 'Schedule Pickup';
+        return "Schedule Pickup";
     }
   };
 
@@ -280,22 +474,28 @@ export default function Pickup() {
     <View style={styles.progressContainer}>
       {[1, 2, 3].map((phase) => (
         <View key={phase} style={styles.progressStep}>
-          <View style={[
-            styles.progressCircle,
-            currentPhase >= phase && styles.progressCircleActive
-          ]}>
-            <Text style={[
-              styles.progressText,
-              currentPhase >= phase && styles.progressTextActive
-            ]}>
+          <View
+            style={[
+              styles.progressCircle,
+              currentPhase >= phase && styles.progressCircleActive,
+            ]}
+          >
+            <Text
+              style={[
+                styles.progressText,
+                currentPhase >= phase && styles.progressTextActive,
+              ]}
+            >
               {phase}
             </Text>
           </View>
           {phase < 3 && (
-            <View style={[
-              styles.progressLine,
-              currentPhase > phase && styles.progressLineActive
-            ]} />
+            <View
+              style={[
+                styles.progressLine,
+                currentPhase > phase && styles.progressLineActive,
+              ]}
+            />
           )}
         </View>
       ))}
@@ -303,96 +503,130 @@ export default function Pickup() {
   );
 
   const renderCurrentPhase = (phase = currentPhase) => {
-    console.log('[Pickup] Rendering phase:', phase);
-    
+    console.log("[Pickup] Rendering phase:", phase);
+
     try {
       switch (phase) {
-      case 1:
-        return (
-          <AddressPhase
-            user={user}
-            selectedAddress={selectedAddress}
-            onAddressSelect={handleAddressSelect}
-            onNext={handleNextPhase}
-            onBack={() => router.back()}
-            pickupWorkflow={workflowHook}
-          />
-        );
-      case 2:
+        case 1:
+          return (
+            <AddressPhase
+              user={user}
+              selectedAddress={selectedAddress}
+              onAddressSelect={handleAddressSelect}
+              onNext={handleNextPhase}
+              onBack={() => router.back()}
+              pickupWorkflow={workflowHook}
+            />
+          );
+        case 2:
+          if (!selectedAddress) {
+            console.log("[Pickup] No selected address, staying in phase 1");
+            return renderCurrentPhase(1);
+          }
+          if (!cartItems || Object.keys(cartItems).length === 0) {
+            console.log("[Pickup] No cart items, redirecting to cart");
+            router.push("/(tabs)/cart");
+            return null;
+          }
 
-        if (!selectedAddress) {
-          console.log('[Pickup] No selected address, staying in phase 1');
-          return renderCurrentPhase(1);
-        }
-        if (!cartItems || Object.keys(cartItems).length === 0) {
-          console.log('[Pickup] No cart items, redirecting to cart');
-          router.push('/(tabs)/cart');
+          console.log("[Pickup] Rendering ReviewPhase with:", {
+            user: !!user,
+            cartItems: Object.keys(cartItems).length,
+            selectedAddress: !!selectedAddress,
+            loading: workflowHook?.loading,
+            selectedAddressKeys: selectedAddress
+              ? Object.keys(selectedAddress)
+              : [],
+            userType: typeof user,
+            cartItemsType: typeof cartItems,
+          });
+
+          if (typeof createOrder !== "function") {
+            console.error(
+              "[Pickup] createOrder is not a function:",
+              typeof createOrder
+            );
+            return (
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  padding: 20,
+                }}
+              >
+                <Text style={{ color: "red", textAlign: "center" }}>
+                  Configuration error: Invalid createOrder function
+                </Text>
+              </View>
+            );
+          }
+
+          if (typeof previousPhase !== "function") {
+            console.error(
+              "[Pickup] previousPhase is not a function:",
+              typeof previousPhase
+            );
+            return (
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  padding: 20,
+                }}
+              >
+                <Text style={{ color: "red", textAlign: "center" }}>
+                  Configuration error: Invalid previousPhase function
+                </Text>
+              </View>
+            );
+          }
+
+          console.log("[Pickup] Creating ReviewPhase directly...");
+          return (
+            <ReviewPhase
+              user={user}
+              cartItems={cartItems}
+              selectedAddress={selectedAddress}
+              onConfirm={createOrder}
+              onBack={previousPhase}
+              loading={workflowHook?.loading || false}
+              pickupWorkflow={workflowHook}
+              accessToken={accessToken}
+            />
+          );
+        case 3:
+          return (
+            <ConfirmationPhase
+              order={orderData}
+              onFinish={() => {
+                reset();
+                router.push("/(tabs)/home");
+              }}
+            />
+          );
+        default:
           return null;
-        }
-        
-        console.log('[Pickup] Rendering ReviewPhase with:', {
-          user: !!user,
-          cartItems: Object.keys(cartItems).length,
-          selectedAddress: !!selectedAddress,
-          loading: workflowHook?.loading,
-          selectedAddressKeys: selectedAddress ? Object.keys(selectedAddress) : [],
-          userType: typeof user,
-          cartItemsType: typeof cartItems
-        });
-
-        if (typeof createOrder !== 'function') {
-          console.error('[Pickup] createOrder is not a function:', typeof createOrder);
-          return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-              <Text style={{ color: 'red', textAlign: 'center' }}>
-                Configuration error: Invalid createOrder function
-              </Text>
-            </View>
-          );
-        }
-        
-        if (typeof previousPhase !== 'function') {
-          console.error('[Pickup] previousPhase is not a function:', typeof previousPhase);
-          return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-              <Text style={{ color: 'red', textAlign: 'center' }}>
-                Configuration error: Invalid previousPhase function
-              </Text>
-            </View>
-          );
-        }
-
-        console.log('[Pickup] Creating ReviewPhase directly...');
-        return (
-          <ReviewPhase
-            user={user}
-            cartItems={cartItems}
-            selectedAddress={selectedAddress}
-            onConfirm={createOrder}
-            onBack={previousPhase}
-            loading={workflowHook?.loading || false}
-            pickupWorkflow={workflowHook}
-            accessToken={accessToken}
-          />
-        );
-      case 3:
-        return (
-          <ConfirmationPhase
-            order={orderData}
-            onFinish={() => {
-              reset();
-              router.push('/(tabs)/home');
-            }}
-          />
-        );
-      default:
-        return null;
-    }
+      }
     } catch (error) {
-      console.error('[Pickup] Error rendering phase:', phase, error);
+      console.error("[Pickup] Error rendering phase:", phase, error);
       return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-          <Text style={{ color: colors.error, textAlign: 'center', marginBottom: 20 }}>
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            padding: 20,
+          }}
+        >
+          <Text
+            style={{
+              color: colors.error,
+              textAlign: "center",
+              marginBottom: 20,
+            }}
+          >
             An error occurred while loading this phase. Please try again.
           </Text>
           <TouchableOpacity
@@ -400,17 +634,19 @@ export default function Pickup() {
               backgroundColor: colors.primary,
               paddingVertical: 12,
               paddingHorizontal: 24,
-              borderRadius: 8
+              borderRadius: 8,
             }}
             onPress={() => {
-              console.log('[Pickup] Retrying phase render');
+              console.log("[Pickup] Retrying phase render");
 
               if (phase > 1) {
                 previousPhase();
               }
             }}
           >
-            <Text style={{ color: colors.white, fontWeight: 'bold' }}>Try Again</Text>
+            <Text style={{ color: colors.white, fontWeight: "bold" }}>
+              Try Again
+            </Text>
           </TouchableOpacity>
         </View>
       );
@@ -419,8 +655,12 @@ export default function Pickup() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-      
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="transparent"
+        translucent
+      />
+
       <LinearGradient
         colors={[colors.primary, colors.secondary]}
         start={{ x: 0, y: 0 }}
@@ -431,9 +671,7 @@ export default function Pickup() {
         {renderProgressIndicator()}
       </LinearGradient>
 
-      <View style={styles.content}>
-        {renderCurrentPhase()}
-      </View>
+      <View style={styles.content}>{renderCurrentPhase()}</View>
     </View>
   );
 }
@@ -452,9 +690,9 @@ const styles = StyleSheet.create({
   headerTitle: {
     ...typography.title,
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: colors.white,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: spacing.lg,
   },
   content: {
@@ -463,46 +701,46 @@ const styles = StyleSheet.create({
   },
   messageContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: spacing.xl,
   },
   messageTitle: {
     ...typography.title,
     fontSize: 22,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: colors.primary,
     marginTop: spacing.lg,
     marginBottom: spacing.md,
-    textAlign: 'center',
+    textAlign: "center",
   },
   messageText: {
     ...typography.body,
     color: colors.neutral,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 22,
     marginBottom: spacing.lg,
   },
 
   progressContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     marginTop: spacing.md,
   },
   progressStep: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   progressCircle: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
+    justifyContent: "center",
+    alignItems: "center",
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.5)',
+    borderColor: "rgba(255, 255, 255, 0.5)",
   },
   progressCircleActive: {
     backgroundColor: colors.white,
@@ -511,7 +749,7 @@ const styles = StyleSheet.create({
   progressText: {
     ...typography.caption,
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: colors.white,
   },
   progressTextActive: {
@@ -520,7 +758,7 @@ const styles = StyleSheet.create({
   progressLine: {
     width: 40,
     height: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
     marginHorizontal: spacing.sm,
   },
   progressLineActive: {
