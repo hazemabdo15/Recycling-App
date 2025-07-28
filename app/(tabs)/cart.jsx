@@ -445,7 +445,7 @@ const Cart = () => {
                 </Text>
               </View>
             </View>
-            {!canSchedulePickup && (
+            {remainingAmount > 0 && (
               <View style={styles.minimumOrderWarning}>
                 <MaterialCommunityIcons
                   name="alert-circle"
