@@ -10,10 +10,11 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import RecyclingModal from "../../components/Modals/RecyclingModal";
 import { useAuth } from "../../context/AuthContext";
 import { useUserPoints } from "../../hooks/useUserPoints";
 import { orderService } from "../../services/api/orders";
-import { getLabel, isBuyer } from '../../utils/roleLabels';
+import { getLabel, isBuyer, isCustomer } from '../../utils/roleLabels';
 // import RecyclingModal from '../../components/Modals/RecyclingModal'
 
 const tabs = ["incoming", "completed", "cancelled"];
@@ -285,21 +286,25 @@ function ProfileContent() {
             <StatBox label="Membership Tier" value={stats.tier} />
           </View>
 
-          {!isBuyer(user) && (
-            <TouchableOpacity
-              style={styles.redeemButton}
-              onPress={() => setModalVisible(true)}
-            >
-              <Text style={styles.redeemButtonText}>Redeem and Return</Text>
-            </TouchableOpacity>
-          )}
 
-          {/* <RecyclingModal 
-            visible={modalVisible}
-            onClose={() => setModalVisible(false)}
-            totalPoints={userPoints}
-            onPointsUpdated={getUserPoints}
-          /> */}
+          {isCustomer(user) && (
+            <>
+              <TouchableOpacity
+                style={styles.redeemButton}
+                onPress={() => setModalVisible(true)}
+              >
+                <Text style={styles.redeemButtonText}>Redeem and Return</Text>
+              </TouchableOpacity>
+              
+              <RecyclingModal 
+                visible={modalVisible}
+                onClose={() => setModalVisible(false)}
+                totalPoints={userPoints}
+                onPointsUpdated={getUserPoints}
+              />
+             
+            </>
+          )}
 
           <View style={styles.tabsContainer}>
             {tabs.map((tab) => (
