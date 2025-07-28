@@ -1,14 +1,15 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Linking from 'expo-linking';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
-    Alert,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -33,20 +34,14 @@ export default function Pickup() {
   const [isFocused, setIsFocused] = useState(false);
 
   useEffect(() => {
-    console.log('[Pickup] Auth state changed:');
-    console.log('  - isLoggedIn:', isLoggedIn);
-    console.log('  - user:', user ? 'present' : 'null');
-    console.log('  - accessToken:', accessToken ? 'present' : 'null');
-    console.log('  - authContextLoading:', authContextLoading);
+    // Auth state tracking for debugging authentication issues
   }, [isLoggedIn, user, accessToken, authContextLoading]);
 
   useFocusEffect(
     useCallback(() => {
-      console.log('[Pickup] Screen focused');
       setIsFocused(true);
       
       return () => {
-        console.log('[Pickup] Screen unfocused');
         setIsFocused(false);
         setDialogShown(false);
       };
@@ -55,26 +50,16 @@ export default function Pickup() {
 
   useEffect(() => {
     if (!isFocused) {
-      console.log('[Pickup] Screen not focused, skipping auth check');
       return;
     }
     
     const checkAuth = async () => {
       try {
-        console.log('[Pickup] Starting auth check...');
-        console.log('[Pickup] authContextLoading:', authContextLoading);
-
         if (authContextLoading) {
-          console.log('[Pickup] Waiting for AuthContext to finish loading...');
           return;
         }
         
-        console.log('[Pickup] isLoggedIn:', isLoggedIn);
-        console.log('[Pickup] user:', user ? 'present' : 'null');
-        console.log('[Pickup] accessToken:', accessToken ? 'present' : 'null');
-        
         if (!isLoggedIn || !user) {
-          console.log('[Pickup] User not logged in or user data missing');
           setAuthError('LOGIN_REQUIRED');
           setAuthLoading(false);
           return;
@@ -82,15 +67,13 @@ export default function Pickup() {
 
         const authStatus = await isAuthenticated();
         console.log('[Pickup] isAuthenticated() result:', authStatus);
-        
+
         if (!authStatus) {
-          console.log('[Pickup] Token expired or invalid');
           setAuthError('TOKEN_EXPIRED');
           setAuthLoading(false);
           return;
         }
 
-        console.log('[Pickup] Authentication verified successfully');
         setAuthError(null);
         setAuthLoading(false);
       } catch (error) {
@@ -113,8 +96,44 @@ export default function Pickup() {
     previousPhase = () => {},
     setSelectedAddress = () => {},
     createOrder = () => {},
-    reset = () => {}
+    reset = () => {},
+    setCurrentPhase = () => {}
   } = workflowHook || {};
+
+  // Deep link handler for Stripe Checkout redirects
+  useEffect(() => {
+    const handleDeepLink = (event) => {
+      const url = event.url;
+      console.log('[Pickup] Deep link received:', url);
+      
+      if (url.includes('confirmation')) {
+        console.log('[Pickup] Stripe payment successful, navigating to confirmation phase');
+        if (setCurrentPhase && typeof setCurrentPhase === 'function') {
+          setCurrentPhase(3);
+        } else {
+          console.warn('[Pickup] setCurrentPhase not available, using nextPhase fallback');
+          nextPhase();
+          nextPhase(); // Move to phase 3
+        }
+      } else if (url.includes('review')) {
+        console.log('[Pickup] Stripe payment cancelled, staying on review phase');
+        if (setCurrentPhase && typeof setCurrentPhase === 'function') {
+          setCurrentPhase(2);
+        }
+        Alert.alert(
+          'Payment Cancelled', 
+          'Your payment was cancelled. You can try again when ready.',
+          [{ text: 'OK' }]
+        );
+      }
+    };
+
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+    
+    return () => {
+      subscription?.remove();
+    };
+  }, [setCurrentPhase, nextPhase]);
 
   useEffect(() => {
     console.log('[Pickup] Phase changed to:', currentPhase);
@@ -353,6 +372,7 @@ export default function Pickup() {
             onBack={previousPhase}
             loading={workflowHook?.loading || false}
             pickupWorkflow={workflowHook}
+            accessToken={accessToken}
           />
         );
       case 3:

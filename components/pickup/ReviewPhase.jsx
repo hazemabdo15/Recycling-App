@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { useAuth } from "../../context/AuthContext";
+import { usePayment } from "../../hooks/usePayment";
 
 import { categoriesAPI } from "../../services/api";
 import { borderRadius, spacing, typography } from "../../styles";
@@ -21,34 +22,27 @@ const ReviewPhase = ({
   onConfirm,
   onBack,
   loading,
+  user: propUser,
+  accessToken,
 }) => {
-  console.log("[ReviewPhase] MINIMAL component starting");
-  console.log("[ReviewPhase] Received props:", {
-    selectedAddress: !!selectedAddress,
-    cartItems: cartItems,
-    cartItemsType: typeof cartItems,
-    cartItemsKeys: cartItems ? Object.keys(cartItems) : [],
-    onConfirm: typeof onConfirm,
-    onBack: typeof onBack,
-    loading: typeof loading,
-  });
-
   const [allItems, setAllItems] = useState([]);
   const [itemsLoaded, setItemsLoaded] = useState(false);
   const [cartItemsDisplay, setCartItemsDisplay] = useState([]);
 
-  // Get the real logged-in user from AuthContext
-  const { user } = useAuth();
+  // Get the real logged-in user from AuthContext, but prefer prop user
+  const { user: contextUser } = useAuth();
+  const user = propUser || contextUser;
+
+  // Payment processing hook
+  const { isProcessing, processPayment, shouldUsePayment } = usePayment();
 
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        console.log("[ReviewPhase] Fetching all items...");
         const response = await categoriesAPI.getAllItems();
         const items = response.data?.items || response.data || response.items || response;
         setAllItems(Array.isArray(items) ? items : []);
         setItemsLoaded(true);
-        console.log("[ReviewPhase] Items loaded:", items.length);
       } catch (error) {
         console.error("[ReviewPhase] Failed to fetch items:", error);
         setItemsLoaded(true);
@@ -99,102 +93,93 @@ const ReviewPhase = ({
     }
   }, [itemsLoaded, cartItems, allItems]);
 
-  const handleConfirm = () => {
-    console.log("[ReviewPhase] MINIMAL confirm pressed");
-    console.log("[ReviewPhase] Processing cart items:", cartItems);
-    console.log("[ReviewPhase] Available items for lookup:", allItems.length);
+  /**
+   * Handles payment processing for buyers
+   */
+  const handlePaymentFlow = async (cartItemsArray, userData) => {
+    await processPayment({
+      user,
+      accessToken,
+      cartItemsDisplay,
+      onSuccess: (result) => {
+        // Payment initiated successfully
+      },
+      onError: (error) => {
+        console.error("[ReviewPhase] Payment failed:", error.message);
+      },
+    });
+  };
 
-    if (cartItems && typeof cartItems === "object") {
+  /**
+   * Handles regular order flow for non-buyers
+   */
+  const handleRegularOrderFlow = (cartItemsArray, userData) => {
+    if (typeof onConfirm === "function") {
+      onConfirm(cartItemsArray, userData);
+    }
+  };
 
-      const cartItemsArray = Object.entries(cartItems).map(
-        ([categoryId, quantity]) => {
-
-          const realItem = allItems.find(
-            (item) => item._id === categoryId || item.categoryId === categoryId
-          );
-
-          if (realItem) {
-            console.log(
-              "[ReviewPhase] Found real item for",
-              categoryId,
-              ":",
-              realItem.name,
-              "with measurement_unit:",
-              realItem.measurement_unit,
-              "type:",
-              typeof realItem.measurement_unit
-            );
-            
-            const measurementUnit = typeof realItem.measurement_unit === 'string' 
-              ? (realItem.measurement_unit === "KG" ? 1 : 2) 
-              : Number(realItem.measurement_unit);
-              
-            console.log("[ReviewPhase] Converted measurement_unit to:", measurementUnit);
-            
-            return {
-              categoryId: categoryId,
-              quantity: quantity,
-              itemName: realItem.name,
-              measurement_unit: measurementUnit,
-              points: realItem.points || 10,
-              price: realItem.price || 5.0,
-              image:
-                realItem.image ||
-                `${realItem.name.toLowerCase().replace(/\s+/g, "-")}.png`,
-            };
-          } else {
-            console.log(
-              "[ReviewPhase] No real item found for",
-              categoryId,
-              ", using fallback with proper image"
-            );
-            return {
-              categoryId: categoryId,
-              quantity: quantity,
-              itemName: `Item ${categoryId}`,
-              measurement_unit: 1,
-              points: 10,
-              price: 5.0,
-              image: `item-${categoryId.slice(-4)}.png`,
-            };
-          }
-        }
-      );
-
-
-      // Use the real user data from context, always provide imageUrl as a string
-      const userData = user ? {
-        userId: user._id || user.userId,
-        phoneNumber: user.phoneNumber,
-        userName: user.name || user.userName,
-        email: user.email,
-        imageUrl: (typeof user.imageUrl === 'string' && user.imageUrl && user.imageUrl.trim())
-          || (typeof user.image === 'string' && user.image && user.image.trim())
-          || 'https://via.placeholder.com/150/0000FF/808080?text=User',
-        role: user.role,
-      } : null;
-
-      console.log("[ReviewPhase] Calling onConfirm with:", {
-        cartItemsArray,
-        userData,
-      });
-
-      cartItemsArray.forEach((item, index) => {
-        console.log(`[ReviewPhase] Item ${index + 1}:`, {
-          categoryId: item.categoryId,
-          quantity: item.quantity,
-          quantityType: typeof item.quantity,
-          measurement_unit: item.measurement_unit,
-          measurement_unit_type: typeof item.measurement_unit,
-          itemName: item.itemName
-        });
-      });
-
-      if (typeof onConfirm === "function") {
-        onConfirm(cartItemsArray, userData);
-      }
-    } else {
+  /**
+   * Main confirm handler - routes to appropriate flow based on user role
+   */
+  const handleConfirm = async () => {
+    if (!cartItems || typeof cartItems !== "object") {
       console.error("[ReviewPhase] Invalid cartItems format:", cartItems);
+      return;
+    }
+
+    // Process cart items
+    const cartItemsArray = Object.entries(cartItems).map(
+      ([categoryId, quantity]) => {
+        const realItem = allItems.find(
+          (item) => item._id === categoryId || item.categoryId === categoryId
+        );
+
+        if (realItem) {
+          const measurementUnit = typeof realItem.measurement_unit === 'string' 
+            ? (realItem.measurement_unit === "KG" ? 1 : 2) 
+            : Number(realItem.measurement_unit);
+            
+          return {
+            categoryId: categoryId,
+            quantity: quantity,
+            itemName: realItem.name,
+            measurement_unit: measurementUnit,
+            points: realItem.points || 10,
+            price: realItem.price || 5.0,
+            image: realItem.image || `${realItem.name.toLowerCase().replace(/\s+/g, "-")}.png`,
+          };
+        } else {
+          return {
+            categoryId: categoryId,
+            quantity: quantity,
+            itemName: `Item ${categoryId}`,
+            measurement_unit: 1,
+            points: 10,
+            price: 5.0,
+            image: `item-${categoryId.slice(-4)}.png`,
+          };
+        }
+      }
+    );
+
+    // Prepare user data
+    const userData = user ? {
+      userId: user._id || user.userId,
+      phoneNumber: user.phoneNumber,
+      userName: user.name || user.userName,
+      email: user.email,
+      imageUrl: (typeof user.imageUrl === 'string' && user.imageUrl && user.imageUrl.trim())
+        || (typeof user.image === 'string' && user.image && user.image.trim())
+        || 'https://via.placeholder.com/150/0000FF/808080?text=User',
+      role: user.role,
+    } : null;
+
+    // Route to appropriate flow based on user role
+    if (shouldUsePayment(user)) {
+      await handlePaymentFlow(cartItemsArray, userData);
+    } else {
+      handleRegularOrderFlow(cartItemsArray, userData);
     }
   };
 
@@ -259,14 +244,18 @@ const ReviewPhase = ({
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Review Your Order</Text>
-        <Text style={styles.subtitle}>
-          {selectedAddress?.street
-            ? `Delivery to ${selectedAddress.street}, ${
-                selectedAddress.area || selectedAddress.city
-              }`
-            : "No address selected"}
-        </Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.title}>Review Your Order</Text>
+            <Text style={styles.subtitle}>
+              {selectedAddress?.street
+                ? `Delivery to ${selectedAddress.street}, ${
+                    selectedAddress.area || selectedAddress.city
+                  }`
+                : "No address selected"}
+            </Text>
+          </View>
+        </View>
       </View>
 
       {!itemsLoaded ? (
@@ -334,22 +323,36 @@ const ReviewPhase = ({
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => {
-            console.log("[ReviewPhase] Back pressed");
             if (typeof onBack === "function") {
               onBack();
             }
           }}
+          disabled={isProcessing}
         >
           <Text style={styles.backButtonText}>Back to Address</Text>
         </TouchableOpacity>
 
         <AnimatedButton
-          style={[styles.confirmButton, !itemsLoaded && styles.disabledButton]}
+          style={[
+            styles.confirmButton, 
+            (!itemsLoaded || isProcessing) && styles.disabledButton
+          ]}
           onPress={handleConfirm}
-          disabled={!itemsLoaded}
+          disabled={!itemsLoaded || isProcessing}
         >
-          <MaterialCommunityIcons name="check" size={20} color={colors.white} />
-          <Text style={styles.confirmButtonText}>Confirm Order</Text>
+          {isProcessing ? (
+            <MaterialCommunityIcons name="loading" size={20} color={colors.white} />
+          ) : (
+            <MaterialCommunityIcons name="check" size={20} color={colors.white} />
+          )}
+          <Text style={styles.confirmButtonText}>
+            {isProcessing 
+              ? 'Processing...' 
+              : user?.role === 'buyer' 
+                ? 'Pay & Confirm Order' 
+                : 'Confirm Order'
+            }
+          </Text>
         </AnimatedButton>
       </View>
     </View>
