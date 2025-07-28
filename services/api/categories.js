@@ -1,5 +1,7 @@
 import itemsData from '../../data/items.json';
 import apiCache from '../../utils/apiCache';
+import logger from '../../utils/logger';
+import { measureApiCall } from '../../utils/performanceMonitor';
 import { API_ENDPOINTS } from './config';
 
 const fallbackCategories = [
@@ -30,54 +32,96 @@ const generateFallbackItems = () => {
 
 export const categoriesAPI = {
   getAllCategories: async () => {
-    const cacheKey = apiCache.generateKey('categories');
-    const cached = apiCache.get(cacheKey);
-    
-    if (cached) {
-      return cached;
-    }
+    return measureApiCall(
+      async () => {
+        const cacheKey = apiCache.generateKey('categories');
+        const cached = apiCache.get(cacheKey);
+        
+        if (cached) {
+          logger.debug('Categories retrieved from cache', { count: cached.length });
+          return cached;
+        }
 
-    try {
-      const response = await fetch(API_ENDPOINTS.CATEGORIES);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      apiCache.set(cacheKey, data, 10 * 60 * 1000);
-      return data;
-    } catch (_error) {
-
-      return fallbackCategories;
-    }
+        try {
+          const response = await fetch(API_ENDPOINTS.CATEGORIES);
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const data = await response.json();
+          apiCache.set(cacheKey, data, 10 * 60 * 1000); // Cache for 10 minutes
+          
+          logger.api('Categories fetched from API', { count: data.length });
+          return data;
+        } catch (error) {
+          logger.api('Failed to fetch categories, using fallback', {
+            error: error.message,
+            fallbackCount: fallbackCategories.length
+          }, 'WARN');
+          return fallbackCategories;
+        }
+      },
+      'categories-get-all'
+    );
   },
+
   getAllItems: async () => {
-    try {
-      const response = await fetch(API_ENDPOINTS.ALL_ITEMS);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.warn('Error fetching all items, using fallback data:', error.message);
-      return { items: generateFallbackItems() };
-    }
+    return measureApiCall(
+      async () => {
+        try {
+          const response = await fetch(API_ENDPOINTS.ALL_ITEMS);
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const data = await response.json();
+          
+          logger.api('All items fetched from API', {
+            count: data.items?.length || 0
+          });
+          return data;
+        } catch (error) {
+          const fallbackItems = generateFallbackItems();
+          logger.api('Failed to fetch all items, using fallback', {
+            error: error.message,
+            fallbackCount: fallbackItems.length
+          }, 'WARN');
+          return { items: fallbackItems };
+        }
+      },
+      'categories-get-all-items'
+    );
   },
+
   getCategoryItems: async (categoryName) => {
-    try {
-      const response = await fetch(API_ENDPOINTS.CATEGORY_ITEMS(categoryName));
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.warn(`Error fetching items for category ${categoryName}, using fallback data:`, error.message);
-      const fallbackItems = generateFallbackItems().filter(item => 
-        item.name.toLowerCase().includes(categoryName.toLowerCase()) ||
-        categoryName.toLowerCase().includes('paper') && item.measurement_unit === 'KG'
-      );
-      return fallbackItems.slice(0, 10);
-    }
+    return measureApiCall(
+      async () => {
+        try {
+          const response = await fetch(API_ENDPOINTS.CATEGORY_ITEMS(categoryName));
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const data = await response.json();
+          
+          logger.api('Category items fetched from API', {
+            categoryName,
+            count: data.length || 0
+          });
+          return data;
+        } catch (error) {
+          const fallbackItems = generateFallbackItems().filter(item => 
+            item.name.toLowerCase().includes(categoryName.toLowerCase()) ||
+            categoryName.toLowerCase().includes('paper') && item.measurement_unit === 'KG'
+          );
+          
+          logger.api('Failed to fetch category items, using fallback', {
+            error: error.message,
+            categoryName,
+            fallbackCount: fallbackItems.length
+          }, 'WARN');
+          
+          return fallbackItems.slice(0, 10);
+        }
+      },
+      'categories-get-items'
+    );
   },
 };

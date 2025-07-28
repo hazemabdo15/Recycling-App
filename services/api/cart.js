@@ -1,12 +1,16 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { isDevelopment, isProduction } from '../../config/env';
 import { validateQuantity } from "../../utils/cartUtils.js";
+import logger from '../../utils/logger';
+import { measureApiCall } from '../../utils/performanceMonitor';
 import { BASE_URLS } from "./config";
 
 const BASE_URL = BASE_URLS.CART;
 
+// Production-optimized token caching
 let cachedToken = null;
 let tokenCacheTime = 0;
-const TOKEN_CACHE_DURATION = 30000;
+const TOKEN_CACHE_DURATION = isProduction ? 60000 : 30000; // Longer cache in production
 
 export async function clearAuthData() {
   try {
@@ -14,21 +18,26 @@ export async function clearAuthData() {
     await AsyncStorage.removeItem("sessionId");
     cachedToken = null;
     tokenCacheTime = 0;
-  } catch (_err) {
-    console.error("[cart API] Error clearing auth data:", _err.message);
+    
+    if (!isProduction) {
+      logger.auth('Cart auth data cleared');
+    }
+  } catch (error) {
+    logger.auth('Error clearing cart auth data', { error: error.message }, 'ERROR');
   }
 }
 
 async function getSessionId() {
   try {
     const sessionId = await AsyncStorage.getItem("sessionId");
-    console.log(
-      "[cart API] Retrieved sessionId:",
-      sessionId ? "Session found" : "No session"
-    );
+    
+    if (!isProduction) {
+      logger.debug(`Session ID retrieved: ${sessionId ? 'found' : 'not found'}`, null, 'CART');
+    }
+    
     return sessionId;
-  } catch (_err) {
-    console.error("[cart API] Error retrieving sessionId:", _err.message);
+  } catch (error) {
+    logger.cart('Error retrieving sessionId', { error: error.message }, 'ERROR');
     return null;
   }
 }
@@ -36,9 +45,11 @@ async function getSessionId() {
 async function getAccessToken() {
   try {
     const now = Date.now();
+    
+    // Check cache first
     if (cachedToken && now - tokenCacheTime < TOKEN_CACHE_DURATION) {
       if (isTokenExpired(cachedToken)) {
-        console.warn("[cart API] Cached token has expired, clearing cache");
+        logger.auth('Cached token expired, clearing cache', null, 'WARN');
         cachedToken = null;
         tokenCacheTime = 0;
       } else {
@@ -50,13 +61,15 @@ async function getAccessToken() {
     if (token && !isTokenExpired(token)) {
       cachedToken = token;
       tokenCacheTime = now;
+      logger.debug('Token retrieved and cached', null, 'CART');
       return token;
     }
 
     cachedToken = null;
     tokenCacheTime = 0;
     return null;
-  } catch (_err) {
+  } catch (error) {
+    logger.auth('Error retrieving access token', { error: error.message }, 'ERROR');
     return null;
   }
 }
@@ -67,14 +80,16 @@ function isTokenExpired(token) {
   try {
     let decoded;
 
+    // Handle mock tokens for development
     if (token.startsWith("mock.")) {
       const parts = token.split(".");
       if (parts.length >= 2) {
         decoded = atob(parts[1]);
       } else {
-        return false;
+        return false; // Mock token without proper structure, assume valid
       }
     } else {
+      // Handle JWT tokens
       const parts = token.split(".");
       if (parts.length !== 3) return true;
 
@@ -83,6 +98,8 @@ function isTokenExpired(token) {
 
       try {
         decoded = atob(padded);
+        
+        // Handle encoding issues
         if (decoded.includes("�") || decoded.includes("?")) {
           const uint8Array = new Uint8Array(
             atob(base64)
@@ -91,33 +108,34 @@ function isTokenExpired(token) {
           );
           const result = new TextDecoder("utf-8").decode(uint8Array);
           if (result.includes("�") || result.includes("\uFFFD")) {
-            const isoDecoded = new TextDecoder("iso-8859-1").decode(uint8Array);
-            decoded = isoDecoded;
+            decoded = new TextDecoder("iso-8859-1").decode(uint8Array);
           } else {
             decoded = result;
           }
         }
-      } catch (_e) {
+      } catch (decodeError) {
+        logger.auth('Token decode error', { error: decodeError.message }, 'ERROR');
         return true;
       }
     }
 
     const payload = JSON.parse(decoded);
     const currentTime = Math.floor(Date.now() / 1000);
+    const isExpired = currentTime >= payload.exp;
 
-    if (Math.random() < 0.1) {
-
-      console.log("[cart API] Token expiration check:", {
+    // Only log token expiration checks occasionally to reduce noise
+    if (isDevelopment() && Math.random() < 0.1) {
+      logger.debug('Token expiration check', {
         currentTime,
         tokenExp: payload.exp,
-        isExpired: currentTime >= payload.exp,
+        isExpired,
         timeUntilExpiry: payload.exp - currentTime,
-      });
+      }, 'CART');
     }
 
-    return currentTime >= payload.exp;
-  } catch (_err) {
-    console.error("[cart API] Error checking token expiration:", _err.message);
+    return isExpired;
+  } catch (error) {
+    logger.auth('Error checking token expiration', { error: error.message }, 'ERROR');
     return true;
   }
 }
@@ -134,271 +152,354 @@ async function setSessionIdFromResponse(response) {
       if (sessionMatch) {
         const sessionId = sessionMatch[1];
         await AsyncStorage.setItem("sessionId", sessionId);
+        logger.debug('Session ID set from cookie', { sessionId: sessionId.substring(0, 8) + '...' }, 'CART');
       }
     }
 
+    // Try to get session ID from response body
     try {
       const responseClone = response.clone();
       const responseData = await responseClone.json();
       if (responseData.sessionId) {
         await AsyncStorage.setItem("sessionId", responseData.sessionId);
+        logger.debug('Session ID set from response body', null, 'CART');
       }
-    } catch (_parseErr) {
-
+    } catch (_parseError) {
+      // Response may not be JSON, ignore silently
     }
-  } catch (_err) {
-    console.error("[cart API] Error setting sessionId:", _err.message);
+  } catch (error) {
+    logger.cart('Error setting sessionId', { error: error.message }, 'ERROR');
   }
 }
 
 async function getAuthHeaders(isLoggedIn, sessionId) {
   const headers = { "Content-Type": "application/json" };
+  
   if (isLoggedIn) {
     const token = await getAccessToken();
-    console.log(
-      "[cart API] Retrieved access token:",
-      token ? "Token found" : "No token"
-    );
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
+      logger.debug('Auth headers set with token', null, 'CART');
     } else {
-      console.warn(
-        "[cart API] No valid token found - user may need to re-authenticate"
-      );
+      logger.auth('No valid token found - user may need to re-authenticate', null, 'WARN');
     }
   } else if (sessionId) {
     headers["Cookie"] = `sessionId=${sessionId}`;
-    console.log("[cart API] Using session cookie for guest user");
+    logger.debug('Auth headers set with session cookie', null, 'CART');
   }
 
-  if (process.env.NODE_ENV === "development") {
-    console.log("[cart API] Final headers:", headers);
+  if (isDevelopment()) {
+    logger.debug('Final auth headers', { 
+      hasAuth: !!headers.Authorization,
+      hasCookie: !!headers.Cookie
+    }, 'CART');
   }
 
   return headers;
 }
 
 export async function getCart(isLoggedIn) {
-  try {
-    const sessionId = isLoggedIn ? null : await getSessionId();
-    const headers = await getAuthHeaders(isLoggedIn, sessionId);
+  return measureApiCall(
+    async () => {
+      try {
+        const sessionId = isLoggedIn ? null : await getSessionId();
+        const headers = await getAuthHeaders(isLoggedIn, sessionId);
 
-    const response = await fetch(BASE_URL, {
-      method: "GET",
-      headers,
-      credentials: "include",
-    });
+        const response = await fetch(BASE_URL, {
+          method: "GET",
+          headers,
+          credentials: "include",
+        });
 
-    await setSessionIdFromResponse(response);
+        await setSessionIdFromResponse(response);
 
-    if (!response.ok) {
-      throw new Error(
-        `Failed to get cart: ${response.status} ${response.statusText}`
-      );
-    }
+        if (!response.ok) {
+          throw new Error(
+            `Failed to get cart: ${response.status} ${response.statusText}`
+          );
+        }
 
-    return await response.json();
-  } catch (error) {
-    console.error("[cart API] getCart error:", error.message);
-    throw error;
-  }
+        const result = await response.json();
+        logger.cart('Cart retrieved successfully', {
+          itemCount: result.items?.length || 0,
+          userType: isLoggedIn ? 'authenticated' : 'guest'
+        });
+
+        return result;
+      } catch (error) {
+        logger.cart('Error retrieving cart', {
+          error: error.message,
+          userType: isLoggedIn ? 'authenticated' : 'guest'
+        }, 'ERROR');
+        throw error;
+      }
+    },
+    'cart-get'
+  );
 }
 
 export async function addItemToCart(item, isLoggedIn) {
-  try {
-    console.log("[cart API] addItemToCart - Starting request for:", item.name);
-
-
-    validateQuantity(item);
-
-    const sessionId = isLoggedIn ? null : await getSessionId();
-    let headers = await getAuthHeaders(isLoggedIn, sessionId);
-
-    if (!isLoggedIn && !sessionId) {
-      console.log(
-        "[cart API] No sessionId found for guest user, attempting to create session..."
-      );
+  return measureApiCall(
+    async () => {
       try {
-        const sessionResponse = await fetch(BASE_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
+        logger.cart('Adding item to cart', {
+          itemName: item.name,
+          categoryId: item.categoryId,
+          quantity: item.quantity,
+          userType: isLoggedIn ? 'authenticated' : 'guest'
         });
-        await setSessionIdFromResponse(sessionResponse);
-        const newSessionId = await getSessionId();
-        if (newSessionId) {
-          console.log("[cart API] Session created successfully");
-          headers = await getAuthHeaders(isLoggedIn, newSessionId);
+
+        // Validate item before processing
+        validateQuantity(item);
+
+        const sessionId = isLoggedIn ? null : await getSessionId();
+        let headers = await getAuthHeaders(isLoggedIn, sessionId);
+
+        // Handle session creation for guest users
+        if (!isLoggedIn && !sessionId) {
+          logger.debug('Creating session for guest user', null, 'CART');
+          try {
+            const sessionResponse = await fetch(BASE_URL, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+            });
+            await setSessionIdFromResponse(sessionResponse);
+            const newSessionId = await getSessionId();
+            if (newSessionId) {
+              logger.success('Session created successfully for guest user', null, 'CART');
+              headers = await getAuthHeaders(isLoggedIn, newSessionId);
+            }
+          } catch (sessionError) {
+            logger.cart('Error creating session', { 
+              error: sessionError.message 
+            }, 'ERROR');
+          }
         }
-      } catch (sessionError) {
-        console.error(
-          "[cart API] Error creating session:",
-          sessionError.message
-        );
-      }
-    }
 
-    const fixedPayload = {
-      categoryId: item.categoryId,
-      categoryName: item.categoryName,
-      itemName: item.name,
-      image: item.image,
-      points: item.points,
-      price: item.price,
-      measurement_unit: item.measurement_unit,
-      quantity: item.quantity,
-    };
+        const payload = {
+          categoryId: item.categoryId,
+          categoryName: item.categoryName,
+          itemName: item.name,
+          image: item.image,
+          points: item.points,
+          price: item.price,
+          measurement_unit: item.measurement_unit,
+          quantity: item.quantity,
+        };
 
-    console.log("[cart API] Sending request with payload for:", item.name);
+        const response = await fetch(BASE_URL, {
+          method: "POST",
+          headers,
+          credentials: "include",
+          body: JSON.stringify(payload),
+        });
 
-    const response = await fetch(BASE_URL, {
-      method: "POST",
-      headers,
-      credentials: "include",
-      body: JSON.stringify(fixedPayload),
-    });
+        await setSessionIdFromResponse(response);
 
-    await setSessionIdFromResponse(response);
+        if (!response.ok) {
+          const errorText = await response.text();
+          
+          if (response.status === 401) {
+            logger.auth('Authentication failed - token expired', null, 'ERROR');
+            await AsyncStorage.removeItem("accessToken");
+            cachedToken = null;
+            tokenCacheTime = 0;
+            throw new Error("Authentication failed - please login again");
+          }
 
-    console.log("[cart API] addItemToCart - Response status:", response.status);
+          let backendError = `HTTP ${response.status}: ${response.statusText}`;
+          try {
+            const errorData = JSON.parse(errorText);
+            backendError = errorData.message || errorData.error || backendError;
+          } catch (_parseError) {
+            if (errorText && errorText.trim()) {
+              backendError = errorText;
+            }
+          }
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("[cart API] addItemToCart - Error response:", errorText);
+          logger.cart('Failed to add item to cart', {
+            itemName: item.name,
+            status: response.status,
+            error: backendError
+          }, 'ERROR');
 
-      if (response.status === 401) {
-        console.error(
-          "[cart API] Authentication failed - token may be expired"
-        );
-        await AsyncStorage.removeItem("accessToken");
-        cachedToken = null;
-        tokenCacheTime = 0;
-        throw new Error("Authentication failed - please login again");
-      }
-
-      let backendError = `HTTP ${response.status}: ${response.statusText}`;
-      try {
-        const errorData = JSON.parse(errorText);
-        if (errorData.message) {
-          backendError = errorData.message;
-        } else if (errorData.error) {
-          backendError = errorData.error;
+          throw new Error(backendError);
         }
-      } catch (_parseError) {
-        if (errorText && errorText.trim()) {
-          backendError = errorText;
-        }
+
+        const result = await response.json();
+        logger.success('Item added to cart successfully', {
+          itemName: item.name,
+          categoryId: item.categoryId
+        }, 'CART');
+
+        return result;
+      } catch (error) {
+        logger.cart('Add item to cart failed', {
+          itemName: item?.name || 'unknown',
+          error: error.message
+        }, 'ERROR');
+        throw error;
       }
-
-      throw new Error(backendError);
-    }
-
-    const result = await response.json();
-    console.log("✅ [cart API] addItemToCart - Successfully added:", item.name);
-
-    return result;
-  } catch (error) {
-    console.warn(
-      "[cart API] addItemToCart error for",
-      item?.name || "unknown item",
-      ":",
-      error.message
-    );
-    throw error;
-  }
+    },
+    'cart-add-item'
+  );
 }
 
-export async function updateCartItem(
-  categoryId,
-  quantity,
-  isLoggedIn,
-  measurementUnit = null
-) {
-  try {
+export async function updateCartItem(categoryId, quantity, isLoggedIn, measurementUnit = null) {
+  return measureApiCall(
+    async () => {
+      try {
+        logger.cart('Updating cart item', {
+          categoryId,
+          quantity,
+          measurementUnit,
+          userType: isLoggedIn ? 'authenticated' : 'guest'
+        });
 
-    validateQuantity({ quantity, measurement_unit: measurementUnit });
+        // Validate quantity before processing
+        validateQuantity({ quantity, measurement_unit: measurementUnit });
 
-    const sessionId = isLoggedIn ? null : await getSessionId();
-    const headers = await getAuthHeaders(isLoggedIn, sessionId);
+        const sessionId = isLoggedIn ? null : await getSessionId();
+        const headers = await getAuthHeaders(isLoggedIn, sessionId);
 
-    console.log('[cart API] updateCartItem - Payload:', { quantity, measurement_unit: measurementUnit });
+        const payload = { 
+          quantity, 
+          measurement_unit: measurementUnit, 
+          categoryId 
+        };
 
-    const response = await fetch(BASE_URL, {
-      method: "PUT",
-      headers,
-      credentials: "include",
-      body: JSON.stringify({ quantity, measurement_unit: measurementUnit, categoryId }),
-    });
+        const response = await fetch(BASE_URL, {
+          method: "PUT",
+          headers,
+          credentials: "include",
+          body: JSON.stringify(payload),
+        });
 
-    await setSessionIdFromResponse(response);
+        await setSessionIdFromResponse(response);
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("[cart API] updateCartItem error:", errorText);
-      throw new Error(
-        `Failed to update cart item: ${response.status} ${response.statusText}`
-      );
-    }
+        if (!response.ok) {
+          const errorText = await response.text();
+          logger.cart('Failed to update cart item', {
+            categoryId,
+            status: response.status,
+            error: errorText
+          }, 'ERROR');
+          throw new Error(
+            `Failed to update cart item: ${response.status} ${response.statusText}`
+          );
+        }
 
-    return await response.json();
-  } catch (error) {
-    console.error("[cart API] updateCartItem error:", error.message);
-    throw error;
-  }
+        const result = await response.json();
+        logger.success('Cart item updated successfully', {
+          categoryId,
+          newQuantity: quantity
+        }, 'CART');
+
+        return result;
+      } catch (error) {
+        logger.cart('Update cart item failed', {
+          categoryId,
+          error: error.message
+        }, 'ERROR');
+        throw error;
+      }
+    },
+    'cart-update-item'
+  );
 }
 
 export async function removeItemFromCart(categoryId, isLoggedIn) {
-  try {
-    const sessionId = isLoggedIn ? null : await getSessionId();
-    const headers = await getAuthHeaders(isLoggedIn, sessionId);
+  return measureApiCall(
+    async () => {
+      try {
+        logger.cart('Removing item from cart', {
+          categoryId,
+          userType: isLoggedIn ? 'authenticated' : 'guest'
+        });
 
-    const response = await fetch(`${BASE_URL}/${categoryId}`, {
-      method: "DELETE",
-      headers,
-      credentials: "include",
-    });
+        const sessionId = isLoggedIn ? null : await getSessionId();
+        const headers = await getAuthHeaders(isLoggedIn, sessionId);
 
-    await setSessionIdFromResponse(response);
+        const response = await fetch(`${BASE_URL}/${categoryId}`, {
+          method: "DELETE",
+          headers,
+          credentials: "include",
+        });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("[cart API] removeItemFromCart error:", errorText);
-      throw new Error(
-        `Failed to remove item from cart: ${response.status} ${response.statusText}`
-      );
-    }
+        await setSessionIdFromResponse(response);
 
-    return await response.json();
-  } catch (error) {
-    console.error("[cart API] removeItemFromCart error:", error.message);
-    throw error;
-  }
+        if (!response.ok) {
+          const errorText = await response.text();
+          logger.cart('Failed to remove item from cart', {
+            categoryId,
+            status: response.status,
+            error: errorText
+          }, 'ERROR');
+          throw new Error(
+            `Failed to remove item from cart: ${response.status} ${response.statusText}`
+          );
+        }
+
+        const result = await response.json();
+        logger.success('Item removed from cart successfully', {
+          categoryId
+        }, 'CART');
+
+        return result;
+      } catch (error) {
+        logger.cart('Remove item from cart failed', {
+          categoryId,
+          error: error.message
+        }, 'ERROR');
+        throw error;
+      }
+    },
+    'cart-remove-item'
+  );
 }
 
 export async function clearCart(isLoggedIn) {
-  try {
-    const sessionId = isLoggedIn ? null : await getSessionId();
-    const headers = await getAuthHeaders(isLoggedIn, sessionId);
+  return measureApiCall(
+    async () => {
+      try {
+        logger.cart('Clearing cart', {
+          userType: isLoggedIn ? 'authenticated' : 'guest'
+        });
 
-    const response = await fetch(`${BASE_URL}/`, {
-      method: "DELETE",
-      headers,
-      credentials: "include",
-    });
+        const sessionId = isLoggedIn ? null : await getSessionId();
+        const headers = await getAuthHeaders(isLoggedIn, sessionId);
 
-    await setSessionIdFromResponse(response);
+        const response = await fetch(`${BASE_URL}/`, {
+          method: "DELETE",
+          headers,
+          credentials: "include",
+        });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("[cart API] clearCart error:", errorText);
-      throw new Error(
-        `Failed to clear cart: ${response.status} ${response.statusText}`
-      );
-    }
+        await setSessionIdFromResponse(response);
 
-    return await response.json();
-  } catch (error) {
-    console.error("[cart API] clearCart error:", error.message);
-    throw error;
-  }
+        if (!response.ok) {
+          const errorText = await response.text();
+          logger.cart('Failed to clear cart', {
+            status: response.status,
+            error: errorText
+          }, 'ERROR');
+          throw new Error(
+            `Failed to clear cart: ${response.status} ${response.statusText}`
+          );
+        }
+
+        const result = await response.json();
+        logger.success('Cart cleared successfully', null, 'CART');
+
+        return result;
+      } catch (error) {
+        logger.cart('Clear cart failed', {
+          error: error.message
+        }, 'ERROR');
+        throw error;
+      }
+    },
+    'cart-clear'
+  );
 }

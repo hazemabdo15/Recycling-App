@@ -1,4 +1,23 @@
-﻿export const API_BASE_URL = 'http://192.168.0.165:5000';
+﻿/**
+ * API Configuration
+ * Centralized API endpoints and configuration management
+ */
+
+import { getApiConfig, isDevelopment } from '../../config/env';
+import logger from '../../utils/logger';
+
+// Get environment-specific API configuration
+const apiConfig = getApiConfig();
+export const API_BASE_URL = apiConfig.baseUrl;
+
+// Log API configuration (only in development)
+if (isDevelopment()) {
+  logger.info('API Configuration loaded', {
+    baseUrl: API_BASE_URL,
+    timeout: apiConfig.timeout,
+    retries: apiConfig.retries
+  }, 'API');
+}
 
 export const BASE_URLS = {
   API: `${API_BASE_URL}/api`,
@@ -6,7 +25,10 @@ export const BASE_URLS = {
 };
 
 export const API_ENDPOINTS = {
+  // Health check
+  HEALTH: `${API_BASE_URL}/health`,
 
+  // Authentication endpoints
   AUTH: {
     LOGIN: `${API_BASE_URL}/api/auth/login`,
     REGISTER_INIT: `${API_BASE_URL}/api/auth/initiateSignup`,
@@ -17,31 +39,96 @@ export const API_ENDPOINTS = {
     RESET_PASSWORD: `${API_BASE_URL}/api/auth/resetPassword`,
   },
 
+  // Data endpoints
   CATEGORIES: `${API_BASE_URL}/api/categories`,
   ALL_ITEMS: `${API_BASE_URL}/api/categories/get-items`,
   CATEGORY_ITEMS: (categoryName) => `${API_BASE_URL}/api/categories/get-items/${categoryName}`,
   CART: `${API_BASE_URL}/api/cart`,
   ADDRESSES: `${API_BASE_URL}/api/addresses`,
   ORDERS: `${API_BASE_URL}/api/orders`,
+  NOTIFICATIONS: `${API_BASE_URL}/api/notifications`,
 
+  // Analytics endpoints
   ANALYTICS: {
     ORDER_ANALYTICS: `${API_BASE_URL}/api/orders/analytics`,
     TOP_CITIES: `${API_BASE_URL}/api/orders/analytics/top-cities`,
     TOP_MATERIALS: `${API_BASE_URL}/api/top-materials-recycled`,
     TOP_USERS: `${API_BASE_URL}/api/top-users-points`,
+  },
+
+  // Payment endpoints
+  PAYMENTS: {
+    CREATE_SESSION: (userId) => `${API_BASE_URL}/api/users/${userId}/create-checkout-session`,
   }
 };
 
 export const API_CONFIG = {
+  timeout: apiConfig.timeout,
+  retries: apiConfig.retries,
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
   credentials: 'include',
 };
 
 export const TOKEN_CONFIG = {
   ACCESS_TOKEN_KEY: 'accessToken',
-  REFRESH_TOKEN_EXPIRES: 7 * 24 * 60 * 60 * 1000,
-  ACCESS_TOKEN_EXPIRES: 15 * 60 * 1000,
-  REFRESH_THRESHOLD: 5 * 60 * 1000,
+  REFRESH_TOKEN_KEY: 'refreshToken',
+  USER_KEY: 'user',
+  REFRESH_TOKEN_EXPIRES: 7 * 24 * 60 * 60 * 1000, // 7 days
+  ACCESS_TOKEN_EXPIRES: 15 * 60 * 1000, // 15 minutes
+  REFRESH_THRESHOLD: 5 * 60 * 1000, // 5 minutes before expiry
+};
+
+// Request/Response interceptor configurations
+export const INTERCEPTOR_CONFIG = {
+  request: {
+    timeout: apiConfig.timeout,
+    retryDelay: 1000, // 1 second
+    maxRetries: apiConfig.retries,
+  },
+  response: {
+    successCodes: [200, 201, 202, 204],
+    retryableCodes: [408, 429, 500, 502, 503, 504],
+    authErrorCodes: [401, 403],
+  }
+};
+
+// Export environment-specific configurations
+export const getEndpointUrl = (endpoint) => {
+  if (typeof endpoint === 'function') {
+    logger.warn('Dynamic endpoint function called without parameters', { endpoint: endpoint.toString() }, 'API');
+    return null;
+  }
+  return endpoint;
+};
+
+export const validateEndpoint = (url) => {
+  try {
+    new URL(url);
+    return true;
+  } catch (_error) {
+    logger.error('Invalid endpoint URL', { url }, 'API');
+    return false;
+  }
+};
+
+// Network status configuration
+export const NETWORK_CONFIG = {
+  timeout: apiConfig.timeout,
+  retryAttempts: apiConfig.retries,
+  retryDelay: 1000,
+  offlineRetryDelay: 5000,
+  connectionCheckUrl: `${API_BASE_URL}/health`,
+};
+
+export default {
+  API_BASE_URL,
+  BASE_URLS,
+  API_ENDPOINTS,
+  API_CONFIG,
+  TOKEN_CONFIG,
+  INTERCEPTOR_CONFIG,
+  NETWORK_CONFIG,
 };
