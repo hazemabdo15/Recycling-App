@@ -85,7 +85,7 @@ const TopRecycledSection = memo(() => {
           {topItems.map((item, index) => {
             const iconInfo = ICON_MAP[item.categoryName] || { name: "recycle", color: colors.primary };
             return (
-              <TouchableOpacity
+              <View
                 key={item._id?.itemName || item._id || index}
                 style={[
                   styles.itemCard,
@@ -101,7 +101,7 @@ const TopRecycledSection = memo(() => {
                   <Image
                     source={{ uri: item.image }}
                     style={styles.itemImage}
-                    resizeMode="contain"
+                    resizeMode="cover"
                   />
                 ) : null}
                 <View style={styles.iconContainer}>
@@ -121,11 +121,11 @@ const TopRecycledSection = memo(() => {
                     />
                     <Text style={styles.recycleCount}>{item.totalQuantity}</Text>
                   </View>
-                  <View style={styles.pointsBadge}>
+                  {/* <View style={styles.pointsBadge}>
                     <Text style={styles.pointsText}>+{item.totalPoints} pts</Text>
-                  </View>
+                  </View> */}
                 </View>
-              </TouchableOpacity>
+              </View>
             );
           })}
         </ScrollView>
