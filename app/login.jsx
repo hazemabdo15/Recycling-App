@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
@@ -9,7 +10,7 @@ import { getLoggedInUser } from '../utils/authUtils';
 export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [checkingUser, setCheckingUser] = useState(true);
-  const { login, setUser } = useAuth();
+  const { login, setUser, isLoggedIn, user } = useAuth();
 
   useFocusEffect(
     useCallback(() => {
@@ -17,15 +18,36 @@ export default function LoginScreen() {
 
       const checkUser = async () => {
         try {
-          const savedUser = await getLoggedInUser();
-          if (isActive && savedUser) {
-            setUser(savedUser);
-            router.replace('/home');
-          } else {
-            setCheckingUser(false);
+          console.log('[LoginScreen] Checking auth state...');
+          console.log('[LoginScreen] AuthContext isLoggedIn:', isLoggedIn);
+          console.log('[LoginScreen] AuthContext user:', user);
+          
+          // If already logged in according to AuthContext, redirect
+          if (isLoggedIn && user) {
+            console.log('[LoginScreen] User already logged in, redirecting to home');
+            if (user.role === 'delivery') {
+              router.replace('/delivery/dashboard');
+            } else {
+              router.replace('/home');
+            }
+            return;
           }
+          
+          // Check AsyncStorage as fallback
+          const savedUser = await getLoggedInUser();
+          console.log('[LoginScreen] Saved user result:', savedUser);
+          
+          if (isActive && savedUser && !isLoggedIn) {
+            // Stale user in storage, clear it and show login form
+            console.log('[LoginScreen] Found stale user in storage but not logged in, clearing and showing login form');
+            await AsyncStorage.removeItem('user');
+            setCheckingUser(false);
+            return;
+          }
+
+          setCheckingUser(false);
         } catch (err) {
-          console.error('Error checking user:', err);
+          console.error('[LoginScreen] Error checking user:', err);
           setCheckingUser(false);
         }
       };
@@ -35,7 +57,7 @@ export default function LoginScreen() {
       return () => {
         isActive = false;
       };
-    }, [setUser])
+    }, [isLoggedIn, user])
   );
 
   if (checkingUser) return null;
@@ -70,7 +92,7 @@ export default function LoginScreen() {
       else {
         router.replace('/home');
       }
-    } catch (error) {
+    } catch (_error) {
       // console.error('[Login] Login failed:', error?.message || 'Unknown error');
       Alert.alert('Login failed', 'Please check your credentials and try again.');
     } finally {

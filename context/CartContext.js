@@ -1,13 +1,13 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import {
-    addItemToCart,
-    clearCart as apiClearCart,
-    clearAuthData,
-    getCart,
-    removeItemFromCart,
-    testBackendConnectivity,
-    testMinimalPost,
-    updateCartItem,
+  addItemToCart,
+  clearCart as apiClearCart,
+  clearAuthData,
+  getCart,
+  removeItemFromCart,
+  testBackendConnectivity,
+  testMinimalPost,
+  updateCartItem,
 } from "../services/api/cart.js";
 import { normalizeItemData, validateQuantity } from '../utils/cartUtils';
 import { useAuth } from "./AuthContext";
@@ -17,7 +17,7 @@ const CartContext = createContext();
 export const useCartContext = () => useContext(CartContext);
 
 export const CartProvider = ({ children }) => {
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, user } = useAuth();
   const [cartItems, setCartItems] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -25,25 +25,28 @@ export const CartProvider = ({ children }) => {
   const [removingItems, setRemovingItems] = useState(new Set());
 
   useEffect(() => {
-    console.log('[CartContext] Auth state changed, isLoggedIn:', isLoggedIn);
-    
+    let didCancel = false;
+    console.log('[CartContext] Auth state changed, isLoggedIn:', isLoggedIn, 'user:', user);
+
     if (!isLoggedIn) {
-      // User logged out, clear all cart state immediately
-      console.log('[CartContext] User logged out, clearing cart state');
+      // User logged out, clear all cart state and session
+      console.log('[CartContext] User logged out, clearing cart state and session');
       setCartItems({});
       setError(null);
       setPendingOperations(new Set());
       setRemovingItems(new Set());
       setLoading(false);
+      // Clear sessionId and accessToken from storage
+      clearAuthData();
       return;
     }
-    
-    // User is logged in, fetch cart
+
+    // User is logged in, fetch cart (including after login/merge)
     setLoading(true);
     getCart(isLoggedIn)
       .then((cart) => {
+        if (didCancel) return;
         const itemsObj = {};
-
         const cartItems = cart.data?.data?.items || cart.data?.items || cart.items || [];
         cartItems.forEach((item) => {
           itemsObj[item.categoryId] = item.quantity;
@@ -53,6 +56,7 @@ export const CartProvider = ({ children }) => {
         console.log('[CartContext] Cart loaded successfully');
       })
       .catch((err) => {
+        if (didCancel) return;
         console.warn(
           "Failed to fetch cart from backend, using empty cart:",
           err.message
@@ -60,8 +64,14 @@ export const CartProvider = ({ children }) => {
         setCartItems({});
         setError(null);
       })
-      .finally(() => setLoading(false));
-  }, [isLoggedIn]);
+      .finally(() => {
+        if (didCancel) return;
+        setLoading(false);
+      });
+    return () => {
+      didCancel = true;
+    };
+  }, [isLoggedIn, user]);
 
   const handleAddSingleItem = async (item) => {
     const normalizedItem = normalizeItemData(item);
@@ -281,6 +291,18 @@ export const CartProvider = ({ children }) => {
   const getItemQuantity = (categoryId) => cartItems[categoryId] || 0;
 
   const fetchBackendCart = async () => {
+    // Prevent fetching cart if not logged in and no valid sessionId
+    if (!isLoggedIn) {
+      // Try to get guest sessionId from storage
+      let sessionId = null;
+      try {
+        sessionId = await require('../services/api/cart').getSessionId();
+      } catch {}
+      if (!sessionId) {
+        // No session, do not fetch
+        return { items: {} };
+      }
+    }
     try {
       const cart = await getCart(isLoggedIn);
       return cart;

@@ -52,6 +52,6 @@ export async function setLoggedInUser(user) {
 
 export async function clearSession() {
   try {
-    await AsyncStorage.multiRemove(['user', 'accessToken']);
+    await AsyncStorage.multiRemove(['user', 'accessToken', 'sessionId']);
   } catch {}
 }
