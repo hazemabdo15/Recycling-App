@@ -17,7 +17,7 @@ const CartContext = createContext();
 export const useCartContext = () => useContext(CartContext);
 
 export const CartProvider = ({ children }) => {
-  const { isLoggedIn, user } = useAuth();
+  const { isLoggedIn, user, loading: authLoading } = useAuth();
   const [cartItems, setCartItems] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -27,9 +27,14 @@ export const CartProvider = ({ children }) => {
 
   useEffect(() => {
     let didCancel = false;
-    console.log('[CartContext] Auth state changed, isLoggedIn:', isLoggedIn, 'user:', user);
+    // Wait for AuthContext to finish loading before running cart logic
+    if (authLoading) {
+      // Don't do anything until auth is loaded
+      return;
+    }
+    console.log('[CartContext] Auth state changed, isLoggedIn:', isLoggedIn, 'user:', user, 'authLoading:', authLoading);
 
-    if (!isLoggedIn) {
+    if (!isLoggedIn && !authLoading) {
       // User logged out, clear all cart state and session
       console.log('[CartContext] User logged out, clearing cart state and session');
       setCartItems({});
@@ -43,40 +48,41 @@ export const CartProvider = ({ children }) => {
       return;
     }
 
-    // Always fetch cart after login, do not skip if fetchingCart is true
-    // setFetchingCart(true);
-    setLoading(true);
-    getCart(isLoggedIn)
-      .then((cart) => {
-        if (didCancel) return;
-        const itemsObj = {};
-        const cartItems = cart.data?.data?.items || cart.data?.items || cart.items || [];
-        cartItems.forEach((item) => {
-          itemsObj[item.categoryId] = item.quantity;
-        });
-        setCartItems(itemsObj);
-        setError(null);
-        console.log('[CartContext] Cart loaded successfully');
-      })
-      .catch((err) => {
-        if (didCancel) return;
-        console.warn(
-          "Failed to fetch cart from backend, using empty cart:",
-          err.message
-        );
-        setCartItems({});
-        setError(null);
-      })
-      .finally(() => {
-        if (didCancel) return;
-        setLoading(false);
-        // setFetchingCart(false);
-      });
+    if (isLoggedIn && !authLoading) {
+      // Always fetch cart after login, do not skip if fetchingCart is true
+      // setFetchingCart(true);
+      setLoading(true);
+      (async () => {
+        try {
+          const cart = await getCart(isLoggedIn);
+          if (didCancel) return;
+          const itemsObj = {};
+          const cartItems = cart.data?.data?.items || cart.data?.items || cart.items || [];
+          for (const item of cartItems) {
+            itemsObj[item.categoryId] = item.quantity;
+          }
+          setCartItems(itemsObj);
+          setError(null);
+          console.log('[CartContext] Cart loaded successfully');
+        } catch (err) {
+          if (didCancel) return;
+          console.warn(
+            "Failed to fetch cart from backend, using empty cart:",
+            err.message
+          );
+          setCartItems({});
+          setError(null);
+        } finally {
+          if (didCancel) return;
+          setLoading(false);
+          // setFetchingCart(false);
+        }
+      })();
+    }
     return () => {
       didCancel = true;
     };
-  }, [isLoggedIn, user]);
-
+  }, [isLoggedIn, user, authLoading]);
   const handleAddSingleItem = async (item) => {
     const normalizedItem = normalizeItemData(item);
     try {
@@ -93,9 +99,9 @@ export const CartProvider = ({ children }) => {
       const result = await addItemToCart(normalizedItem, isLoggedIn);
       if (result.items) {
         const itemsObj = {};
-        result.items.forEach((backendItem) => {
+        for (const backendItem of result.items) {
           itemsObj[backendItem.categoryId] = backendItem.quantity;
-        });
+        }
         setCartItems(itemsObj);
       }
       setError(null);
