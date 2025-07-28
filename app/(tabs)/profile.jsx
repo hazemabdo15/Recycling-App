@@ -13,8 +13,8 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { useUserPoints } from "../../hooks/useUserPoints";
 import { orderService } from "../../services/api/orders";
+import { getLabel, isBuyer } from '../../utils/roleLabels';
 // import RecyclingModal from '../../components/Modals/RecyclingModal'
-import { getLabel } from "../../utils/roleLabels";
 
 const tabs = ["incoming", "completed", "cancelled"];
 
@@ -276,19 +276,23 @@ function ProfileContent() {
         <>
           <View style={styles.statsContainer}>
             <StatBox label="Total Recycles" value={stats.totalRecycles} />
-            <StatBox
-              label="Points Collected"
-              value={userPoints ? userPoints : 0}
-            />
+            {!isBuyer(user) && (
+              <StatBox
+                label="Points Collected"
+                value={userPoints ? userPoints : 0}
+              />
+            )}
             <StatBox label="Membership Tier" value={stats.tier} />
           </View>
 
-          <TouchableOpacity
-            style={styles.redeemButton}
-            onPress={() => setModalVisible(true)}
-          >
-            <Text style={styles.redeemButtonText}>Redeem and Return</Text>
-          </TouchableOpacity>
+          {!isBuyer(user) && (
+            <TouchableOpacity
+              style={styles.redeemButton}
+              onPress={() => setModalVisible(true)}
+            >
+              <Text style={styles.redeemButtonText}>Redeem and Return</Text>
+            </TouchableOpacity>
+          )}
 
           {/* <RecyclingModal 
             visible={modalVisible}
@@ -368,7 +372,9 @@ function ProfileContent() {
                         Quantity: {item.quantity}{" "}
                         {item.measurement_unit === 1 ? "kg" : "pcs"}
                       </Text>
-                      <Text style={styles.itemInfo}>Points: {item.points}</Text>
+                      {!isBuyer(user) && (
+                        <Text style={styles.itemInfo}>Points: {item.points}</Text>
+                      )}
                       <Text style={styles.itemInfo}>
                         Price: {item.price} EGP
                       </Text>

@@ -1,12 +1,12 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import {
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { useAuth } from "../../context/AuthContext";
 import { usePayment } from "../../hooks/usePayment";
@@ -14,6 +14,7 @@ import { usePayment } from "../../hooks/usePayment";
 import { categoriesAPI } from "../../services/api";
 import { borderRadius, spacing, typography } from "../../styles";
 import { colors } from "../../styles/theme";
+import { isBuyer } from "../../utils/roleLabels";
 import { AnimatedButton } from "../common";
 
 const ReviewPhase = ({
@@ -222,14 +223,16 @@ const ReviewPhase = ({
               {item.quantity} {item.measurement_unit}
             </Text>
             <View style={styles.separator} />
-            <View style={styles.pointsRow}>
-              <MaterialCommunityIcons
-                name="star"
-                size={14}
-                color={colors.accent}
-              />
-              <Text style={styles.points}>{item.totalPoints} pts</Text>
-            </View>
+            {!isBuyer(user) && (
+              <View style={styles.pointsRow}>
+                <MaterialCommunityIcons
+                  name="star"
+                  size={14}
+                  color={colors.accent}
+                />
+                <Text style={styles.points}>{item.totalPoints} pts</Text>
+              </View>
+            )}
           </View>
           <Text style={styles.price}>{item.totalPrice.toFixed(2)} EGP</Text>
         </View>
@@ -295,19 +298,21 @@ const ReviewPhase = ({
                 <Text style={styles.summaryLabel}>Total Items:</Text>
                 <Text style={styles.summaryValue}>{totalItems}</Text>
               </View>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Total Points:</Text>
-                <View style={styles.pointsContainer}>
-                  <MaterialCommunityIcons
-                    name="star"
-                    size={16}
-                    color={colors.accent}
-                  />
-                  <Text style={[styles.summaryValue, styles.pointsText]}>
-                    {totalPoints}
-                  </Text>
+              {!isBuyer(user) && (
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Total Points:</Text>
+                  <View style={styles.pointsContainer}>
+                    <MaterialCommunityIcons
+                      name="star"
+                      size={16}
+                      color={colors.accent}
+                    />
+                    <Text style={[styles.summaryValue, styles.pointsText]}>
+                      {totalPoints}
+                    </Text>
+                  </View>
                 </View>
-              </View>
+              )}
               <View style={[styles.summaryRow, styles.totalRow]}>
                 <Text style={styles.totalLabel}>Total Value:</Text>
                 <Text style={styles.totalValue}>

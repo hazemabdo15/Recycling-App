@@ -1,7 +1,9 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
+import { useAuth } from '../../context/AuthContext';
 import { categoryHeaderStyles } from '../../styles/components/categoryStyles';
 import { colors } from '../../styles/theme';
+import { isBuyer } from '../../utils/roleLabels';
 
 const CategoryHeader = ({
     categoryName,
@@ -12,6 +14,8 @@ const CategoryHeader = ({
     headerOpacity,
     onGoBack
 }) => {
+    const { user } = useAuth();
+    
     return (
         <View style={[categoryHeaderStyles.header, animatedStyle]}>
             <View style={categoryHeaderStyles.headerContentRow}>
@@ -34,15 +38,17 @@ const CategoryHeader = ({
                     <Text style={categoryHeaderStyles.statText}>{totalItems}</Text>
                     <Text style={categoryHeaderStyles.statLabel}>Items</Text>
                 </View>
-                <View style={categoryHeaderStyles.statItem}>
-                    <MaterialCommunityIcons
-                        name="star"
-                        size={20}
-                        color={colors.accent}
-                    />
-                    <Text style={categoryHeaderStyles.statText}>{totalPoints}</Text>
-                    <Text style={categoryHeaderStyles.statLabel}>Eco Points</Text>
-                </View>
+                {!isBuyer(user) && (
+                    <View style={categoryHeaderStyles.statItem}>
+                        <MaterialCommunityIcons
+                            name="star"
+                            size={20}
+                            color={colors.accent}
+                        />
+                        <Text style={categoryHeaderStyles.statText}>{totalPoints}</Text>
+                        <Text style={categoryHeaderStyles.statLabel}>Eco Points</Text>
+                    </View>
+                )}
                 <View style={categoryHeaderStyles.statItem}>
                     <MaterialCommunityIcons
                         name="cash"

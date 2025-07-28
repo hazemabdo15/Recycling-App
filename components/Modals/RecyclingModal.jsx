@@ -1,20 +1,21 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import {
-  Alert,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Alert,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { useAuth } from '../../context/AuthContext';
 import { useUserPoints } from '../../hooks/useUserPoints';
 import apiService from '../../services/api/apiService';
 import { colors } from '../../styles/theme';
+import { isBuyer } from '../../utils/roleLabels';
 
 const vouchers = [
   { id: '1', name: 'Talabat Mart', value: '50 EGP', points: 500, icon: 'local-grocery-store' },
@@ -44,6 +45,11 @@ const RecyclingModal = ({ visible, onClose, onPointsUpdated }) => {
   useEffect(() => {
     if (visible) getUserPoints();
   }, [visible, getUserPoints]);
+
+  // Don't render the modal for buyers as they don't have access to points
+  if (isBuyer(user)) {
+    return null;
+  }
 
   const handleRedeem = async () => {
     if (!activeOption) return;

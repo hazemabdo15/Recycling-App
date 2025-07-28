@@ -19,7 +19,7 @@ import { useCart } from "../../hooks/useCart";
 import { borderRadius, spacing, typography } from "../../styles";
 import { colors } from "../../styles/theme";
 import { normalizeItemData } from "../../utils/cartUtils";
-import { getLabel } from "../../utils/roleLabels";
+import { getLabel, isBuyer } from "../../utils/roleLabels";
 
 // Helper function to get role-based icons
 const getRoleBasedIcon = (iconType, userRole = 'customer') => {
@@ -236,7 +236,7 @@ const Cart = () => {
             </Text>
           </View>
           <View style={styles.itemDetailsRow}>
-            {points !== null ? (
+            {!isBuyer(user) && points !== null ? (
               <Text
                 style={[
                   styles.cartUnit,
@@ -420,17 +420,19 @@ const Cart = () => {
               {cartArray.length} {getLabel('itemsReadyFor', user?.role)}
             </Text>
             <View style={styles.checkoutSummaryRowHero}>
-              <View style={styles.checkoutSummaryItemHero}>
-                <MaterialCommunityIcons
-                  name="star"
-                  size={22}
-                  color={colors.accent}
-                />
-                <Text style={styles.checkoutSummaryLabelHero}>Eco Points</Text>
-                <Text style={styles.checkoutSummaryValueHero}>
-                  {totalPoints}
-                </Text>
-              </View>
+              {!isBuyer(user) && (
+                <View style={styles.checkoutSummaryItemHero}>
+                  <MaterialCommunityIcons
+                    name="star"
+                    size={22}
+                    color={colors.accent}
+                  />
+                  <Text style={styles.checkoutSummaryLabelHero}>Eco Points</Text>
+                  <Text style={styles.checkoutSummaryValueHero}>
+                    {totalPoints}
+                  </Text>
+                </View>
+              )}
               <View style={styles.checkoutSummaryItemHero}>
                 <MaterialCommunityIcons
                   name="cash"

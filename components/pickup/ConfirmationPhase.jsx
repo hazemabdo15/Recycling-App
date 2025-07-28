@@ -1,16 +1,16 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 import { useAuth } from '../../context/AuthContext';
 import { borderRadius, spacing, typography } from '../../styles';
 import { colors } from '../../styles/theme';
-import { getLabel } from '../../utils/roleLabels';
+import { getLabel, isBuyer } from '../../utils/roleLabels';
 import { AnimatedButton } from '../common';
 
 const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
@@ -95,12 +95,14 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
               <Text style={styles.orderLabel}>Items</Text>
               <Text style={styles.orderValue}>{order.items?.length || 0} items</Text>
             </View>
-            <View style={styles.orderRow}>
-              <Text style={styles.orderLabel}>Total Points</Text>
-              <Text style={[styles.orderValue, { color: colors.accent }]}>
-                {order.items?.reduce((sum, item) => sum + (item.points * item.quantity), 0) || 0}
-              </Text>
-            </View>
+            {!isBuyer(user) && (
+              <View style={styles.orderRow}>
+                <Text style={styles.orderLabel}>Total Points</Text>
+                <Text style={[styles.orderValue, { color: colors.accent }]}>
+                  {order.items?.reduce((sum, item) => sum + (item.points * item.quantity), 0) || 0}
+                </Text>
+              </View>
+            )}
             <View style={styles.orderRow}>
               <Text style={styles.orderLabel}>Total Value</Text>
               <Text style={[styles.orderValue, { color: colors.secondary }]}>
