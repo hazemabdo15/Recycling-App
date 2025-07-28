@@ -48,40 +48,6 @@ export default function Pickup() {
     cartItemsRef.current = cartItems;
   }, [cartItems]);
 
-  // Check for recent order creation on component mount
-  useEffect(() => {
-    const checkRecentOrderCreation = async () => {
-      try {
-        const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
-        const lastOrderData = await AsyncStorage.getItem('lastOrderCreated');
-        if (lastOrderData) {
-          const orderInfo = JSON.parse(lastOrderData);
-          const timeDiff = Date.now() - orderInfo.timestamp;
-          
-          // If order was created within the last 5 minutes and was successful
-          if (timeDiff < 5 * 60 * 1000 && orderInfo.success) {
-            console.log('[Pickup] Recent successful order found:', orderInfo);
-            
-            // Clear the stored data
-            await AsyncStorage.removeItem('lastOrderCreated');
-            
-            // Set to confirmation phase if not already there
-            if (currentPhase !== 3 && typeof setCurrentPhase === 'function') {
-              console.log('[Pickup] Setting phase to confirmation due to recent order');
-              setCurrentPhase(3);
-            }
-          }
-        }
-      } catch (error) {
-        console.warn('[Pickup] Could not check recent order creation:', error);
-      }
-    };
-
-    if (isFocused) {
-      checkRecentOrderCreation();
-    }
-  }, [isFocused, currentPhase, setCurrentPhase]);
-
   useEffect(() => {
     // Auth state tracking for debugging authentication issues
   }, [isLoggedIn, user, accessToken, authContextLoading]);
@@ -239,19 +205,6 @@ export default function Pickup() {
             const orderResult = await createOrder(cartItemsArray, userData);
             
             console.log('[Pickup] Order created successfully after Stripe payment:', orderResult);
-            
-            // Store success in localStorage to persist across app reloads
-            try {
-              await import('@react-native-async-storage/async-storage').then(({ default: AsyncStorage }) => {
-                AsyncStorage.setItem('lastOrderCreated', JSON.stringify({
-                  timestamp: Date.now(),
-                  success: true,
-                  orderId: orderResult?._id || orderResult?.id || 'unknown'
-                }));
-              });
-            } catch (storageError) {
-              console.warn('[Pickup] Could not store order success state:', storageError);
-            }
           } catch (error) {
             console.error('[Pickup] Failed to create order after payment:', error);
             console.error('[Pickup] Error details:', {
