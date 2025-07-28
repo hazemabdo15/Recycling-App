@@ -33,19 +33,19 @@ export const isStaging = () => getCurrentEnv() === ENV.STAGING;
 const API_CONFIGS = {
   [ENV.DEVELOPMENT]: {
     baseUrl: 'http://192.168.0.165:5000',
-    timeout: 30000,
-    retries: 3,
+    timeout: 15000, // Reduced from 30s
+    retries: 2, // Reduced from 3
     debug: true
   },
   [ENV.STAGING]: {
     baseUrl: 'https://staging-api.recycling-app.com',
-    timeout: 15000,
-    retries: 2,
+    timeout: 10000, // Reduced from 15s
+    retries: 1, // Reduced from 2
     debug: true
   },
   [ENV.PRODUCTION]: {
     baseUrl: 'https://api.recycling-app.com',
-    timeout: 10000,
+    timeout: 8000, // Reduced from 10s
     retries: 1,
     debug: false
   }

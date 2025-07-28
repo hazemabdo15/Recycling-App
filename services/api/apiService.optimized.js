@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { BASE_URLS, API_CONFIG, INTERCEPTOR_CONFIG } from './config';
+import { API_CONFIG, BASE_URLS } from './config';
 
 let notifyTokenExpired = null;
 
