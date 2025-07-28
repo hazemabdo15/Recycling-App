@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
@@ -39,13 +38,8 @@ export default function LoginScreen() {
           const savedUser = await getLoggedInUser();
           console.log('[LoginScreen] Saved user result:', savedUser);
           
-          if (isActive && savedUser && !isLoggedIn) {
-            // Stale user in storage, clear it and show login form
-            console.log('[LoginScreen] Found stale user in storage but not logged in, clearing and showing login form');
-            await AsyncStorage.removeItem('user');
-            setCheckingUser(false);
-            return;
-          }
+          // Do not clear AsyncStorage if user is found in storage but not in AuthContext.
+          // Let AuthContext finish rehydrating from storage.
 
           setCheckingUser(false);
         } catch (err) {
