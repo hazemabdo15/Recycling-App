@@ -395,10 +395,12 @@ const Cart = () => {
 
   const MINIMUM_ORDER_VALUE = 100;
   
-  // Role-based logic: customers can schedule pickup, buyers proceed to purchase
+  // Role-based logic: customers can schedule pickup, buyers proceed to purchase, guests can proceed to login
+  const isGuest = !isLoggedIn || !user;
   const canSchedulePickup = totalValue >= MINIMUM_ORDER_VALUE && user?.role === 'customer';
   const canProceedToPurchase = totalValue >= MINIMUM_ORDER_VALUE && user?.role === 'buyer';
-  const canProceed = canSchedulePickup || canProceedToPurchase;
+  const canGuestProceed = totalValue >= MINIMUM_ORDER_VALUE && isGuest;
+  const canProceed = canSchedulePickup || canProceedToPurchase || canGuestProceed;
   
   const remainingAmount = MINIMUM_ORDER_VALUE - totalValue;
 
@@ -472,6 +474,8 @@ const Cart = () => {
                     ? () => router.push("/pickup")
                     : canProceedToPurchase
                     ? () => router.push("/pickup")
+                    : canGuestProceed
+                    ? () => router.push("/login")
                     : null
                 }
                 disabled={!canProceed}
@@ -487,8 +491,10 @@ const Cart = () => {
                     !canProceed && styles.checkoutBtnBarTextDisabled,
                   ]}
                 >
-                  {canProceed
+                  {canSchedulePickup || canProceedToPurchase
                     ? getLabel('schedulePickup', user?.role)
+                    : canGuestProceed
+                    ? 'Login to Continue'
                     : getLabel('minimumOrderButton', user?.role)}
                 </Text>
               </AnimatedButton>
