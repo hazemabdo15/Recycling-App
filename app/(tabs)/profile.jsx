@@ -30,7 +30,7 @@ function ProfileContent() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("incoming");
   const [menuVisible, setMenuVisible] = useState(false);
-  const { userPoints, pointsLoading, getUserPoints } = useUserPoints({
+  const { userPoints, getUserPoints } = useUserPoints({
     userId: isLoggedIn && user?._id ? user._id : null,
     name: isLoggedIn && user?.name ? user.name : null,
     email: isLoggedIn && user?.email ? user.email : null,
