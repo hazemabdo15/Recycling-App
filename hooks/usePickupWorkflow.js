@@ -296,7 +296,8 @@ export const usePickupWorkflow = () => {
     setSelectedAddress,
 
     setError,
-    setCurrentPhase
+    setCurrentPhase,
+    setOrderData
   }), [
     addresses,
     loading,
@@ -314,6 +315,7 @@ export const usePickupWorkflow = () => {
     createOrder,
     setSelectedAddress,
     setError,
-    setCurrentPhase
+    setCurrentPhase,
+    setOrderData
   ]);
 };

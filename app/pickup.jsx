@@ -199,6 +199,7 @@ export default function Pickup() {
     createOrder = () => {},
     reset = () => {},
     setCurrentPhase = () => {},
+    setOrderData = () => {},
   } = workflowHook || {};
 
   // AppState listener to handle app returning from background (e.g., after Stripe checkout)
@@ -407,8 +408,8 @@ export default function Pickup() {
               try {
                 logWithTimestamp('INFO', 'Verifying if order was created despite error...');
                 
-                // Wait for backend processing (reduced from 3s to 1s for faster UX)
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                // Wait for backend processing (reduced for better UX)
+                await new Promise(resolve => setTimeout(resolve, 500));
                 
                 // Check for recent orders
                 const ordersResponse = await fetch(`${API_BASE_URL}/api/orders?limit=5`, {
@@ -432,6 +433,12 @@ export default function Pickup() {
                     
                     if (recentOrder) {
                       logWithTimestamp('CRITICAL', 'Found recent order despite error! Treating as success:', recentOrder._id);
+                      
+                      // Set the order data in the workflow hook
+                      if (setOrderData && typeof setOrderData === 'function') {
+                        setOrderData(recentOrder);
+                        logWithTimestamp('INFO', 'Order data set in workflow hook:', recentOrder._id);
+                      }
                       
                       // Clear the cart after successful order creation
                       try {
@@ -638,8 +645,8 @@ export default function Pickup() {
               try {
                 logWithTimestamp('INFO', 'Verifying if order was created despite error...');
                 
-                // Wait for backend processing (reduced from 3s to 1s for faster UX)
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                // Wait for backend processing (reduced for better UX)
+                await new Promise(resolve => setTimeout(resolve, 500));
                 
                 // Check for recent orders
                 const ordersResponse = await fetch(`${API_BASE_URL}/api/orders?limit=5`, {
@@ -756,6 +763,7 @@ export default function Pickup() {
     fetchBackendCart,
     accessToken,
     handleClearCart,
+    setOrderData,
   ]);
 
   // Add app state monitoring to debug visibility changes

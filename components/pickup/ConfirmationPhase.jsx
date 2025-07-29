@@ -1,11 +1,13 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useMemo } from 'react';
+import * as Clipboard from 'expo-clipboard';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Animated,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 import { useAuth } from '../../context/AuthContext';
@@ -16,21 +18,51 @@ import { AnimatedButton } from '../common';
 
 const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
   const { user } = useAuth();
+  const [copied, setCopied] = useState(false);
+  const rotateValue = useRef(new Animated.Value(0)).current;
+  
+  // Rotate animation for loading icon
+  useEffect(() => {
+    if (!trackingNumber) {
+      const rotateAnimation = Animated.loop(
+        Animated.timing(rotateValue, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        })
+      );
+      rotateAnimation.start();
+      return () => rotateAnimation.stop();
+    }
+  }, [trackingNumber, rotateValue]);
   
   // Memoize the tracking number to prevent regeneration on re-renders
   const trackingNumber = useMemo(() => {
     const generateTrackingNumber = (orderId) => {
       if (!orderId) {
-        console.log('[ConfirmationPhase] Generating fallback tracking number (no order ID)');
-        return 'REC' + Date.now().toString().slice(-8);
+        // Don't log when order is null (loading state)
+        return null; // Return null instead of generating random tracking number
       }
 
-      console.log('[ConfirmationPhase] Using order ID as tracking number:', orderId);
+      // Use the full order ID as tracking number for all users (buyers and customers)
+      console.log('[ConfirmationPhase] Using full order ID as tracking number:', orderId);
       return orderId;
     };
     
-    return generateTrackingNumber(order?._id);
-  }, [order?._id]);
+    // Try both _id and id fields, prioritizing _id
+    const orderId = order?._id || order?.id;
+    return generateTrackingNumber(orderId);
+  }, [order]);
+
+  const handleCopyTracking = async () => {
+    try {
+      await Clipboard.setStringAsync(trackingNumber);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000); // Reset after 2 seconds
+    } catch (error) {
+      console.error('Failed to copy tracking number:', error);
+    }
+  };
 
   const handleDone = () => {
 
@@ -74,10 +106,43 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
             <View style={styles.trackingRow}>
               <Text style={styles.trackingLabel}>Tracking Number</Text>
               <View style={styles.trackingNumberContainer}>
-                <Text style={styles.trackingNumber}>{trackingNumber}</Text>
-                <TouchableOpacity style={styles.copyButton}>
-                  <MaterialCommunityIcons name="content-copy" size={16} color={colors.primary} />
-                </TouchableOpacity>
+                {trackingNumber ? (
+                  <>
+                    <Text style={styles.trackingNumber} numberOfLines={1} ellipsizeMode="middle">
+                      {trackingNumber}
+                    </Text>
+                    <TouchableOpacity 
+                      style={styles.copyButton}
+                      onPress={handleCopyTracking}
+                    >
+                      <MaterialCommunityIcons 
+                        name={copied ? "check" : "content-copy"} 
+                        size={16} 
+                        color={copied ? colors.accent : colors.primary} 
+                      />
+                    </TouchableOpacity>
+                  </>
+                ) : (
+                  <View style={styles.loadingContainer}>
+                    <Animated.View 
+                      style={{
+                        transform: [{
+                          rotate: rotateValue.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: ['0deg', '360deg'],
+                          })
+                        }]
+                      }}
+                    >
+                      <MaterialCommunityIcons 
+                        name="loading" 
+                        size={16} 
+                        color={colors.neutral} 
+                      />
+                    </Animated.View>
+                    <Text style={styles.loadingText}>Loading...</Text>
+                  </View>
+                )}
               </View>
             </View>
             
@@ -230,9 +295,9 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   trackingRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: colors.base100,
@@ -241,20 +306,37 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.neutral,
     fontWeight: '500',
+    flex: 0,
+    marginRight: spacing.md,
   },
   trackingNumberContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
+    flex: 1,
+    justifyContent: 'flex-end',
+    maxWidth: '70%', // Prevent overflow
   },
   trackingNumber: {
     ...typography.subtitle,
     fontWeight: 'bold',
     color: colors.primary,
     fontFamily: 'monospace',
+    flex: 1,
+    textAlign: 'right',
   },
   copyButton: {
     padding: spacing.xs,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  loadingText: {
+    ...typography.body,
+    color: colors.neutral,
+    fontStyle: 'italic',
   },
   statusContainer: {
     flexDirection: 'row',
