@@ -223,7 +223,13 @@ export const usePickupWorkflow = () => {
       
       return order;
     } catch (err) {
-      console.error('[Pickup Workflow] Failed to create order:', err.message);
+      // Suppress console errors for known "Category not found" backend validation issue
+      // This error is expected and handled by the enhanced order verification system
+      if (err.message && err.message.includes('Category with ID') && err.message.includes('not found')) {
+        console.log('[Pickup Workflow] Known category validation error detected - error handled by enhanced verification system');
+      } else {
+        console.error('[Pickup Workflow] Failed to create order:', err.message);
+      }
       setError(`Failed to create order: ${err.message}`);
       throw err;
     } finally {

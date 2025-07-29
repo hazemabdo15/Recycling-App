@@ -1,10 +1,11 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useMemo } from 'react';
 import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 
 import { useAuth } from '../../context/AuthContext';
@@ -15,14 +16,21 @@ import { AnimatedButton } from '../common';
 
 const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
   const { user } = useAuth();
-  const generateTrackingNumber = (orderId) => {
-    if (!orderId) return 'REC' + Date.now().toString().slice(-8);
+  
+  // Memoize the tracking number to prevent regeneration on re-renders
+  const trackingNumber = useMemo(() => {
+    const generateTrackingNumber = (orderId) => {
+      if (!orderId) {
+        console.log('[ConfirmationPhase] Generating fallback tracking number (no order ID)');
+        return 'REC' + Date.now().toString().slice(-8);
+      }
 
-    const shortId = orderId.length > 8 ? orderId.slice(-8) : orderId;
-    return `REC${shortId.toUpperCase()}`;
-  };
-
-  const trackingNumber = generateTrackingNumber(order?._id);
+      console.log('[ConfirmationPhase] Using order ID as tracking number:', orderId);
+      return orderId;
+    };
+    
+    return generateTrackingNumber(order?._id);
+  }, [order?._id]);
 
   const handleDone = () => {
 

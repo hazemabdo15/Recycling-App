@@ -75,7 +75,7 @@ export const categoriesAPI = {
           const data = await response.json();
           
           logger.api('All items fetched from API', {
-            count: data.items?.length || 0
+            count: data.data?.length || data.items?.length || 0
           });
           return data;
         } catch (error) {

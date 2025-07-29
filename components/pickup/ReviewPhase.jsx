@@ -12,8 +12,10 @@ import { useAuth } from "../../context/AuthContext";
 import { usePayment } from "../../hooks/usePayment";
 
 import { categoriesAPI } from "../../services/api";
+import { API_BASE_URL } from "../../services/api/config";
 import { borderRadius, spacing, typography } from "../../styles";
 import { colors } from "../../styles/theme";
+import { normalizeItemData } from "../../utils/cartUtils";
 import { isBuyer } from "../../utils/roleLabels";
 import { AnimatedButton } from "../common";
 
@@ -42,53 +44,137 @@ const ReviewPhase = ({
       try {
         const response = await categoriesAPI.getAllItems();
         const items = response.data?.items || response.data || response.items || response;
-        setAllItems(Array.isArray(items) ? items : []);
+        const normalizedItems = Array.isArray(items) ? items.map(normalizeItemData) : [];
+        
+        if (normalizedItems.length === 0) {
+          // If API fails, try to get data from backend cart endpoint
+          try {
+            const backendResponse = await fetch(`${API_BASE_URL}/api/cart`, {
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            
+            if (backendResponse.ok) {
+              const backendCartData = await backendResponse.json();
+              const backendItems = backendCartData.items || [];
+              
+              // Use backend cart items which already have the right structure
+              setAllItems(backendItems.map(normalizeItemData));
+            } else {
+              setAllItems([]);
+            }
+          } catch (backendError) {
+            console.error('[ReviewPhase] Backend cart fetch error:', backendError);
+            setAllItems([]);
+          }
+        } else {
+          setAllItems(normalizedItems);
+        }
+        
         setItemsLoaded(true);
       } catch (error) {
         console.error("[ReviewPhase] Failed to fetch items:", error);
+        setAllItems([]);
         setItemsLoaded(true);
       }
     };
 
     fetchItems();
-  }, []);
+  }, [accessToken, cartItems]);
 
   useEffect(() => {
     if (itemsLoaded && cartItems && allItems.length > 0) {
       const displayItems = Object.entries(cartItems).map(
         ([categoryId, quantity]) => {
-          const realItem = allItems.find(
-            (item) => item._id === categoryId || item.categoryId === categoryId
-          );
+          // The cart key might be either the item's _id or its categoryId
+          // Try to find the item by _id first (most common case), then by categoryId
+          let realItem = allItems.find(item => item._id === categoryId);
+          
+          if (!realItem) {
+            // If not found by _id, try by categoryId after normalization
+            realItem = allItems.find(item => {
+              const normalizedItem = normalizeItemData(item);
+              return normalizedItem.categoryId === categoryId ||
+                     String(normalizedItem.id) === String(categoryId);
+            });
+          }
 
           if (realItem) {
+            const normalizedItem = normalizeItemData(realItem);
             return {
               categoryId,
               quantity,
-              itemName: realItem.name,
-              measurement_unit:
-                realItem.measurement_unit === 1 ? "KG" : "Piece",
-              points: realItem.points || 10,
-              price: realItem.price || 5.0,
-              image: realItem.image,
-              totalPoints: (realItem.points || 10) * quantity,
-              totalPrice: (realItem.price || 5.0) * quantity,
+              itemName: normalizedItem.name || normalizedItem.itemName || normalizedItem.categoryName || `Item ${categoryId.slice(-4)}`,
+              measurement_unit: normalizedItem.measurement_unit === 1 ? "KG" : "Piece",
+              points: normalizedItem.points || 10,
+              price: normalizedItem.price || 5.0,
+              image: normalizedItem.image,
+              totalPoints: (normalizedItem.points || 10) * quantity,
+              totalPrice: (normalizedItem.price || 5.0) * quantity,
+              isValidItem: true // Mark as valid item
             };
           } else {
+            // Enhanced fallback for items not found in current catalog
+            console.warn(`[ReviewPhase] Item ${categoryId} not found in catalog - may be discontinued`);
+            
+            // Try to determine a more meaningful name based on other items in cart
+            let itemName = "Recycling Item";
+            let measurementUnit = "KG";
+            
+            // Look for other valid items to infer category
+            const validCartItems = Object.entries(cartItems).map(([id, qty]) => {
+              const foundItem = allItems.find(item => {
+                const normalized = normalizeItemData(item);
+                return normalized.categoryId === id || String(normalized._id) === String(id);
+              });
+              return foundItem ? normalizeItemData(foundItem) : null;
+            }).filter(Boolean);
+            
+            if (validCartItems.length > 0) {
+              const sampleItem = validCartItems[0];
+              itemName = `${sampleItem.categoryName || 'Recycling'} Item`;
+              measurementUnit = sampleItem.measurement_unit === 1 ? "KG" : "Piece";
+            } else if (allItems.length > 0) {
+              // Fall back to any available item
+              const sampleItem = allItems.find(item => item.categoryName) || allItems[0];
+              if (sampleItem?.categoryName) {
+                itemName = `${sampleItem.categoryName} Item`;
+                measurementUnit = sampleItem.measurement_unit === 1 ? "KG" : "Piece";
+              }
+            }
+            
             return {
               categoryId,
               quantity,
-              itemName: `Item ${categoryId}`,
-              measurement_unit: "KG",
+              itemName,
+              measurement_unit: measurementUnit,
               points: 10,
               price: 5.0,
               image: null,
               totalPoints: 10 * quantity,
               totalPrice: 5.0 * quantity,
+              isValidItem: false // Mark as invalid/fallback item
             };
           }
         }
       );
+
+      // Log summary of what we found
+      const validItems = displayItems.filter(item => item.isValidItem);
+      const invalidItems = displayItems.filter(item => !item.isValidItem);
+      
+      if (invalidItems.length > 0) {
+        console.warn(`[ReviewPhase] Found ${invalidItems.length} invalid/stale cart items out of ${displayItems.length} total`);
+      }
+      
+      console.log('[ReviewPhase] Cart summary:', {
+        totalItems: displayItems.length,
+        validItems: validItems.length,
+        invalidItems: invalidItems.length,
+        itemNames: displayItems.map(item => ({ name: item.itemName, valid: item.isValidItem }))
+      });
 
       setCartItemsDisplay(displayItems);
     }
@@ -132,33 +218,43 @@ const ReviewPhase = ({
     // Process cart items
     const cartItemsArray = Object.entries(cartItems).map(
       ([categoryId, quantity]) => {
-        const realItem = allItems.find(
-          (item) => item._id === categoryId || item.categoryId === categoryId
-        );
+        // The cart key might be either the item's _id or its categoryId
+        // Try to find the item by _id first (most common case), then by categoryId
+        let realItem = allItems.find(item => item._id === categoryId);
+        
+        if (!realItem) {
+          // If not found by _id, try by categoryId after normalization
+          realItem = allItems.find(item => {
+            const normalizedItem = normalizeItemData(item);
+            return normalizedItem.categoryId === categoryId ||
+                   String(normalizedItem.id) === String(categoryId);
+          });
+        }
 
         if (realItem) {
-          const measurementUnit = typeof realItem.measurement_unit === 'string' 
-            ? (realItem.measurement_unit === "KG" ? 1 : 2) 
-            : Number(realItem.measurement_unit);
+          const normalizedItem = normalizeItemData(realItem);
+          const measurementUnit = typeof normalizedItem.measurement_unit === 'string' 
+            ? (normalizedItem.measurement_unit === "KG" ? 1 : 2) 
+            : Number(normalizedItem.measurement_unit);
             
           return {
             categoryId: categoryId,
             quantity: quantity,
-            itemName: realItem.name,
+            itemName: normalizedItem.name || normalizedItem.itemName || normalizedItem.categoryName,
             measurement_unit: measurementUnit,
-            points: realItem.points || 10,
-            price: realItem.price || 5.0,
-            image: realItem.image || `${realItem.name.toLowerCase().replace(/\s+/g, "-")}.png`,
+            points: normalizedItem.points || 10,
+            price: normalizedItem.price || 5.0,
+            image: normalizedItem.image || `${(normalizedItem.name || 'item').toLowerCase().replace(/\s+/g, "-")}.png`,
           };
         } else {
           return {
             categoryId: categoryId,
             quantity: quantity,
-            itemName: `Item ${categoryId}`,
+            itemName: `Recycling Item`,
             measurement_unit: 1,
             points: 10,
             price: 5.0,
-            image: `item-${categoryId.slice(-4)}.png`,
+            image: `recycling-item.png`,
           };
         }
       }
@@ -209,15 +305,23 @@ const ReviewPhase = ({
         ) : (
           <View style={styles.placeholderImage}>
             <MaterialCommunityIcons
-              name="package-variant"
+              name={item.isValidItem ? "package-variant" : "alert-circle-outline"}
               size={24}
-              color={colors.base300}
+              color={item.isValidItem ? colors.base300 : colors.warning}
             />
           </View>
         )}
 
         <View style={styles.itemDetails}>
-          <Text style={styles.itemName}>{item.itemName}</Text>
+          <View style={styles.itemNameRow}>
+            <Text style={styles.itemName}>{item.itemName}</Text>
+            {!item.isValidItem && (
+              <View style={styles.warningBadge}>
+                <MaterialCommunityIcons name="alert" size={12} color={colors.warning} />
+                <Text style={styles.warningText}>Unavailable</Text>
+              </View>
+            )}
+          </View>
           <View style={styles.itemMeta}>
             <Text style={styles.itemUnit}>
               {item.quantity} {item.measurement_unit}
@@ -272,6 +376,19 @@ const ReviewPhase = ({
         </View>
       ) : (
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Warning banner for invalid items */}
+          {cartItemsDisplay.filter(item => !item.isValidItem).length > 0 && (
+            <View style={styles.warningBanner}>
+              <MaterialCommunityIcons name="alert-circle" size={20} color={colors.warning} />
+              <View style={styles.warningBannerText}>
+                <Text style={styles.warningBannerTitle}>Some items may be unavailable</Text>
+                <Text style={styles.warningBannerSubtitle}>
+                  These items might have been removed from the catalog. You can still proceed with your order.
+                </Text>
+              </View>
+            </View>
+          )}
+          
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <MaterialCommunityIcons
@@ -403,6 +520,33 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
+  warningBanner: {
+    backgroundColor: colors.warning + "15", // 15% opacity
+    borderLeftWidth: 4,
+    borderLeftColor: colors.warning,
+    marginHorizontal: spacing.xl,
+    marginVertical: spacing.md,
+    padding: spacing.lg,
+    borderRadius: borderRadius.md,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: spacing.md,
+  },
+  warningBannerText: {
+    flex: 1,
+  },
+  warningBannerTitle: {
+    ...typography.subtitle,
+    fontWeight: "bold",
+    color: colors.warning,
+    marginBottom: spacing.xs,
+  },
+  warningBannerSubtitle: {
+    ...typography.body,
+    color: colors.neutral,
+    fontSize: 13,
+    lineHeight: 18,
+  },
   section: {
     marginBottom: spacing.lg,
   },
@@ -454,11 +598,32 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: spacing.lg,
   },
+  itemNameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: spacing.xs,
+  },
   itemName: {
     ...typography.subtitle,
     fontWeight: "bold",
     color: colors.black,
-    marginBottom: spacing.xs,
+    flex: 1,
+  },
+  warningBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.warning + "20", // 20% opacity
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+    gap: spacing.xs,
+  },
+  warningText: {
+    ...typography.caption,
+    color: colors.warning,
+    fontSize: 10,
+    fontWeight: "600",
   },
   itemMeta: {
     flexDirection: "row",

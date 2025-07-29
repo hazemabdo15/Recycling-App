@@ -40,9 +40,9 @@ export const API_ENDPOINTS = {
   },
 
   // Data endpoints
-  CATEGORIES: `${API_BASE_URL}/api/categories`,
-  ALL_ITEMS: `${API_BASE_URL}/api/categories/get-items`,
-  CATEGORY_ITEMS: (categoryName) => `${API_BASE_URL}/api/categories/get-items/${categoryName}`,
+  CATEGORIES: `${API_BASE_URL}/api/categories?skip=0&limit=100`,
+  ALL_ITEMS: `${API_BASE_URL}/api/categories/get-items?skip=0&limit=100`,
+  CATEGORY_ITEMS: (categoryName) => `${API_BASE_URL}/api/categories/get-items/${categoryName}?skip=0&limit=100`,
   CART: `${API_BASE_URL}/api/cart`,
   ADDRESSES: `${API_BASE_URL}/api/addresses`,
   ORDERS: `${API_BASE_URL}/api/orders`,

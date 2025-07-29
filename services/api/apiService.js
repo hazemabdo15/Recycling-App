@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { BASE_URLS, API_CONFIG, INTERCEPTOR_CONFIG } from './config';
+import { API_CONFIG, BASE_URLS } from './config';
 
 let notifyTokenExpired = null;
 
@@ -284,7 +284,13 @@ class OptimizedAPIService {
     } catch (error) {
       // Only log critical errors to reduce performance impact
       if (error.name !== 'AbortError') {
-        console.error(`[API] ${endpoint}:`, error.message);
+        // Suppress console errors for known "Category not found" backend validation issue
+        // This error is expected and handled by the enhanced order verification system
+        if (error.message && error.message.includes('Category with ID') && error.message.includes('not found')) {
+          console.log(`[API] ${endpoint}: Known category validation error detected - error handled by enhanced verification system`);
+        } else {
+          console.error(`[API] ${endpoint}:`, error.message);
+        }
       }
 
       if (error.message === 'Session expired' || error.status === 401) {
