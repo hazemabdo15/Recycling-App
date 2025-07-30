@@ -55,7 +55,7 @@ const Explore = () => {
         ]}
       >
         <LinearGradient
-          colors={[colors.primary, colors.secondary]}
+          colors={[colors.primary, colors.neutral]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[StyleSheet.absoluteFill, styles.heroSectionBg]}
