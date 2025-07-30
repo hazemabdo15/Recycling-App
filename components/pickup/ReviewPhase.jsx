@@ -82,7 +82,7 @@ const ReviewPhase = ({
     };
 
     fetchItems();
-  }, [accessToken, cartItems]);
+  }, [accessToken, cartItems,user?.role]);
 
   useEffect(() => {
     if (itemsLoaded && cartItems && allItems.length > 0) {

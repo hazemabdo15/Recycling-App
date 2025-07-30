@@ -18,7 +18,7 @@ export const useCategories = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user?.role]);
   useEffect(() => {
     fetchCategories();
   }, [fetchCategories]);
@@ -47,7 +47,7 @@ export const useAllItems = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user?.role]);
 
   useEffect(() => {
     fetchAllItems();

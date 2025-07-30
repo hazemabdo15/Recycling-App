@@ -1,11 +1,11 @@
-import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
-import LoginForm from '../components/auth/LoginForm';
-import { useAuth } from '../context/AuthContext';
-import { useCartContext } from '../context/CartContext';
-import { loginUser } from '../services/auth';
-import { getLoggedInUser } from '../utils/authUtils';
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
+import { Alert, StyleSheet, View } from "react-native";
+import LoginForm from "../components/auth/LoginForm";
+import { useAuth } from "../context/AuthContext";
+import { useCartContext } from "../context/CartContext";
+import { loginUser } from "../services/auth";
+import { getLoggedInUser } from "../utils/authUtils";
 
 export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
@@ -16,34 +16,35 @@ export default function LoginScreen() {
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
-
       const checkUser = async () => {
         try {
-          console.log('[LoginScreen] Checking auth state...');
-          console.log('[LoginScreen] AuthContext isLoggedIn:', isLoggedIn);
-          console.log('[LoginScreen] AuthContext user:', user);
-          
+          console.log("[LoginScreen] Checking auth state...");
+          console.log("[LoginScreen] AuthContext isLoggedIn:", isLoggedIn);
+          console.log("[LoginScreen] AuthContext user:", user);
+
           // If already logged in according to AuthContext, redirect
           if (isLoggedIn && user) {
-            console.log('[LoginScreen] User already logged in, redirecting to home');
-            if (user.role === 'delivery') {
-              router.replace('/delivery/dashboard');
+            console.log(
+              "[LoginScreen] User already logged in, redirecting to home"
+            );
+            if (user.role === "delivery") {
+              router.replace("/delivery/dashboard");
             } else {
-              router.replace('/home');
+              router.replace("/home");
             }
             return;
           }
-          
+
           // Check AsyncStorage as fallback
           const savedUser = await getLoggedInUser();
-          console.log('[LoginScreen] Saved user result:', savedUser);
-          
+          console.log("[LoginScreen] Saved user result:", savedUser);
+
           // Do not clear AsyncStorage if user is found in storage but not in AuthContext.
           // Let AuthContext finish rehydrating from storage.
 
           setCheckingUser(false);
         } catch (err) {
-          console.error('[LoginScreen] Error checking user:', err);
+          console.error("[LoginScreen] Error checking user:", err);
           setCheckingUser(false);
         }
       };
@@ -61,44 +62,49 @@ export default function LoginScreen() {
   const handleLogin = async ({ email, password }) => {
     email = email.trim().toLowerCase();
     if (loading) {
-      console.log('[Login] Already processing login, ignoring duplicate request');
+      console.log(
+        "[Login] Already processing login, ignoring duplicate request"
+      );
       return;
     }
 
     setLoading(true);
-    console.log('[Login] Starting login process for:', email);
+    console.log("[Login] Starting login process for:", email);
 
     if (!email || !password) {
-      Alert.alert('Missing Fields', 'Email and password are required.');
+      Alert.alert("Missing Fields", "Email and password are required.");
       setLoading(false);
       return;
     }
 
     try {
       const { user, accessToken } = await loginUser({ email, password });
-      console.log('[Login] Login API call successful');
+      console.log("[Login] Login API call successful");
 
       await login(user, accessToken);
-      console.log('[Login] AuthContext updated successfully');
+      console.log("[Login] AuthContext updated successfully");
 
       // Refresh cart after login to ensure merged items are shown
       try {
         await refreshCart();
-        console.log('[Login] Cart refreshed after login');
+        console.log("[Login] Cart refreshed after login");
       } catch (cartErr) {
-        console.warn('[Login] Failed to refresh cart after login:', cartErr);
+        console.warn("[Login] Failed to refresh cart after login:", cartErr);
       }
 
-      if (user.role === 'delivery') {
-        console.log('[Login] Redirecting to delivery dashboard');
-        router.replace('/delivery/dashboard');
+      if (user.role === "delivery") {
+        console.log("[Login] Redirecting to delivery dashboard");
+        router.replace("/delivery/dashboard");
         return;
       } else {
-        router.replace('/home');
+        router.replace("/home");
       }
     } catch (_error) {
       // console.error('[Login] Login failed:', error?.message || 'Unknown error');
-      Alert.alert('Login failed', 'Please check your credentials and try again.');
+      Alert.alert(
+        "Login failed",
+        "Please check your credentials and try again."
+      );
     } finally {
       setLoading(false);
     }
