@@ -39,7 +39,6 @@ const MessageItem = React.memo(({ msg }) => (
            prevProps.msg.content === nextProps.msg.content;
 });
 
-
 export default function ChatModal() {
     const [messages, setMessages] = useState([]);
     const [inputValue, setInputValue] = useState('');
@@ -80,6 +79,29 @@ export default function ChatModal() {
         });
     }, []);
 
+    const formatMessagesForAPI = useCallback((messages, newQuery = null) => {
+        const systemMessage = {
+            role: "system",
+            content: "You are a helpful AI assistant that provides information about recycling, waste disposal, and environmental topics. Remember the conversation context and refer to previous messages when relevant."
+        };
+
+        const conversationHistory = messages.map(msg => ({
+            role: msg.type === 'user' ? 'user' : 'assistant',
+            content: msg.content
+        }));
+
+        const allMessages = [systemMessage, ...conversationHistory];
+        if (newQuery) {
+            allMessages.push({ role: "user", content: newQuery });
+        }
+
+        if (allMessages.length > 21) {
+            return [systemMessage, ...allMessages.slice(-20)];
+        }
+
+        return allMessages;
+    }, []);
+
     const callApi = useCallback(async (query) => {
         if (isLoading) return;
 
@@ -90,9 +112,13 @@ export default function ChatModal() {
         setInputValue('');
 
         try {
+            const apiMessages = formatMessagesForAPI(messages, query);
+
             const response = await axios.post('https://api.fireworks.ai/inference/v1/chat/completions', {
                 model: "accounts/fireworks/models/llama4-maverick-instruct-basic",
-                messages: [{ role: "user", content: query }]
+                messages: apiMessages,
+                max_tokens: 1000,
+                temperature: 0.7,
             }, {
                 headers: {
                     "Content-Type": "application/json",
@@ -113,17 +139,22 @@ export default function ChatModal() {
 
             setMessages(prev => [...prev, aiMsg]);
         } catch (err) {
+            console.error('API Error:', err);
             setMessages(prev => [...prev, {
                 id: Date.now() + 2,
                 type: 'ai',
-                content: 'There was an error processing your request.',
+                content: 'There was an error processing your request. Please try again.',
                 timestamp: new Date()
             }]);
         } finally {
             setIsTyping(false);
             setIsLoading(false);
         }
-    }, [isLoading, parseResponse]);
+    }, [isLoading, parseResponse, messages, formatMessagesForAPI]);
+
+    const clearHistory = useCallback(() => {
+        setMessages([]);
+    }, []);
 
     const handleSend = () => {
         if (!inputValue.trim()) return;
@@ -147,7 +178,6 @@ export default function ChatModal() {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 20}
             >
-
                 <View style={styles.modalContent}>
                     <View style={styles.header}>
                         <View style={styles.headerContent}>
@@ -156,9 +186,19 @@ export default function ChatModal() {
                             </View>
                             <Text style={styles.headerTitle}>AI Assistant</Text>
                         </View>
-                        <TouchableOpacity onPress={() => router.back()}>
-                            <Ionicons name="close" size={24} color={colors.text} />
-                        </TouchableOpacity>
+                        <View style={styles.headerActions}>
+                            {messages.length > 0 && (
+                                <TouchableOpacity 
+                                    onPress={clearHistory} 
+                                    style={styles.clearButton}
+                                >
+                                    <Ionicons name="refresh" size={20} color={colors.textSecondary} />
+                                </TouchableOpacity>
+                            )}
+                            <TouchableOpacity onPress={() => router.back()}>
+                                <Ionicons name="close" size={24} color={colors.text} />
+                            </TouchableOpacity>
+                        </View>
                     </View>
 
                     <View style={styles.container}>
@@ -212,7 +252,6 @@ export default function ChatModal() {
     );
 }
 
-
 const styles = StyleSheet.create({
     modalContainer: {
         flex: 1,
@@ -233,7 +272,7 @@ const styles = StyleSheet.create({
         backgroundColor: colors.base100,
         paddingTop: spacing.xl,
     },
-     header: {
+    header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -248,6 +287,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
     },
+    headerActions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
     aiIcon: {
         backgroundColor: colors.primary,
         width: 36,
@@ -261,6 +305,9 @@ const styles = StyleSheet.create({
         ...typography.subtitle,
         fontWeight: '600',
         color: colors.text,
+    },
+    clearButton: {
+        padding: 4,
     },
     chatArea: {
         flex: 1,
