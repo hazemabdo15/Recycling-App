@@ -328,7 +328,7 @@ const Cart = () => {
           translucent
         />
         <LinearGradient
-          colors={[colors.primary, colors.secondary]}
+          colors={[colors.primary, colors.neutral]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[styles.heroSection, { paddingTop: insets.top + 20 }]}
@@ -412,7 +412,7 @@ const Cart = () => {
         translucent
       />
       <LinearGradient
-        colors={[colors.primary, colors.secondary]}
+        colors={[colors.primary, colors.neutral]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.heroSection, { paddingTop: insets.top + 20 }]}
