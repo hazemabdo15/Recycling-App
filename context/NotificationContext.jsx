@@ -4,6 +4,7 @@ import { Alert } from 'react-native';
 import { io } from 'socket.io-client';
 import { API_BASE_URL } from '../services/api/config';
 import { notificationsAPI } from '../services/api/notifications';
+import { refreshAccessToken } from '../services/auth';
 import { useAuth } from './AuthContext';
 
 const NotificationContext = createContext();
@@ -112,6 +113,24 @@ export const NotificationProvider = ({ children }) => {
     }
   }, [accessToken]);
 
+  // Helper to check if token is expired
+  const isTokenExpired = (token) => {
+    if (!token) return true;
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return true;
+      const base64 = parts[1];
+      const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+      const decoded = atob(padded);
+      const payload = JSON.parse(decoded);
+      const currentTime = Math.floor(Date.now() / 1000);
+      return currentTime >= payload.exp;
+    } catch {
+      return true;
+    }
+  };
+
+
   const doConnect = useCallback(async () => {
     try {
       if (isConnecting.current || currentSocket.current) {
@@ -119,10 +138,14 @@ export const NotificationProvider = ({ children }) => {
         return;
       }
 
-      const token = accessToken || await AsyncStorage.getItem('accessToken');
-      if (!token) {
-        console.log('❌ No token available for socket connection');
-        return;
+      let token = accessToken || await AsyncStorage.getItem('accessToken');
+      if (!token || isTokenExpired(token)) {
+        console.log('🔄 Token expired or missing, attempting to refresh...');
+        token = await refreshAccessToken();
+        if (!token) {
+          Alert.alert('Session expired', 'Please log in again.');
+          return;
+        }
       }
 
       isConnecting.current = true;
@@ -183,14 +206,27 @@ export const NotificationProvider = ({ children }) => {
         }
       });
 
-      socketConnection.on('connect_error', (error) => {
+      socketConnection.on('connect_error', async (error) => {
         console.error('❌ Socket connection failed:', error.message || error);
         console.error('❌ Socket URL attempted:', SOCKET_URL);
         setIsConnected(false);
         currentSocket.current = null;
         isConnecting.current = false;
 
-        // Attempt to reconnect after a delay
+        // If error is due to invalid/expired token, try to refresh and reconnect
+        if (error?.message?.toLowerCase().includes('invalid token') || error?.message?.toLowerCase().includes('authentication')) {
+          console.log('🔄 Detected invalid/expired token, attempting to refresh and reconnect...');
+          const newToken = await refreshAccessToken();
+          if (newToken) {
+            doConnect();
+            return;
+          } else {
+            Alert.alert('Session expired', 'Please log in again.');
+            return;
+          }
+        }
+
+        // Attempt to reconnect after a delay for other errors
         setTimeout(() => {
           console.log('🔄 Attempting to reconnect after connection error...');
           if (!currentSocket.current && user && accessToken) {
