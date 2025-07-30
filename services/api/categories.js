@@ -33,7 +33,7 @@ const generateFallbackItems = () => {
 export const categoriesAPI = {
   getAllCategories: async (role = "customer") => {
     return measureApiCall(async () => {
-      const cacheKey = apiCache.generateKey("categories");
+      const cacheKey = apiCache.generateKey(`categories-${role}`);
       const cached = apiCache.get(cacheKey);
       if (cached) {
         logger.debug("Categories retrieved from cache", {
