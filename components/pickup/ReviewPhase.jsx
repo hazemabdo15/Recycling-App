@@ -42,7 +42,7 @@ const ReviewPhase = ({
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const response = await categoriesAPI.getAllItems();
+        const response = await categoriesAPI.getAllItems(user.role);
         const items = response.data?.items || response.data || response.items || response;
         const normalizedItems = Array.isArray(items) ? items.map(normalizeItemData) : [];
         

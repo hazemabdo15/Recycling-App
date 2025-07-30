@@ -1,14 +1,18 @@
-import { useCallback, useEffect, useState } from 'react';
-import { categoriesAPI } from '../services/api';
+import { useCallback, useEffect, useState } from "react";
+import { categoriesAPI } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 export const useCategories = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { user } = useAuth();
   const fetchCategories = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await categoriesAPI.getAllCategories();
+      const data = await categoriesAPI.getAllCategories(user.role);
+      console.log("[useAPI] Fetched user role:", user.role);
+      console.log("[useAPI] Fetched categories:", data);
       setCategories(data.data);
     } catch (err) {
       setError(err.message);
@@ -27,6 +31,7 @@ export const useCategories = () => {
   };
 };
 export const useAllItems = () => {
+  const { user } = useAuth();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -34,7 +39,7 @@ export const useAllItems = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await categoriesAPI.getAllItems();
+      const data = await categoriesAPI.getAllItems(user.role);
 
       const itemsArray = data.data?.items || data.data;
       setItems(Array.isArray(itemsArray) ? itemsArray : []);
@@ -59,13 +64,17 @@ export const useCategoryItems = (categoryName) => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { user } = useAuth();
   useEffect(() => {
     const fetchCategoryItems = async () => {
       if (!categoryName) return;
       try {
         setLoading(true);
         setError(null);
-        const data = await categoriesAPI.getCategoryItems(categoryName);
+        const data = await categoriesAPI.getCategoryItems(
+          user.role,
+          categoryName
+        );
         setItems(data.data);
       } catch (err) {
         setError(err.message);
@@ -74,13 +83,16 @@ export const useCategoryItems = (categoryName) => {
       }
     };
     fetchCategoryItems();
-  }, [categoryName]);
+  }, [categoryName, user.role]);
   const refetch = async () => {
     if (!categoryName) return;
     try {
       setLoading(true);
       setError(null);
-      const data = await categoriesAPI.getCategoryItems(categoryName);
+      const data = await categoriesAPI.getCategoryItems(
+        user.role,
+        categoryName
+      );
       setItems(data.data);
     } catch (err) {
       setError(err.message);

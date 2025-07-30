@@ -277,7 +277,7 @@ export default function Pickup() {
               
               try {
                 // Try to get items from API first
-                const response = await categoriesAPI.getAllItems();
+                const response = await categoriesAPI.getAllItems(user.role);
                 const allItems = response.data?.items || response.data || response.items || response;
                 const itemsArray = Array.isArray(allItems) ? allItems : [];
                 
@@ -412,7 +412,7 @@ export default function Pickup() {
                 await new Promise(resolve => setTimeout(resolve, 500));
                 
                 // Check for recent orders
-                const ordersResponse = await fetch(`${API_BASE_URL}/api/orders?limit=5`, {
+                const ordersResponse = await fetch(`${API_BASE_URL}/api/orders?skip=0&limit=5`, {
                   headers: {
                     'Authorization': `Bearer ${accessToken}`,
                     'Content-Type': 'application/json'
@@ -536,7 +536,7 @@ export default function Pickup() {
               
               try {
                 // Try to get items from API first
-                const response = await categoriesAPI.getAllItems();
+                const response = await categoriesAPI.getAllItems(user.role);
                 const allItems = response.data?.items || response.data || response.items || response;
                 const itemsArray = Array.isArray(allItems) ? allItems : [];
                 
