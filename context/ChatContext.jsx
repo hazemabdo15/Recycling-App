@@ -10,13 +10,31 @@ const ChatContext = createContext();
 export const ChatProvider = ({ children }) => {
     const pathname = usePathname();
     const pulseAnim = useRef(new Animated.Value(1)).current;
-    const hiddenPaths = ['/chat-modal', '/login', '/register', '/notifications', '/ai-results-modal', '/voice-modal'];
+    const hiddenPaths = [
+        '/',
+        'chat-modal', 
+        'login', 
+        'register', 
+        'notifications', 
+        'ai-results-modal', 
+        'voice-modal',
+        '/chat-modal',
+        '/login', 
+        '/register', 
+        '/notifications', 
+        '/ai-results-modal', 
+        '/voice-modal'
+    ];
     const shouldHideFAB = !pathname || hiddenPaths.includes(pathname);
     const [modalOpen, setModalOpen] = useState(shouldHideFAB);
 
 
     useEffect(() => {
-        setModalOpen(shouldHideFAB);
+        const timer = setTimeout(() => {
+            setModalOpen(shouldHideFAB);
+        }, 50);
+        
+        return () => clearTimeout(timer);
     }, [shouldHideFAB]);
 
     useEffect(() => {
