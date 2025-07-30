@@ -277,7 +277,7 @@ export default function Pickup() {
               
               try {
                 // Try to get items from API first
-                const response = await categoriesAPI.getAllItems(user.role);
+                const response = await categoriesAPI.getAllItems(user?.role || "customer");
                 const allItems = response.data?.items || response.data || response.items || response;
                 const itemsArray = Array.isArray(allItems) ? allItems : [];
                 
@@ -536,7 +536,7 @@ export default function Pickup() {
               
               try {
                 // Try to get items from API first
-                const response = await categoriesAPI.getAllItems(user.role);
+                const response = await categoriesAPI.getAllItems(user?.role || "customer");
                 const allItems = response.data?.items || response.data || response.items || response;
                 const itemsArray = Array.isArray(allItems) ? allItems : [];
                 

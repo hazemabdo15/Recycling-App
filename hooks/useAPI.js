@@ -10,8 +10,7 @@ export const useCategories = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await categoriesAPI.getAllCategories(user.role);
-      console.log("[useAPI] Fetched user role:", user.role);
+      const data = await categoriesAPI.getAllCategories(user?.role || "customer");
       console.log("[useAPI] Fetched categories:", data);
       setCategories(data.data);
     } catch (err) {
@@ -39,7 +38,7 @@ export const useAllItems = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await categoriesAPI.getAllItems(user.role);
+      const data = await categoriesAPI.getAllItems(user?.role || "customer");
 
       const itemsArray = data.data?.items || data.data;
       setItems(Array.isArray(itemsArray) ? itemsArray : []);
@@ -72,7 +71,7 @@ export const useCategoryItems = (categoryName) => {
         setLoading(true);
         setError(null);
         const data = await categoriesAPI.getCategoryItems(
-          user.role,
+          user?.role || "customer",
           categoryName
         );
         setItems(data.data);
@@ -83,14 +82,14 @@ export const useCategoryItems = (categoryName) => {
       }
     };
     fetchCategoryItems();
-  }, [categoryName, user.role]);
+  }, [categoryName, user?.role]);
   const refetch = async () => {
     if (!categoryName) return;
     try {
       setLoading(true);
       setError(null);
       const data = await categoriesAPI.getCategoryItems(
-        user.role,
+        user?.role || "customer",
         categoryName
       );
       setItems(data.data);

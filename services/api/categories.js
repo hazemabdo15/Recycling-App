@@ -35,7 +35,6 @@ export const categoriesAPI = {
     return measureApiCall(async () => {
       const cacheKey = apiCache.generateKey("categories");
       const cached = apiCache.get(cacheKey);
-
       if (cached) {
         logger.debug("Categories retrieved from cache", {
           count: cached.length,
@@ -49,7 +48,7 @@ export const categoriesAPI = {
           JSON.stringify({ role })
         );
         const response = await fetch(
-          `${API_ENDPOINTS.CATEGORIES}?role=${role}`
+          `${API_ENDPOINTS.CATEGORIES}&role=${role}`
         );
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -76,7 +75,11 @@ export const categoriesAPI = {
   getAllItems: async (role = "customer") => {
     return measureApiCall(async () => {
       try {
-        const response = await fetch(`${API_ENDPOINTS.ALL_ITEMS}?role=${role}`);
+        console.log(
+          "[Categories API] Fetching all items for role:",
+          `${API_ENDPOINTS.ALL_ITEMS}?role=${role}`
+        );
+        const response = await fetch(`${API_ENDPOINTS.ALL_ITEMS}&role=${role}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -105,7 +108,7 @@ export const categoriesAPI = {
     return measureApiCall(async () => {
       try {
         const response = await fetch(
-          `${API_ENDPOINTS.CATEGORY_ITEMS(categoryName)}?role=${role}`
+          `${API_ENDPOINTS.CATEGORY_ITEMS(categoryName)}&role=${role}`
         );
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
