@@ -13,11 +13,8 @@ export const ChatProvider = ({ children }) => {
     const pulseAnim = useRef(new Animated.Value(1)).current;
 
     useEffect(() => {
-        if (pathname === '/chat-modal') {
-            setModalOpen(true);
-        } else {
-            setModalOpen(false);
-        }
+        const hiddenPaths = ['/chat-modal', '/login', '/register'];
+        setModalOpen(hiddenPaths.includes(pathname));
     }, [pathname]);
 
     useEffect(() => {
