@@ -11,9 +11,10 @@ export const ChatProvider = ({ children }) => {
     const pathname = usePathname();
     const [modalOpen, setModalOpen] = useState(false);
     const pulseAnim = useRef(new Animated.Value(1)).current;
+    const hiddenPaths = ['/chat-modal', '/login', '/register', '/notifications', '/ai-results-modal', '/voice-modal'];
+
 
     useEffect(() => {
-        const hiddenPaths = ['/chat-modal', '/login', '/register', '/notifications'];
         setModalOpen(hiddenPaths.includes(pathname));
     }, [pathname]);
 
