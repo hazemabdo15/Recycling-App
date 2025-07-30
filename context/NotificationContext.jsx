@@ -157,10 +157,10 @@ export const NotificationProvider = ({ children }) => {
         },
         transports: ['websocket', 'polling'],
         timeout: 15000,
-        forceNew: true,
+        // Let socket.io handle reconnection
         reconnection: true,
-        reconnectionAttempts: 3,
-        reconnectionDelay: 2000,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 5000,
       });
 
       socketConnection.on('connect', () => {
@@ -194,16 +194,16 @@ export const NotificationProvider = ({ children }) => {
         setIsConnected(false);
         currentSocket.current = null;
         isConnecting.current = false;
-        
-        // Attempt to reconnect after a short delay for certain disconnect reasons
-        if (reason === 'io server disconnect') {
-          console.log('🔄 Server disconnected us, attempting to reconnect in 5 seconds...');
-          setTimeout(() => {
-            if (!currentSocket.current && user && accessToken) {
-              doConnect();
-            }
-          }, 5000);
-        }
+
+        // Only reconnect if user is authenticated and not a guest
+        setTimeout(() => {
+          if (!currentSocket.current && user && accessToken && !user.isGuest) {
+            console.log('🔄 Auto-reconnecting after disconnect (user authenticated)...');
+            doConnect();
+          } else {
+            console.log('🔒 Not reconnecting: no authenticated user.');
+          }
+        }, 5000); // 5 seconds delay
       });
 
       socketConnection.on('connect_error', async (error) => {
