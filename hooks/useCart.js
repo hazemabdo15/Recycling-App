@@ -89,7 +89,8 @@ export const useCart = () => {
       categoryName: processedItem.categoryName
     });
     
-    const currentQuantity = getItemQuantity(_id);  // Use _id to get quantity
+    const currentQuantity = getItemQuantity(_id);
+    console.log("[useCart] current item quantity",currentQuantity);  // Use _id to get quantity
     let newQuantity;
     
     if (currentQuantity <= 1) {

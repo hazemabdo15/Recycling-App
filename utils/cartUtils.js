@@ -65,7 +65,7 @@ export const normalizeItemData = (item) => {
     
     return {
         _id: item._id || item.itemId,
-        categoryId: item.categoryId || item.categoryId,
+        categoryId: item.categoryId,
         name: item.name || item.material || 'Unknown Item',
         image: item.image || '',
         points: item.points || 0,
@@ -172,31 +172,10 @@ export const createCartItem = (item, quantity = 1) => {
         measurement_unit: processedItem.measurement_unit, // 1 = KG, 2 = PIECE
         quantity: quantity                      // Quantity in cart
     };
-    
+    console.log('[createCartItem] Created cart item:', result);
     return result;
 };
 
-/**
- * Converts API item data to format suitable for cart operations
- * Uses _id as the primary identifier for cart operations
- * @param {Object} item - Item from API
- * @returns {Object} Normalized item with proper IDs
- */
-export const normalizeApiItem = (item) => {
-    const normalized = normalizeItemData(item);
-    
-    // Ensure we have the required fields for cart operations
-    if (!normalized._id) {
-        console.warn('Item missing _id field:', item);
-    }
-    
-    return {
-        ...normalized,
-        // Ensure we use the item _id as the primary identifier
-        itemId: normalized._id,           // For clarity in cart operations
-        cartKey: normalized._id,          // Key to use in cart state
-    };
-};
 
 /**
  * Helper function to get the cart key for an item

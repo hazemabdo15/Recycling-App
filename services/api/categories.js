@@ -119,6 +119,7 @@ export const categoriesAPI = {
           categoryName,
           count: data.length || 0,
         });
+        console.log("[Categories API] Fetched category items:", data);
         return data;
       } catch (error) {
         const fallbackItems = generateFallbackItems().filter(
