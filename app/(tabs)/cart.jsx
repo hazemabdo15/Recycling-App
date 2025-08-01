@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
     FlatList,
     Image,
@@ -54,17 +54,14 @@ const Cart = () => {
   const { user, isLoggedIn } = useAuth();
   const {
     cartItems,
+    cartItemDetails,
     handleIncreaseQuantity,
     handleDecreaseQuantity,
     handleRemoveFromCart,
     handleClearCart,
-    fetchBackendCart,
     removingItems,
   } = useCart();
-  // const { refreshCart } = useCartContext();
-  // Removed refreshCart effect to prevent infinite fetch loop. CartContext handles cart fetching after login.
   const { items: allItems, loading: itemsLoading } = useAllItems();
-  const [backendCartItems, setBackendCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showEmptyState, setShowEmptyState] = useState(false);
 
@@ -74,63 +71,44 @@ const Cart = () => {
     }
   }, [itemsLoading]);
 
-  const fetchCartFromBackend = useCallback(async () => {
-    console.log("Calling fetchBackendCart...");
-    try {
-      const response = await fetchBackendCart();
-      console.log("Backend cart response:", response);
-      const cartItems = response.data?.data?.items || response.data?.items || response.items || [];
-      setBackendCartItems(Array.isArray(cartItems) ? cartItems : []);
-    } catch (err) {
-      console.error("Error in fetchBackendCart:", err);
-      setBackendCartItems([]);
-    }
-  }, [fetchBackendCart]);
-
-  useEffect(() => {
-    fetchCartFromBackend();
-  }, [fetchCartFromBackend]);
-
   const safeAllItems = Array.isArray(allItems) ? allItems : [];
   
-  // Use backend cart items as primary source since they have complete data
-  const cartArray = backendCartItems.length > 0 
-    ? backendCartItems.map((backendItem) => {
-        // Backend items already have complete data, use them directly without normalization
-        const combinedItem = {
-          ...backendItem,
-          // Use backend quantity directly since it's the source of truth
-          quantity: backendItem.quantity || 0,
+  // Use cartItemDetails from CartContext for better performance - no additional lookups needed
+  const cartArray = Object.entries(cartItems)
+    .map(([itemId, quantity]) => {
+      // First try to get item from cartItemDetails (most complete and up-to-date)
+      const itemFromDetails = cartItemDetails[itemId];
+      
+      if (itemFromDetails) {
+        // CartContext already has complete item data, use it directly
+        return {
+          ...itemFromDetails,
+          quantity: quantity, // Ensure quantity is from cartItems (most up-to-date)
         };
+      }
+      
+      // Fallback: Find item in allItems for display data (should rarely be needed)
+      const item = safeAllItems.find(
+        (item) => item._id === itemId || item.categoryId === itemId
+      );
 
-        // Backend items are already complete, no need to normalize
-        return combinedItem;
-      }).filter((item) => item.quantity > 0)
-    : // Fallback to context-based approach only if no backend data
-      Object.entries(cartItems)
-        .map(([itemId, quantity]) => {
-          // Find item in allItems as fallback
-          const fallbackItem = safeAllItems.find(
-            (item) => item._id === itemId || item.categoryId === itemId
-          );
+      const combinedItem = {
+        ...(item || {}),
+        _id: (item?._id || itemId),
+        categoryId: item?.categoryId,
+        name: (item?.name || item?.material || "Unknown Item"),
+        image: item?.image,
+        points: item?.points,
+        price: item?.price,
+        measurement_unit: item?.measurement_unit,
+        quantity: quantity,
+      };
 
-          const combinedItem = {
-            ...(fallbackItem || {}),
-            _id: (fallbackItem?._id || itemId),
-            categoryId: fallbackItem?.categoryId,
-            name: (fallbackItem?.name || fallbackItem?.material || "Unknown Item"),
-            image: fallbackItem?.image,
-            points: fallbackItem?.points,
-            price: fallbackItem?.price,
-            measurement_unit: fallbackItem?.measurement_unit,
-            quantity: quantity,
-          };
-
-          // Only normalize fallback data if it's actually incomplete
-          const needsNormalization = !combinedItem._id || !combinedItem.categoryId || !combinedItem.image || combinedItem.measurement_unit === undefined;
-          return needsNormalization ? normalizeItemData(combinedItem) : combinedItem;
-        })
-        .filter((item) => item.quantity > 0);
+      // Only normalize fallback data if it's actually incomplete
+      const needsNormalization = !combinedItem._id || !combinedItem.categoryId || !combinedItem.image || combinedItem.measurement_unit === undefined;
+      return needsNormalization ? normalizeItemData(combinedItem) : combinedItem;
+    })
+    .filter((item) => item.quantity > 0);
 
   useEffect(() => {
     if (cartArray.length === 0) {

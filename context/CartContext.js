@@ -203,24 +203,32 @@ export const CartProvider = ({ children }) => {
     optimisticUpdate[itemKey] = cartItem.quantity;
     optimisticDetails[itemKey] = cartItem;
     
+    // Apply optimistic update immediately for instant UI feedback
     setCartItems(optimisticUpdate);
     setCartItemDetails(optimisticDetails);
 
     try {
       const result = await addItemToCart(cartItem, isLoggedIn);
-      if (result.items) {
+      
+      // Use optimistic update result instead of refetching entire cart
+      // Only update if backend returns specific item data
+      if (result.items && Array.isArray(result.items)) {
         const itemsObj = {};
         const itemDetailsObj = {};
         
         for (const backendItem of result.items) {
-          const backendItemKey = getCartKey(backendItem); // Use consistent key function
+          const backendItemKey = getCartKey(backendItem);
           itemsObj[backendItemKey] = backendItem.quantity;
           itemDetailsObj[backendItemKey] = backendItem;
         }
         
         setCartItems(itemsObj);
         setCartItemDetails(itemDetailsObj);
+      } else {
+        // If backend doesn't return full cart, trust our optimistic update
+        console.log('[CartContext] Backend add successful, keeping optimistic update');
       }
+      
       setError(null);
       return { success: true, result };
     } catch (err) {
@@ -336,10 +344,14 @@ export const CartProvider = ({ children }) => {
       return { success: false, error: "Item details not found in cart" };
     }
 
-    // Optimistic update using _id as key
+    // Optimistic update using _id as key - Update both quantity and details
     const optimisticUpdate = { ...cartItems };
+    const optimisticDetailsUpdate = { ...cartItemDetails };
     optimisticUpdate[itemId] = quantity;
+    optimisticDetailsUpdate[itemId] = { ...itemDetails, quantity };
+    
     setCartItems(optimisticUpdate);
+    setCartItemDetails(optimisticDetailsUpdate);
 
     try {
       // Pass the full item object with categoryId
@@ -350,19 +362,25 @@ export const CartProvider = ({ children }) => {
         measurementUnit
       );
 
-      if (result.items) {
+      // Use optimistic update result instead of refetching entire cart
+      // Only update if backend returns specific item data
+      if (result.items && Array.isArray(result.items)) {
         const itemsObj = {};
         const itemDetailsObj = {};
         
         result.items.forEach((backendItem) => {
-          const backendItemKey = getCartKey(backendItem); // Use consistent key function
+          const backendItemKey = getCartKey(backendItem);
           itemsObj[backendItemKey] = backendItem.quantity;
           itemDetailsObj[backendItemKey] = backendItem;
         });
         
         setCartItems(itemsObj);
         setCartItemDetails(itemDetailsObj);
+      } else {
+        // If backend doesn't return full cart, trust our optimistic update
+        console.log('[CartContext] Backend update successful, keeping optimistic update');
       }
+      
       setError(null);
       return { success: true, result };
     } catch (err) {
@@ -396,37 +414,48 @@ export const CartProvider = ({ children }) => {
   const handleRemoveFromCart = async (itemId) => {  // Changed parameter name from categoryId to itemId
     setRemovingItems((prev) => new Set([...prev, itemId]));
 
+    // Store original state for potential revert
+    const originalCartItems = { ...cartItems };
+    const originalCartDetails = { ...cartItemDetails };
+
+    // Apply optimistic update immediately for instant UI feedback
     const optimisticUpdate = { ...cartItems };
     const optimisticDetails = { ...cartItemDetails };
-    delete optimisticUpdate[itemId];          // Use itemId instead of categoryId
+    delete optimisticUpdate[itemId];
     delete optimisticDetails[itemId];
     setCartItems(optimisticUpdate);
     setCartItemDetails(optimisticDetails);
 
     try {
-      const result = await removeItemFromCart(itemId, isLoggedIn);  // Pass itemId
+      const result = await removeItemFromCart(itemId, isLoggedIn);
 
-      if (result && result.items) {
+      // Use optimistic update result instead of refetching entire cart
+      // Only update if backend returns specific cart data
+      if (result && result.items && Array.isArray(result.items)) {
         const itemsObj = {};
         const itemDetailsObj = {};
         result.items.forEach((backendItem) => {
-          const backendItemKey = getCartKey(backendItem); // Use consistent key function
+          const backendItemKey = getCartKey(backendItem);
           itemsObj[backendItemKey] = backendItem.quantity;
           itemDetailsObj[backendItemKey] = backendItem;
         });
         setCartItems(itemsObj);
         setCartItemDetails(itemDetailsObj);
+      } else {
+        // If backend doesn't return full cart, trust our optimistic update
+        console.log('[CartContext] Backend remove successful, keeping optimistic update');
       }
+      
       setError(null);
     } catch (err) {
-      // Revert optimistic updates
-      setCartItems(cartItems);
-      setCartItemDetails(cartItemDetails);
+      // Revert optimistic updates on error
+      setCartItems(originalCartItems);
+      setCartItemDetails(originalCartDetails);
       setError(err.message || "Failed to remove item");
     } finally {
       setRemovingItems((prev) => {
         const newSet = new Set(prev);
-        newSet.delete(itemId);              // Use itemId instead of categoryId
+        newSet.delete(itemId);
         return newSet;
       });
     }
