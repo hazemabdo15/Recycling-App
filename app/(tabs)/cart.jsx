@@ -3,13 +3,13 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
-  FlatList,
-  Image,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    FlatList,
+    Image,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AnimatedButton, AnimatedListItem } from "../../components/common";
@@ -18,7 +18,7 @@ import { useAllItems } from "../../hooks/useAPI";
 import { useCart } from "../../hooks/useCart";
 import { borderRadius, spacing, typography } from "../../styles";
 import { colors } from "../../styles/theme";
-import { normalizeItemData } from "../../utils/cartUtils";
+import { getCartKey, getDisplayKey, normalizeItemData } from "../../utils/cartUtils";
 import { getLabel, isBuyer } from "../../utils/roleLabels";
 
 // Helper function to get role-based icons
@@ -92,42 +92,45 @@ const Cart = () => {
   }, [fetchCartFromBackend]);
 
   const safeAllItems = Array.isArray(allItems) ? allItems : [];
-  const cartArray = Object.entries(cartItems)
-    .map(([categoryId, quantity]) => {
-      const itemDetails =
-        safeAllItems.find(
-          (item) => item.categoryId === categoryId || item._id === categoryId
-        ) || {};
+  
+  // Use backend cart items as primary source since they have complete data
+  const cartArray = backendCartItems.length > 0 
+    ? backendCartItems.map((backendItem) => {
+        // Backend items already have complete data, use them directly without normalization
+        const combinedItem = {
+          ...backendItem,
+          // Use backend quantity directly since it's the source of truth
+          quantity: backendItem.quantity || 0,
+        };
 
-      const backendItem =
-        backendCartItems.find((item) => item.categoryId === categoryId) || {};
+        // Backend items are already complete, no need to normalize
+        return combinedItem;
+      }).filter((item) => item.quantity > 0)
+    : // Fallback to context-based approach only if no backend data
+      Object.entries(cartItems)
+        .map(([itemId, quantity]) => {
+          // Find item in allItems as fallback
+          const fallbackItem = safeAllItems.find(
+            (item) => item._id === itemId || item.categoryId === itemId
+          );
 
-      const combinedItem = {
-        ...itemDetails,
-        ...backendItem,
-        categoryId: categoryId,
-        name:
-          backendItem.itemName ||
-          itemDetails.name ||
-          itemDetails.material ||
-          "Unknown Item",
-        image: backendItem.image || itemDetails.image,
-        points:
-          typeof backendItem.points === "number"
-            ? backendItem.points
-            : itemDetails.points,
-        price:
-          typeof backendItem.price === "number"
-            ? backendItem.price
-            : itemDetails.price,
-        measurement_unit:
-          backendItem.measurement_unit || itemDetails.measurement_unit,
-        quantity: quantity,
-      };
+          const combinedItem = {
+            ...(fallbackItem || {}),
+            _id: (fallbackItem?._id || itemId),
+            categoryId: fallbackItem?.categoryId,
+            name: (fallbackItem?.name || fallbackItem?.material || "Unknown Item"),
+            image: fallbackItem?.image,
+            points: fallbackItem?.points,
+            price: fallbackItem?.price,
+            measurement_unit: fallbackItem?.measurement_unit,
+            quantity: quantity,
+          };
 
-      return normalizeItemData(combinedItem);
-    })
-    .filter((item) => item.quantity > 0);
+          // Only normalize fallback data if it's actually incomplete
+          const needsNormalization = !combinedItem._id || !combinedItem.categoryId || !combinedItem.image || combinedItem.measurement_unit === undefined;
+          return needsNormalization ? normalizeItemData(combinedItem) : combinedItem;
+        })
+        .filter((item) => item.quantity > 0);
 
   useEffect(() => {
     if (cartArray.length === 0) {
@@ -148,7 +151,12 @@ const Cart = () => {
 
   const handleIncrease = async (item) => {
     try {
-      await handleIncreaseQuantity({ ...item, categoryId: item.categoryId });
+      // Use the correct item ID from the new system
+      const itemWithCorrectId = { 
+        ...item, 
+        _id: getCartKey(item)  // This handles the field mapping
+      };
+      await handleIncreaseQuantity(itemWithCorrectId);
     } catch (err) {
       console.error("[Cart] Error increasing quantity:", err);
     }
@@ -156,7 +164,12 @@ const Cart = () => {
 
   const handleDecrease = async (item) => {
     try {
-      await handleDecreaseQuantity({ ...item, categoryId: item.categoryId });
+      // Use the correct item ID from the new system
+      const itemWithCorrectId = { 
+        ...item, 
+        _id: getCartKey(item)  // This handles the field mapping
+      };
+      await handleDecreaseQuantity(itemWithCorrectId);
     } catch (err) {
       console.error("[Cart] Error decreasing quantity:", err);
     }
@@ -164,7 +177,9 @@ const Cart = () => {
 
   const handleDelete = async (item) => {
     try {
-      await handleRemoveFromCart(item.categoryId);
+      // Use the actual item ID for removal
+      const itemId = getCartKey(item);
+      await handleRemoveFromCart(itemId);
     } catch (err) {
       console.error("[Cart] Error removing item:", err);
     }
@@ -521,9 +536,7 @@ const Cart = () => {
         <FlatList
           data={cartArray}
           renderItem={renderCartItem}
-          keyExtractor={(item) =>
-            item.categoryId || item._id || String(Math.random())
-          }
+          keyExtractor={(item) => getDisplayKey(item)}
           contentContainerStyle={[
             styles.listContainerModern,
             { paddingBottom: spacing.xxl * 2 + 64 },

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
     ActivityIndicator,
     ScrollView,
@@ -11,7 +11,7 @@ import { useCategories } from "../../hooks/useAPI";
 import { useCart } from "../../hooks/useCart";
 import { useToast } from "../../hooks/useToast";
 import { spacing } from "../../styles";
-import { getIncrementStep, normalizeItemData } from "../../utils/cartUtils";
+import { getCartKey, getIncrementStep, normalizeItemData } from "../../utils/cartUtils";
 import { getLabel } from "../../utils/roleLabels";
 import { CategoryCard } from "../cards";
 import { ItemCard } from "../category";
@@ -35,32 +35,113 @@ const CategoriesGrid = ({
   const { showSuccess, showError } = useToast();
   const [pendingOperations, setPendingOperations] = useState({});
 
-  let filteredCategories = [];
-  let filteredItems = [];
-
-  if (showItemsMode) {
-
-    filteredItems = categories
-      .flatMap(
-        (category) =>
+  // Optimized: Memoize filtered data to prevent unnecessary re-computations
+  const { filteredCategories, filteredItems } = useMemo(() => {
+    const searchLower = searchText.toLowerCase();
+    
+    if (showItemsMode) {
+      const items = categories
+        .flatMap((category) =>
           category.items?.map((item) => {
-            const normalizedItem = normalizeItemData(item);
-            const quantity = cartItems[normalizedItem.categoryId] || 0;
+            const normalizedItem = normalizeItemData({
+              ...item,
+              category: category  // Pass category info for proper normalization
+            });
+            const itemKey = getCartKey(normalizedItem);
+            const quantity = cartItems[itemKey] || 0;
             return {
               ...normalizedItem,
               quantity,
               category: category,
             };
           }) || []
-      )
-      .filter((item) =>
-        item.name.toLowerCase().includes(searchText.toLowerCase())
+        )
+        .filter((item) => item.name.toLowerCase().includes(searchLower));
+      
+      return { filteredCategories: [], filteredItems: items };
+    } else {
+      const cats = categories.filter((category) =>
+        category.name.toLowerCase().includes(searchLower)
       );
-  } else {
-    filteredCategories = categories.filter((category) =>
-      category.name.toLowerCase().includes(searchText.toLowerCase())
-    );
-  }
+      return { filteredCategories: cats, filteredItems: [] };
+    }
+  }, [categories, showItemsMode, searchText, cartItems]);
+
+  // Optimized: Memoize cart operation handler
+  const handleCartOperation = useCallback(async (item, operation) => {
+    const itemKey = getCartKey(item);
+    if (pendingOperations[itemKey]) return;
+
+    const timeoutId = setTimeout(() => {
+      setPendingOperations((prev) => {
+        const newState = { ...prev };
+        delete newState[itemKey];
+        return newState;
+      });
+    }, 2000);
+
+    try {
+      setPendingOperations((prev) => ({
+        ...prev,
+        [itemKey]: operation,
+      }));
+
+      switch (operation) {
+        case 'increase':
+          await handleIncreaseQuantity(item);
+          break;
+        case 'decrease':
+          await handleDecreaseQuantity(item);
+          break;
+        case 'fastIncrease':
+          await handleFastIncreaseQuantity(item);
+          break;
+        case 'fastDecrease':
+          await handleFastDecreaseQuantity(item);
+          break;
+        default:
+          throw new Error(`Unknown operation: ${operation}`);
+      }
+
+      // Show success message
+      const normalizedItem = normalizeItemData(item);
+      const step = operation.includes('fast') ? 5 : getIncrementStep(normalizedItem.measurement_unit);
+      const unit = normalizedItem.measurement_unit === 1 ? "kg" : "";
+      
+      if (operation.includes('increase')) {
+        showSuccess(
+          `Added ${step}${unit} ${item.name || "item"} ${getLabel('addToPickup', user?.role)}`,
+          2500
+        );
+      } else {
+        const remainingQuantity = item.quantity - step;
+        if (remainingQuantity > 0) {
+          showSuccess(
+            `Reduced ${item.name || "item"} by ${step}${unit}`,
+            2000
+          );
+        } else {
+          showSuccess(
+            `Removed ${item.name || "item"} from pickup`,
+            2000
+          );
+        }
+      }
+    } catch (err) {
+      console.error(`[CategoriesGrid] Error ${operation} quantity:`, err);
+      const errorMessage = operation.includes('increase') 
+        ? `Failed to add item ${getLabel('addToPickup', user?.role)}` 
+        : "Failed to update item quantity";
+      showError(errorMessage);
+    } finally {
+      clearTimeout(timeoutId);
+      setPendingOperations((prev) => {
+        const newState = { ...prev };
+        delete newState[itemKey];
+        return newState;
+      });
+    }
+  }, [handleIncreaseQuantity, handleDecreaseQuantity, handleFastIncreaseQuantity, handleFastDecreaseQuantity, pendingOperations, showSuccess, showError, user?.role]);
 
   useEffect(() => {
     if (onFilteredCountChange) {
@@ -116,196 +197,20 @@ const CategoriesGrid = ({
         {showItemsMode ? (
           <View style={styles.itemsList}>
             {filteredItems.map((item, index) => {
-              const itemPendingAction = pendingOperations[item.categoryId];
+              const itemKey = getCartKey(item);
+              const itemPendingAction = pendingOperations[itemKey];
               return (
                 <ItemCard
-                  key={item.categoryId || `${item.name}-${index}`}
+                  key={itemKey || `${item.name}-${index}`}
                   item={item}
                   quantity={item.quantity}
                   index={index}
                   disabled={!!itemPendingAction}
                   pendingAction={itemPendingAction}
-                  onIncrease={async () => {
-                    if (itemPendingAction) return;
-
-                    const timeoutId = setTimeout(() => {
-                      setPendingOperations((prev) => {
-                        const newState = { ...prev };
-                        delete newState[item.categoryId];
-                        return newState;
-                      });
-                    }, 2000);
-
-                    try {
-                      setPendingOperations((prev) => ({
-                        ...prev,
-                        [item.categoryId]: "increase",
-                      }));
-                      await handleIncreaseQuantity(item);
-
-                      const normalizedItem = normalizeItemData(item);
-                      const step = getIncrementStep(
-                        normalizedItem.measurement_unit
-                      );
-                      const unit =
-                        normalizedItem.measurement_unit === 1 ? "kg" : "";
-                      showSuccess(
-                        `Added ${step}${unit} ${item.name || "item"} ${getLabel('addToPickup', user?.role)}`,
-                        2500
-                      );
-                    } catch (err) {
-                      console.error(
-                        "[CategoriesGrid] Error increasing quantity:",
-                        err
-                      );
-                      showError(`Failed to add item ${getLabel('addToPickup', user?.role)}`);
-                    } finally {
-                      clearTimeout(timeoutId);
-                      setPendingOperations((prev) => {
-                        const newState = { ...prev };
-                        delete newState[item.categoryId];
-                        return newState;
-                      });
-                    }
-                  }}
-                  onDecrease={async () => {
-                    if (itemPendingAction) return;
-
-                    const timeoutId = setTimeout(() => {
-                      setPendingOperations((prev) => {
-                        const newState = { ...prev };
-                        delete newState[item.categoryId];
-                        return newState;
-                      });
-                    }, 2000);
-
-                    try {
-                      setPendingOperations((prev) => ({
-                        ...prev,
-                        [item.categoryId]: "decrease",
-                      }));
-                      await handleDecreaseQuantity(item);
-
-                      const normalizedItem = normalizeItemData(item);
-                      const step = getIncrementStep(
-                        normalizedItem.measurement_unit
-                      );
-                      const unit =
-                        normalizedItem.measurement_unit === 1 ? "kg" : "";
-                      if (item.quantity > step) {
-                        showSuccess(
-                          `Reduced ${item.name || "item"} by ${step}${unit}`,
-                          2000
-                        );
-                      } else {
-                        showSuccess(
-                          `Removed ${item.name || "item"} from pickup`,
-                          2000
-                        );
-                      }
-                    } catch (err) {
-                      console.error(
-                        "[CategoriesGrid] Error decreasing quantity:",
-                        err
-                      );
-                      showError("Failed to update item quantity");
-                    } finally {
-                      clearTimeout(timeoutId);
-                      setPendingOperations((prev) => {
-                        const newState = { ...prev };
-                        delete newState[item.categoryId];
-                        return newState;
-                      });
-                    }
-                  }}
-                  onFastIncrease={async () => {
-                    if (itemPendingAction) return;
-
-                    const timeoutId = setTimeout(() => {
-                      setPendingOperations((prev) => {
-                        const newState = { ...prev };
-                        delete newState[item.categoryId];
-                        return newState;
-                      });
-                    }, 2000);
-
-                    try {
-                      setPendingOperations((prev) => ({
-                        ...prev,
-                        [item.categoryId]: "fastIncrease",
-                      }));
-                      await handleFastIncreaseQuantity(item);
-
-                      const normalizedItem = normalizeItemData(item);
-                      const unit =
-                        normalizedItem.measurement_unit === 1 ? "kg" : "";
-                      showSuccess(
-                        `Added 5${unit} ${item.name || "items"} ${getLabel('addToPickup', user?.role)}`,
-                        2500
-                      );
-                    } catch (err) {
-                      console.error(
-                        "[CategoriesGrid] Error fast increasing quantity:",
-                        err
-                      );
-                      showError(`Failed to add items ${getLabel('addToPickup', user?.role)}`);
-                    } finally {
-                      clearTimeout(timeoutId);
-                      setPendingOperations((prev) => {
-                        const newState = { ...prev };
-                        delete newState[item.categoryId];
-                        return newState;
-                      });
-                    }
-                  }}
-                  onFastDecrease={async () => {
-                    if (itemPendingAction) return;
-
-                    const timeoutId = setTimeout(() => {
-                      setPendingOperations((prev) => {
-                        const newState = { ...prev };
-                        delete newState[item.categoryId];
-                        return newState;
-                      });
-                    }, 2000);
-
-                    try {
-                      setPendingOperations((prev) => ({
-                        ...prev,
-                        [item.categoryId]: "fastDecrease",
-                      }));
-                      await handleFastDecreaseQuantity(item);
-
-                      const normalizedItem = normalizeItemData(item);
-                      const unit =
-                        normalizedItem.measurement_unit === 1 ? "kg" : "";
-                      const remainingQuantity = item.quantity - 5;
-                      if (remainingQuantity > 0) {
-                        showSuccess(
-                          `Reduced ${item.name || "item"} by 5${unit}`,
-                          2000
-                        );
-                      } else {
-                        showSuccess(
-                          `Removed ${item.name || "item"} from pickup`,
-                          2000
-                        );
-                      }
-                    } catch (err) {
-                      console.error(
-                        "[CategoriesGrid] Error fast decreasing quantity:",
-                        err
-                      );
-                      showError("Failed to update item quantity");
-                    } finally {
-                      clearTimeout(timeoutId);
-                      setPendingOperations((prev) => {
-                        const newState = { ...prev };
-                        delete newState[item.categoryId];
-                        return newState;
-                      });
-                    }
-                  }}
+                  onIncrease={() => handleCartOperation(item, 'increase')}
+                  onDecrease={() => handleCartOperation(item, 'decrease')}
+                  onFastIncrease={() => handleCartOperation(item, 'fastIncrease')}
+                  onFastDecrease={() => handleCartOperation(item, 'fastDecrease')}
                 />
               );
             })}

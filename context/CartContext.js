@@ -9,7 +9,7 @@ import {
   testMinimalPost,
   updateCartItem,
 } from "../services/api/cart.js";
-import { normalizeItemData, validateQuantity } from '../utils/cartUtils';
+import { createCartItem, getCartKey, normalizeItemData, validateQuantity } from "../utils/cartUtils";
 import { useAuth } from "./AuthContext";
 
 const CartContext = createContext();
@@ -18,12 +18,13 @@ export const useCartContext = () => useContext(CartContext);
 
 export const CartProvider = ({ children }) => {
   const { isLoggedIn, user, loading: authLoading } = useAuth();
-  const [cartItems, setCartItems] = useState({});
+  const [cartItems, setCartItems] = useState({}); // Key: item._id, Value: quantity
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [pendingOperations, setPendingOperations] = useState(new Set());
   const [removingItems, setRemovingItems] = useState(new Set());
-  // const [fetchingCart, setFetchingCart] = useState(false);
+  // Store full cart item details for better performance
+  const [cartItemDetails, setCartItemDetails] = useState({}); // Key: item._id, Value: full item object
 
   useEffect(() => {
     let didCancel = false;
@@ -38,32 +39,130 @@ export const CartProvider = ({ children }) => {
       // User logged out, clear all cart state and session
       console.log('[CartContext] User logged out, clearing cart state and session');
       setCartItems({});
+      setCartItemDetails({});
       setError(null);
       setPendingOperations(new Set());
       setRemovingItems(new Set());
       setLoading(false);
-      // setFetchingCart(false);
       // Clear sessionId and accessToken from storage
       clearAuthData();
       return;
     }
 
     if (isLoggedIn && !authLoading) {
-      // Always fetch cart after login, do not skip if fetchingCart is true
-      // setFetchingCart(true);
+      // Always fetch cart after login with enhanced error handling
       setLoading(true);
       (async () => {
         try {
           const cart = await getCart(isLoggedIn);
           if (didCancel) return;
+          
+          // Process cart items with proper normalization and fallback data fetching
           const itemsObj = {};
+          const itemDetailsObj = {};
           const cartItems = cart.data?.data?.items || cart.data?.items || cart.items || [];
-          for (const item of cartItems) {
-            itemsObj[item.categoryId] = item.quantity;
+          
+          // Check if cart items have complete data (they should from backend)
+          const hasCompleteData = cartItems.length > 0 && cartItems.every(item => 
+            item.categoryId && item.image && item.measurement_unit !== undefined
+          );
+          
+          if (hasCompleteData) {
+            console.log('[CartContext] Backend cart items have complete data, using directly');
+            // Use backend cart data directly since it's complete
+            for (const cartItem of cartItems) {
+              try {
+                // Backend items already have complete data, no need to normalize
+                // CRITICAL: Just use the backend data as-is since it's already complete
+                
+                // Use _id as the key (this is the actual item ID)
+                const itemKey = cartItem._id;
+                
+                if (!itemKey) {
+                  console.error('[CartContext] Item missing _id field:', cartItem);
+                  continue;
+                }
+                
+                // Store in cart items object for context
+                itemsObj[itemKey] = cartItem.quantity || 0;
+                
+                // Store full item details for UI components (use complete backend data)
+                itemDetailsObj[itemKey] = cartItem;
+                
+                console.log('[CartContext] Processed cart item:', cartItem.name, 'quantity:', cartItem.quantity);
+              } catch (itemError) {
+                console.error('[CartContext] Error processing cart item:', itemError.message, cartItem);
+              }
+            }
+          } else {
+            console.log('[CartContext] Cart items missing essential data, fetching full item details...');
+            // Fallback to the old logic only if cart data is incomplete
+            const needsFullItemData = cartItems.some(item => 
+              !item.categoryId || !item.image || item.measurement_unit === undefined
+            );
+            
+            let allItemsData = null;
+            if (needsFullItemData) {
+              try {
+                // Fetch all items to get complete data
+                const { categoriesAPI } = await import("../services/api");
+                const response = await categoriesAPI.getAllItems(user?.role || "customer");
+                allItemsData = response.data?.items || response.data || response.items || response;
+                console.log('[CartContext] Fetched', allItemsData?.length || 0, 'items for cart merging');
+              } catch (itemsError) {
+                console.warn('[CartContext] Failed to fetch full item data:', itemsError.message);
+              }
+            }
+            
+            for (const cartItem of cartItems) {
+              try {
+                let itemToUse = cartItem;
+                
+                // If we have incomplete data and full items data is available, merge them
+                if (needsFullItemData && allItemsData && Array.isArray(allItemsData)) {
+                  const fullItemData = allItemsData.find(item => item._id === cartItem._id);
+                  if (fullItemData) {
+                    itemToUse = {
+                      ...fullItemData,
+                      quantity: cartItem.quantity, // Preserve cart quantity
+                    };
+                    console.log('[CartContext] Merged cart item with full data:', fullItemData.name);
+                  } else {
+                    // Only normalize if we couldn't find full data
+                    itemToUse = normalizeItemData(cartItem);
+                  }
+                } else {
+                  // Only normalize if data is actually incomplete
+                  const isIncomplete = !cartItem.categoryId || !cartItem.image || cartItem.measurement_unit === undefined;
+                  if (isIncomplete) {
+                    itemToUse = normalizeItemData(cartItem);
+                  }
+                }
+                
+                // Use _id as the key (this is the actual item ID)
+                const itemKey = itemToUse._id;
+                
+                if (!itemKey) {
+                  console.error('[CartContext] Item missing _id field:', cartItem);
+                  continue;
+                }
+                
+                // Store in cart items object for context
+                itemsObj[itemKey] = itemToUse.quantity || 0;
+                
+                // Store full item details for UI components
+                itemDetailsObj[itemKey] = itemToUse;
+                
+                console.log('[CartContext] Processed cart item:', itemToUse.name, 'quantity:', itemToUse.quantity);
+              } catch (itemError) {
+                console.error('[CartContext] Error processing cart item:', itemError.message, cartItem);
+              }
+            }
           }
           setCartItems(itemsObj);
+          setCartItemDetails(itemDetailsObj);
           setError(null);
-          console.log('[CartContext] Cart loaded successfully');
+          console.log('[CartContext] Cart loaded successfully with new schema');
         } catch (err) {
           if (didCancel) return;
           console.warn(
@@ -71,11 +170,11 @@ export const CartProvider = ({ children }) => {
             err.message
           );
           setCartItems({});
+          setCartItemDetails({});
           setError(null);
         } finally {
           if (didCancel) return;
           setLoading(false);
-          // setFetchingCart(false);
         }
       })();
     }
@@ -85,29 +184,49 @@ export const CartProvider = ({ children }) => {
   }, [isLoggedIn, user, authLoading]);
   const handleAddSingleItem = async (item) => {
     const normalizedItem = normalizeItemData(item);
+    
+    // Create proper cart item for new backend schema
+    const cartItem = createCartItem(normalizedItem, normalizedItem.quantity || 1);
+    
     try {
-      validateQuantity(normalizedItem);
+      validateQuantity(cartItem);
     } catch (err) {
       setError(err.message);
       return { success: false, error: err.message };
     }
+    
+    // Use _id as the key for optimistic update
+    const itemKey = cartItem._id;
     const optimisticUpdate = { ...cartItems };
-    optimisticUpdate[normalizedItem.categoryId] = normalizedItem.quantity;
+    const optimisticDetails = { ...cartItemDetails };
+    
+    optimisticUpdate[itemKey] = cartItem.quantity;
+    optimisticDetails[itemKey] = cartItem;
+    
     setCartItems(optimisticUpdate);
+    setCartItemDetails(optimisticDetails);
 
     try {
-      const result = await addItemToCart(normalizedItem, isLoggedIn);
+      const result = await addItemToCart(cartItem, isLoggedIn);
       if (result.items) {
         const itemsObj = {};
+        const itemDetailsObj = {};
+        
         for (const backendItem of result.items) {
-          itemsObj[backendItem.categoryId] = backendItem.quantity;
+          const backendItemKey = getCartKey(backendItem); // Use consistent key function
+          itemsObj[backendItemKey] = backendItem.quantity;
+          itemDetailsObj[backendItemKey] = backendItem;
         }
+        
         setCartItems(itemsObj);
+        setCartItemDetails(itemDetailsObj);
       }
       setError(null);
       return { success: true, result };
     } catch (err) {
+      // Revert optimistic update on error
       setCartItems(cartItems);
+      setCartItemDetails(cartItemDetails);
       setError(err.message || "Failed to add item");
       return { success: false, error: err.message };
     }
@@ -126,31 +245,36 @@ export const CartProvider = ({ children }) => {
       const currentBackendCart = await getCart(isLoggedIn);
       const actualCartItems = {};
       (currentBackendCart.items || []).forEach((item) => {
-        actualCartItems[item.categoryId] = item.quantity;
+        const itemKey = getCartKey(item); // Use proper item key
+        actualCartItems[itemKey] = item.quantity;
       });
       setCartItems(actualCartItems);
       const itemsToMerge = {};
       normalizedItems.forEach((item) => {
-        if (itemsToMerge[item.categoryId]) {
-          itemsToMerge[item.categoryId].quantity += item.quantity;
+        const itemKey = getCartKey(item); // Use proper item key
+        if (itemsToMerge[itemKey]) {
+          itemsToMerge[itemKey].quantity += item.quantity;
         } else {
-          itemsToMerge[item.categoryId] = { ...item };
+          itemsToMerge[itemKey] = { ...item };
         }
       });
       const optimisticUpdate = { ...actualCartItems };
       Object.values(itemsToMerge).forEach((item) => {
-        const currentQuantity = actualCartItems[item.categoryId] || 0;
+        const itemKey = getCartKey(item); // Use proper item key
+        const currentQuantity = actualCartItems[itemKey] || 0;
         const newQuantity = currentQuantity + item.quantity;
-        optimisticUpdate[item.categoryId] = newQuantity;
+        optimisticUpdate[itemKey] = newQuantity;
       });
       setCartItems(optimisticUpdate);
       const results = [];
       for (const mergedItem of Object.values(itemsToMerge)) {
-        const actualCurrentQuantity = actualCartItems[mergedItem.categoryId] || 0;
+        const itemKey = getCartKey(mergedItem); // Use proper item key
+        const actualCurrentQuantity = actualCartItems[itemKey] || 0;
         if (actualCurrentQuantity > 0) {
           const newTotalQuantity = actualCurrentQuantity + mergedItem.quantity;
+          // Pass the full merged item object to updateCartItem
           const result = await updateCartItem(
-            mergedItem.categoryId,
+            mergedItem,             // Pass full item object with categoryId
             newTotalQuantity,
             isLoggedIn,
             mergedItem.measurement_unit
@@ -164,7 +288,8 @@ export const CartProvider = ({ children }) => {
       const finalCart = await getCart(isLoggedIn);
       const finalItemsObj = {};
       (finalCart.items || []).forEach((backendItem) => {
-        finalItemsObj[backendItem.categoryId] = backendItem.quantity;
+        const itemKey = getCartKey(backendItem); // Use proper item key
+        finalItemsObj[itemKey] = backendItem.quantity;
       });
       setCartItems(finalItemsObj);
       setError(null);
@@ -173,7 +298,8 @@ export const CartProvider = ({ children }) => {
         const revertCart = await getCart(isLoggedIn);
         const revertItemsObj = {};
         (revertCart.items || []).forEach((item) => {
-          revertItemsObj[item.categoryId] = item.quantity;
+          const itemKey = getCartKey(item); // Use proper item key
+          revertItemsObj[itemKey] = item.quantity;
         });
         setCartItems(revertItemsObj);
       } catch (_revertErr) {
@@ -185,11 +311,11 @@ export const CartProvider = ({ children }) => {
   };
 
   const handleUpdateQuantity = async (
-    categoryId,
+    itemId,                    // Changed from categoryId to itemId (using _id)
     quantity,
     measurementUnit = null
   ) => {
-    const operationKey = `update-${categoryId}`;
+    const operationKey = `update-${itemId}`;
     if (pendingOperations.has(operationKey)) {
       return { success: false, reason: "Operation already pending" };
     }
@@ -197,14 +323,28 @@ export const CartProvider = ({ children }) => {
     setPendingOperations((prev) => new Set([...prev, operationKey]));
 
     const previousCartItems = { ...cartItems };
+    const previousCartDetails = { ...cartItemDetails };
 
+    // Get the full item details (we need categoryId for backend)
+    const itemDetails = cartItemDetails[itemId];
+    if (!itemDetails) {
+      setPendingOperations((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(operationKey);
+        return newSet;
+      });
+      return { success: false, error: "Item details not found in cart" };
+    }
+
+    // Optimistic update using _id as key
     const optimisticUpdate = { ...cartItems };
-    optimisticUpdate[categoryId] = quantity;
+    optimisticUpdate[itemId] = quantity;
     setCartItems(optimisticUpdate);
 
     try {
+      // Pass the full item object with categoryId
       const result = await updateCartItem(
-        categoryId,
+        itemDetails,            // Pass full item object with categoryId
         quantity,
         isLoggedIn,
         measurementUnit
@@ -212,20 +352,31 @@ export const CartProvider = ({ children }) => {
 
       if (result.items) {
         const itemsObj = {};
+        const itemDetailsObj = {};
+        
         result.items.forEach((backendItem) => {
-          itemsObj[backendItem.categoryId] = backendItem.quantity;
+          const backendItemKey = getCartKey(backendItem); // Use consistent key function
+          itemsObj[backendItemKey] = backendItem.quantity;
+          itemDetailsObj[backendItemKey] = backendItem;
         });
+        
         setCartItems(itemsObj);
+        setCartItemDetails(itemDetailsObj);
       }
       setError(null);
       return { success: true, result };
     } catch (err) {
+      // Revert optimistic updates
       setCartItems(previousCartItems);
+      setCartItemDetails(previousCartDetails);
 
       if (err.message.includes("Item not found in cart")) {
         const updatedItems = { ...previousCartItems };
-        delete updatedItems[categoryId];
+        const updatedDetails = { ...previousCartDetails };
+        delete updatedItems[itemId];
+        delete updatedDetails[itemId];
         setCartItems(updatedItems);
+        setCartItemDetails(updatedDetails);
         setError("Item was removed from cart");
       } else {
         setError(err.message || "Failed to update item");
@@ -242,31 +393,40 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  const handleRemoveFromCart = async (categoryId) => {
-    setRemovingItems((prev) => new Set([...prev, categoryId]));
+  const handleRemoveFromCart = async (itemId) => {  // Changed parameter name from categoryId to itemId
+    setRemovingItems((prev) => new Set([...prev, itemId]));
 
     const optimisticUpdate = { ...cartItems };
-    delete optimisticUpdate[categoryId];
+    const optimisticDetails = { ...cartItemDetails };
+    delete optimisticUpdate[itemId];          // Use itemId instead of categoryId
+    delete optimisticDetails[itemId];
     setCartItems(optimisticUpdate);
+    setCartItemDetails(optimisticDetails);
 
     try {
-      const result = await removeItemFromCart(categoryId, isLoggedIn);
+      const result = await removeItemFromCart(itemId, isLoggedIn);  // Pass itemId
 
       if (result && result.items) {
         const itemsObj = {};
+        const itemDetailsObj = {};
         result.items.forEach((backendItem) => {
-          itemsObj[backendItem.categoryId] = backendItem.quantity;
+          const backendItemKey = getCartKey(backendItem); // Use consistent key function
+          itemsObj[backendItemKey] = backendItem.quantity;
+          itemDetailsObj[backendItemKey] = backendItem;
         });
         setCartItems(itemsObj);
+        setCartItemDetails(itemDetailsObj);
       }
       setError(null);
     } catch (err) {
+      // Revert optimistic updates
       setCartItems(cartItems);
+      setCartItemDetails(cartItemDetails);
       setError(err.message || "Failed to remove item");
     } finally {
       setRemovingItems((prev) => {
         const newSet = new Set(prev);
-        newSet.delete(categoryId);
+        newSet.delete(itemId);              // Use itemId instead of categoryId
         return newSet;
       });
     }
@@ -274,13 +434,17 @@ export const CartProvider = ({ children }) => {
 
   const handleClearCart = async () => {
     const originalCart = { ...cartItems };
+    const originalDetails = { ...cartItemDetails };
     setCartItems({});
+    setCartItemDetails({});
 
     try {
       await apiClearCart(isLoggedIn);
       setError(null);
     } catch (err) {
+      // Revert both cart items and details
       setCartItems(originalCart);
+      setCartItemDetails(originalDetails);
       setError(err.message || "Failed to clear cart");
     }
   };
@@ -289,16 +453,49 @@ export const CartProvider = ({ children }) => {
     try {
       const cart = await getCart(isLoggedIn);
       const itemsObj = {};
-      (cart.items || []).forEach((item) => {
-        itemsObj[item.categoryId] = item.quantity;
+      const itemDetailsObj = {};
+      
+      const cartItems = cart.items || [];
+      cartItems.forEach((item) => {
+        // Use consistent key function for item ID
+        const itemKey = getCartKey(item);
+        itemsObj[itemKey] = item.quantity;
+        itemDetailsObj[itemKey] = {
+          ...item,
+          _id: itemKey, // Ensure _id is properly set
+        };
       });
+      
       setCartItems(itemsObj);
+      setCartItemDetails(itemDetailsObj);
     } catch (err) {
       throw err;
     }
   };
 
-  const getItemQuantity = (categoryId) => cartItems[categoryId] || 0;
+  // Backward compatibility function - handles the naming correction
+  // OLD: categoryId was actually the item ID (wrong naming)
+  // NEW: _id = item ID, categoryId = actual category ID
+  const getItemQuantity = (identifier) => {
+    // First try using the identifier directly as item ID
+    if (cartItems[identifier]) {
+      return cartItems[identifier];
+    }
+    
+    // For backward compatibility: if someone passes what they think is categoryId
+    // but it's actually an item ID from old data, check if it exists as a key
+    const matchingItemKey = Object.keys(cartItems).find(key => {
+      const item = cartItemDetails[key];
+      if (!item) return false;
+      
+      // Check if the identifier matches either the item ID or the old "categoryId" field
+      return key === identifier || 
+             item.categoryId === identifier ||
+             item._id === identifier;
+    });
+    
+    return matchingItemKey ? cartItems[matchingItemKey] : 0;
+  };
 
   const fetchBackendCart = async () => {
     // Prevent fetching cart if not logged in and no valid sessionId
@@ -370,13 +567,14 @@ export const CartProvider = ({ children }) => {
     <CartContext.Provider
       value={{
         cartItems,
+        cartItemDetails,        // Export cart item details for better performance
         getItemQuantity,
         handleAddToCart,
         handleAddSingleItem,
         handleUpdateQuantity,
         handleRemoveFromCart,
         handleClearCart,
-        refreshCart, // <-- ensure this is exported
+        refreshCart,
         fetchBackendCart,
         testConnectivity,
         testMinimalPostRequest,

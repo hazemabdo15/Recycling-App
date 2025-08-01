@@ -1,11 +1,10 @@
 import { Stack } from "expo-router";
 import { AuthProvider } from '../context/AuthContext';
 import { CartProvider } from '../context/CartContext';
-import { NotificationProvider } from '../context/NotificationContext';
 import { ChatProvider } from "../context/ChatContext";
+import { NotificationProvider } from '../context/NotificationContext';
 
 export default function RootLayout() {
-
   return (
     <AuthProvider>
       <CartProvider>

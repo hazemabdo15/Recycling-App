@@ -1,5 +1,5 @@
 import { useCartContext } from '../context/CartContext';
-import { calculateQuantity, getIncrementStep, normalizeItemData } from '../utils/cartUtils';
+import { calculateQuantity, createCartItem, getIncrementStep, normalizeItemData } from '../utils/cartUtils';
 
 export const useCart = () => {
   const {
@@ -23,30 +23,31 @@ export const useCart = () => {
   const handleIncreaseQuantity = async (item) => {
     console.log('[useCart] handleIncreaseQuantity - Original item:', item);
     
-    const normalizedItem = normalizeItemData(item);
-    const { categoryId, measurement_unit } = normalizedItem;
+    // Only normalize if the item is missing essential fields
+    const needsNormalization = !item._id || !item.categoryId || !item.image || item.measurement_unit === undefined;
+    const processedItem = needsNormalization ? normalizeItemData(item) : item;
+    const { _id, measurement_unit } = processedItem;  // Use _id instead of categoryId
     
-    console.log('[useCart] handleIncreaseQuantity - Normalized item:', {
-      categoryId,
+    console.log('[useCart] handleIncreaseQuantity - Processed item:', {
+      _id,
       measurement_unit,
-      itemName: normalizedItem.name,
-      categoryName: normalizedItem.categoryName
+      itemName: processedItem.name,
+      categoryName: processedItem.categoryName
     });
     
-    const currentQuantity = getItemQuantity(categoryId);
+    // Use _id to get current quantity (with backward compatibility)
+    const currentQuantity = getItemQuantity(_id);
     let newQuantity;
     
     if (currentQuantity === 0) {
-
       newQuantity = 1;
     } else {
-
       const step = getIncrementStep(measurement_unit);
       newQuantity = calculateQuantity(currentQuantity, step, 'add');
     }
     
     console.log('[useCart] handleIncreaseQuantity:', { 
-      categoryId, 
+      _id, 
       currentQuantity, 
       newQuantity, 
       measurement_unit,
@@ -55,23 +56,15 @@ export const useCart = () => {
     
     try {
       if (currentQuantity === 0) {
-
-        const cartItem = {
-          categoryId,
-          categoryName: normalizedItem.categoryName,
-          name: normalizedItem.name,
-          image: normalizedItem.image,
-          points: normalizedItem.points,
-          price: normalizedItem.price,
-          measurement_unit,
-          quantity: 1
-        };
+        // Create proper cart item using new schema
+        const cartItem = createCartItem(processedItem, 1);
         
         console.log('[useCart] Adding new item to cart with quantity 1:', cartItem);
         await handleAddSingleItem(cartItem);
       } else {
-        console.log('[useCart] Updating existing item quantity:', { categoryId, newQuantity });
-        const result = await handleUpdateQuantity(categoryId, newQuantity, measurement_unit);
+        console.log('[useCart] Updating existing item quantity:', { _id, newQuantity });
+        // Use _id for update operations
+        const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit);
 
         if (result && !result.success && result.reason === 'Operation already pending') {
           console.log('⏸️ [useCart] Update skipped - operation already pending');
@@ -84,24 +77,24 @@ export const useCart = () => {
   };
 
   const handleDecreaseQuantity = async (item) => {
-    const normalizedItem = normalizeItemData(item);
-    const { categoryId, measurement_unit } = normalizedItem;
+    // Only normalize if the item is missing essential fields
+    const needsNormalization = !item._id || !item.categoryId || !item.image || item.measurement_unit === undefined;
+    const processedItem = needsNormalization ? normalizeItemData(item) : item;
+    const { _id, measurement_unit } = processedItem;  // Use _id instead of categoryId
     
-    console.log('[useCart] handleDecreaseQuantity - Normalized item:', {
-      categoryId,
+    console.log('[useCart] handleDecreaseQuantity - Processed item:', {
+      _id,
       measurement_unit,
-      itemName: normalizedItem.name,
-      categoryName: normalizedItem.categoryName
+      itemName: processedItem.name,
+      categoryName: processedItem.categoryName
     });
     
-    const currentQuantity = getItemQuantity(categoryId);
+    const currentQuantity = getItemQuantity(_id);  // Use _id to get quantity
     let newQuantity;
     
     if (currentQuantity <= 1) {
-
       newQuantity = 0;
     } else {
-
       const step = getIncrementStep(measurement_unit);
       newQuantity = calculateQuantity(currentQuantity, step, 'subtract');
 
@@ -111,7 +104,7 @@ export const useCart = () => {
     }
     
     console.log('[useCart] handleDecreaseQuantity:', { 
-      categoryId, 
+      _id, 
       currentQuantity, 
       newQuantity, 
       measurement_unit,
@@ -120,9 +113,9 @@ export const useCart = () => {
     
     try {
       if (newQuantity <= 0) {
-        await handleRemoveFromCart(categoryId);
+        await handleRemoveFromCart(_id);  // Use _id for removal
       } else {
-        const result = await handleUpdateQuantity(categoryId, newQuantity, measurement_unit);
+        const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit);  // Use _id for update
 
         if (result && !result.success && result.reason === 'Operation already pending') {
           console.log('⏸️ [useCart] Update skipped - operation already pending');
@@ -137,22 +130,22 @@ export const useCart = () => {
   const handleFastIncreaseQuantity = async (item) => {
     console.log('[useCart] handleFastIncreaseQuantity - Original item:', item);
     
-    const normalizedItem = normalizeItemData(item);
-    const { categoryId, measurement_unit } = normalizedItem;
+    // Only normalize if the item is missing essential fields
+    const needsNormalization = !item._id || !item.categoryId || !item.image || item.measurement_unit === undefined;
+    const processedItem = needsNormalization ? normalizeItemData(item) : item;
+    const { _id, measurement_unit } = processedItem;  // Use _id instead of categoryId
 
-    const currentQuantity = getItemQuantity(categoryId);
+    const currentQuantity = getItemQuantity(_id);  // Use _id to get quantity
     let newQuantity;
     
     if (currentQuantity === 0) {
-
       newQuantity = 5;
     } else {
-
       newQuantity = currentQuantity + 5;
     }
     
     console.log('[useCart] handleFastIncreaseQuantity:', { 
-      categoryId, 
+      _id, 
       currentQuantity, 
       newQuantity,
       measurement_unit
@@ -160,29 +153,20 @@ export const useCart = () => {
     
     try {
       if (currentQuantity === 0) {
-
         let formattedQuantity = newQuantity;
         
         if (measurement_unit === 1) {
           formattedQuantity = parseFloat(newQuantity.toFixed(2));
         }
         
-        const cartItem = {
-          categoryId,
-          categoryName: normalizedItem.categoryName,
-          name: normalizedItem.name,
-          image: normalizedItem.image,
-          points: normalizedItem.points,
-          price: normalizedItem.price,
-          measurement_unit,
-          quantity: formattedQuantity
-        };
+        // Create proper cart item using new schema
+        const cartItem = createCartItem(processedItem, formattedQuantity);
         
         console.log('[useCart] Adding new item to cart with fast quantity (FAST PATH):', cartItem);
         await handleAddSingleItem(cartItem);
       } else {
-        console.log('[useCart] Fast updating existing item quantity:', { categoryId, newQuantity });
-        const result = await handleUpdateQuantity(categoryId, newQuantity, measurement_unit);
+        console.log('[useCart] Fast updating existing item quantity:', { _id, newQuantity });
+        const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit);  // Use _id for update
         
         if (result && !result.success && result.reason === 'Operation already pending') {
           console.log('⏸️ [useCart] Fast update skipped - operation already pending');
@@ -195,10 +179,12 @@ export const useCart = () => {
   };
 
   const handleFastDecreaseQuantity = async (item) => {
-    const normalizedItem = normalizeItemData(item);
-    const { categoryId, measurement_unit } = normalizedItem;
+    // Only normalize if the item is missing essential fields
+    const needsNormalization = !item._id || !item.categoryId || !item.image || item.measurement_unit === undefined;
+    const processedItem = needsNormalization ? normalizeItemData(item) : item;
+    const { _id, measurement_unit } = processedItem;  // Use _id instead of categoryId
 
-    const currentQuantity = getItemQuantity(categoryId);
+    const currentQuantity = getItemQuantity(_id);  // Use _id to get quantity
     let newQuantity = currentQuantity - 5;
 
     if (newQuantity < 1) {
@@ -206,7 +192,7 @@ export const useCart = () => {
     }
     
     console.log('[useCart] handleFastDecreaseQuantity:', { 
-      categoryId, 
+      _id,           // Use _id instead of categoryId
       currentQuantity, 
       newQuantity, 
       measurement_unit,
@@ -215,9 +201,9 @@ export const useCart = () => {
     
     try {
       if (newQuantity <= 0) {
-        await handleRemoveFromCart(categoryId);
+        await handleRemoveFromCart(_id);  // Use _id for removal
       } else {
-        const result = await handleUpdateQuantity(categoryId, newQuantity, measurement_unit);
+        const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit);  // Use _id for update
         
         if (result && !result.success && result.reason === 'Operation already pending') {
           console.log('⏸️ [useCart] Fast decrease skipped - operation already pending');

@@ -278,15 +278,30 @@ export async function addItemToCart(item, isLoggedIn) {
         }
 
         const payload = {
-          categoryId: item.categoryId,
+          _id: item._id,                        // Item _id (required for new schema)
+          categoryId: item.categoryId,          // CRITICAL: Must be the actual category ID
           categoryName: item.categoryName,
-          itemName: item.name,
+          name: item.name,                      // Use 'name' instead of 'itemName'
           image: item.image,
           points: item.points,
           price: item.price,
           measurement_unit: item.measurement_unit,
           quantity: item.quantity,
         };
+
+        // Debug log to verify we're sending correct categoryId
+        if (item.categoryId) {
+          logger.cart('Sending cart item with categoryId', {
+            itemId: item._id,
+            categoryId: item.categoryId,
+            itemName: item.name
+          });
+        } else {
+          logger.cart('WARNING: Missing categoryId in cart item', {
+            itemId: item._id,
+            itemName: item.name
+          }, 'WARN');
+        }
 
         const response = await fetch(BASE_URL, {
           method: "POST",
@@ -346,12 +361,13 @@ export async function addItemToCart(item, isLoggedIn) {
   );
 }
 
-export async function updateCartItem(categoryId, quantity, isLoggedIn, measurementUnit = null) {
+export async function updateCartItem(item, quantity, isLoggedIn, measurementUnit = null) {
   return measureApiCall(
     async () => {
       try {
         logger.cart('Updating cart item', {
-          categoryId,
+          itemId: item._id || item.itemId,
+          categoryId: item.categoryId,
           quantity,
           measurementUnit,
           userType: isLoggedIn ? 'authenticated' : 'guest'
@@ -363,11 +379,21 @@ export async function updateCartItem(categoryId, quantity, isLoggedIn, measureme
         const sessionId = isLoggedIn ? null : await getSessionId();
         const headers = await getAuthHeaders(isLoggedIn, sessionId);
 
+        // FIXED: Send both _id and categoryId to match backend schema
         const payload = { 
+          _id: item._id || item.itemId,        // Item ID
+          categoryId: item.categoryId,         // CRITICAL: Category ID required by backend
           quantity, 
-          measurement_unit: measurementUnit, 
-          categoryId 
+          measurement_unit: measurementUnit
         };
+
+        // Debug log to verify we're sending correct data
+        if (!item.categoryId) {
+          logger.cart('WARNING: Missing categoryId in updateCartItem', {
+            itemId: item._id || item.itemId,
+            itemData: item
+          }, 'WARN');
+        }
 
         const response = await fetch(BASE_URL, {
           method: "PUT",
@@ -381,7 +407,7 @@ export async function updateCartItem(categoryId, quantity, isLoggedIn, measureme
         if (!response.ok) {
           const errorText = await response.text();
           logger.cart('Failed to update cart item', {
-            categoryId,
+            itemId: item._id || item.itemId,
             status: response.status,
             error: errorText
           }, 'ERROR');
@@ -392,14 +418,14 @@ export async function updateCartItem(categoryId, quantity, isLoggedIn, measureme
 
         const result = await response.json();
         logger.success('Cart item updated successfully', {
-          categoryId,
+          itemId: item._id || item.itemId,
           newQuantity: quantity
         }, 'CART');
 
         return result;
       } catch (error) {
         logger.cart('Update cart item failed', {
-          categoryId,
+          itemId: item._id || item.itemId,
           error: error.message
         }, 'ERROR');
         throw error;
@@ -409,19 +435,20 @@ export async function updateCartItem(categoryId, quantity, isLoggedIn, measureme
   );
 }
 
-export async function removeItemFromCart(categoryId, isLoggedIn) {
+export async function removeItemFromCart(itemId, isLoggedIn) {
   return measureApiCall(
     async () => {
       try {
         logger.cart('Removing item from cart', {
-          categoryId,
+          itemId,
           userType: isLoggedIn ? 'authenticated' : 'guest'
         });
 
         const sessionId = isLoggedIn ? null : await getSessionId();
         const headers = await getAuthHeaders(isLoggedIn, sessionId);
 
-        const response = await fetch(`${BASE_URL}/${categoryId}`, {
+        // Updated to use _id in URL path (matching new backend route)
+        const response = await fetch(`${BASE_URL}/${itemId}`, {
           method: "DELETE",
           headers,
           credentials: "include",
@@ -432,7 +459,7 @@ export async function removeItemFromCart(categoryId, isLoggedIn) {
         if (!response.ok) {
           const errorText = await response.text();
           logger.cart('Failed to remove item from cart', {
-            categoryId,
+            itemId,
             status: response.status,
             error: errorText
           }, 'ERROR');
@@ -443,13 +470,13 @@ export async function removeItemFromCart(categoryId, isLoggedIn) {
 
         const result = await response.json();
         logger.success('Item removed from cart successfully', {
-          categoryId
+          itemId
         }, 'CART');
 
         return result;
       } catch (error) {
         logger.cart('Remove item from cart failed', {
-          categoryId,
+          itemId,
           error: error.message
         }, 'ERROR');
         throw error;

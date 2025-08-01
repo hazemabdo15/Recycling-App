@@ -11,7 +11,7 @@ import { useCart } from '../hooks/useCart';
 import { useToast } from '../hooks/useToast';
 import { layoutStyles } from '../styles/components/commonStyles';
 import { colors } from '../styles/theme';
-import { calculateCartStats, getIncrementStep, normalizeItemData } from '../utils/cartUtils';
+import { calculateCartStats, getCartKey, getDisplayKey, getIncrementStep, normalizeItemData } from '../utils/cartUtils';
 import { getLabel } from '../utils/roleLabels';
 
 let Animated, useAnimatedStyle, useSharedValue, withSpring, withTiming;
@@ -49,13 +49,16 @@ const CategoryDetails = () => {
     const { cartItems, handleIncreaseQuantity, handleDecreaseQuantity, handleFastIncreaseQuantity, handleFastDecreaseQuantity } = useCart();
 
     const mergedItems = items.map((item) => {
-        const normalizedItem = normalizeItemData(item);
-        const { categoryId } = normalizedItem;
-
-        const quantity = cartItems[categoryId] || 0;
+        // API items should already have complete data, use them directly
+        // Only normalize if the item is actually missing essential fields
+        const needsNormalization = !item._id || !item.categoryId || !item.image || item.measurement_unit === undefined;
+        const processedItem = needsNormalization ? normalizeItemData(item) : item;
+        
+        const itemKey = getCartKey(processedItem); // Use item _id as key
+        const quantity = cartItems[itemKey] || 0;
         
         return {
-            ...normalizedItem,
+            ...processedItem,
             quantity,
         };
     });
@@ -82,7 +85,8 @@ const CategoryDetails = () => {
     const { totalItems, totalPoints, totalValue } = calculateCartStats(mergedItems, cartItems);
 
     const renderItem = ({ item, index }) => {
-        const itemPendingAction = pendingOperations[item.categoryId];
+        const itemKey = getCartKey(item);
+        const itemPendingAction = pendingOperations[itemKey];
         
         return (
             <ItemCard
@@ -98,14 +102,15 @@ const CategoryDetails = () => {
                     const timeoutId = setTimeout(() => {
                         setPendingOperations(prev => {
                             const newState = { ...prev };
-                            delete newState[item.categoryId];
+                            delete newState[itemKey];
                             return newState;
                         });
                     }, 2000);
                     
                     try {
-                        setPendingOperations(prev => ({ ...prev, [item.categoryId]: 'increase' }));
-                        await handleIncreaseQuantity(item);
+                        setPendingOperations(prev => ({ ...prev, [itemKey]: 'increase' }));
+                        const itemWithCorrectId = { ...item, _id: itemKey };
+                        await handleIncreaseQuantity(itemWithCorrectId);
 
                         const normalizedItem = normalizeItemData(item);
                         const step = getIncrementStep(normalizedItem.measurement_unit);
@@ -125,7 +130,7 @@ const CategoryDetails = () => {
                         clearTimeout(timeoutId);
                         setPendingOperations(prev => {
                             const newState = { ...prev };
-                            delete newState[item.categoryId];
+                            delete newState[itemKey];
                             return newState;
                         });
                     }
@@ -137,14 +142,15 @@ const CategoryDetails = () => {
                     const timeoutId = setTimeout(() => {
                         setPendingOperations(prev => {
                             const newState = { ...prev };
-                            delete newState[item.categoryId];
+                            delete newState[itemKey];
                             return newState;
                         });
                     }, 2000);
                     
                     try {
-                        setPendingOperations(prev => ({ ...prev, [item.categoryId]: 'decrease' }));
-                        await handleDecreaseQuantity(item);
+                        setPendingOperations(prev => ({ ...prev, [itemKey]: 'decrease' }));
+                        const itemWithCorrectId = { ...item, _id: itemKey };
+                        await handleDecreaseQuantity(itemWithCorrectId);
 
                         const normalizedItem = normalizeItemData(item);
                         const step = getIncrementStep(normalizedItem.measurement_unit);
@@ -170,7 +176,7 @@ const CategoryDetails = () => {
                         clearTimeout(timeoutId);
                         setPendingOperations(prev => {
                             const newState = { ...prev };
-                            delete newState[item.categoryId];
+                            delete newState[itemKey];
                             return newState;
                         });
                     }
@@ -311,7 +317,7 @@ const CategoryDetails = () => {
                     <FlatList
                         data={mergedItems}
                         renderItem={renderItem}
-                        keyExtractor={(item) => item.categoryId}
+                        keyExtractor={(item) => getDisplayKey(item)}
                         showsVerticalScrollIndicator={false}
                         contentContainerStyle={[layoutStyles.listContainer, { paddingBottom: 32 }]}
                         ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
