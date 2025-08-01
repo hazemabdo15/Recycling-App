@@ -197,6 +197,7 @@ export default function AIResultsModal() {
     }
 
     const cartItems = availableMaterials.map(item => ({
+      _id: item.databaseItem._id,
       categoryId: item.databaseItem.categoryId,
       categoryName: item.databaseItem.categoryName,
       name: item.databaseItem.name,
