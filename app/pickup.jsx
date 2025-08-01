@@ -5,13 +5,13 @@ import * as Linking from "expo-linking";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Alert,
-  AppState,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Alert,
+    AppState,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -21,25 +21,57 @@ import ReviewPhase from "../components/pickup/ReviewPhase";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../hooks/useCart";
 import { usePickupWorkflow } from "../hooks/usePickupWorkflow";
-import { categoriesAPI } from "../services/api";
 import { API_BASE_URL } from "../services/api/config";
 import { isAuthenticated } from "../services/auth";
 import { colors, spacing, typography } from "../styles/theme";
 import { getProgressStepLabel } from "../utils/roleLabels";
 
-// Helper function to prepare order items
-const prepareOrderItems = async (cartItems, accessToken, user, logWithTimestamp) => {
+// Helper function to prepare order items - now uses cart details directly
+const prepareOrderItems = async (cartItems, cartItemDetails, accessToken, user, logWithTimestamp) => {
   let orderItems = [];
   
   try {
-    // Try to get items from API first
-    const response = await categoriesAPI.getAllItems(user?.role || "customer");
-    const allItems = response.data?.items || response.data || response.items || response;
-    const itemsArray = Array.isArray(allItems) ? allItems : [];
-    
-    if (itemsArray.length === 0) {
-      // API failed, use backend cart data
-      logWithTimestamp('WARN', 'API returned no items, using backend cart data');
+    // Use cartItemDetails directly instead of fetching from API
+    if (cartItemDetails && Object.keys(cartItemDetails).length > 0) {
+      logWithTimestamp('INFO', 'Using cart item details directly, no API call needed');
+      
+      // Convert cartItemDetails to order items format
+      orderItems = Object.entries(cartItems).map(([itemId, quantity]) => {
+        const itemDetails = cartItemDetails[itemId];
+        
+        if (itemDetails) {
+          return {
+            _id: itemDetails._id, // Item ID
+            categoryId: itemDetails.categoryId, // Category ID
+            quantity: Number(quantity),
+            name: itemDetails.name || itemDetails.itemName || 'Unknown Item',
+            categoryName: itemDetails.categoryName || 'Unknown Category',
+            measurement_unit: Number(itemDetails.measurement_unit),
+            points: Number(itemDetails.points) || 10,
+            price: Number(itemDetails.price) || 5.0,
+            image: itemDetails.image || 'placeholder.png',
+          };
+        } else {
+          // Fallback for missing item details
+          logWithTimestamp('WARN', `Missing details for item ${itemId}, using basic data`);
+          return {
+            _id: itemId,
+            categoryId: itemId, // Fallback
+            quantity: Number(quantity),
+            name: 'Unknown Item',
+            categoryName: 'Unknown Category',
+            measurement_unit: 1,
+            points: 10,
+            price: 5.0,
+            image: 'placeholder.png',
+          };
+        }
+      });
+      
+      logWithTimestamp('INFO', 'Prepared order items from cart context:', orderItems.length);
+    } else {
+      // Fallback: if cartItemDetails is not available, try backend cart data
+      logWithTimestamp('WARN', 'Cart item details not available, fetching from backend cart');
       const backendCartResponse = await fetch(`${API_BASE_URL}/api/cart`, {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -56,8 +88,8 @@ const prepareOrderItems = async (cartItems, accessToken, user, logWithTimestamp)
           _id: item._id, // Item ID
           categoryId: item.categoryId, // Category ID
           quantity: Number(item.quantity),
-          name: item.name || item.itemName || 'Unknown Item', // Try 'name' field instead of 'itemName'
-          categoryName: item.categoryName || 'Unknown Category', // Add categoryName field
+          name: item.name || item.itemName || 'Unknown Item',
+          categoryName: item.categoryName || 'Unknown Category',
           measurement_unit: Number(item.measurement_unit),
           points: Number(item.points) || 10,
           price: Number(item.price) || 5.0,
@@ -66,29 +98,9 @@ const prepareOrderItems = async (cartItems, accessToken, user, logWithTimestamp)
         
         logWithTimestamp('INFO', 'Using backend cart items for order:', orderItems.length);
       }
-    } else {
-      // Process items normally
-      orderItems = Object.entries(cartItems).map(([_id, quantity]) => {
-        const realItem = itemsArray.find(item => item._id === _id);
-        
-        if (realItem) {
-          return {
-            _id: realItem._id, // Item ID
-            categoryId: realItem.categoryId, // Category ID
-            quantity: Number(quantity),
-            name: realItem.name || realItem.itemName || 'Unknown Item', // Try 'name' field instead of 'itemName'
-            categoryName: realItem.categoryName || 'Unknown Category', // Add categoryName field
-            measurement_unit: Number(realItem.measurement_unit),
-            points: Number(realItem.points) || 10,
-            price: Number(realItem.price) || 5.0,
-            image: realItem.image || 'placeholder.png',
-          };
-        }
-        return null;
-      }).filter(Boolean);
     }
-  } catch (apiError) {
-    logWithTimestamp('ERROR', 'Failed to prepare order items:', apiError.message);
+  } catch (error) {
+    logWithTimestamp('ERROR', 'Failed to prepare order items:', error.message);
     throw new Error('Failed to prepare order data');
   }
   
@@ -193,7 +205,7 @@ export default function Pickup() {
     accessToken,
     loading: authContextLoading,
   } = useAuth();
-  const { cartItems, fetchBackendCart, handleClearCart } = useCart();
+  const { cartItems, cartItemDetails, fetchBackendCart, handleClearCart } = useCart();
 
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState(null);
@@ -392,7 +404,7 @@ export default function Pickup() {
               }
               
               // Prepare order data
-              const orderItems = await prepareOrderItems(cartItemsRef.current, accessToken, user, logWithTimestamp);
+              const orderItems = await prepareOrderItems(cartItemsRef.current, cartItemDetails, accessToken, user, logWithTimestamp);
               
               // Format user data
               const userData = {
@@ -586,7 +598,7 @@ export default function Pickup() {
               }
               
               // Prepare order data using helper function
-              const orderItems = await prepareOrderItems(cartItemsRef.current, accessToken, user, logWithTimestamp);
+              const orderItems = await prepareOrderItems(cartItemsRef.current, cartItemDetails, accessToken, user, logWithTimestamp);
               
               // Format user data
               const userData = {
@@ -758,6 +770,7 @@ export default function Pickup() {
     setCurrentPhase,
     createOrder,
     cartItems,
+    cartItemDetails,
     user,
     selectedAddress,
     creatingOrder,

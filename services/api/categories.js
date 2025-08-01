@@ -75,9 +75,9 @@ export const categoriesAPI = {
   getAllItems: async (role = "customer") => {
     return measureApiCall(async () => {
       try {
-        console.log(
+        logger.debug(
           "[Categories API] Fetching all items for role:",
-          `${API_ENDPOINTS.ALL_ITEMS}?role=${role}`
+          JSON.stringify({ role, endpoint: `${API_ENDPOINTS.ALL_ITEMS}?role=${role}` })
         );
         const response = await fetch(`${API_ENDPOINTS.ALL_ITEMS}&role=${role}`);
         if (!response.ok) {

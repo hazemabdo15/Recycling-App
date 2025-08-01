@@ -1,13 +1,13 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import {
-  addItemToCart,
-  clearCart as apiClearCart,
-  clearAuthData,
-  getCart,
-  removeItemFromCart,
-  testBackendConnectivity,
-  testMinimalPost,
-  updateCartItem,
+    addItemToCart,
+    clearCart as apiClearCart,
+    clearAuthData,
+    getCart,
+    removeItemFromCart,
+    testBackendConnectivity,
+    testMinimalPost,
+    updateCartItem,
 } from "../services/api/cart.js";
 import { createCartItem, getCartKey, normalizeItemData, validateQuantity } from "../utils/cartUtils";
 import { useAuth } from "./AuthContext";
@@ -462,19 +462,19 @@ export const CartProvider = ({ children }) => {
   };
 
   const handleClearCart = async () => {
-    const originalCart = { ...cartItems };
-    const originalDetails = { ...cartItemDetails };
+    // Clear cart locally first
     setCartItems({});
     setCartItemDetails({});
 
     try {
       await apiClearCart(isLoggedIn);
       setError(null);
+      console.log('[CartContext] Cart cleared successfully on backend');
     } catch (err) {
-      // Revert both cart items and details
-      setCartItems(originalCart);
-      setCartItemDetails(originalDetails);
-      setError(err.message || "Failed to clear cart");
+      console.warn('[CartContext] Backend cart clear failed, but keeping local cart cleared:', err.message);
+      // Don't revert the local cart clearing - keep it cleared locally
+      // This ensures the user sees an empty cart even if backend sync fails
+      setError(null); // Don't show error to user since order was successful
     }
   };
 

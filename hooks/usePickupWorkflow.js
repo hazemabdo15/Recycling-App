@@ -3,11 +3,9 @@ import { useAuth } from '../context/AuthContext';
 import { addressService } from '../services/api/addresses';
 import { orderService } from '../services/api/orders';
 import { validateQuantity } from '../utils/cartUtils';
-import { useCart } from './useCart';
 
 export const usePickupWorkflow = () => {
   const { user } = useAuth();
-  const { handleClearCart } = useCart();
 
   const [addresses, setAddresses] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -154,15 +152,7 @@ export const usePickupWorkflow = () => {
     setError(null);
     try {
       console.log('[Pickup Workflow] Creating pickup order');
-      console.log('[Pickup Workflow] Raw cart items received:', cartItems.map(item => ({
-        _id: item._id,
-        itemName: item.itemName || item.name, // Show the itemName field that backend expects
-        categoryId: item.categoryId,
-        measurement_unit: item.measurement_unit,
-        measurement_unit_type: typeof item.measurement_unit,
-        quantity: item.quantity,
-        quantityType: typeof item.quantity
-      })));
+      console.log(`[Pickup Workflow] Processing ${cartItems.length} items from cart`);
 
       const orderData = {
         address: {
@@ -180,9 +170,9 @@ export const usePickupWorkflow = () => {
         items: cartItems.map((item, index) => {
           const mappedItem = {
             _id: item._id, // Item ID (individual item identifier)
-            categoryId: item.categoryId, // Category ID (category identifier)
+            categoryId: item.categoryId, // Use original categoryId (should be parent category ID from API)
             image: item.image,
-            itemName: item.itemName || item.name, // Backend expects itemName
+            name: item.name || item.itemName || 'Unknown Item', // Backend expects 'name' field
             categoryName: item.categoryName || 'Unknown Category', // Add categoryName field
             measurement_unit: Number(item.measurement_unit),
             points: Number(item.points) || 10,
@@ -190,15 +180,7 @@ export const usePickupWorkflow = () => {
             quantity: Number(item.quantity)
           };
           
-          console.log(`[Pickup Workflow] Validating item ${index + 1}:`, {
-            _id: mappedItem._id,
-            categoryId: mappedItem.categoryId,
-            itemName: mappedItem.itemName, // Log the actual itemName field being used
-            measurement_unit: mappedItem.measurement_unit,
-            measurement_unit_type: typeof mappedItem.measurement_unit,
-            quantity: mappedItem.quantity,
-            quantityType: typeof mappedItem.quantity
-          });
+          console.log(`[Pickup Workflow] Processing item ${index + 1}: ${mappedItem.name} (${mappedItem.categoryName})`);
           
           return mappedItem;
         }),
@@ -219,15 +201,12 @@ export const usePickupWorkflow = () => {
       
       console.log('[Pickup Workflow] Order created successfully:', order._id);
 
-      try {
-        handleClearCart();
-        console.log('[Pickup Workflow] Cart cleared after successful order creation');
-      } catch (cartError) {
-        console.warn('[Pickup Workflow] Failed to clear cart:', cartError.message);
-
-      }
-
+      // Move to success phase first
       setCurrentPhase(3);
+
+      // Skip cart clearing since the order was created successfully
+      // The cart will be automatically synced when the user navigates back to cart page
+      console.log('[Pickup Workflow] Order completed successfully. Cart clearing skipped to avoid backend conflicts.');
       
       return order;
     } catch (err) {
@@ -243,7 +222,7 @@ export const usePickupWorkflow = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedAddress, handleClearCart, user]);
+  }, [selectedAddress, user]);
 
   const validateOrderData = (orderData) => {
     const requiredFields = ['address', 'items', 'phoneNumber', 'userName', 'email'];
@@ -260,17 +239,7 @@ export const usePickupWorkflow = () => {
     }
 
     orderData.items.forEach((item, index) => {
-      console.log(`[Pickup Workflow] Validating item ${index + 1}:`, {
-        _id: item._id,
-        categoryId: item.categoryId,
-        quantity: item.quantity,
-        quantityType: typeof item.quantity,
-        measurement_unit: item.measurement_unit,
-        measurement_unit_type: typeof item.measurement_unit,
-        itemName: item.itemName // Log the actual itemName field being validated
-      });
-      
-      const requiredItemFields = ['_id', 'categoryId', 'image', 'itemName', 'categoryName', 'measurement_unit', 'points', 'price', 'quantity'];
+      const requiredItemFields = ['_id', 'categoryId', 'image', 'name', 'categoryName', 'measurement_unit', 'points', 'price', 'quantity'];
       const missingItemFields = requiredItemFields.filter(field => 
         item[field] === undefined || item[field] === null
       );

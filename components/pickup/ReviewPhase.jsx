@@ -9,10 +9,9 @@ import {
   View,
 } from "react-native";
 import { useAuth } from "../../context/AuthContext";
+import { useCart } from "../../hooks/useCart";
 import { usePayment } from "../../hooks/usePayment";
 
-import { categoriesAPI } from "../../services/api";
-import { API_BASE_URL } from "../../services/api/config";
 import { borderRadius, spacing, typography } from "../../styles";
 import { colors } from "../../styles/theme";
 import { normalizeItemData } from "../../utils/cartUtils";
@@ -34,55 +33,37 @@ const ReviewPhase = ({
 
   // Get the real logged-in user from AuthContext, but prefer prop user
   const { user: contextUser } = useAuth();
+  const { cartItemDetails } = useCart(); // Get complete cart item details from context
   const user = propUser || contextUser;
 
   // Payment processing hook
   const { isProcessing, processPayment, shouldUsePayment } = usePayment();
 
+  // Use cart item details directly instead of fetching from API
   useEffect(() => {
-    const fetchItems = async () => {
-      try {
-        const response = await categoriesAPI.getAllItems(user?.role || "customer");
-        const items = response.data?.items || response.data || response.items || response;
-        const normalizedItems = Array.isArray(items) ? items.map(normalizeItemData) : [];
-        
-        if (normalizedItems.length === 0) {
-          // If API fails, try to get data from backend cart endpoint
-          try {
-            const backendResponse = await fetch(`${API_BASE_URL}/api/cart`, {
-              headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json'
-              }
-            });
-            
-            if (backendResponse.ok) {
-              const backendCartData = await backendResponse.json();
-              const backendItems = backendCartData.items || [];
-              
-              // Use backend cart items which already have the right structure
-              setAllItems(backendItems.map(normalizeItemData));
-            } else {
-              setAllItems([]);
-            }
-          } catch (backendError) {
-            console.error('[ReviewPhase] Backend cart fetch error:', backendError);
-            setAllItems([]);
-          }
-        } else {
-          setAllItems(normalizedItems);
-        }
-        
-        setItemsLoaded(true);
-      } catch (error) {
-        console.error("[ReviewPhase] Failed to fetch items:", error);
+    console.log('[ReviewPhase] Using cart item details directly, no API call needed');
+    
+    // Convert cartItemDetails to array format for compatibility
+    const itemsFromCart = Object.values(cartItemDetails || {});
+    
+    if (itemsFromCart.length > 0) {
+      // Cart items already have complete data, use them directly
+      setAllItems(itemsFromCart);
+      setItemsLoaded(true);
+      console.log('[ReviewPhase] Loaded', itemsFromCart.length, 'items from cart context');
+    } else {
+      // Fallback: if cartItemDetails is empty but cartItems has data, 
+      // it means we need to wait for CartContext to populate the details
+      if (cartItems && Object.keys(cartItems).length > 0) {
+        console.log('[ReviewPhase] Cart items exist but details not loaded yet, waiting...');
+        setItemsLoaded(false);
+      } else {
+        console.log('[ReviewPhase] No cart items found');
         setAllItems([]);
         setItemsLoaded(true);
       }
-    };
-
-    fetchItems();
-  }, [accessToken, cartItems,user?.role]);
+    }
+  }, [cartItemDetails, cartItems]);
 
   useEffect(() => {
     if (itemsLoaded && cartItems && allItems.length > 0) {
@@ -241,7 +222,7 @@ const ReviewPhase = ({
             _id: normalizedItem._id || normalizedItem.id || categoryId, // Add _id field for backend schema
             categoryId: categoryId,
             quantity: quantity,
-            name: normalizedItem.name || normalizedItem.itemName || normalizedItem.categoryName || 'Unknown Item', // Try 'name' instead of 'itemName'
+            name: normalizedItem.name || normalizedItem.itemName || normalizedItem.categoryName || 'Unknown Item', // Backend expects 'name' field
             categoryName: normalizedItem.categoryName || 'Unknown Category', // Add categoryName field
             measurement_unit: measurementUnit,
             points: normalizedItem.points || 10,
@@ -253,7 +234,7 @@ const ReviewPhase = ({
             _id: categoryId, // Use categoryId as fallback _id
             categoryId: categoryId,
             quantity: quantity,
-            itemName: `Recycling Item`, // Backend expects itemName
+            name: `Recycling Item`, // Backend expects 'name' field, not 'itemName'
             categoryName: 'Unknown Category', // Add categoryName field
             measurement_unit: 1,
             points: 10,
