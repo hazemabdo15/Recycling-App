@@ -155,7 +155,8 @@ export const usePickupWorkflow = () => {
     try {
       console.log('[Pickup Workflow] Creating pickup order');
       console.log('[Pickup Workflow] Raw cart items received:', cartItems.map(item => ({
-        name: item.itemName || item.name,
+        _id: item._id,
+        itemName: item.itemName || item.name, // Show the itemName field that backend expects
         categoryId: item.categoryId,
         measurement_unit: item.measurement_unit,
         measurement_unit_type: typeof item.measurement_unit,
@@ -165,6 +166,7 @@ export const usePickupWorkflow = () => {
 
       const orderData = {
         address: {
+          userId: user._id || user.userId, // Add userId to match backend schema
           city: selectedAddress.city || '',
           area: selectedAddress.area || '',
           street: selectedAddress.street || '',
@@ -172,13 +174,16 @@ export const usePickupWorkflow = () => {
           floor: selectedAddress.floor || '',
           apartment: selectedAddress.apartment || '',
           landmark: selectedAddress.landmark || '',
+          notes: selectedAddress.notes || '', // Add notes field to match backend schema
           isDefault: false
         },
         items: cartItems.map((item, index) => {
           const mappedItem = {
-            categoryId: item.categoryId,
+            _id: item._id, // Item ID (individual item identifier)
+            categoryId: item.categoryId, // Category ID (category identifier)
             image: item.image,
-            itemName: item.itemName || item.name,
+            itemName: item.itemName || item.name, // Backend expects itemName
+            categoryName: item.categoryName || 'Unknown Category', // Add categoryName field
             measurement_unit: Number(item.measurement_unit),
             points: Number(item.points) || 10,
             price: Number(item.price) || 5.0,
@@ -186,8 +191,9 @@ export const usePickupWorkflow = () => {
           };
           
           console.log(`[Pickup Workflow] Validating item ${index + 1}:`, {
+            _id: mappedItem._id,
             categoryId: mappedItem.categoryId,
-            itemName: mappedItem.itemName,
+            itemName: mappedItem.itemName, // Log the actual itemName field being used
             measurement_unit: mappedItem.measurement_unit,
             measurement_unit_type: typeof mappedItem.measurement_unit,
             quantity: mappedItem.quantity,
@@ -203,6 +209,8 @@ export const usePickupWorkflow = () => {
       };
 
       validateOrderData(orderData);
+
+      console.log('[Pickup Workflow] Complete order data being sent to backend:', JSON.stringify(orderData, null, 2));
 
       const response = await orderService.createOrder(orderData);
 
@@ -235,7 +243,7 @@ export const usePickupWorkflow = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedAddress, handleClearCart]);
+  }, [selectedAddress, handleClearCart, user]);
 
   const validateOrderData = (orderData) => {
     const requiredFields = ['address', 'items', 'phoneNumber', 'userName', 'email'];
@@ -253,15 +261,16 @@ export const usePickupWorkflow = () => {
 
     orderData.items.forEach((item, index) => {
       console.log(`[Pickup Workflow] Validating item ${index + 1}:`, {
+        _id: item._id,
         categoryId: item.categoryId,
         quantity: item.quantity,
         quantityType: typeof item.quantity,
         measurement_unit: item.measurement_unit,
         measurement_unit_type: typeof item.measurement_unit,
-        itemName: item.itemName
+        itemName: item.itemName // Log the actual itemName field being validated
       });
       
-      const requiredItemFields = ['categoryId', 'image', 'itemName', 'measurement_unit', 'points', 'price', 'quantity'];
+      const requiredItemFields = ['_id', 'categoryId', 'image', 'itemName', 'categoryName', 'measurement_unit', 'points', 'price', 'quantity'];
       const missingItemFields = requiredItemFields.filter(field => 
         item[field] === undefined || item[field] === null
       );

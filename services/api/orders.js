@@ -6,6 +6,7 @@ export const orderService = {
   async createOrder(orderData) {
     try {
       console.log('[Order Service] Creating order');
+      console.log('[Order Service] Order data received:', JSON.stringify(orderData, null, 2));
 
       this.validateOrderData(orderData);
       
@@ -211,8 +212,28 @@ export const orderService = {
   },
 
   validateOrderItem(item, index) {
-    const requiredItemFields = ['categoryId', 'image', 'itemName', 'measurement_unit', 'points', 'price', 'quantity'];
-    const missingFields = requiredItemFields.filter(field => item[field] === undefined || item[field] === null);
+    console.log(`[Order Service] Validating item ${index + 1}:`, JSON.stringify(item, null, 2));
+    
+    const requiredItemFields = ['_id', 'categoryId', 'image', 'name', 'categoryName', 'measurement_unit', 'points', 'price', 'quantity'];
+    const missingFields = requiredItemFields.filter(field => {
+      const value = item[field];
+      return value === undefined || value === null || value === '';
+    });
+    
+    console.log(`[Order Service] Item ${index + 1} field check:`, {
+      _id: item._id,
+      categoryId: item.categoryId,
+      image: item.image,
+      name: item.name,
+      categoryName: item.categoryName,
+      measurement_unit: item.measurement_unit,
+      points: item.points,
+      price: item.price,
+      quantity: item.quantity,
+      missingFields: missingFields,
+      nameType: typeof item.name,
+      nameLength: item.name ? item.name.length : 'N/A'
+    });
     
     if (missingFields.length > 0) {
       throw new Error(`Item ${index + 1} missing required fields: ${missingFields.join(', ')}`);

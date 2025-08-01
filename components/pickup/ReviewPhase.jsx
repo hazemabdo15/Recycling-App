@@ -1,12 +1,12 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import {
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useAuth } from "../../context/AuthContext";
 import { usePayment } from "../../hooks/usePayment";
@@ -238,19 +238,23 @@ const ReviewPhase = ({
             : Number(normalizedItem.measurement_unit);
             
           return {
+            _id: normalizedItem._id || normalizedItem.id || categoryId, // Add _id field for backend schema
             categoryId: categoryId,
             quantity: quantity,
-            itemName: normalizedItem.name || normalizedItem.itemName || normalizedItem.categoryName,
+            name: normalizedItem.name || normalizedItem.itemName || normalizedItem.categoryName || 'Unknown Item', // Try 'name' instead of 'itemName'
+            categoryName: normalizedItem.categoryName || 'Unknown Category', // Add categoryName field
             measurement_unit: measurementUnit,
             points: normalizedItem.points || 10,
             price: normalizedItem.price || 5.0,
-            image: normalizedItem.image || `${(normalizedItem.name || 'item').toLowerCase().replace(/\s+/g, "-")}.png`,
+            image: normalizedItem.image || `${(normalizedItem.name || normalizedItem.itemName || 'item').toLowerCase().replace(/\s+/g, "-")}.png`,
           };
         } else {
           return {
+            _id: categoryId, // Use categoryId as fallback _id
             categoryId: categoryId,
             quantity: quantity,
-            itemName: `Recycling Item`,
+            itemName: `Recycling Item`, // Backend expects itemName
+            categoryName: 'Unknown Category', // Add categoryName field
             measurement_unit: 1,
             points: 10,
             price: 5.0,

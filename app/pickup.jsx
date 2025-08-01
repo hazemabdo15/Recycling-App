@@ -5,13 +5,13 @@ import * as Linking from "expo-linking";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    Alert,
-    AppState,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  AppState,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -26,6 +26,79 @@ import { API_BASE_URL } from "../services/api/config";
 import { isAuthenticated } from "../services/auth";
 import { colors, spacing, typography } from "../styles/theme";
 import { getProgressStepLabel } from "../utils/roleLabels";
+
+// Helper function to prepare order items
+const prepareOrderItems = async (cartItems, accessToken, user, logWithTimestamp) => {
+  let orderItems = [];
+  
+  try {
+    // Try to get items from API first
+    const response = await categoriesAPI.getAllItems(user?.role || "customer");
+    const allItems = response.data?.items || response.data || response.items || response;
+    const itemsArray = Array.isArray(allItems) ? allItems : [];
+    
+    if (itemsArray.length === 0) {
+      // API failed, use backend cart data
+      logWithTimestamp('WARN', 'API returned no items, using backend cart data');
+      const backendCartResponse = await fetch(`${API_BASE_URL}/api/cart`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (backendCartResponse.ok) {
+        const backendCartData = await backendCartResponse.json();
+        const backendItems = backendCartData.items || [];
+        
+        // Use backend cart items directly - they have the right format
+        orderItems = backendItems.map(item => ({
+          _id: item._id, // Item ID
+          categoryId: item.categoryId, // Category ID
+          quantity: Number(item.quantity),
+          name: item.name || item.itemName || 'Unknown Item', // Try 'name' field instead of 'itemName'
+          categoryName: item.categoryName || 'Unknown Category', // Add categoryName field
+          measurement_unit: Number(item.measurement_unit),
+          points: Number(item.points) || 10,
+          price: Number(item.price) || 5.0,
+          image: item.image || 'placeholder.png',
+        }));
+        
+        logWithTimestamp('INFO', 'Using backend cart items for order:', orderItems.length);
+      }
+    } else {
+      // Process items normally
+      orderItems = Object.entries(cartItems).map(([_id, quantity]) => {
+        const realItem = itemsArray.find(item => item._id === _id);
+        
+        if (realItem) {
+          return {
+            _id: realItem._id, // Item ID
+            categoryId: realItem.categoryId, // Category ID
+            quantity: Number(quantity),
+            name: realItem.name || realItem.itemName || 'Unknown Item', // Try 'name' field instead of 'itemName'
+            categoryName: realItem.categoryName || 'Unknown Category', // Add categoryName field
+            measurement_unit: Number(realItem.measurement_unit),
+            points: Number(realItem.points) || 10,
+            price: Number(realItem.price) || 5.0,
+            image: realItem.image || 'placeholder.png',
+          };
+        }
+        return null;
+      }).filter(Boolean);
+    }
+  } catch (apiError) {
+    logWithTimestamp('ERROR', 'Failed to prepare order items:', apiError.message);
+    throw new Error('Failed to prepare order data');
+  }
+  
+  if (orderItems.length === 0) {
+    throw new Error('No items found for order creation');
+  }
+  
+  logWithTimestamp('INFO', 'Final order items:', JSON.stringify(orderItems));
+  return orderItems;
+};
 
 export default function Pickup() {
   // Create persistent logging that survives app state changes
@@ -77,6 +150,8 @@ export default function Pickup() {
       
     } catch (_e) {}
   };
+
+
 
   logWithTimestamp('INFO', 'Component initialized/re-rendered');
   
@@ -140,9 +215,36 @@ export default function Pickup() {
 
   useFocusEffect(
     useCallback(() => {
+      logWithTimestamp('INFO', "Pickup screen focused");
       setIsFocused(true);
 
+      // Check stored logs when screen comes into focus
+      const checkStoredLogs = async () => {
+        try {
+          const storedLogs = await AsyncStorage.getItem('pickup_debug_logs');
+          if (storedLogs) {
+            const logs = JSON.parse(storedLogs);
+            console.log('[Pickup] Retrieved stored logs:', logs.slice(-15)); // Show last 15 logs
+            
+            // Check for recent critical logs
+            const recentCritical = logs.filter(log => 
+              log.level === 'CRITICAL' && 
+              (Date.now() - new Date(log.timestamp).getTime()) < 5 * 60 * 1000 // Last 5 minutes
+            );
+            
+            if (recentCritical.length > 0) {
+              console.log('[Pickup] Recent critical events found:', recentCritical);
+            }
+          }
+        } catch (error) {
+          console.warn('[Pickup] Failed to retrieve stored logs:', error.message);
+        }
+      };
+      
+      checkStoredLogs();
+
       return () => {
+        logWithTimestamp('INFO', "Pickup screen unfocused");
         setIsFocused(false);
         setDialogShown(false);
       };
@@ -205,8 +307,9 @@ export default function Pickup() {
   // AppState listener to handle app returning from background (e.g., after Stripe checkout)
   useEffect(() => {
     const handleAppStateChange = (nextAppState) => {
+      logWithTimestamp('INFO', "App state changed to:", nextAppState);
       if (nextAppState === 'active') {
-        console.log('[Pickup] App returned to foreground - refreshing state');
+        logWithTimestamp('INFO', "App became active, checking for pending payments");
         // Refresh cart and user state when returning from background
         if (fetchBackendCart && isLoggedIn) {
           fetchBackendCart().catch(error => {
@@ -230,7 +333,23 @@ export default function Pickup() {
     const handleDeepLink = async (event) => {
       logWithTimestamp('CRITICAL', '===== DEEP LINK RECEIVED =====');
       const { queryParams } = Linking.parse(event.url);
-      logWithTimestamp('INFO', "Phase and payment status received:", JSON.stringify(queryParams));
+      logWithTimestamp('INFO', "Deep link URL received:", event.url);
+      logWithTimestamp('INFO', "Query params:", JSON.stringify(queryParams));
+      
+      // Only process URLs that are actually payment-related redirects
+      // Check if this URL contains payment-related parameters
+      const isPaymentRelatedURL = 
+        event.url.includes('payment=') ||
+        event.url.includes('payment_intent=') ||
+        event.url.includes('session_id=') ||
+        event.url.includes('canceled=true') ||
+        event.url.includes('cancelled=true') ||
+        (queryParams.phase && queryParams.payment);
+      
+      if (!isPaymentRelatedURL) {
+        logWithTimestamp('INFO', 'URL is not payment-related, ignoring deep link handler');
+        return;
+      }
       
       // Log current app state for debugging
       logWithTimestamp('INFO', "Current app state when deep link received:", JSON.stringify({
@@ -272,73 +391,8 @@ export default function Pickup() {
                 }
               }
               
-              // Prepare order data using backend cart info if API fails
-              let orderItems = [];
-              
-              try {
-                // Try to get items from API first
-                const response = await categoriesAPI.getAllItems(user?.role || "customer");
-                const allItems = response.data?.items || response.data || response.items || response;
-                const itemsArray = Array.isArray(allItems) ? allItems : [];
-                
-                if (itemsArray.length === 0) {
-                  // API failed, use backend cart data
-                  logWithTimestamp('WARN', 'API returned no items, using backend cart data');
-                  const backendCartResponse = await fetch(`${API_BASE_URL}/api/cart`, {
-                    headers: {
-                      'Authorization': `Bearer ${accessToken}`,
-                      'Content-Type': 'application/json'
-                    }
-                  });
-                  
-                  if (backendCartResponse.ok) {
-                    const backendCartData = await backendCartResponse.json();
-                    const backendItems = backendCartData.items || [];
-                    
-                    // Use backend cart items directly - they have the right format
-                    orderItems = backendItems.map(item => ({
-                      categoryId: item.categoryId,
-                      quantity: Number(item.quantity),
-                      itemName: item.itemName,
-                      measurement_unit: Number(item.measurement_unit),
-                      points: Number(item.points) || 10,
-                      price: Number(item.price) || 5.0,
-                      image: item.image || 'placeholder.png',
-                    }));
-                    
-                    logWithTimestamp('INFO', 'Using backend cart items for order:', orderItems.length);
-                  }
-                } else {
-                  // Process items normally
-                  orderItems = Object.entries(cartItemsRef.current).map(([categoryId, quantity]) => {
-                    const realItem = itemsArray.find(item => 
-                      item._id === categoryId || item.categoryId === categoryId
-                    );
-                    
-                    if (realItem) {
-                      return {
-                        categoryId: realItem._id || realItem.categoryId || categoryId,
-                        quantity: Number(quantity),
-                        itemName: realItem.name,
-                        measurement_unit: Number(realItem.measurement_unit),
-                        points: Number(realItem.points) || 10,
-                        price: Number(realItem.price) || 5.0,
-                        image: realItem.image || 'placeholder.png',
-                      };
-                    }
-                    return null;
-                  }).filter(Boolean);
-                }
-              } catch (apiError) {
-                logWithTimestamp('ERROR', 'Failed to prepare order items:', apiError.message);
-                throw new Error('Failed to prepare order data');
-              }
-              
-              if (orderItems.length === 0) {
-                throw new Error('No items found for order creation');
-              }
-              
-              logWithTimestamp('INFO', 'Final order items:', JSON.stringify(orderItems));
+              // Prepare order data
+              const orderItems = await prepareOrderItems(cartItemsRef.current, accessToken, user, logWithTimestamp);
               
               // Format user data
               const userData = {
@@ -531,73 +585,8 @@ export default function Pickup() {
                 }
               }
               
-              // Prepare order data using backend cart info if API fails
-              let orderItems = [];
-              
-              try {
-                // Try to get items from API first
-                const response = await categoriesAPI.getAllItems(user?.role || "customer");
-                const allItems = response.data?.items || response.data || response.items || response;
-                const itemsArray = Array.isArray(allItems) ? allItems : [];
-                
-                if (itemsArray.length === 0) {
-                  // API failed, use backend cart data
-                  logWithTimestamp('WARN', 'API returned no items, using backend cart data');
-                  const backendCartResponse = await fetch(`${API_BASE_URL}/api/cart`, {
-                    headers: {
-                      'Authorization': `Bearer ${accessToken}`,
-                      'Content-Type': 'application/json'
-                    }
-                  });
-                  
-                  if (backendCartResponse.ok) {
-                    const backendCartData = await backendCartResponse.json();
-                    const backendItems = backendCartData.items || [];
-                    
-                    // Use backend cart items directly - they have the right format
-                    orderItems = backendItems.map(item => ({
-                      categoryId: item.categoryId,
-                      quantity: Number(item.quantity),
-                      itemName: item.itemName,
-                      measurement_unit: Number(item.measurement_unit),
-                      points: Number(item.points) || 10,
-                      price: Number(item.price) || 5.0,
-                      image: item.image || 'placeholder.png',
-                    }));
-                    
-                    logWithTimestamp('INFO', 'Using backend cart items for order:', orderItems.length);
-                  }
-                } else {
-                  // Process items normally
-                  orderItems = Object.entries(cartItemsRef.current).map(([categoryId, quantity]) => {
-                    const realItem = itemsArray.find(item => 
-                      item._id === categoryId || item.categoryId === categoryId
-                    );
-                    
-                    if (realItem) {
-                      return {
-                        categoryId: realItem._id || realItem.categoryId || categoryId,
-                        quantity: Number(quantity),
-                        itemName: realItem.name,
-                        measurement_unit: Number(realItem.measurement_unit),
-                        points: Number(realItem.points) || 10,
-                        price: Number(realItem.price) || 5.0,
-                        image: realItem.image || 'placeholder.png',
-                      };
-                    }
-                    return null;
-                  }).filter(Boolean);
-                }
-              } catch (apiError) {
-                logWithTimestamp('ERROR', 'Failed to prepare order items:', apiError.message);
-                throw new Error('Failed to prepare order data');
-              }
-              
-              if (orderItems.length === 0) {
-                throw new Error('No items found for order creation');
-              }
-              
-              logWithTimestamp('INFO', 'Final order items:', JSON.stringify(orderItems));
+              // Prepare order data using helper function
+              const orderItems = await prepareOrderItems(cartItemsRef.current, accessToken, user, logWithTimestamp);
               
               // Format user data
               const userData = {
@@ -722,11 +711,11 @@ export default function Pickup() {
         logWithTimestamp('WARN', "Payment was canceled");
         Alert.alert("Payment Canceled", "Your payment was canceled. Please try again.");
       } else {
-        logWithTimestamp('WARN', "Unexpected URL pattern in deep link:", event.url);
-        // Unknown pattern, could be a success case we haven't seen before
+        logWithTimestamp('WARN', "Unexpected payment-related URL pattern:", event.url);
+        // Only show alert for actual payment-related URLs that we couldn't parse
         Alert.alert(
           "Payment Status Unclear",
-          "Please check your order history to confirm if your payment was processed.",
+          "We received a payment notification but couldn't determine the status. Please check your order history to confirm if your payment was processed.",
           [{ text: "OK" }]
         );
       }
@@ -736,7 +725,20 @@ export default function Pickup() {
     Linking.getInitialURL().then((url) => {
       if (url) {
         logWithTimestamp('INFO', "Initial URL detected:", url);
-        handleDeepLink({ url });
+        // Only process if it looks like a payment redirect
+        const isPaymentURL = 
+          url.includes('payment=') ||
+          url.includes('payment_intent=') ||
+          url.includes('session_id=') ||
+          url.includes('canceled=true') ||
+          url.includes('cancelled=true');
+          
+        if (isPaymentURL) {
+          logWithTimestamp('INFO', "Initial URL appears to be payment-related, processing...");
+          handleDeepLink({ url });
+        } else {
+          logWithTimestamp('INFO', "Initial URL is not payment-related, skipping deep link processing");
+        }
       } else {
         logWithTimestamp('INFO', "No initial URL found");
       }
@@ -766,65 +768,9 @@ export default function Pickup() {
     setOrderData,
   ]);
 
-  // Add app state monitoring to debug visibility changes
-  useEffect(() => {
-    const handleAppStateChange = (nextAppState) => {
-      logWithTimestamp('INFO', "App state changed to:", nextAppState);
-      if (nextAppState === 'active') {
-        logWithTimestamp('INFO', "App became active, checking for pending payments");
-      }
-    };
 
-    const subscription = AppState.addEventListener('change', handleAppStateChange);
-    return () => subscription?.remove();
-  }, []);
 
-  // Enhanced focus effect to check logs on return
-  useFocusEffect(
-    useCallback(() => {
-      logWithTimestamp('INFO', "Pickup screen focused");
-      
-      // Check stored logs when screen comes into focus
-      const checkStoredLogs = async () => {
-        try {
-          const storedLogs = await AsyncStorage.getItem('pickup_debug_logs');
-          if (storedLogs) {
-            const logs = JSON.parse(storedLogs);
-            console.log('[Pickup] Retrieved stored logs:', logs.slice(-15)); // Show last 15 logs
-            
-            // Check for recent critical logs
-            const recentCritical = logs.filter(log => 
-              log.level === 'CRITICAL' && 
-              (Date.now() - new Date(log.timestamp).getTime()) < 5 * 60 * 1000 // Last 5 minutes
-            );
-            
-            if (recentCritical.length > 0) {
-              console.log('[Pickup] Recent critical events found:', recentCritical);
-            }
-            
-            // Check for Category not found errors in recent logs
-            const categoryErrors = logs.filter(log => 
-              log.message.includes('Category with ID') && 
-              log.message.includes('not found') &&
-              (Date.now() - new Date(log.timestamp).getTime()) < 10 * 60 * 1000 // Last 10 minutes
-            );
-            
-            if (categoryErrors.length > 0) {
-              console.log('[Pickup] Recent category validation errors found (this is expected):', categoryErrors.length);
-            }
-          }
-        } catch (error) {
-          console.warn('[Pickup] Failed to retrieve stored logs:', error.message);
-        }
-      };
-      
-      checkStoredLogs();
-      
-      return () => {
-        logWithTimestamp('INFO', "Pickup screen unfocused");
-      };
-    }, [])
-  );
+
 
   useEffect(() => {
     logWithTimestamp('INFO', "Phase changed to:", currentPhase.toString());
