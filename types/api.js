@@ -1,4 +1,4 @@
-export const CategoryType = {
+﻿export const CategoryType = {
   _id: '',
   name: '',
   description: '',
@@ -16,7 +16,7 @@ export const ItemType = {
   price: 0,
   measurement_unit: 0,
   image: '',
-  quantity: 0, // Available quantity in inventory
+  quantity: 0,
   categoryName: '',
   categoryId: '',
 };
@@ -28,19 +28,18 @@ export const CategoryItemType = {
   price: 0,
   measurement_unit: 0,
   image: '',
-  quantity: 0, // Available quantity in inventory
+  quantity: 0,
   categoryName: '',
 };
 
-// New Cart Item Type matching backend schema
 export const CartItemType = {
-  _id: '',           // Item _id (from items collection)
-  categoryId: '',    // Category _id 
-  name: '',          // Item name
-  image: '',         // Item image URL
-  points: 0,         // Points per item
-  price: 0,          // Price per item
-  categoryName: '',  // Category name
-  measurement_unit: 0, // 1 = KG, 2 = PIECE
-  quantity: 0        // Quantity in cart
+  _id: '',
+  categoryId: '',
+  name: '',
+  image: '',
+  points: 0,
+  price: 0,
+  categoryName: '',
+  measurement_unit: 0,
+  quantity: 0
 };

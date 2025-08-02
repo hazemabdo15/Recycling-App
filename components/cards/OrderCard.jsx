@@ -1,6 +1,6 @@
-import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import UserAvatar from '../../components/common/UserAvatar'; // Adjust the import path as needed
-import { colors, shadows } from '../../styles/theme'; // Import your colors
+﻿import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import UserAvatar from '../../components/common/UserAvatar';
+import { colors, shadows } from '../../styles/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const scale = (size) => (SCREEN_WIDTH / 375) * size;
@@ -17,7 +17,6 @@ const OrderCard = ({ item, setSelectedOrder, setShowProofModal }) => {
       borderRadius: scale(12),
     }]}
     >
-      {/* Customer Info with UserAvatar */}
       <View style={[styles.customerInfo, { marginBottom: scale(12) }]}
       >
         <UserAvatar
@@ -34,7 +33,6 @@ const OrderCard = ({ item, setSelectedOrder, setShowProofModal }) => {
         </View>
       </View>
 
-      {/* Address */}
       <View style={[styles.addressSection, { marginBottom: scale(12), paddingBottom: scale(12), borderBottomWidth: scale(1) }]}
       >
         <Text style={styles.addressMain}>
@@ -46,7 +44,6 @@ const OrderCard = ({ item, setSelectedOrder, setShowProofModal }) => {
         </Text>
       </View>
 
-      {/* Date and Status */}
       <View style={styles.metaSection}>
         <Text style={styles.orderDate}>🕒 Ordered at: {createdAt}</Text>
         <View style={[
@@ -58,7 +55,6 @@ const OrderCard = ({ item, setSelectedOrder, setShowProofModal }) => {
         </View>
       </View>
 
-      {/* Complete Delivery Button */}
       {item.status === 'assigntocourier' && (
         <TouchableOpacity
           style={[styles.completeButton, { marginTop: scale(16), paddingVertical: scale(12), borderRadius: scale(8) }]}
@@ -129,7 +125,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   statusPending: {
-    backgroundColor: colors.warning + '20', // Add transparency
+    backgroundColor: colors.warning + '20',
   },
   statusCompleted: {
     backgroundColor: colors.success + '20',

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import {
   View, Text, TouchableOpacity, Image, TextInput, ScrollView, FlatList, Modal, ActivityIndicator,
   StyleSheet, SafeAreaView,
@@ -37,7 +37,7 @@ export default function DeliveryDashboard() {
 
   const pickImage = async () => {
     try {
-        // Request camera permissions
+
         const { status } = await ImagePicker.requestCameraPermissionsAsync();
         if (status !== 'granted') {
         Alert.alert(
@@ -49,7 +49,7 @@ export default function DeliveryDashboard() {
         }
 
         const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: 'images', // Use string instead of enum
+        mediaTypes: 'images',
         quality: 0.7,
         allowsEditing: true,
         aspect: [4, 3],
@@ -140,7 +140,6 @@ export default function DeliveryDashboard() {
         />
       )}
 
-      {/* Modal for completing delivery */}
       <Modal
         visible={showProofModal}
         animationType="slide"

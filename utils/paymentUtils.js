@@ -1,12 +1,6 @@
-/**
- * Payment utility functions
- */
+﻿
 
-/**
- * Calculates total amount from cart items
- * @param {Array} cartItemsDisplay - Array of cart items with totalPrice
- * @returns {number} - Total amount in EGP
- */
+
 export const calculateTotalAmount = (cartItemsDisplay) => {
   if (!Array.isArray(cartItemsDisplay)) {
     return 0;
@@ -18,32 +12,17 @@ export const calculateTotalAmount = (cartItemsDisplay) => {
   }, 0);
 };
 
-/**
- * Formats amount for display
- * @param {number} amount - Amount in EGP
- * @returns {string} - Formatted amount string
- */
+
 export const formatAmount = (amount) => {
   return `${amount.toFixed(2)} EGP`;
 };
 
-/**
- * Checks if user is a buyer
- * @param {Object} user - User object
- * @returns {boolean} - True if user is a buyer
- */
+
 export const isBuyer = (user) => {
   return user?.role === 'buyer';
 };
 
-/**
- * Validates payment prerequisites
- * @param {Object} params - Validation parameters
- * @param {Object} params.user - User object
- * @param {string} params.accessToken - Access token
- * @param {Array} params.cartItems - Cart items
- * @returns {Object} - Validation result
- */
+
 export const validatePaymentPrerequisites = ({ user, accessToken, cartItems }) => {
   if (!user) {
     return { isValid: false, error: 'User information is missing' };
@@ -65,9 +44,7 @@ export const validatePaymentPrerequisites = ({ user, accessToken, cartItems }) =
   return { isValid: true, userId };
 };
 
-/**
- * Payment error messages
- */
+
 export const PAYMENT_ERRORS = {
   NETWORK_ERROR: 'Cannot connect to payment service. Please check your internet connection.',
   AUTHENTICATION_ERROR: 'Authentication failed. Please log in again.',
@@ -77,11 +54,7 @@ export const PAYMENT_ERRORS = {
   UNKNOWN_ERROR: 'An unexpected error occurred. Please try again.',
 };
 
-/**
- * Gets user-friendly error message
- * @param {Error} error - Error object
- * @returns {string} - User-friendly error message
- */
+
 export const getPaymentErrorMessage = (error) => {
   if (!error) return PAYMENT_ERRORS.UNKNOWN_ERROR;
   

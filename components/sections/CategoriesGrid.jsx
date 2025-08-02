@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+﻿import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -36,7 +36,6 @@ const CategoriesGrid = ({
   const { showSuccess, showError } = useToast();
   const [pendingOperations, setPendingOperations] = useState({});
 
-  // Optimized: Memoize filtered data to prevent unnecessary re-computations
   const { filteredCategories, filteredItems } = useMemo(() => {
     const searchLower = searchText.toLowerCase();
     
@@ -46,7 +45,7 @@ const CategoriesGrid = ({
           category.items?.map((item) => {
             const normalizedItem = normalizeItemData({
               ...item,
-              category: category  // Pass category info for proper normalization
+              category: category
             });
             const itemKey = getCartKey(normalizedItem);
             const quantity = cartItems[itemKey] || 0;
@@ -68,7 +67,6 @@ const CategoriesGrid = ({
     }
   }, [categories, showItemsMode, searchText, cartItems]);
 
-  // Optimized: Memoize cart operation handler
   const handleCartOperation = useCallback(async (item, operation) => {
     const itemKey = getCartKey(item);
     if (pendingOperations[itemKey]) return;
@@ -104,7 +102,6 @@ const CategoriesGrid = ({
           throw new Error(`Unknown operation: ${operation}`);
       }
 
-      // Show success message
       const normalizedItem = normalizeItemData(item);
       const step = operation.includes('fast') ? 5 : getIncrementStep(normalizedItem.measurement_unit);
       const unit = normalizedItem.measurement_unit === 1 ? "kg" : "";

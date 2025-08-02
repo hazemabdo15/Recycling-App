@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+﻿import { MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from "expo-linear-gradient";
 import * as Linking from "expo-linking";
@@ -27,23 +27,21 @@ import { colors, spacing, typography } from "../styles/theme";
 import { getProgressStepLabel } from "../utils/roleLabels";
 import { scaleSize } from '../utils/scale';
 
-// Helper function to prepare order items - now uses cart details directly
 const prepareOrderItems = async (cartItems, cartItemDetails, accessToken, user, logWithTimestamp) => {
   let orderItems = [];
   
   try {
-    // Use cartItemDetails directly instead of fetching from API
+
     if (cartItemDetails && Object.keys(cartItemDetails).length > 0) {
       logWithTimestamp('INFO', 'Using cart item details directly, no API call needed');
-      
-      // Convert cartItemDetails to order items format
+
       orderItems = Object.entries(cartItems).map(([itemId, quantity]) => {
         const itemDetails = cartItemDetails[itemId];
         
         if (itemDetails) {
           return {
-            _id: itemDetails._id, // Item ID
-            categoryId: itemDetails.categoryId, // Category ID
+            _id: itemDetails._id,
+            categoryId: itemDetails.categoryId,
             quantity: Number(quantity),
             name: itemDetails.name || itemDetails.itemName || 'Unknown Item',
             categoryName: itemDetails.categoryName || 'Unknown Category',
@@ -53,11 +51,11 @@ const prepareOrderItems = async (cartItems, cartItemDetails, accessToken, user, 
             image: itemDetails.image || 'placeholder.png',
           };
         } else {
-          // Fallback for missing item details
+
           logWithTimestamp('WARN', `Missing details for item ${itemId}, using basic data`);
           return {
             _id: itemId,
-            categoryId: itemId, // Fallback
+            categoryId: itemId,
             quantity: Number(quantity),
             name: 'Unknown Item',
             categoryName: 'Unknown Category',
@@ -71,7 +69,7 @@ const prepareOrderItems = async (cartItems, cartItemDetails, accessToken, user, 
       
       logWithTimestamp('INFO', 'Prepared order items from cart context:', orderItems.length);
     } else {
-      // Fallback: if cartItemDetails is not available, try backend cart data
+
       logWithTimestamp('WARN', 'Cart item details not available, fetching from backend cart');
       const backendCartResponse = await fetch(`${API_BASE_URL}/api/cart`, {
         headers: {
@@ -83,11 +81,10 @@ const prepareOrderItems = async (cartItems, cartItemDetails, accessToken, user, 
       if (backendCartResponse.ok) {
         const backendCartData = await backendCartResponse.json();
         const backendItems = backendCartData.items || [];
-        
-        // Use backend cart items directly - they have the right format
+
         orderItems = backendItems.map(item => ({
-          _id: item._id, // Item ID
-          categoryId: item.categoryId, // Category ID
+          _id: item._id,
+          categoryId: item.categoryId,
           quantity: Number(item.quantity),
           name: item.name || item.itemName || 'Unknown Item',
           categoryName: item.categoryName || 'Unknown Category',
@@ -114,7 +111,7 @@ const prepareOrderItems = async (cartItems, cartItemDetails, accessToken, user, 
 };
 
 export default function Pickup() {
-  // Create persistent logging that survives app state changes
+
   const logWithTimestamp = (level, ...args) => {
     const timestamp = new Date().toISOString();
     const logEntry = `[${timestamp}] [PICKUP-${level}]`;
@@ -126,8 +123,7 @@ export default function Pickup() {
     } else {
       console.log(logEntry, ...args);
     }
-    
-    // Store ALL logs in AsyncStorage for debugging, not just errors
+
     try {
       const logData = {
         timestamp,
@@ -135,12 +131,10 @@ export default function Pickup() {
         message: args.join(' '),
         appState: AppState.currentState
       };
-      
-      // Store individual log entries
+
       const logKey = `pickup_log_${Date.now()}`;
       AsyncStorage.setItem(logKey, JSON.stringify(logData)).catch(() => {});
-      
-      // Also maintain a rolling log buffer
+
       AsyncStorage.getItem('pickup_debug_logs').then(existingLogs => {
         let logs = [];
         if (existingLogs) {
@@ -152,8 +146,7 @@ export default function Pickup() {
         }
         
         logs.push(logData);
-        
-        // Keep only last 50 logs to prevent storage overflow
+
         if (logs.length > 50) {
           logs = logs.slice(-50);
         }
@@ -167,8 +160,7 @@ export default function Pickup() {
 
 
   logWithTimestamp('INFO', 'Component initialized/re-rendered');
-  
-  // Debug utility function - expose this globally for manual log checking
+
   global.checkPickupLogs = async () => {
     try {
       const storedLogs = await AsyncStorage.getItem('pickup_debug_logs');
@@ -213,17 +205,15 @@ export default function Pickup() {
   const [dialogShown, setDialogShown] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [creatingOrder, setCreatingOrder] = useState(false);
-  
-  // Store cart items in ref to prevent issues with state updates during order creation
+
   const cartItemsRef = useRef(cartItems);
-  
-  // Update ref when cart items change
+
   useEffect(() => {
     cartItemsRef.current = cartItems;
   }, [cartItems]);
 
   useEffect(() => {
-    // Auth state tracking for debugging authentication issues
+
   }, [isLoggedIn, user, accessToken, authContextLoading]);
 
   useFocusEffect(
@@ -231,18 +221,16 @@ export default function Pickup() {
       logWithTimestamp('INFO', "Pickup screen focused");
       setIsFocused(true);
 
-      // Check stored logs when screen comes into focus
       const checkStoredLogs = async () => {
         try {
           const storedLogs = await AsyncStorage.getItem('pickup_debug_logs');
           if (storedLogs) {
             const logs = JSON.parse(storedLogs);
-            console.log('[Pickup] Retrieved stored logs:', logs.slice(-15)); // Show last 15 logs
-            
-            // Check for recent critical logs
+            console.log('[Pickup] Retrieved stored logs:', logs.slice(-15));
+
             const recentCritical = logs.filter(log => 
               log.level === 'CRITICAL' && 
-              (Date.now() - new Date(log.timestamp).getTime()) < 5 * 60 * 1000 // Last 5 minutes
+              (Date.now() - new Date(log.timestamp).getTime()) < 5 * 60 * 1000
             );
             
             if (recentCritical.length > 0) {
@@ -317,13 +305,12 @@ export default function Pickup() {
     setOrderData = () => {},
   } = workflowHook || {};
 
-  // AppState listener to handle app returning from background (e.g., after Stripe checkout)
   useEffect(() => {
     const handleAppStateChange = (nextAppState) => {
       logWithTimestamp('INFO', "App state changed to:", nextAppState);
       if (nextAppState === 'active') {
         logWithTimestamp('INFO', "App became active, checking for pending payments");
-        // Refresh cart and user state when returning from background
+
         if (fetchBackendCart && isLoggedIn) {
           fetchBackendCart().catch(error => {
             console.error('[Pickup] Failed to refresh cart on app foreground:', error);
@@ -339,7 +326,6 @@ export default function Pickup() {
     };
   }, [fetchBackendCart, isLoggedIn]);
 
-  // Deep link handler for Stripe Checkout redirects
   useEffect(() => {
     logWithTimestamp('INFO', 'Setting up deep link handler');
     
@@ -348,9 +334,7 @@ export default function Pickup() {
       const { queryParams } = Linking.parse(event.url);
       logWithTimestamp('INFO', "Deep link URL received:", event.url);
       logWithTimestamp('INFO', "Query params:", JSON.stringify(queryParams));
-      
-      // Only process URLs that are actually payment-related redirects
-      // Check if this URL contains payment-related parameters
+
       const isPaymentRelatedURL = 
         event.url.includes('payment=') ||
         event.url.includes('payment_intent=') ||
@@ -363,8 +347,7 @@ export default function Pickup() {
         logWithTimestamp('INFO', 'URL is not payment-related, ignoring deep link handler');
         return;
       }
-      
-      // Log current app state for debugging
+
       logWithTimestamp('INFO', "Current app state when deep link received:", JSON.stringify({
         currentPhase,
         hasUser: !!user,
@@ -381,19 +364,17 @@ export default function Pickup() {
       ) {
         if (setCurrentPhase && typeof setCurrentPhase === "function") {
           logWithTimestamp('INFO', "Payment successful, moving to confirmation phase");
-          setCurrentPhase(3); // confirmation phase
+          setCurrentPhase(3);
         }
         logWithTimestamp('INFO', "Payment successful, creating order... checking requirements");
-        
-        // Since payment was successful, assume order creation should succeed
-        // Even if there are validation errors, if order gets created in DB, treat as success
+
         const processOrderCreation = async () => {
           if (typeof createOrder === "function" && cartItemsRef.current && user && selectedAddress && !creatingOrder) {
             setCreatingOrder(true);
             logWithTimestamp('INFO', 'Starting order creation after successful payment');
             
             try {
-              // First, try to refresh cart data
+
               logWithTimestamp('INFO', 'Refreshing cart data before order creation...');
               if (fetchBackendCart) {
                 try {
@@ -403,11 +384,9 @@ export default function Pickup() {
                   logWithTimestamp('WARN', 'Failed to refresh cart:', refreshError.message);
                 }
               }
-              
-              // Prepare order data
+
               const orderItems = await prepareOrderItems(cartItemsRef.current, cartItemDetails, accessToken, user, logWithTimestamp);
-              
-              // Format user data
+
               const userData = {
                 userId: user._id || user.userId,
                 phoneNumber: user.phoneNumber || user.phone || '',
@@ -418,8 +397,7 @@ export default function Pickup() {
                   || 'https://via.placeholder.com/150/0000FF/808080?text=User',
                 role: user.role,
               };
-              
-              // Attempt order creation
+
               logWithTimestamp('INFO', 'Calling createOrder function...');
               logWithTimestamp('INFO', 'Order data being sent:', JSON.stringify({
                 itemCount: orderItems.length,
@@ -431,8 +409,7 @@ export default function Pickup() {
               const orderResult = await createOrder(orderItems, userData);
               
               logWithTimestamp('CRITICAL', 'Order creation completed successfully without error:', JSON.stringify(orderResult));
-              
-              // Clear the cart after successful order creation
+
               try {
                 if (handleClearCart) {
                   await handleClearCart();
@@ -441,44 +418,39 @@ export default function Pickup() {
               } catch (cartError) {
                 logWithTimestamp('WARN', 'Failed to clear cart after successful order:', cartError.message);
               }
-              
-              // If we get here without throwing, consider it successful
+
               if (setCurrentPhase && typeof setCurrentPhase === "function") {
                 setCurrentPhase(3);
               }
               
-              return true; // Success
+              return true;
               
             } catch (error) {
-              // Special handling for "Category not found" errors - this is a known backend issue
+
               if (error.message && error.message.includes('Category with ID') && error.message.includes('not found')) {
                 logWithTimestamp('INFO', 'Detected "Category not found" error - this is the known backend validation issue. Proceeding with order verification...');
-                
-                // Extract the problematic category ID for debugging (but don't log as error)
+
                 const categoryIdMatch = error.message.match(/Category with ID (\w+) not found/);
                 if (categoryIdMatch) {
                   logWithTimestamp('INFO', 'Problematic category ID:', categoryIdMatch[1]);
                 }
               } else {
-                // Only log as error if it's not the known category issue
+
                 logWithTimestamp('ERROR', 'Order creation failed:', error.message);
                 logWithTimestamp('ERROR', 'Error details:', JSON.stringify({
                   errorName: error.name,
                   errorMessage: error.message,
-                  errorStack: error.stack?.split('\n')[0], // First line of stack
+                  errorStack: error.stack?.split('\n')[0],
                   cartItemsCount: cartItemsRef.current ? Object.keys(cartItemsRef.current).length : 0,
                   userId: user?._id || 'unknown'
                 }));
               }
-              
-              // Check if order was actually created despite the error
+
               try {
                 logWithTimestamp('INFO', 'Verifying if order was created despite error...');
-                
-                // Wait for backend processing (reduced for better UX)
+
                 await new Promise(resolve => setTimeout(resolve, 500));
-                
-                // Check for recent orders
+
                 const ordersResponse = await fetch(`${API_BASE_URL}/api/orders?skip=0&limit=5`, {
                   headers: {
                     'Authorization': `Bearer ${accessToken}`,
@@ -491,23 +463,21 @@ export default function Pickup() {
                   const recentOrders = ordersData.data || ordersData.orders || ordersData;
                   
                   if (Array.isArray(recentOrders) && recentOrders.length > 0) {
-                    // Check if any order was created within the last 2 minutes
+
                     const recentOrder = recentOrders.find(order => {
                       const orderTime = new Date(order.createdAt).getTime();
                       const timeDiff = Date.now() - orderTime;
-                      return timeDiff < 2 * 60 * 1000; // 2 minutes
+                      return timeDiff < 2 * 60 * 1000;
                     });
                     
                     if (recentOrder) {
                       logWithTimestamp('CRITICAL', 'Found recent order despite error! Treating as success:', recentOrder._id);
-                      
-                      // Set the order data in the workflow hook
+
                       if (setOrderData && typeof setOrderData === 'function') {
                         setOrderData(recentOrder);
                         logWithTimestamp('INFO', 'Order data set in workflow hook:', recentOrder._id);
                       }
-                      
-                      // Clear the cart after successful order creation
+
                       try {
                         if (handleClearCart) {
                           await handleClearCart();
@@ -520,27 +490,24 @@ export default function Pickup() {
                       if (setCurrentPhase && typeof setCurrentPhase === "function") {
                         setCurrentPhase(3);
                       }
-                      
-                      // Don't show alert if user is already in confirmation phase
-                      // The redirect to confirmation is the success indicator
+
                       logWithTimestamp('INFO', 'User successfully redirected to confirmation phase, no alert needed');
                       
-                      return true; // Treat as success
+                      return true;
                     }
                   }
                 }
               } catch (verifyError) {
                 logWithTimestamp('ERROR', 'Failed to verify order creation:', verifyError.message);
               }
-              
-              // Only show error if we couldn't find a recent order
+
               Alert.alert(
                 "Order Status Unclear",
                 "There was an issue during order processing. Please check your order history to see if the order was created, or try again.",
                 [{ text: "OK" }]
               );
               
-              return false; // Failed
+              return false;
             } finally {
               setCreatingOrder(false);
             }
@@ -556,38 +523,35 @@ export default function Pickup() {
             return false;
           }
         };
-        
-        // Execute order creation
+
         processOrderCreation();
       } else if (
         queryParams.phase === "review" &&
         queryParams.payment === "cancelled"
       ) {
         if (setCurrentPhase && typeof setCurrentPhase === "function") {
-          setCurrentPhase(2); // review phase
+          setCurrentPhase(2);
         }
         Alert.alert("Payment Cancelled", "Your payment was cancelled.");
       } else if (event.url.includes("payment_intent=")) {
         logWithTimestamp('INFO', "Payment intent found in URL");
-        // Handle case where URL contains payment_intent instead of session_id
+
         const match = event.url.match(/payment_intent=([^&]+)/);
         if (match) {
           const paymentIntentId = match[1];
           logWithTimestamp('INFO', "Payment intent ID extracted:", paymentIntentId);
-          
-          // Move to confirmation phase since payment intent suggests success
+
           if (setCurrentPhase && typeof setCurrentPhase === "function") {
             logWithTimestamp('INFO', "Payment intent successful, moving to confirmation phase");
             setCurrentPhase(3);
           }
-          
-          // Process order creation - duplicate the logic for payment intent case
+
           if (typeof createOrder === "function" && cartItemsRef.current && user && selectedAddress && !creatingOrder) {
             setCreatingOrder(true);
             logWithTimestamp('INFO', 'Starting order creation after payment intent success');
             
             try {
-              // First, try to refresh cart data
+
               logWithTimestamp('INFO', 'Refreshing cart data before order creation...');
               if (fetchBackendCart) {
                 try {
@@ -597,11 +561,9 @@ export default function Pickup() {
                   logWithTimestamp('WARN', 'Failed to refresh cart:', refreshError.message);
                 }
               }
-              
-              // Prepare order data using helper function
+
               const orderItems = await prepareOrderItems(cartItemsRef.current, cartItemDetails, accessToken, user, logWithTimestamp);
-              
-              // Format user data
+
               const userData = {
                 userId: user._id || user.userId,
                 phoneNumber: user.phoneNumber || user.phone || '',
@@ -612,14 +574,12 @@ export default function Pickup() {
                   || 'https://via.placeholder.com/150/0000FF/808080?text=User',
                 role: user.role,
               };
-              
-              // Attempt order creation
+
               logWithTimestamp('INFO', 'Calling createOrder function...');
               const orderResult = await createOrder(orderItems, userData);
               
               logWithTimestamp('INFO', 'Order creation completed:', JSON.stringify(orderResult));
-              
-              // Clear the cart after successful order creation
+
               try {
                 if (handleClearCart) {
                   await handleClearCart();
@@ -628,29 +588,25 @@ export default function Pickup() {
               } catch (cartError) {
                 logWithTimestamp('WARN', 'Failed to clear cart after successful order (payment_intent flow):', cartError.message);
               }
-              
-              // If we get here without throwing, consider it successful
+
               if (setCurrentPhase && typeof setCurrentPhase === "function") {
                 setCurrentPhase(3);
               }
               
             } catch (error) {
-              // Special handling for "Category not found" errors - this is a known backend issue
+
               if (error.message && error.message.includes('Category with ID') && error.message.includes('not found')) {
                 logWithTimestamp('INFO', 'Detected "Category not found" error in payment_intent flow - this is the known backend validation issue. Proceeding with order verification...');
               } else {
-                // Only log as error if it's not the known category issue
+
                 logWithTimestamp('ERROR', 'Order creation failed:', error.message);
               }
-              
-              // Check if order was actually created despite the error
+
               try {
                 logWithTimestamp('INFO', 'Verifying if order was created despite error...');
-                
-                // Wait for backend processing (reduced for better UX)
+
                 await new Promise(resolve => setTimeout(resolve, 500));
-                
-                // Check for recent orders
+
                 const ordersResponse = await fetch(`${API_BASE_URL}/api/orders?limit=5`, {
                   headers: {
                     'Authorization': `Bearer ${accessToken}`,
@@ -663,17 +619,16 @@ export default function Pickup() {
                   const recentOrders = ordersData.data || ordersData.orders || ordersData;
                   
                   if (Array.isArray(recentOrders) && recentOrders.length > 0) {
-                    // Check if any order was created within the last 2 minutes
+
                     const recentOrder = recentOrders.find(order => {
                       const orderTime = new Date(order.createdAt).getTime();
                       const timeDiff = Date.now() - orderTime;
-                      return timeDiff < 2 * 60 * 1000; // 2 minutes
+                      return timeDiff < 2 * 60 * 1000;
                     });
                     
                     if (recentOrder) {
                       logWithTimestamp('CRITICAL', 'Found recent order despite error! Treating as success:', recentOrder._id);
-                      
-                      // Clear the cart after successful order creation
+
                       try {
                         if (handleClearCart) {
                           await handleClearCart();
@@ -686,20 +641,17 @@ export default function Pickup() {
                       if (setCurrentPhase && typeof setCurrentPhase === "function") {
                         setCurrentPhase(3);
                       }
-                      
-                      // Don't show alert if user is already in confirmation phase
-                      // The redirect to confirmation is the success indicator
+
                       logWithTimestamp('INFO', 'User successfully redirected to confirmation phase, no alert needed (payment_intent flow)');
                       
-                      return; // Treat as success
+                      return;
                     }
                   }
                 }
               } catch (verifyError) {
                 logWithTimestamp('ERROR', 'Failed to verify order creation:', verifyError.message);
               }
-              
-              // Only show error if we couldn't find a recent order
+
               Alert.alert(
                 "Order Status Unclear",
                 "There was an issue during order processing. Please check your order history to see if the order was created, or try again.",
@@ -725,7 +677,7 @@ export default function Pickup() {
         Alert.alert("Payment Canceled", "Your payment was canceled. Please try again.");
       } else {
         logWithTimestamp('WARN', "Unexpected payment-related URL pattern:", event.url);
-        // Only show alert for actual payment-related URLs that we couldn't parse
+
         Alert.alert(
           "Payment Status Unclear",
           "We received a payment notification but couldn't determine the status. Please check your order history to confirm if your payment was processed.",
@@ -734,11 +686,10 @@ export default function Pickup() {
       }
     };
 
-    // Get initial URL when app starts
     Linking.getInitialURL().then((url) => {
       if (url) {
         logWithTimestamp('INFO', "Initial URL detected:", url);
-        // Only process if it looks like a payment redirect
+
         const isPaymentURL = 
           url.includes('payment=') ||
           url.includes('payment_intent=') ||
@@ -759,7 +710,6 @@ export default function Pickup() {
       logWithTimestamp('ERROR', "Failed to get initial URL:", error.message);
     });
 
-    // Listen for URL changes
     logWithTimestamp('INFO', "Setting up deep link handler");
     const subscription = Linking.addEventListener("url", handleDeepLink);
     

@@ -1,4 +1,4 @@
-import itemsData from "../../data/items.json";
+﻿import itemsData from "../../data/items.json";
 import apiCache from "../../utils/apiCache";
 import logger from "../../utils/logger";
 import { measureApiCall } from "../../utils/performanceMonitor";
@@ -54,7 +54,7 @@ export const categoriesAPI = {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        apiCache.set(cacheKey, data, 10 * 60 * 1000); // Cache for 10 minutes
+        apiCache.set(cacheKey, data, 10 * 60 * 1000);
 
         logger.api("Categories fetched from API", { count: data.length });
         return data;

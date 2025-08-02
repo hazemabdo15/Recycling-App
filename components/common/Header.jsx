@@ -1,4 +1,4 @@
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+﻿import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -8,7 +8,7 @@ import { getLoggedInUser } from '../../utils/authUtils';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-const scale = (size) => (SCREEN_WIDTH / 375) * size; // 375 is iPhone 11 width
+const scale = (size) => (SCREEN_WIDTH / 375) * size;
 
 const Header = () => {
     const router = useRouter();

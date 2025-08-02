@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+﻿import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import apiService from '../services/api/apiService';
 
@@ -8,9 +8,8 @@ export function useUserPoints({ userId, name, email }) {
   const [pointsLoading, setPointsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-
   const getUserPoints = useCallback(async () => {
-    // If user is not logged in, clear points and skip fetch
+
     if (!isLoggedIn) {
       console.log('getUserPoints: User not logged in, clearing points');
       setUserPoints(null);
@@ -33,7 +32,6 @@ export function useUserPoints({ userId, name, email }) {
       setPointsLoading(true);
       setError(null);
 
-      // Double-check authentication before making API call
       if (!isLoggedIn) {
         console.log('getUserPoints: User logged out during fetch, aborting');
         setUserPoints(null);
@@ -44,8 +42,7 @@ export function useUserPoints({ userId, name, email }) {
       console.log(`Making API call to: /users/${userId}/points`);
       
       const res = await apiService.get(`/users/${userId}/points`);
-      
-      // Check authentication again after API call
+
       if (!isLoggedIn) {
         console.log('getUserPoints: User logged out after API call, ignoring response');
         setUserPoints(null);
@@ -66,7 +63,6 @@ export function useUserPoints({ userId, name, email }) {
     } catch (err) {
       console.error('Error fetching user points:', err);
 
-      // If user logged out, don't process error
       if (!isLoggedIn) {
         console.log('getUserPoints: User logged out, ignoring error');
         setUserPoints(null);

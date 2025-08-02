@@ -1,4 +1,4 @@
-import { MaterialIcons } from '@expo/vector-icons';
+﻿import { MaterialIcons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import {
     Alert,
@@ -46,7 +46,6 @@ const RecyclingModal = ({ visible, onClose, onPointsUpdated }) => {
     if (visible) getUserPoints();
   }, [visible, getUserPoints]);
 
-  // Don't render the modal for buyers as they don't have access to points
   if (isBuyer(user)) {
     return null;
   }

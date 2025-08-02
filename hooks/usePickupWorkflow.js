@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+﻿import { useCallback, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { addressService } from '../services/api/addresses';
 import { orderService } from '../services/api/orders';
@@ -33,8 +33,7 @@ export const usePickupWorkflow = () => {
 
   const fetchAddresses = useCallback(async () => {
     console.log('[Pickup Workflow] fetchAddresses called, user role:', user?.role);
-    
-    // Buyers now can fetch and see their saved addresses
+
 
     if (fetchingAddresses) {
       console.log('[Pickup Workflow] Already fetching addresses, skipping...');
@@ -54,8 +53,7 @@ export const usePickupWorkflow = () => {
       console.log(`[Pickup Workflow] Fetched ${addressList.length} addresses`);
     } catch (err) {
       console.error('[Pickup Workflow] Failed to fetch addresses:', err.message);
-      
-      // Handle authentication errors specifically
+
       if (err.response?.status === 401 || err.response?.status === 403) {
         setError('Authentication required. Please log in again.');
         console.error('[Pickup Workflow] Authentication error - user may need to re-login');
@@ -156,7 +154,7 @@ export const usePickupWorkflow = () => {
 
       const orderData = {
         address: {
-          userId: user._id || user.userId, // Add userId to match backend schema
+          userId: user._id || user.userId,
           city: selectedAddress.city || '',
           area: selectedAddress.area || '',
           street: selectedAddress.street || '',
@@ -164,16 +162,16 @@ export const usePickupWorkflow = () => {
           floor: selectedAddress.floor || '',
           apartment: selectedAddress.apartment || '',
           landmark: selectedAddress.landmark || '',
-          notes: selectedAddress.notes || '', // Add notes field to match backend schema
+          notes: selectedAddress.notes || '',
           isDefault: false
         },
         items: cartItems.map((item, index) => {
           const mappedItem = {
-            _id: item._id, // Item ID (individual item identifier)
-            categoryId: item.categoryId, // Use original categoryId (should be parent category ID from API)
+            _id: item._id,
+            categoryId: item.categoryId,
             image: item.image,
-            name: item.name || item.itemName || 'Unknown Item', // Backend expects 'name' field
-            categoryName: item.categoryName || 'Unknown Category', // Add categoryName field
+            name: item.name || item.itemName || 'Unknown Item',
+            categoryName: item.categoryName || 'Unknown Category',
             measurement_unit: Number(item.measurement_unit),
             points: Number(item.points) || 10,
             price: Number(item.price) || 5.0,
@@ -201,17 +199,13 @@ export const usePickupWorkflow = () => {
       
       console.log('[Pickup Workflow] Order created successfully:', order._id);
 
-      // Move to success phase first
       setCurrentPhase(3);
 
-      // Skip cart clearing since the order was created successfully
-      // The cart will be automatically synced when the user navigates back to cart page
       console.log('[Pickup Workflow] Order completed successfully. Cart clearing skipped to avoid backend conflicts.');
       
       return order;
     } catch (err) {
-      // Suppress console errors for known "Category not found" backend validation issue
-      // This error is expected and handled by the enhanced order verification system
+
       if (err.message && err.message.includes('Category with ID') && err.message.includes('not found')) {
         console.log('[Pickup Workflow] Known category validation error detected - error handled by enhanced verification system');
       } else {

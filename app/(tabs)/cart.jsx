@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+﻿import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
@@ -22,25 +22,24 @@ import { getCartKey, getDisplayKey, normalizeItemData } from "../../utils/cartUt
 import { getLabel, isBuyer } from "../../utils/roleLabels";
 import { scaleSize } from '../../utils/scale';
 
-// Helper function to get role-based icons
 const getRoleBasedIcon = (iconType, userRole = 'customer') => {
   const iconMappings = {
-    // Main action button icon
+
     scheduleAction: {
-      customer: 'truck-fast', // Pickup truck
-      buyer: 'credit-card-fast' // Fast checkout/payment
+      customer: 'truck-fast',
+      buyer: 'credit-card-fast'
     },
-    // Empty cart icon
+
     emptyCart: {
-      customer: 'truck-delivery-outline', // Delivery truck
-      buyer: 'cart-outline' // Shopping cart
+      customer: 'truck-delivery-outline',
+      buyer: 'cart-outline'
     },
-    // Find items button icon
+
     findItems: {
-      customer: 'recycle', // Recycle symbol
-      buyer: 'store' // Store/shop
+      customer: 'recycle',
+      buyer: 'store'
     },
-    // Locked state icon (same for both)
+
     locked: {
       customer: 'lock',
       buyer: 'lock'
@@ -73,22 +72,20 @@ const Cart = () => {
   }, [itemsLoading]);
 
   const safeAllItems = Array.isArray(allItems) ? allItems : [];
-  
-  // Use cartItemDetails from CartContext for better performance - no additional lookups needed
+
   const cartArray = Object.entries(cartItems)
     .map(([itemId, quantity]) => {
-      // First try to get item from cartItemDetails (most complete and up-to-date)
+
       const itemFromDetails = cartItemDetails[itemId];
       
       if (itemFromDetails) {
-        // CartContext already has complete item data, use it directly
+
         return {
           ...itemFromDetails,
-          quantity: quantity, // Ensure quantity is from cartItems (most up-to-date)
+          quantity: quantity,
         };
       }
-      
-      // Fallback: Find item in allItems for display data (should rarely be needed)
+
       const item = safeAllItems.find(
         (item) => item._id === itemId || item.categoryId === itemId
       );
@@ -105,7 +102,6 @@ const Cart = () => {
         quantity: quantity,
       };
 
-      // Only normalize fallback data if it's actually incomplete
       const needsNormalization = !combinedItem._id || !combinedItem.categoryId || !combinedItem.image || combinedItem.measurement_unit === undefined;
       return needsNormalization ? normalizeItemData(combinedItem) : combinedItem;
     })
@@ -130,10 +126,10 @@ const Cart = () => {
 
   const handleIncrease = async (item) => {
     try {
-      // Use the correct item ID from the new system
+
       const itemWithCorrectId = { 
         ...item, 
-        _id: getCartKey(item)  // This handles the field mapping
+        _id: getCartKey(item)
       };
       await handleIncreaseQuantity(itemWithCorrectId);
     } catch (err) {
@@ -143,10 +139,10 @@ const Cart = () => {
 
   const handleDecrease = async (item) => {
     try {
-      // Use the correct item ID from the new system
+
       const itemWithCorrectId = { 
         ...item, 
-        _id: getCartKey(item)  // This handles the field mapping
+        _id: getCartKey(item)
       };
       await handleDecreaseQuantity(itemWithCorrectId);
     } catch (err) {
@@ -156,7 +152,7 @@ const Cart = () => {
 
   const handleDelete = async (item) => {
     try {
-      // Use the actual item ID for removal
+
       const itemId = getCartKey(item);
       await handleRemoveFromCart(itemId);
     } catch (err) {
@@ -385,8 +381,7 @@ const Cart = () => {
   }, 0);
 
   const MINIMUM_ORDER_VALUE = 100;
-  
-  // Role-based logic: customers can schedule pickup, buyers proceed to purchase, guests can proceed to login
+
   const isGuest = !isLoggedIn || !user;
   const canSchedulePickup = totalValue >= MINIMUM_ORDER_VALUE && user?.role === 'customer';
   const canProceedToPurchase = totalValue >= MINIMUM_ORDER_VALUE && user?.role === 'buyer';

@@ -1,4 +1,4 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+﻿import AsyncStorage from "@react-native-async-storage/async-storage";
 import { isDevelopment, isProduction } from '../../config/env';
 import { validateQuantity } from "../../utils/cartUtils.js";
 import logger from '../../utils/logger';
@@ -7,10 +7,9 @@ import { BASE_URLS } from "./config";
 
 const BASE_URL = BASE_URLS.CART;
 
-// Production-optimized token caching
 let cachedToken = null;
 let tokenCacheTime = 0;
-const TOKEN_CACHE_DURATION = isProduction ? 60000 : 30000; // Longer cache in production
+const TOKEN_CACHE_DURATION = isProduction ? 60000 : 30000;
 
 export async function clearAuthData() {
   try {
@@ -45,8 +44,7 @@ async function getSessionId() {
 async function getAccessToken() {
   try {
     const now = Date.now();
-    
-    // Check cache first
+
     if (cachedToken && now - tokenCacheTime < TOKEN_CACHE_DURATION) {
       if (isTokenExpired(cachedToken)) {
         logger.auth('Cached token expired, clearing cache', null, 'WARN');
@@ -80,16 +78,15 @@ function isTokenExpired(token) {
   try {
     let decoded;
 
-    // Handle mock tokens for development
     if (token.startsWith("mock.")) {
       const parts = token.split(".");
       if (parts.length >= 2) {
         decoded = atob(parts[1]);
       } else {
-        return false; // Mock token without proper structure, assume valid
+        return false;
       }
     } else {
-      // Handle JWT tokens
+
       const parts = token.split(".");
       if (parts.length !== 3) return true;
 
@@ -98,8 +95,7 @@ function isTokenExpired(token) {
 
       try {
         decoded = atob(padded);
-        
-        // Handle encoding issues
+
         if (decoded.includes("�") || decoded.includes("?")) {
           const uint8Array = new Uint8Array(
             atob(base64)
@@ -123,7 +119,6 @@ function isTokenExpired(token) {
     const currentTime = Math.floor(Date.now() / 1000);
     const isExpired = currentTime >= payload.exp;
 
-    // Only log token expiration checks occasionally to reduce noise
     if (isDevelopment() && Math.random() < 0.1) {
       logger.debug('Token expiration check', {
         currentTime,
@@ -156,7 +151,6 @@ async function setSessionIdFromResponse(response) {
       }
     }
 
-    // Try to get session ID from response body
     try {
       const responseClone = response.clone();
       const responseData = await responseClone.json();
@@ -165,7 +159,7 @@ async function setSessionIdFromResponse(response) {
         logger.debug('Session ID set from response body', null, 'CART');
       }
     } catch (_parseError) {
-      // Response may not be JSON, ignore silently
+
     }
   } catch (error) {
     logger.cart('Error setting sessionId', { error: error.message }, 'ERROR');
@@ -249,13 +243,11 @@ export async function addItemToCart(item, isLoggedIn) {
           userType: isLoggedIn ? 'authenticated' : 'guest'
         });
 
-        // Validate item before processing
         validateQuantity(item);
 
         const sessionId = isLoggedIn ? null : await getSessionId();
         let headers = await getAuthHeaders(isLoggedIn, sessionId);
 
-        // Handle session creation for guest users
         if (!isLoggedIn && !sessionId) {
           logger.debug('Creating session for guest user', null, 'CART');
           try {
@@ -278,10 +270,10 @@ export async function addItemToCart(item, isLoggedIn) {
         }
 
         const payload = {
-          _id: item._id,                        // Item _id (required for new schema)
-          categoryId: item.categoryId,          // CRITICAL: Must be the actual category ID
+          _id: item._id,
+          categoryId: item.categoryId,
           categoryName: item.categoryName,
-          name: item.name,                      // Use 'name' instead of 'itemName'
+          name: item.name,
           image: item.image,
           points: item.points,
           price: item.price,
@@ -289,7 +281,6 @@ export async function addItemToCart(item, isLoggedIn) {
           quantity: item.quantity,
         };
 
-        // Debug log to verify we're sending correct categoryId
         if (item.categoryId) {
           logger.cart('Sending cart item with categoryId', {
             itemId: item._id,
@@ -373,21 +364,18 @@ export async function updateCartItem(item, quantity, isLoggedIn, measurementUnit
           userType: isLoggedIn ? 'authenticated' : 'guest'
         });
 
-        // Validate quantity before processing
         validateQuantity({ quantity, measurement_unit: measurementUnit });
 
         const sessionId = isLoggedIn ? null : await getSessionId();
         const headers = await getAuthHeaders(isLoggedIn, sessionId);
 
-        // FIXED: Send both _id and categoryId to match backend schema
         const payload = { 
-          _id: item._id || item.itemId,        // Item ID
-          categoryId: item.categoryId,         // CRITICAL: Category ID required by backend
+          _id: item._id || item.itemId,
+          categoryId: item.categoryId,
           quantity, 
           measurement_unit: measurementUnit
         };
 
-        // Debug log to verify we're sending correct data
         if (!item.categoryId) {
           logger.cart('WARNING: Missing categoryId in updateCartItem', {
             itemId: item._id || item.itemId,
@@ -447,7 +435,6 @@ export async function removeItemFromCart(itemId, isLoggedIn) {
         const sessionId = isLoggedIn ? null : await getSessionId();
         const headers = await getAuthHeaders(isLoggedIn, sessionId);
 
-        // Updated to use _id in URL path (matching new backend route)
         const response = await fetch(`${BASE_URL}/${itemId}`, {
           method: "DELETE",
           headers,

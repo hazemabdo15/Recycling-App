@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+﻿import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useLinkBuilder } from "@react-navigation/native";
 import { BlurView } from "expo-blur";
 import * as Haptics from 'expo-haptics';
@@ -40,18 +40,18 @@ try {
 const { width } = Dimensions.get("window");
 
 const getIconName = (routeName, isFocused, userRole = 'customer') => {
-  // Role-based icon mappings
+
   const customerIcons = {
     home: isFocused ? "home" : "home-outline",
     explore: isFocused ? "magnify" : "magnify",
-    cart: isFocused ? "truck-delivery" : "truck-delivery-outline", // Pickup/delivery truck
+    cart: isFocused ? "truck-delivery" : "truck-delivery-outline",
     profile: isFocused ? "account" : "account-outline",
   };
   
   const buyerIcons = {
     home: isFocused ? "home" : "home-outline",
-    explore: isFocused ? "store" : "store-outline", // Store/shop icon
-    cart: isFocused ? "cart" : "cart-outline", // Shopping cart icon
+    explore: isFocused ? "store" : "store-outline",
+    cart: isFocused ? "cart" : "cart-outline",
     profile: isFocused ? "account" : "account-outline",
   };
   

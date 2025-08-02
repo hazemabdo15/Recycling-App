@@ -1,4 +1,4 @@
-import { Ionicons } from "@expo/vector-icons";
+﻿import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useRef } from "react";
@@ -103,7 +103,7 @@ const Index = () => {
 
 const styles = StyleSheet.create({
   lastSection: {
-    // marginBottom removed; now handled inline for dynamic spacing
+
   },
   container: {
     flex: 1,
@@ -195,13 +195,13 @@ const styles = StyleSheet.create({
     marginTop: scaleSize(-24),
     paddingHorizontal: scaleSize(spacing.md),
     paddingTop: scaleSize(spacing.lg),
-    paddingBottom: scaleSize(24), // Reasonable bottom padding
+    paddingBottom: scaleSize(24),
   },
   statsSection: {
     marginBottom: scaleSize(spacing.sm),
   },
   section: {
-    marginBottom: scaleSize(48), // Increased space after last section for tab bar
+    marginBottom: scaleSize(30),
   },
   sectionHeader: {
     marginBottom: scaleSize(spacing.md),

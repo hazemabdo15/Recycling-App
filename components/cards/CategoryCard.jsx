@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react';
+﻿import { memo, useCallback } from 'react';
 import { Dimensions, StyleSheet, Text, View } from 'react-native';
 import { getCategoryImageProps } from '../../utils/categoryUtils';
 import { CategoryImage } from '../ui';
@@ -22,7 +22,6 @@ try {
   useAnimatedStyle = () => ({});
   withSpring = (value) => value;
 }
-
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const scaleSize = (size) => (SCREEN_WIDTH / 375) * size;

@@ -1,11 +1,6 @@
-#!/usr/bin/env node
+﻿#!/usr/bin/env node
 
-/**
- * Performance Diagnostic Tool
- * 
- * Real-time monitoring and analysis of performance improvements
- * after optimization deployment.
- */
+
 
 const fs = require('fs');
 const path = require('path');
@@ -14,7 +9,6 @@ console.log('📊 Performance Diagnostic Tool');
 console.log('==============================');
 console.log('');
 
-// Check if optimizations are applied
 const checkOptimizations = () => {
   console.log('🔍 Checking applied optimizations...');
   
@@ -22,8 +16,7 @@ const checkOptimizations = () => {
   const monitorPath = path.join(process.cwd(), 'utils/performanceMonitor.js');
   
   let optimizationsApplied = 0;
-  
-  // Check API service
+
   if (fs.existsSync(apiServicePath)) {
     const content = fs.readFileSync(apiServicePath, 'utf8');
     if (content.includes('OptimizedAPIService') || content.includes('tokenCache')) {
@@ -33,8 +26,7 @@ const checkOptimizations = () => {
       console.log('   ⚠️ Original API service detected');
     }
   }
-  
-  // Check performance monitor
+
   if (fs.existsSync(monitorPath)) {
     const content = fs.readFileSync(monitorPath, 'utf8');
     if (content.includes('OptimizedPerformanceMonitor') || content.includes('samplingRate')) {
@@ -51,19 +43,17 @@ const checkOptimizations = () => {
   return optimizationsApplied === 2;
 };
 
-// Performance health check
 const performHealthCheck = () => {
   console.log('🏥 Performance Health Check');
   console.log('----------------------------');
   
   try {
-    // Try to load and test the optimized modules
+
     const monitorPath = path.join(process.cwd(), 'utils/performanceMonitor.js');
     
     if (fs.existsSync(monitorPath)) {
       console.log('   ✅ Performance monitor module loads successfully');
-      
-      // Check for key optimizations in the code
+
       const content = fs.readFileSync(monitorPath, 'utf8');
       const checks = [
         { feature: 'Smart sampling', pattern: 'shouldTrack' },
@@ -81,8 +71,7 @@ const performHealthCheck = () => {
         }
       });
     }
-    
-    // Check API service optimizations
+
     const apiPath = path.join(process.cwd(), 'services/api/apiService.js');
     if (fs.existsSync(apiPath)) {
       const content = fs.readFileSync(apiPath, 'utf8');
@@ -110,7 +99,6 @@ const performHealthCheck = () => {
   console.log('');
 };
 
-// Generate recommendations
 const generateRecommendations = () => {
   console.log('💡 Performance Recommendations');
   console.log('-------------------------------');
@@ -136,7 +124,6 @@ const generateRecommendations = () => {
   console.log('');
 };
 
-// Expected performance improvements
 const showExpectedImprovements = () => {
   console.log('📈 Expected Performance Improvements');
   console.log('------------------------------------');
@@ -159,7 +146,6 @@ const showExpectedImprovements = () => {
   });
 };
 
-// Main diagnostic flow
 const runDiagnostics = () => {
   const optimizationsActive = checkOptimizations();
   
@@ -181,5 +167,4 @@ const runDiagnostics = () => {
   }
 };
 
-// Run diagnostics
 runDiagnostics();

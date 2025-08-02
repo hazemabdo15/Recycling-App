@@ -1,4 +1,4 @@
-import { Dimensions, View } from 'react-native';
+﻿import { Dimensions, View } from 'react-native';
 import { itemCardStyles } from '../../styles/components/categoryStyles';
 import { getUnitDisplay } from '../../utils/cartUtils';
 import { AnimatedListItem } from '../common';

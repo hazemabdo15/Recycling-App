@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+﻿import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_CONFIG, BASE_URLS } from './config';
 
 let notifyTokenExpired = null;
@@ -9,7 +9,7 @@ const getNotifyTokenExpired = () => {
       const authContextModule = require('../../context/AuthContext');
       notifyTokenExpired = authContextModule.notifyTokenExpired;
     } catch (error) {
-      // Silent fail - avoid performance impact
+
     }
   }
   return notifyTokenExpired;
@@ -22,14 +22,12 @@ class OptimizedAPIService {
     this.isRefreshing = false;
     this.failedQueue = [];
     this.isInitialized = false;
-    
-    // Performance optimizations
+
     this.tokenCache = new Map();
     this.requestCache = new Map();
     this.lastTokenCheck = 0;
     this.pendingRequests = new Map();
-    
-    // Connection management
+
     this.abortController = new AbortController();
     this.requestTimeouts = new Map();
   }
@@ -49,7 +47,7 @@ class OptimizedAPIService {
     this.accessToken = token;
     if (token) {
       await AsyncStorage.setItem('accessToken', token);
-      // Clear token cache when new token is set
+
       this.tokenCache.clear();
       this.lastTokenCheck = 0;
     } else {
@@ -74,8 +72,7 @@ class OptimizedAPIService {
     this.isInitialized = false;
     this.tokenCache.clear();
     this.lastTokenCheck = 0;
-    
-    // Cancel all pending requests
+
     this.abortController.abort();
     this.abortController = new AbortController();
     this.clearAllTimeouts();
@@ -83,13 +80,11 @@ class OptimizedAPIService {
     await AsyncStorage.multiRemove(['accessToken', 'user']);
   }
 
-  // Optimized token expiration check with caching
   isTokenExpired(token) {
     if (!token) return true;
-    
-    // Use cached result if recent (5 seconds)
+
     const now = Date.now();
-    const cacheKey = token.substring(0, 50); // Use token prefix as cache key
+    const cacheKey = token.substring(0, 50);
     const cached = this.tokenCache.get(cacheKey);
     
     if (cached && (now - cached.timestamp) < 5000) {
@@ -103,8 +98,7 @@ class OptimizedAPIService {
           const payload = JSON.parse(atob(parts[1]));
           const currentTime = Math.floor(Date.now() / 1000);
           const isExpired = currentTime >= payload.exp;
-          
-          // Cache result
+
           this.tokenCache.set(cacheKey, { expired: isExpired, timestamp: now });
           return isExpired;
         }
@@ -120,12 +114,11 @@ class OptimizedAPIService {
       const payload = JSON.parse(decoded);
       const currentTime = Math.floor(Date.now() / 1000);
       const willExpireSoon = currentTime >= (payload.exp - 30);
-      
-      // Cache result
+
       this.tokenCache.set(cacheKey, { expired: willExpireSoon, timestamp: now });
       return willExpireSoon;
     } catch (error) {
-      // Cache as expired on error
+
       this.tokenCache.set(cacheKey, { expired: true, timestamp: now });
       return true;
     }
@@ -142,7 +135,6 @@ class OptimizedAPIService {
     this.failedQueue = [];
   }
 
-  // Optimized refresh token with deduplication
   async refreshToken() {
     if (this.isRefreshing) {
       return new Promise((resolve, reject) => {
@@ -154,7 +146,7 @@ class OptimizedAPIService {
 
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
       const response = await fetch(`${this.baseURL}/auth/refresh`, {
         method: 'POST',
@@ -184,7 +176,6 @@ class OptimizedAPIService {
     }
   }
 
-  // Create timeout for request
   createRequestTimeout(requestId, timeout = API_CONFIG.timeout) {
     const timeoutId = setTimeout(() => {
       const controller = this.pendingRequests.get(requestId);
@@ -213,7 +204,6 @@ class OptimizedAPIService {
     this.requestTimeouts.clear();
   }
 
-  // Optimized API call with better error handling and timeouts
   async apiCall(endpoint, options = {}) {
     await this.initialize();
 
@@ -221,7 +211,6 @@ class OptimizedAPIService {
     const controller = new AbortController();
     this.pendingRequests.set(requestId, controller);
 
-    // Set up timeout
     const timeout = options.timeout || API_CONFIG.timeout;
     this.createRequestTimeout(requestId, timeout);
 
@@ -249,7 +238,6 @@ class OptimizedAPIService {
 
       let response = await fetch(url, requestOptions);
 
-      // Handle 401 with optimized token refresh
       if (response.status === 401 && this.accessToken && !endpoint.includes('/auth/refresh')) {
         const newToken = await this.refreshToken();
         if (newToken) {
@@ -263,7 +251,6 @@ class OptimizedAPIService {
         }
       }
 
-      // Optimized response parsing
       const contentType = response.headers.get('content-type');
       let data;
       
@@ -282,10 +269,9 @@ class OptimizedAPIService {
 
       return data;
     } catch (error) {
-      // Only log critical errors to reduce performance impact
+
       if (error.name !== 'AbortError') {
-        // Suppress console errors for known "Category not found" backend validation issue
-        // This error is expected and handled by the enhanced order verification system
+
         if (error.message && error.message.includes('Category with ID') && error.message.includes('not found')) {
           console.log(`[API] ${endpoint}: Known category validation error detected - error handled by enhanced verification system`);
         } else {
@@ -299,13 +285,12 @@ class OptimizedAPIService {
       
       throw error;
     } finally {
-      // Cleanup
+
       this.clearRequestTimeout(requestId);
       this.pendingRequests.delete(requestId);
     }
   }
 
-  // Optimized HTTP methods
   async get(endpoint, options = {}) {
     return this.apiCall(endpoint, { method: 'GET', ...options });
   }
@@ -338,7 +323,6 @@ class OptimizedAPIService {
     return this.apiCall(endpoint, { method: 'DELETE', ...options });
   }
 
-  // Fast authentication check (optimized for performance)
   async isAuthenticated() {
     if (!this.accessToken) {
       await this.initialize();
@@ -359,12 +343,10 @@ class OptimizedAPIService {
     return true;
   }
 
-  // Synchronous auth check (no async operations)
   isAuthenticatedSync() {
     return this.accessToken && !this.isTokenExpired(this.accessToken);
   }
 
-  // Optimized token refresh check
   shouldRefreshToken() {
     if (!this.accessToken) return false;
     
@@ -373,7 +355,7 @@ class OptimizedAPIService {
       const exp = payload.exp * 1000;
       const now = Date.now();
       const timeUntilExpiry = exp - now;
-      const REFRESH_THRESHOLD = 5 * 60 * 1000; // 5 minutes
+      const REFRESH_THRESHOLD = 5 * 60 * 1000;
       
       return timeUntilExpiry <= REFRESH_THRESHOLD && timeUntilExpiry > 0;
     } catch (error) {
@@ -393,7 +375,6 @@ class OptimizedAPIService {
     return true;
   }
 
-  // Cleanup method for app termination
   destroy() {
     this.abortController.abort();
     this.clearAllTimeouts();

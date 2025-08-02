@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+﻿import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export async function getAccessToken() {
   try {
@@ -11,8 +11,7 @@ export async function getAccessToken() {
 export async function setAccessToken(token) {
   try {
     await AsyncStorage.setItem('accessToken', token);
-    
-    // Also update the APIService instance
+
     try {
       const { default: apiService } = await import('../services/api/apiService');
       await apiService.setAccessToken(token);

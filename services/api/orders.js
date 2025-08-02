@@ -1,4 +1,4 @@
-import { validateQuantity } from '../../utils/cartUtils';
+﻿import { validateQuantity } from '../../utils/cartUtils';
 import apiService from './apiService';
 
 export const orderService = {
@@ -15,8 +15,7 @@ export const orderService = {
       console.log('[Order Service] Order created successfully');
       return response;
     } catch (error) {
-      // Suppress console errors for known "Category not found" backend validation issue
-      // This error is expected and handled by the enhanced order verification system
+
       if (error.message && error.message.includes('Category with ID') && error.message.includes('not found')) {
         console.log('[Order Service] Known category validation error detected - error handled by enhanced verification system');
       } else {
@@ -36,8 +35,7 @@ export const orderService = {
       return response;
     } catch (error) {
       console.error('[Order Service] Failed to fetch orders:', error.message);
-      
-      // If it's a 401/403 error, the user is not properly authenticated
+
       if (error.response?.status === 401 || error.response?.status === 403) {
         console.error('[Order Service] Authentication error, user may need to re-login');
       }

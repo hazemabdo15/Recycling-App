@@ -1,10 +1,7 @@
-/**
- * Role-based text mappings for different user types
- * Used to customize UI text based on user role (customer vs buyer)
- */
+﻿
 
 export const roleLabels = {
-  // Main navigation and actions
+
   pickup: {
     customer: "Pickup",
     buyer: "Cart",
@@ -22,7 +19,6 @@ export const roleLabels = {
     buyer: "Your Shopping Cart",
   },
 
-  // Cart and ordering
   cartTitle: {
     customer: "🛒 Your Pickup Cart",
     buyer: "🛒 Your Shopping Cart",
@@ -44,7 +40,6 @@ export const roleLabels = {
     buyer: "Browse items and place your order!",
   },
 
-  // Order management
   orderConfirmation: {
     customer: "Pickup Request Confirmed!",
     buyer: "Order Confirmed!",
@@ -63,7 +58,6 @@ export const roleLabels = {
     buyer: "Estimated Delivery",
   },
 
-  // Address and delivery
   selectAddress: {
     customer: "Select Delivery Address",
     buyer: "Select Delivery Address",
@@ -73,7 +67,6 @@ export const roleLabels = {
     buyer: "Delivery to",
   },
 
-  // Progress indicators
   progressSteps: {
     customer: {
       1: "Select Address",
@@ -87,7 +80,6 @@ export const roleLabels = {
     },
   },
 
-  // App branding
   appName: {
     customer: "EcoPickup",
     buyer: "EcoStore",
@@ -97,7 +89,6 @@ export const roleLabels = {
     buyer: "Shop eco-friendly products and support sustainability",
   },
 
-  // Explore page
   exploreTitle: {
     customer: "🔍 What Can You Recycle?",
     buyer: "🛒 Browse Products",
@@ -111,7 +102,6 @@ export const roleLabels = {
     buyer: "Search products...",
   },
 
-  // Category details page
   categoryToastMessages: {
     itemAdded: {
       customer: "Added {quantity}{unit} {itemName} to pickup",
@@ -135,7 +125,6 @@ export const roleLabels = {
     },
   },
 
-  // Profile page
   profileLabels: {
     ordersTab: {
       customer: "My Pickups",
@@ -163,7 +152,6 @@ export const roleLabels = {
     },
   },
 
-  // Tab bar labels
   tabLabels: {
     home: {
       customer: "Home",
@@ -183,19 +171,16 @@ export const roleLabels = {
     },
   },
 
-  // Profile and points
   earnPoints: {
     customer: "Earn points by recycling",
     buyer: "Earn points with purchases",
   },
 
-  // Notifications and status
   itemsReadyFor: {
     customer: "items ready for pickup",
     buyer: "items ready for delivery",
   },
 
-  // Minimum order messages
   minimumOrderMessage: {
     customer: "Add {amount} EGP more to schedule pickup",
     buyer: "Add {amount} EGP more to place order",
@@ -205,7 +190,6 @@ export const roleLabels = {
     buyer: "Minimum 100 EGP Required",
   },
 
-  // Cart page specific
   cartPage: {
     findItemsButton: {
       customer: "Find Recyclables",
@@ -214,40 +198,28 @@ export const roleLabels = {
   },
 };
 
-/**
- * Get the appropriate label based on the key and user role
- * @param {string} key - The label key
- * @param {string} role - User role ('customer' or 'buyer')
- * @param {object} params - Optional parameters for string interpolation
- * @returns {string} The appropriate label text
- */
-export function getLabel(key, role = "customer", params = {}) {
-  // console.log(`[roleLabels] Getting label for key: ${key}, role: ${role}`);
 
-  // Handle nested keys like 'tabLabels.cart'
+export function getLabel(key, role = "customer", params = {}) {
+
   const keys = key.split(".");
   let roleMapping = roleLabels;
 
-  // Navigate through nested properties
   for (const k of keys) {
     if (roleMapping && typeof roleMapping === "object" && roleMapping[k]) {
       roleMapping = roleMapping[k];
     } else {
-      // console.warn(`[roleLabels] No mapping found for key: ${key}`);
+
       return key;
     }
   }
 
   if (!roleMapping) {
-    // console.warn(`[roleLabels] No mapping found for key: ${key}`);
+
     return key;
   }
 
   let label = roleMapping[role] || roleMapping.customer || key;
 
-  // console.log(`[roleLabels] Found label: ${label} for key: ${key}, role: ${role}`);
-
-  // Handle string interpolation for parameters
   if (params && typeof label === "string") {
     Object.keys(params).forEach((param) => {
       label = label.replace(`{${param}}`, params[param]);
@@ -257,12 +229,7 @@ export function getLabel(key, role = "customer", params = {}) {
   return label;
 }
 
-/**
- * Get progress step labels for a specific role
- * @param {number} step - Step number (1, 2, 3)
- * @param {string} role - User role ('customer' or 'buyer')
- * @returns {string} The step label
- */
+
 export function getProgressStepLabel(step, role = "customer") {
   return (
     roleLabels.progressSteps[role]?.[step] ||
@@ -271,22 +238,14 @@ export function getProgressStepLabel(step, role = "customer") {
   );
 }
 
-/**
- * Check if a user is a buyer
- * @param {object} user - User object with role property
- * @returns {boolean} True if user is a buyer
- */
+
 export function isBuyer(user) {
   return user?.role === "buyer";
 }
 
-/**
- * Check if a user is a customer
- * @param {object} user - User object with role property
- * @returns {boolean} True if user is a customer
- */
+
 export function isCustomer(user) {
-  return user?.role === "customer" || !user?.role; // Default to customer if no role
+  return user?.role === "customer" || !user?.role;
 }
 
 export default {

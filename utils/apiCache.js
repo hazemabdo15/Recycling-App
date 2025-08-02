@@ -1,4 +1,4 @@
-
+﻿
 class APICache {
   constructor(defaultTTL = 5 * 60 * 1000) {
     this.cache = new Map();

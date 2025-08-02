@@ -1,11 +1,6 @@
-#!/usr/bin/env node
+﻿#!/usr/bin/env node
 
-/**
- * Real-time Performance Dashboard
- * 
- * Monitors and displays performance improvements in real-time
- * Run this while using your app to see the optimizations in action
- */
+
 
 const readline = require('readline');
 
@@ -22,7 +17,6 @@ console.log('   Press SPACE to clear screen');
 console.log('   Press R to generate manual report');
 console.log('');
 
-// Setup keyboard input
 readline.emitKeypressEvents(process.stdin);
 process.stdin.setRawMode(true);
 
@@ -49,9 +43,9 @@ const generateManualReport = () => {
   console.log('📊 Generating performance report...');
   
   try {
-    // Try to load and use the optimized performance monitor
+
     const monitorPath = require.resolve('../utils/performanceMonitor.js');
-    delete require.cache[monitorPath]; // Clear cache to get fresh data
+    delete require.cache[monitorPath];
     
     const monitor = require('../utils/performanceMonitor.js').default;
     const report = monitor.getPerformanceReport ? monitor.getPerformanceReport() : monitor.generateOptimizedReport();
@@ -67,8 +61,7 @@ const generateManualReport = () => {
     console.log(`🎛️  Sampling Rate: ${health.samplingRate || '100%'}`);
     console.log(`🚨 Emergency Mode: ${health.emergencyMode ? '🔴 ACTIVE' : '🟢 INACTIVE'}`);
     console.log(`💚 Health Status: ${health.healthy ? '✅ HEALTHY' : '⚠️ ISSUES'}`);
-    
-    // Show API performance if available
+
     if (monitor.getSlowApiEndpoints) {
       const slowApis = monitor.getSlowApiEndpoints();
       if (slowApis.length > 0) {
@@ -127,16 +120,14 @@ const monitorPerformance = () => {
   console.log('   Use your app to generate API calls and see improvements');
   console.log('   Press R to generate a manual performance report');
   console.log('');
-  
-  // Auto-generate reports every 30 seconds
+
   const reportInterval = setInterval(() => {
     if (isRunning) {
       console.log(`📊 Auto-report (${new Date().toLocaleTimeString()}):`);
       generateManualReport();
     }
   }, 30000);
-  
-  // Simulate performance tracking
+
   let simulationCount = 0;
   const simulationInterval = setInterval(() => {
     if (isRunning && simulationCount < 10) {
@@ -153,8 +144,7 @@ const monitorPerformance = () => {
       }
     }
   }, 3000);
-  
-  // Cleanup on exit
+
   process.on('SIGINT', () => {
     clearInterval(reportInterval);
     clearInterval(simulationInterval);
@@ -162,5 +152,4 @@ const monitorPerformance = () => {
   });
 };
 
-// Start monitoring
 monitorPerformance();

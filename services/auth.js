@@ -1,4 +1,4 @@
-import { Alert } from 'react-native';
+﻿import { Alert } from 'react-native';
 import { clearSession, setAccessToken } from '../utils/authUtils';
 import apiService from './api/apiService';
 
@@ -18,7 +18,7 @@ export const loginUser = async ({ email, password }) => {
 
     if (response.accessToken) {
       await setAccessToken(response.accessToken);
-      // Also update the APIService instance
+
       await apiService.setAccessToken(response.accessToken);
       console.log('[Auth] Token set in both AsyncStorage and APIService');
     }
@@ -124,19 +124,16 @@ export const resetPassword = async (email, otpCode, newPassword) => {
 export const logoutUser = async () => {
   try {
     console.log('[Auth] Starting logout process...');
-    
-    // Notify backend about logout (don't fail if this fails)
+
     try {
       await apiService.post('/auth/logout');
       console.log('[Auth] Backend logout successful');
     } catch (backendError) {
       console.warn('[Auth] Backend logout failed, continuing with local cleanup:', backendError.message);
     }
-    
-    // Clear all local session data
+
     await clearSession();
-    
-    // Reset API service state
+
     if (apiService.resetAuthState) {
       apiService.resetAuthState();
     }
@@ -144,8 +141,7 @@ export const logoutUser = async () => {
     console.log('[Auth] Logout process completed');
   } catch (error) {
     console.error('[Auth] Critical error during logout, forcing cleanup:', error.message);
-    
-    // Force cleanup even if everything fails
+
     await clearSession();
     
     if (apiService.resetAuthState) {

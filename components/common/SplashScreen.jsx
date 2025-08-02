@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef } from 'react';
 import {
@@ -13,26 +13,25 @@ import {
 import { colors, typography } from '../../styles/theme';
 
 const SplashScreen = ({ progress = 0, statusText = "Initializing..." }) => {
-  // Realistic falling leaf animation
+
   const window = Dimensions.get('window');
-  const leafY = useRef(new Animated.Value(-80)).current; // Start above
-  const leafProgress = useRef(new Animated.Value(0)).current; // 0 to 1 progress for X/rotation
+  const leafY = useRef(new Animated.Value(-80)).current;
+  const leafProgress = useRef(new Animated.Value(0)).current;
   const leafOpacity = useRef(new Animated.Value(1)).current;
   const textOpacity = useRef(new Animated.Value(0)).current;
   const delayAnim = useRef(new Animated.Value(0)).current;
 
-  // Center destination
-  const textSectionHeight = 80; // estimated height of title+subtitle
-  const leafFinalY = window.height / 2 - textSectionHeight - 48; // 48 = leaf size + margin
+  const textSectionHeight = 80;
+  const leafFinalY = window.height / 2 - textSectionHeight - 48;
   const centerX = window.width / 2;
 
   useEffect(() => {
-    // Animate the leaf falling with fluttering (sinusoidal X and rotation)
+
     leafY.setValue(-80);
     leafProgress.setValue(0);
     leafOpacity.setValue(1);
     textOpacity.setValue(0);
-    leafOpacity.setValue(1); // Ensure no blinking during fall
+    leafOpacity.setValue(1);
     delayAnim.setValue(0);
     Animated.sequence([
       Animated.parallel([
@@ -67,10 +66,9 @@ const SplashScreen = ({ progress = 0, statusText = "Initializing..." }) => {
     ]).start();
   }, [delayAnim, leafFinalY, leafOpacity, leafProgress, leafY, textOpacity]);
 
-  // Simulate a smooth sine wave for X and rotation using many keyframes
   const keyframes = 21;
   const inputRange = Array.from({ length: keyframes }, (_, i) => i / (keyframes - 1));
-  // Sine wave amplitude decreases as leaf falls
+
   const maxAmp = window.width * 0.14;
   const swing = inputRange.map(t => Math.sin(t * Math.PI * 3) * maxAmp * (1 - t * 0.7));
   const rot = inputRange.map(t => `${Math.sin(t * Math.PI * 3) * 22 * (1 - t * 0.7)}deg`);
@@ -92,7 +90,6 @@ const SplashScreen = ({ progress = 0, statusText = "Initializing..." }) => {
         end={{ x: 1, y: 1 }}
         style={styles.gradient}
       >
-        {/* Falling Leaf Animation */}
         <Animated.View
           style={[
             styles.leafContainer,
@@ -112,13 +109,12 @@ const SplashScreen = ({ progress = 0, statusText = "Initializing..." }) => {
           <MaterialCommunityIcons name="leaf" size={64} color="#fff" />
         </Animated.View>
 
-        {/* App Title and Subtitle fade in after leaf lands, positioned just below the leaf */}
         <Animated.View
           style={[
             styles.textSection,
             {
               opacity: 1,
-              top: leafFinalY + 64 + 12, // 64 = leaf size, 12 = margin below leaf
+              top: leafFinalY + 64 + 12,
               left: 0,
               right: 0,
               position: 'absolute',
@@ -132,7 +128,6 @@ const SplashScreen = ({ progress = 0, statusText = "Initializing..." }) => {
           <Text style={styles.subtitle}>Sustainable Living Made Simple</Text>
         </Animated.View>
 
-        {/* Status Section */}
         <View style={styles.statusSection}>
           <Text style={styles.statusText}>{statusText}</Text>
         </View>
@@ -165,7 +160,7 @@ const styles = StyleSheet.create({
   textSection: {
     alignItems: 'center',
     justifyContent: 'center',
-    // position, top, left, right will be set inline to allow dynamic placement
+
   },
   title: {
     fontSize: 36,

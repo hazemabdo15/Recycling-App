@@ -1,4 +1,4 @@
-
+﻿
 export const getUnitDisplay = (measurementUnit) => {
     return measurementUnit === 1 ? 'KG' : 'Piece';
 };
@@ -44,18 +44,16 @@ export const validateQuantity = (item) => {
 };
 
 export const normalizeItemData = (item) => {
-    // Smart normalization - only process if data is actually incomplete
+
     if (!item) {
         console.warn('[normalizeItemData] Received null/undefined item');
         return {};
     }
-    
-    // If the item already has all required fields, return it as-is (most efficient)
+
     if (item._id && item.categoryId && item.name && item.measurement_unit !== undefined) {
         return { ...item };
     }
-    
-    // Legacy fallback normalization for incomplete data
+
     console.log('[normalizeItemData] Normalizing incomplete item:', {
         _id: item._id,
         categoryId: item.categoryId,
@@ -73,7 +71,7 @@ export const normalizeItemData = (item) => {
         categoryName: item.categoryName || '',
         measurement_unit: item.measurement_unit || item.unit || 2,
         quantity: item.quantity || 1,
-        ...item // Preserve any additional fields
+        ...item
     };
 };
 
@@ -110,7 +108,7 @@ export const calculateCartStats = (items, cartItems) => {
     let totalValue = 0;
     
     items.forEach(item => {
-        // normalizeItemData is now safe and won't corrupt complete data
+
         const processedItem = normalizeItemData(item);
         const itemKey = getCartKey(processedItem);
         const quantity = cartItems[itemKey] || 0;
@@ -130,22 +128,14 @@ export const getMeasurementIcon = (measurementUnit) => {
     return measurementUnit === 1 ? "weight-kilogram" : "cube-outline";
 };
 
-// New utility functions for handling the improved backend schema
 
-/**
- * Creates a cart item object that matches the new backend schema
- * @param {Object} item - The item from API endpoints
- * @param {number} quantity - The quantity to add to cart
- * @returns {Object} Cart item formatted for backend
- */
+
 export const createCartItem = (item, quantity = 1) => {
-    // normalizeItemData is now safe and won't corrupt complete data
+
     const processedItem = normalizeItemData(item);
-    
-    // The API should provide categoryName, but have a fallback for safety
+
     let categoryName = processedItem.categoryName;
-    
-    // Only use fallback mapping if categoryName is missing
+
     if (!categoryName) {
         console.warn('[createCartItem] Missing categoryName, using fallback mapping for:', processedItem.name);
         const categoryNameMapping = {
@@ -162,49 +152,36 @@ export const createCartItem = (item, quantity = 1) => {
     }
     
     const result = {
-        _id: processedItem._id,                    // Item ID
-        categoryId: processedItem.categoryId,      // Category ID  
-        name: processedItem.name,                  // Item name
-        image: processedItem.image || '',          // Item image URL
-        points: processedItem.points || 0,         // Points per item
-        price: processedItem.price || 0,           // Price per item
-        categoryName: categoryName,                // Category name (REQUIRED by backend)
-        measurement_unit: processedItem.measurement_unit, // 1 = KG, 2 = PIECE
-        quantity: quantity                      // Quantity in cart
+        _id: processedItem._id,
+        categoryId: processedItem.categoryId,
+        name: processedItem.name,
+        image: processedItem.image || '',
+        points: processedItem.points || 0,
+        price: processedItem.price || 0,
+        categoryName: categoryName,
+        measurement_unit: processedItem.measurement_unit,
+        quantity: quantity
     };
     console.log('[createCartItem] Created cart item:', result);
     return result;
 };
 
 
-/**
- * Helper function to get the cart key for an item
- * IMPORTANT: With the naming correction, this returns the actual item ID
- * @param {Object} item - Item object
- * @returns {string} The item ID to use for cart operations
- */
+
 export const getCartKey = (item) => {
-    // normalizeItemData is now safe and won't corrupt complete data
+
     const processed = normalizeItemData(item);
     return processed._id;
 };
 
-/**
- * Helper function to get the display key for UI components
- * @param {Object} item - Item object  
- * @returns {string} The key to use for UI rendering (should be stable and unique)
- */
+
 export const getDisplayKey = (item) => {
-    // Use the item ID for display keys (most stable identifier)
+
     const itemId = getCartKey(item);
     return itemId || String(Math.random());
 };
 
-/**
- * Calculates cart statistics from backend cart format
- * @param {Array} cartItems - Items from backend cart.items array
- * @returns {Object} Cart statistics
- */
+
 export const calculateBackendCartStats = (cartItems = []) => {
     const totalItems = cartItems.length;
     

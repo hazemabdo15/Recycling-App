@@ -1,4 +1,4 @@
-import { Ionicons } from "@expo/vector-icons";
+﻿import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -34,7 +34,6 @@ const NotificationsScreen = () => {
     reconnectSocket,
   } = useNotifications();
 
-  // Auto refresh notifications when screen is focused
   useFocusEffect(
     useCallback(() => {
       console.log('📱 Notifications screen focused - refreshing notifications');
@@ -42,7 +41,6 @@ const NotificationsScreen = () => {
     }, [refreshNotifications])
   );
 
-  // Log notification changes for debugging
   useEffect(() => {
     console.log('📱 Notifications updated:', notifications.length, 'total,', unreadCount, 'unread');
   }, [notifications, unreadCount]);

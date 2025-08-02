@@ -1,4 +1,4 @@
-import { Stack } from "expo-router";
+﻿import { Stack } from "expo-router";
 import SplashController from '../components/common/SplashController';
 import { AuthProvider } from '../context/AuthContext';
 import { CartProvider } from '../context/CartContext';

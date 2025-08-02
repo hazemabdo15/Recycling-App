@@ -1,4 +1,4 @@
-import { router, useFocusEffect } from "expo-router";
+﻿import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
 import LoginForm from "../components/auth/LoginForm";
@@ -22,7 +22,6 @@ export default function LoginScreen() {
           console.log("[LoginScreen] AuthContext isLoggedIn:", isLoggedIn);
           console.log("[LoginScreen] AuthContext user:", user);
 
-          // If already logged in according to AuthContext, redirect
           if (isLoggedIn && user) {
             console.log(
               "[LoginScreen] User already logged in, redirecting to home"
@@ -35,12 +34,9 @@ export default function LoginScreen() {
             return;
           }
 
-          // Check AsyncStorage as fallback
           const savedUser = await getLoggedInUser();
           console.log("[LoginScreen] Saved user result:", savedUser);
 
-          // Do not clear AsyncStorage if user is found in storage but not in AuthContext.
-          // Let AuthContext finish rehydrating from storage.
 
           setCheckingUser(false);
         } catch (err) {
@@ -84,7 +80,6 @@ export default function LoginScreen() {
       await login(user, accessToken);
       console.log("[Login] AuthContext updated successfully");
 
-      // Refresh cart after login to ensure merged items are shown
       try {
         await refreshCart();
         console.log("[Login] Cart refreshed after login");
@@ -100,7 +95,7 @@ export default function LoginScreen() {
         router.replace("/home");
       }
     } catch (_error) {
-      // console.error('[Login] Login failed:', error?.message || 'Unknown error');
+
       Alert.alert(
         "Login failed",
         "Please check your credentials and try again."

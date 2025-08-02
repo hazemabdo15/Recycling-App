@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+﻿import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Alert } from 'react-native';
 import { io } from 'socket.io-client';
@@ -113,7 +113,6 @@ export const NotificationProvider = ({ children }) => {
     }
   }, [accessToken]);
 
-  // Helper to check if token is expired
   const isTokenExpired = (token) => {
     if (!token) return true;
     try {
@@ -129,7 +128,6 @@ export const NotificationProvider = ({ children }) => {
       return true;
     }
   };
-
 
   const doConnect = useCallback(async () => {
     try {
@@ -157,7 +155,7 @@ export const NotificationProvider = ({ children }) => {
         },
         transports: ['websocket', 'polling'],
         timeout: 15000,
-        // Let socket.io handle reconnection
+
         reconnection: true,
         reconnectionAttempts: 5,
         reconnectionDelay: 5000,
@@ -170,20 +168,17 @@ export const NotificationProvider = ({ children }) => {
         setIsConnected(true);
         isConnecting.current = false;
         currentSocket.current = socketConnection;
-        
-        // Test the connection by emitting a test event
+
         socketConnection.emit('test-connection', { userId: user?._id });
-        
-        // Add heartbeat to test connection
+
         const heartbeatInterval = setInterval(() => {
           if (socketConnection.connected) {
             socketConnection.emit('ping', { timestamp: Date.now() });
           } else {
             clearInterval(heartbeatInterval);
           }
-        }, 30000); // Every 30 seconds
-        
-        // Clean up interval on disconnect
+        }, 30000);
+
         socketConnection.on('disconnect', () => {
           clearInterval(heartbeatInterval);
         });
@@ -195,7 +190,6 @@ export const NotificationProvider = ({ children }) => {
         currentSocket.current = null;
         isConnecting.current = false;
 
-        // Only reconnect if user is authenticated and not a guest
         setTimeout(() => {
           if (!currentSocket.current && user && accessToken && !user.isGuest) {
             console.log('🔄 Auto-reconnecting after disconnect (user authenticated)...');
@@ -203,7 +197,7 @@ export const NotificationProvider = ({ children }) => {
           } else {
             console.log('🔒 Not reconnecting: no authenticated user.');
           }
-        }, 5000); // 5 seconds delay
+        }, 5000);
       });
 
       socketConnection.on('connect_error', async (error) => {
@@ -213,7 +207,6 @@ export const NotificationProvider = ({ children }) => {
         currentSocket.current = null;
         isConnecting.current = false;
 
-        // If error is due to invalid/expired token, try to refresh and reconnect
         if (error?.message?.toLowerCase().includes('invalid token') || error?.message?.toLowerCase().includes('authentication')) {
           console.log('🔄 Detected invalid/expired token, attempting to refresh and reconnect...');
           const newToken = await refreshAccessToken();
@@ -226,30 +219,27 @@ export const NotificationProvider = ({ children }) => {
           }
         }
 
-        // Attempt to reconnect after a delay for other errors
         setTimeout(() => {
           console.log('🔄 Attempting to reconnect after connection error...');
           if (!currentSocket.current && user && accessToken) {
             isConnecting.current = false;
             doConnect();
           }
-        }, 10000); // Wait 10 seconds before retrying
+        }, 10000);
       });
 
       socketConnection.on('notification:new', (notification) => {
         console.log('📢 New notification received via socket:', notification);
-        
-        // Update notifications list with new notification at the top
+
         setNotifications(prev => {
-          // Check if notification already exists to avoid duplicates
+
           const exists = prev.some(n => (n.id || n._id) === (notification.id || notification._id));
           if (exists) {
             return prev;
           }
           return [notification, ...prev];
         });
-        
-        // Increment unread count
+
         setUnreadCount(prev => prev + 1);
 
         const orderTypes = [
@@ -269,12 +259,10 @@ export const NotificationProvider = ({ children }) => {
         }
       });
 
-      // Add test event listeners for debugging
       socketConnection.on('pong', (data) => {
-        // Server heartbeat response - connection is healthy
+
       });
 
-      // Add listeners for common notification event names that servers might use
       const commonNotificationEvents = [
         'notification',
         'newNotification', 
@@ -288,7 +276,7 @@ export const NotificationProvider = ({ children }) => {
 
       commonNotificationEvents.forEach(eventName => {
         socketConnection.on(eventName, (notification) => {
-          // Handle the notification the same way as notification:new
+
           setNotifications(prev => {
             const exists = prev.some(n => (n.id || n._id) === (notification.id || notification._id));
             if (exists) {
@@ -299,7 +287,6 @@ export const NotificationProvider = ({ children }) => {
           
           setUnreadCount(prev => prev + 1);
 
-          // Show alert for non-order notifications
           const orderTypes = [
             'order_assigned', 'order_confirmed', 'order_cancelled',
             'order_failed', 'order_completed', 'order_picked_up'
@@ -396,8 +383,7 @@ export const NotificationProvider = ({ children }) => {
 
   const reconnectSocket = useCallback(async () => {
     console.log('🔄 Manual socket reconnection requested');
-    
-    // Disconnect existing socket
+
     if (currentSocket.current) {
       currentSocket.current.disconnect();
       currentSocket.current = null;
@@ -405,8 +391,7 @@ export const NotificationProvider = ({ children }) => {
     
     setIsConnected(false);
     isConnecting.current = false;
-    
-    // Wait a moment then reconnect
+
     setTimeout(() => {
       if (user && !user.isGuest && accessToken) {
         doConnect();

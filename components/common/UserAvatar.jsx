@@ -1,4 +1,4 @@
-import { Image, Text, View } from 'react-native';
+﻿import { Image, Text, View } from 'react-native';
 import { colors } from '../../styles/theme';
 
 const UserAvatar = ({ user, size = 40 }) => {

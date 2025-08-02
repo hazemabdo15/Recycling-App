@@ -1,7 +1,4 @@
-/**
- * Production-Ready App Initializer
- * Sets up all production optimizations and configurations
- */
+﻿
 
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
@@ -19,16 +16,13 @@ const AppInitializer = ({ children, onInitialized }) => {
       const startTime = Date.now();
       
       try {
-        // Step 1: Replace console with structured logging
+
         replaceGlobalConsole();
-        
-        // Step 2: Initialize app configuration
+
         const appConfig = initializeAppConfig();
-        
-        // Step 3: Setup performance monitoring
+
         performanceMonitor.takeMemorySnapshot('app-startup');
-        
-        // Step 4: Log successful initialization
+
         logger.info('App initialization completed', {
           duration: Date.now() - startTime,
           version: appConfig.VERSION,

@@ -1,14 +1,9 @@
+﻿
 
-/**
- * Production-Optimized Environment Configuration
- * Centralized configuration management for different environments
- * Features: Performance, logging control, feature flags
- */
 
 import Constants from 'expo-constants';
 import logger from '../utils/logger';
 
-// Environment detection
 export const ENV = {
   DEVELOPMENT: 'development',
   PRODUCTION: 'production',
@@ -17,8 +12,7 @@ export const ENV = {
 
 export const getCurrentEnv = () => {
   if (__DEV__) return ENV.DEVELOPMENT;
-  
-  // You can add logic here to detect staging vs production
+
   const releaseChannel = Constants.expoConfig?.releaseChannel;
   if (releaseChannel === 'staging') return ENV.STAGING;
   
@@ -29,23 +23,22 @@ export const isDevelopment = () => getCurrentEnv() === ENV.DEVELOPMENT;
 export const isProduction = () => getCurrentEnv() === ENV.PRODUCTION;
 export const isStaging = () => getCurrentEnv() === ENV.STAGING;
 
-// API Configuration with environment-specific optimizations
 const API_CONFIGS = {
   [ENV.DEVELOPMENT]: {
     baseUrl: 'http://192.168.0.165:5000',
-    timeout: 15000, // Reduced from 30s
-    retries: 2, // Reduced from 3
+    timeout: 15000,
+    retries: 2,
     debug: true
   },
   [ENV.STAGING]: {
     baseUrl: 'https://staging-api.recycling-app.com',
-    timeout: 10000, // Reduced from 15s
-    retries: 1, // Reduced from 2
+    timeout: 10000,
+    retries: 1,
     debug: true
   },
   [ENV.PRODUCTION]: {
     baseUrl: 'https://api.recycling-app.com',
-    timeout: 8000, // Reduced from 10s
+    timeout: 8000,
     retries: 1,
     debug: false
   }
@@ -66,46 +59,38 @@ export const getApiConfig = () => {
   return config;
 };
 
-// Feature Flags for Production Optimization
 export const FEATURE_FLAGS = {
-  // Logging configuration
+
   ENABLE_CONSOLE_LOGS: isDevelopment(),
   ENABLE_DEBUG_LOGS: isDevelopment(),
-  ENABLE_PERFORMANCE_LOGS: true, // Keep enabled for production monitoring
+  ENABLE_PERFORMANCE_LOGS: true,
   ENABLE_REMOTE_LOGGING: isProduction(),
-  
-  // Performance monitoring
+
   ENABLE_PERFORMANCE_MONITORING: true,
-  ENABLE_RENDER_TRACKING: isDevelopment(), // Disable in production for performance
+  ENABLE_RENDER_TRACKING: isDevelopment(),
   ENABLE_MEMORY_TRACKING: true,
   ENABLE_API_MONITORING: true,
-  
-  // Development features
+
   ENABLE_REDUX_DEVTOOLS: isDevelopment(),
   ENABLE_FLIPPER: isDevelopment(),
   ENABLE_NETWORK_INSPECTOR: isDevelopment(),
-  
-  // Production optimizations
+
   ENABLE_CODE_SPLITTING: isProduction(),
   ENABLE_BUNDLE_ANALYZER: isDevelopment(),
   ENABLE_MINIFICATION: isProduction(),
-  
-  // Security features
+
   ENABLE_SSL_PINNING: isProduction(),
   ENABLE_ROOT_DETECTION: isProduction(),
   ENABLE_DEBUG_PROTECTION: isProduction(),
 };
 
-// Secure API Key Management
 const getSecureApiKey = () => {
   try {
-    // Try environment variable first
+
     const fromEnv = process.env.EXPO_PUBLIC_GROQ_API_KEY;
-    
-    // Try Expo constants
+
     const fromConstants = Constants.expoConfig?.extra?.EXPO_PUBLIC_GROQ_API_KEY;
-    
-    // Development fallback (remove in production)
+
     const devKey = isDevelopment() ? process.env.EXPO_PUBLIC_GROQ_API_KEY : null;
     
     const apiKey = fromEnv || fromConstants || devKey;
@@ -115,7 +100,7 @@ const getSecureApiKey = () => {
       
       if (isProduction()) {
         logger.error(message, null, 'CONFIG');
-        // In production, this should be a critical error
+
         throw new Error(message);
       } else {
         logger.warn(message, null, 'CONFIG');
@@ -138,9 +123,8 @@ const getSecureApiKey = () => {
   }
 };
 
-// App Configuration Export
 export const APP_CONFIG = {
-  VERSION: '1.0.0', // Static version - update manually or use build script
+  VERSION: '1.0.0',
   BUILD_NUMBER: Constants.expoConfig?.ios?.buildNumber || 
                 Constants.expoConfig?.android?.versionCode || '1',
   APP_NAME: Constants.expoConfig?.name || 'Recycling App',
@@ -153,18 +137,16 @@ export const APP_CONFIG = {
   GROQ_API_KEY: getSecureApiKey(),
 };
 
-// Logging Configuration for Production
 export const configureLogging = () => {
   logger.setConsoleLogging(FEATURE_FLAGS.ENABLE_CONSOLE_LOGS);
   logger.setRemoteLogging(FEATURE_FLAGS.ENABLE_REMOTE_LOGGING);
-  
-  // Set appropriate log levels based on environment
+
   if (isDevelopment()) {
-    logger.setLogLevel(3); // DEBUG - full logging in development
+    logger.setLogLevel(3);
   } else if (isStaging()) {
-    logger.setLogLevel(2); // INFO - moderate logging in staging
+    logger.setLogLevel(2);
   } else {
-    logger.setLogLevel(1); // WARN - minimal logging in production for performance
+    logger.setLogLevel(1);
   }
   
   if (!isProduction()) {
@@ -177,7 +159,6 @@ export const configureLogging = () => {
   }
 };
 
-// Performance Configuration
 export const configurePerformanceMonitoring = () => {
   if (!FEATURE_FLAGS.ENABLE_PERFORMANCE_MONITORING) {
     require('../utils/performanceMonitor').default.disable();
@@ -185,12 +166,11 @@ export const configurePerformanceMonitoring = () => {
   }
   
   const performanceMonitor = require('../utils/performanceMonitor').default;
-  
-  // Environment-specific thresholds
+
   if (isProduction()) {
-    performanceMonitor.setThresholds(200, 32); // More lenient in production
+    performanceMonitor.setThresholds(200, 32);
   } else {
-    performanceMonitor.setThresholds(100, 16); // Strict in development
+    performanceMonitor.setThresholds(100, 16);
   }
   
   if (!isProduction()) {
@@ -203,7 +183,6 @@ export const configurePerformanceMonitoring = () => {
   }
 };
 
-// Initialize app configuration
 export const initializeAppConfig = () => {
   try {
     configureLogging();
@@ -219,7 +198,7 @@ export const initializeAppConfig = () => {
     
     return APP_CONFIG;
   } catch (error) {
-    // Use console.error as fallback since logger might not be ready
+
     console.error('Failed to initialize app configuration:', error);
     throw error;
   }

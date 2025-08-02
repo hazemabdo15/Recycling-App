@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+﻿import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import apiService from "../services/api/apiService";
 import { isAuthenticated, logoutUser } from "../services/auth";
 import { getAccessToken, getLoggedInUser, setLoggedInUser } from '../utils/authUtils';
@@ -61,7 +61,6 @@ export function AuthProvider({ children }) {
 
     console.log("[AuthContext] Setting up periodic token refresh (10 min intervals)");
 
-    // Add a delay before starting the periodic checks to let the fresh token settle
     const initialDelay = setTimeout(() => {
       const interval = setInterval(async () => {
 
@@ -107,9 +106,8 @@ export function AuthProvider({ children }) {
         }
       }, 10 * 60 * 1000);
 
-      // Store interval reference for cleanup
       initialDelay.intervalRef = interval;
-    }, 30 * 1000); // Wait 30 seconds before starting periodic checks
+    }, 30 * 1000);
 
     return () => {
       console.log("[AuthContext] Clearing periodic token refresh interval and initial delay");
@@ -147,21 +145,18 @@ export function AuthProvider({ children }) {
       console.log("[AuthContext] Starting logout process...");
       console.log("[AuthContext] Current user before logout:", user);
       console.log("[AuthContext] Current user role before logout:", user?.role);
-      
-      // Clear local state IMMEDIATELY first to prevent any further API calls
+
       console.log("[AuthContext] Clearing user state immediately...");
       setUser(null);
       setAccessToken(null);
       setIsLoggedIn(false);
-      
-      // Then call backend logout API
+
       await logoutUser();
       
       console.log("[AuthContext] Logout completed successfully");
     } catch (error) {
       console.error("Logout error:", error);
 
-      // Ensure local state is cleared even if backend logout fails
       console.log("[AuthContext] Ensuring local state is cleared despite logout error...");
       setUser(null);
       setAccessToken(null);

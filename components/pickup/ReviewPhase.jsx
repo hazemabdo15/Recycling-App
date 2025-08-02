@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+﻿import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import {
   Image,
@@ -31,29 +31,24 @@ const ReviewPhase = ({
   const [itemsLoaded, setItemsLoaded] = useState(false);
   const [cartItemsDisplay, setCartItemsDisplay] = useState([]);
 
-  // Get the real logged-in user from AuthContext, but prefer prop user
   const { user: contextUser } = useAuth();
-  const { cartItemDetails } = useCart(); // Get complete cart item details from context
+  const { cartItemDetails } = useCart();
   const user = propUser || contextUser;
 
-  // Payment processing hook
   const { isProcessing, processPayment, shouldUsePayment } = usePayment();
 
-  // Use cart item details directly instead of fetching from API
   useEffect(() => {
     console.log('[ReviewPhase] Using cart item details directly, no API call needed');
-    
-    // Convert cartItemDetails to array format for compatibility
+
     const itemsFromCart = Object.values(cartItemDetails || {});
     
     if (itemsFromCart.length > 0) {
-      // Cart items already have complete data, use them directly
+
       setAllItems(itemsFromCart);
       setItemsLoaded(true);
       console.log('[ReviewPhase] Loaded', itemsFromCart.length, 'items from cart context');
     } else {
-      // Fallback: if cartItemDetails is empty but cartItems has data, 
-      // it means we need to wait for CartContext to populate the details
+
       if (cartItems && Object.keys(cartItems).length > 0) {
         console.log('[ReviewPhase] Cart items exist but details not loaded yet, waiting...');
         setItemsLoaded(false);
@@ -69,12 +64,11 @@ const ReviewPhase = ({
     if (itemsLoaded && cartItems && allItems.length > 0) {
       const displayItems = Object.entries(cartItems).map(
         ([categoryId, quantity]) => {
-          // The cart key might be either the item's _id or its categoryId
-          // Try to find the item by _id first (most common case), then by categoryId
+
           let realItem = allItems.find(item => item._id === categoryId);
           
           if (!realItem) {
-            // If not found by _id, try by categoryId after normalization
+
             realItem = allItems.find(item => {
               const normalizedItem = normalizeItemData(item);
               return normalizedItem.categoryId === categoryId ||
@@ -94,17 +88,15 @@ const ReviewPhase = ({
               image: normalizedItem.image,
               totalPoints: (normalizedItem.points || 10) * quantity,
               totalPrice: (normalizedItem.price || 5.0) * quantity,
-              isValidItem: true // Mark as valid item
+              isValidItem: true
             };
           } else {
-            // Enhanced fallback for items not found in current catalog
+
             console.warn(`[ReviewPhase] Item ${categoryId} not found in catalog - may be discontinued`);
-            
-            // Try to determine a more meaningful name based on other items in cart
+
             let itemName = "Recycling Item";
             let measurementUnit = "KG";
-            
-            // Look for other valid items to infer category
+
             const validCartItems = Object.entries(cartItems).map(([id, qty]) => {
               const foundItem = allItems.find(item => {
                 const normalized = normalizeItemData(item);
@@ -118,7 +110,7 @@ const ReviewPhase = ({
               itemName = `${sampleItem.categoryName || 'Recycling'} Item`;
               measurementUnit = sampleItem.measurement_unit === 1 ? "KG" : "Piece";
             } else if (allItems.length > 0) {
-              // Fall back to any available item
+
               const sampleItem = allItems.find(item => item.categoryName) || allItems[0];
               if (sampleItem?.categoryName) {
                 itemName = `${sampleItem.categoryName} Item`;
@@ -136,13 +128,12 @@ const ReviewPhase = ({
               image: null,
               totalPoints: 10 * quantity,
               totalPrice: 5.0 * quantity,
-              isValidItem: false // Mark as invalid/fallback item
+              isValidItem: false
             };
           }
         }
       );
 
-      // Log summary of what we found
       const validItems = displayItems.filter(item => item.isValidItem);
       const invalidItems = displayItems.filter(item => !item.isValidItem);
       
@@ -161,16 +152,14 @@ const ReviewPhase = ({
     }
   }, [itemsLoaded, cartItems, allItems]);
 
-  /**
-   * Handles payment processing for buyers
-   */
+  
   const handlePaymentFlow = async (cartItemsArray, userData) => {
     await processPayment({
       user,
       accessToken,
       cartItemsDisplay,
       onSuccess: (result) => {
-        // Payment initiated successfully
+
       },
       onError: (error) => {
         console.error("[ReviewPhase] Payment failed:", error.message);
@@ -178,33 +167,27 @@ const ReviewPhase = ({
     });
   };
 
-  /**
-   * Handles regular order flow for non-buyers
-   */
+  
   const handleRegularOrderFlow = (cartItemsArray, userData) => {
     if (typeof onConfirm === "function") {
       onConfirm(cartItemsArray, userData);
     }
   };
 
-  /**
-   * Main confirm handler - routes to appropriate flow based on user role
-   */
+  
   const handleConfirm = async () => {
     if (!cartItems || typeof cartItems !== "object") {
       console.error("[ReviewPhase] Invalid cartItems format:", cartItems);
       return;
     }
 
-    // Process cart items
     const cartItemsArray = Object.entries(cartItems).map(
       ([categoryId, quantity]) => {
-        // The cart key might be either the item's _id or its categoryId
-        // Try to find the item by _id first (most common case), then by categoryId
+
         let realItem = allItems.find(item => item._id === categoryId);
         
         if (!realItem) {
-          // If not found by _id, try by categoryId after normalization
+
           realItem = allItems.find(item => {
             const normalizedItem = normalizeItemData(item);
             return normalizedItem.categoryId === categoryId ||
@@ -219,11 +202,11 @@ const ReviewPhase = ({
             : Number(normalizedItem.measurement_unit);
             
           return {
-            _id: normalizedItem._id || normalizedItem.id || categoryId, // Add _id field for backend schema
+            _id: normalizedItem._id || normalizedItem.id || categoryId,
             categoryId: categoryId,
             quantity: quantity,
-            name: normalizedItem.name || normalizedItem.itemName || normalizedItem.categoryName || 'Unknown Item', // Backend expects 'name' field
-            categoryName: normalizedItem.categoryName || 'Unknown Category', // Add categoryName field
+            name: normalizedItem.name || normalizedItem.itemName || normalizedItem.categoryName || 'Unknown Item',
+            categoryName: normalizedItem.categoryName || 'Unknown Category',
             measurement_unit: measurementUnit,
             points: normalizedItem.points || 10,
             price: normalizedItem.price || 5.0,
@@ -231,11 +214,11 @@ const ReviewPhase = ({
           };
         } else {
           return {
-            _id: categoryId, // Use categoryId as fallback _id
+            _id: categoryId,
             categoryId: categoryId,
             quantity: quantity,
-            name: `Recycling Item`, // Backend expects 'name' field, not 'itemName'
-            categoryName: 'Unknown Category', // Add categoryName field
+            name: `Recycling Item`,
+            categoryName: 'Unknown Category',
             measurement_unit: 1,
             points: 10,
             price: 5.0,
@@ -245,7 +228,6 @@ const ReviewPhase = ({
       }
     );
 
-    // Prepare user data
     const userData = user ? {
       userId: user._id || user.userId,
       phoneNumber: user.phoneNumber,
@@ -257,7 +239,6 @@ const ReviewPhase = ({
       role: user.role,
     } : null;
 
-    // Route to appropriate flow based on user role
     if (shouldUsePayment(user)) {
       await handlePaymentFlow(cartItemsArray, userData);
     } else {
@@ -361,7 +342,6 @@ const ReviewPhase = ({
         </View>
       ) : (
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Warning banner for invalid items */}
           {cartItemsDisplay.filter(item => !item.isValidItem).length > 0 && (
             <View style={styles.warningBanner}>
               <MaterialCommunityIcons name="alert-circle" size={20} color={colors.warning} />
@@ -506,7 +486,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   warningBanner: {
-    backgroundColor: colors.warning + "15", // 15% opacity
+    backgroundColor: colors.warning + "15",
     borderLeftWidth: 4,
     borderLeftColor: colors.warning,
     marginHorizontal: spacing.xl,
@@ -598,7 +578,7 @@ const styles = StyleSheet.create({
   warningBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.warning + "20", // 20% opacity
+    backgroundColor: colors.warning + "20",
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.sm,

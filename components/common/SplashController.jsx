@@ -1,4 +1,4 @@
-import * as SplashScreen from 'expo-splash-screen';
+﻿import * as SplashScreen from 'expo-splash-screen';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
@@ -9,9 +9,8 @@ import { isAuthenticated } from '../../services/auth';
 import logger from '../../utils/logger';
 import SplashScreenComponent from './SplashScreen';
 
-// Prevent the native splash from auto-hiding initially
 SplashScreen.preventAutoHideAsync().catch(() => {
-  // If this fails, that's okay, we'll handle it manually
+
 });
 
 const SplashController = ({ children, onDataLoaded }) => {
@@ -26,7 +25,6 @@ const SplashController = ({ children, onDataLoaded }) => {
   const hasInitialized = useRef(false);
   const progressTimer = useRef(null);
 
-  // Simulate smooth progress updates
   const updateProgress = useCallback((targetProgress, newStatus) => {
     if (progressTimer.current) {
       clearInterval(progressTimer.current);
@@ -57,32 +55,27 @@ const SplashController = ({ children, onDataLoaded }) => {
 
     try {
       logger.info('Starting app initialization', null, 'SPLASH');
-      
-      // Ensure minimum splash duration for better UX (much longer in dev for testing)
-      const minSplashDuration = __DEV__ ? 5000 : 2000; // 5 seconds in dev, 2 in production
+
+      const minSplashDuration = __DEV__ ? 5000 : 2000;
       const startTime = Date.now();
-      
-      // In development, add extra delay to ensure visibility
+
       if (__DEV__) {
         logger.info('Development mode: Adding initial delay for splash visibility', null, 'SPLASH');
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
-      
-      // Step 1: Initialize API Service (10%)
+
       updateProgress(10, 'Setting up connections...');
       await apiService.initialize();
       await new Promise(resolve => setTimeout(resolve, __DEV__ ? 500 : 300));
 
-      // Step 2: Wait for Auth Context to finish loading (30%)
       updateProgress(30, 'Verifying authentication...');
       let authWaitCounter = 0;
-      while (authLoading && authWaitCounter < 50) { // Max 5 second wait
+      while (authLoading && authWaitCounter < 50) {
         await new Promise(resolve => setTimeout(resolve, 100));
         authWaitCounter++;
       }
       await new Promise(resolve => setTimeout(resolve, __DEV__ ? 500 : 200));
 
-      // Step 3: Validate authentication if user exists (50%)
       if (isLoggedIn && user) {
         updateProgress(50, 'Validating session...');
         try {
@@ -96,21 +89,19 @@ const SplashController = ({ children, onDataLoaded }) => {
       }
       await new Promise(resolve => setTimeout(resolve, __DEV__ ? 500 : 200));
 
-      // Step 4: Load essential data (70%)
       updateProgress(70, 'Loading categories...');
       try {
-        // Load all necessary data in parallel for better performance
+
         const dataPromises = [
           categoriesAPI.getAllCategories(user?.role || 'customer'),
           categoriesAPI.getAllItems(user?.role || 'customer'),
         ];
 
-        // If user is logged in, also load user-specific data
         if (isLoggedIn && user) {
           updateProgress(75, 'Loading your data...');
-          // Add user-specific data loading
+
           try {
-            // Load user addresses and recent orders in parallel
+
             const userDataPromises = [
               addressService.getUserAddresses().catch(err => {
                 logger.warn('Failed to preload addresses', { error: err.message }, 'SPLASH');
@@ -129,8 +120,7 @@ const SplashController = ({ children, onDataLoaded }) => {
         }
         
         const results = await Promise.allSettled(dataPromises);
-        
-        // Log results for debugging
+
         results.forEach((result, index) => {
           if (result.status === 'fulfilled') {
             logger.info(`Data load ${index + 1} completed successfully`, null, 'SPLASH');
@@ -145,7 +135,6 @@ const SplashController = ({ children, onDataLoaded }) => {
       }
       await new Promise(resolve => setTimeout(resolve, __DEV__ ? 500 : 200));
 
-      // Step 5: Initialize cart if user is logged in (85%)
       if (isLoggedIn && user) {
         updateProgress(85, 'Syncing your cart...');
         try {
@@ -161,16 +150,13 @@ const SplashController = ({ children, onDataLoaded }) => {
       }
       await new Promise(resolve => setTimeout(resolve, __DEV__ ? 500 : 200));
 
-      // Step 6: Final initialization (95%)
       updateProgress(95, 'Almost ready...');
-      
-      // Ensure minimum splash duration has passed
+
       const elapsedTime = Date.now() - startTime;
       if (elapsedTime < minSplashDuration) {
         await new Promise(resolve => setTimeout(resolve, minSplashDuration - elapsedTime));
       }
 
-      // Step 7: Complete (100%)
       updateProgress(100, 'Welcome!');
       await new Promise(resolve => setTimeout(resolve, 800));
 
@@ -189,13 +175,12 @@ const SplashController = ({ children, onDataLoaded }) => {
   }, [authLoading, isLoggedIn, user, fetchBackendCart, cartLoading, updateProgress]);
 
   useEffect(() => {
-    // Reset initialization flag for development/hot reload
+
     if (__DEV__) {
       hasInitialized.current = false;
       logger.info('Development mode: Resetting splash initialization for hot reload', null, 'SPLASH');
     }
-    
-    // Hide the native splash screen immediately to show our custom one
+
     const hideNativeSplash = async () => {
       try {
         await SplashScreen.hideAsync();
@@ -206,12 +191,11 @@ const SplashController = ({ children, onDataLoaded }) => {
     };
     
     hideNativeSplash();
-    
-    // Small delay to ensure splash screen is visible
+
     const initTimer = setTimeout(() => {
       logger.info('Starting splash initialization timer', null, 'SPLASH');
       initializeApp();
-    }, __DEV__ ? 500 : 100); // Longer delay in development
+    }, __DEV__ ? 500 : 100);
 
     return () => {
       logger.info('Cleaning up splash initialization timer', null, 'SPLASH');
@@ -224,8 +208,7 @@ const SplashController = ({ children, onDataLoaded }) => {
 
   useEffect(() => {
     if (isAppReady) {
-      // App is ready, don't hide native splash since it's already hidden
-      // Just call the onDataLoaded callback
+
       const completeTransition = async () => {
         try {
           logger.info('App initialization complete, calling onDataLoaded', null, 'SPLASH');
@@ -234,13 +217,11 @@ const SplashController = ({ children, onDataLoaded }) => {
           logger.warn('Failed to complete transition', { error: error.message }, 'SPLASH');
         }
       };
-      
-      // Small delay for smooth transition
+
       setTimeout(completeTransition, 300);
     }
   }, [isAppReady, onDataLoaded]);
 
-  // Show splash screen if app is not ready
   if (!isAppReady) {
     logger.info('Rendering splash screen', { 
       progress, 
@@ -269,7 +250,7 @@ const SplashController = ({ children, onDataLoaded }) => {
       );
     } catch (splashError) {
       logger.error('Splash screen component failed to render', { error: splashError.message }, 'SPLASH');
-      // Fallback to a simple loading screen
+
       return (
         <View style={{ 
           position: 'absolute',

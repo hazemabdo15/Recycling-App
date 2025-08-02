@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useNavigation } from "expo-router";
+﻿import { useLocalSearchParams, useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
 import { FlatList, StatusBar, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -61,8 +61,7 @@ const CategoryDetails = () => {
   } = useCart();
 
   const mergedItems = items.map((item) => {
-    // API items should already have complete data, use them directly
-    // Only normalize if the item is actually missing essential fields
+
     const needsNormalization =
       !item._id ||
       !item.categoryId ||
@@ -70,7 +69,7 @@ const CategoryDetails = () => {
       item.measurement_unit === undefined;
     const processedItem = needsNormalization ? normalizeItemData(item) : item;
 
-    const itemKey = getCartKey(processedItem); // Use item _id as key
+    const itemKey = getCartKey(processedItem);
     const quantity = cartItems[itemKey] || 0;
 
     return {

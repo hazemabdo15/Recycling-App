@@ -1,13 +1,8 @@
-/**
- * Production-Ready Console Log Replacement
- * Automatically replaces console.log with structured logging
- * This utility helps migrate from console.log to proper logging
- */
+﻿
 
 import { FEATURE_FLAGS } from '../config/env';
 import logger from './logger';
 
-// Store original console methods
 const originalConsole = {
   log: console.log,
   error: console.error,
@@ -20,27 +15,23 @@ const originalConsole = {
   groupEnd: console.groupEnd
 };
 
-// Enhanced console wrapper with automatic categorization
 class ProductionConsole {
   constructor() {
     this.isEnabled = FEATURE_FLAGS.ENABLE_CONSOLE_LOGS || false;
     this.logPatterns = new Map([
-      // API related patterns
+
       [/api|fetch|request|response|axios/i, 'API'],
       [/auth|login|token|session/i, 'AUTH'],
       [/cart|order|payment|checkout/i, 'CART'],
       [/pickup|delivery|schedule/i, 'PICKUP'],
-      
-      // Performance patterns
+
       [/performance|slow|timing|duration/i, 'PERFORMANCE'],
       [/render|component|hook/i, 'RENDER'],
       [/memory|leak|usage/i, 'MEMORY'],
-      
-      // Error patterns
+
       [/error|exception|failed|crash/i, 'ERROR'],
       [/warning|warn|deprecated/i, 'WARN'],
-      
-      // Debug patterns
+
       [/debug|trace|verbose/i, 'DEBUG'],
     ]);
   }
@@ -58,7 +49,7 @@ class ProductionConsole {
   }
 
   _extractContext(args) {
-    // Extract objects and additional context from arguments
+
     const context = {};
     
     for (let i = 1; i < args.length; i++) {
@@ -155,13 +146,11 @@ class ProductionConsole {
   }
 }
 
-// Create production console instance
 const productionConsole = new ProductionConsole();
 
-// Replace global console in production
 export const replaceGlobalConsole = () => {
   if (!__DEV__ || FEATURE_FLAGS.ENABLE_STRUCTURED_LOGGING) {
-    // Replace console methods with structured logging
+
     console.log = productionConsole.log.bind(productionConsole);
     console.error = productionConsole.error.bind(productionConsole);
     console.warn = productionConsole.warn.bind(productionConsole);
@@ -178,13 +167,11 @@ export const replaceGlobalConsole = () => {
   }
 };
 
-// Restore original console (for debugging)
 export const restoreGlobalConsole = () => {
   Object.assign(console, originalConsole);
   logger.info('Original console methods restored');
 };
 
-// Utility to migrate console.log calls
 export const migrateConsoleLog = (message, data = null, category = null) => {
   const detectedCategory = category || productionConsole._categorizeMessage(message);
   

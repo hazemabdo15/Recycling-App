@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -20,8 +20,7 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
   const { user } = useAuth();
   const [copied, setCopied] = useState(false);
   const rotateValue = useRef(new Animated.Value(0)).current;
-  
-  // Rotate animation for loading icon
+
   useEffect(() => {
     if (!trackingNumber) {
       const rotateAnimation = Animated.loop(
@@ -35,21 +34,18 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
       return () => rotateAnimation.stop();
     }
   }, [trackingNumber, rotateValue]);
-  
-  // Memoize the tracking number to prevent regeneration on re-renders
+
   const trackingNumber = useMemo(() => {
     const generateTrackingNumber = (orderId) => {
       if (!orderId) {
-        // Don't log when order is null (loading state)
-        return null; // Return null instead of generating random tracking number
+
+        return null;
       }
 
-      // Use the full order ID as tracking number for all users (buyers and customers)
       console.log('[ConfirmationPhase] Using full order ID as tracking number:', orderId);
       return orderId;
     };
-    
-    // Try both _id and id fields, prioritizing _id
+
     const orderId = order?._id || order?.id;
     return generateTrackingNumber(orderId);
   }, [order]);
@@ -58,7 +54,7 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
     try {
       await Clipboard.setStringAsync(trackingNumber);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000); // Reset after 2 seconds
+      setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       console.error('Failed to copy tracking number:', error);
     }
@@ -315,7 +311,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     flex: 1,
     justifyContent: 'flex-end',
-    maxWidth: '70%', // Prevent overflow
+    maxWidth: '70%',
   },
   trackingNumber: {
     ...typography.subtitle,

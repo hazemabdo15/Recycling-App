@@ -1,18 +1,6 @@
-#!/usr/bin/env node
+﻿#!/usr/bin/env node
 
-/**
- * Emergency Performance Optimization Script
- * 
- * This script applies immediate performance optimizations to resolve
- * the critical 77.8% slow operation rate issue.
- * 
- * Actions performed:
- * 1. Replace API service with optimized version
- * 2. Replace performance monitor with lightweight version
- * 3. Update configuration for better performance
- * 4. Clear performance caches
- * 5. Restart development server with optimizations
- */
+
 
 const fs = require('fs');
 const path = require('path');
@@ -26,13 +14,11 @@ console.log('Current slow operation rate: 77.8%');
 console.log('Target: <5% slow operation rate');
 console.log('');
 
-// Create backup directory
 if (!fs.existsSync(BACKUP_DIR)) {
   fs.mkdirSync(BACKUP_DIR);
   console.log('📁 Created backup directory');
 }
 
-// Backup original files
 const filesToBackup = [
   'services/api/apiService.js',
   'utils/performanceMonitor.js'
@@ -49,12 +35,11 @@ filesToBackup.forEach(file => {
   }
 });
 
-// Replace with optimized versions
 console.log('');
 console.log('🔧 Applying performance optimizations...');
 
 try {
-  // Replace API service
+
   const optimizedApiPath = path.join(PROJECT_ROOT, 'services/api/apiService.optimized.js');
   const apiServicePath = path.join(PROJECT_ROOT, 'services/api/apiService.js');
   
@@ -63,7 +48,6 @@ try {
     console.log('   ✅ Installed optimized API service');
   }
 
-  // Replace performance monitor
   const optimizedMonitorPath = path.join(PROJECT_ROOT, 'utils/performanceMonitor.optimized.js');
   const monitorPath = path.join(PROJECT_ROOT, 'utils/performanceMonitor.js');
   
@@ -98,7 +82,6 @@ try {
   process.exit(1);
 }
 
-// Create restore script
 const restoreScript = `#!/usr/bin/env node
 
 const fs = require('fs');

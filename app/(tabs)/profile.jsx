@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+﻿import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
     Alert,
@@ -16,7 +16,7 @@ import { useUserPoints } from "../../hooks/useUserPoints";
 import { orderService } from "../../services/api/orders";
 import { getLabel, isBuyer, isCustomer } from '../../utils/roleLabels';
 import { scaleSize } from '../../utils/scale';
-// import RecyclingModal from '../../components/Modals/RecyclingModal'
+
 
 const tabs = ["incoming", "completed", "cancelled"];
 
@@ -57,11 +57,11 @@ function ProfileContent() {
     console.log("User role:", user?.role);
 
     if (isLoggedIn && user?.email) {
-      // Fetch orders for both customers and buyers
+
       console.log(`[Profile] ${user?.role} role detected, fetching orders`);
       fetchOrders();
     } else {
-      // User is not logged in, clear orders and loading state
+
       console.log("[Profile] User not logged in, clearing orders");
       setAllOrders([]);
       setLoading(false);
@@ -84,7 +84,7 @@ function ProfileContent() {
       setLoading(true);
       const response = await orderService.getOrders();
       console.log('[Profile] Orders API response:', response);
-      // Always use response.data as the orders array (backend always returns orders in data)
+
       setAllOrders(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error("Failed to fetch orders", error);

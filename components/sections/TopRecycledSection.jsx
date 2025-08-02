@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+﻿import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { memo, useEffect, useState } from "react";
 import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
 import { orderService } from "../../services/api/orders";
@@ -27,7 +27,7 @@ const ICON_MAP = {
   "Cardboard": { name: "package-variant", color: "#8BC34A" },
   "Glass": { name: "glass-fragile", color: "#4FC3F7" },
   "Paper": { name: "file-document", color: "#FF9800" },
-  // Add more mappings as needed
+
 };
 
 const TopRecycledSection = memo(() => {
@@ -57,7 +57,7 @@ const TopRecycledSection = memo(() => {
   }, []);
 
   const handleItemPress = (item) => {
-    // You can add navigation or modal here
+
     console.log(`${item._id?.itemName || item.itemName} pressed`);
   };
 
@@ -115,10 +115,7 @@ const TopRecycledSection = memo(() => {
                     />
                     <Text style={styles.recycleCount}>{item.totalQuantity}</Text>
                   </View>
-                  {/* <View style={styles.pointsBadge}>
-                    <Text style={styles.pointsText}>+{item.totalPoints} pts</Text>
-                  </View> */}
-                </View>
+                  </View>
               </View>
             );
           })}

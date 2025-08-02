@@ -1,4 +1,4 @@
-import LottieView from 'lottie-react-native';
+﻿import LottieView from 'lottie-react-native';
 import { Dimensions, StyleSheet, View } from 'react-native';
 
 const { width } = Dimensions.get('window');

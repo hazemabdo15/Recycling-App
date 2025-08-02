@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -48,23 +48,19 @@ const AddressPhase = ({ onNext, onAddressSelect, onBack, pickupWorkflow }) => {
   useEffect(() => {
     console.log('AddressPhase mounted, checking authentication...');
     console.log('isLoggedIn:', isLoggedIn, 'user:', user?.email, 'role:', user?.role);
-    
-    // Buyers now need to see their saved addresses as well
-    
-    // Only fetch addresses if user is properly authenticated and we haven't fetched yet
+
     if (isLoggedIn && user?.email && pickupWorkflow?.fetchAddresses && !hasFetchedAddresses.current) {
       console.log('Fetching addresses for authenticated user:', user?._id);
       hasFetchedAddresses.current = true;
-      // Call fetchAddresses with no params; backend uses authenticated user
+
       pickupWorkflow.fetchAddresses();
     } else if (!isLoggedIn) {
       console.log('User not authenticated, skipping address fetch');
       hasFetchedAddresses.current = false;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [isLoggedIn, user?.email, user?.role]);
 
-  // Reset the fetch flag when component unmounts or user changes
   useEffect(() => {
     return () => {
       hasFetchedAddresses.current = false;
@@ -356,7 +352,7 @@ const AddressPhase = ({ onNext, onAddressSelect, onBack, pickupWorkflow }) => {
           <Text style={styles.loadingText}>Loading addresses...</Text>
         </View>
       ) : (() => {
-        // Filter addresses for buyers to only their own
+
         let addresses = pickupWorkflow.addresses;
         if (user?.role === 'buyer' && user?._id) {
           addresses = addresses.filter(addr => {
@@ -366,7 +362,7 @@ const AddressPhase = ({ onNext, onAddressSelect, onBack, pickupWorkflow }) => {
             }
             const userIdStr = String(user._id);
             const addrUserIdStr = String(addrUserId);
-            // Debug log
+
             if (addrUserIdStr !== userIdStr) {
               console.log('[AddressPhase] Skipping address:', addr, 'addrUserId:', addrUserIdStr, 'user._id:', userIdStr);
             }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Alert } from 'react-native';
 import { stripeService } from '../services/api/stripe';
 import {
@@ -9,21 +9,11 @@ import {
     validatePaymentPrerequisites,
 } from '../utils/paymentUtils';
 
-/**
- * Custom hook for handling payment processing
- */
+
 export const usePayment = () => {
   const [isProcessing, setIsProcessing] = useState(false);
 
-  /**
-   * Processes payment for buyers using Stripe
-   * @param {Object} params - Payment parameters
-   * @param {Object} params.user - User object
-   * @param {string} params.accessToken - Access token
-   * @param {Array} params.cartItemsDisplay - Cart items for display
-   * @param {Function} params.onSuccess - Success callback
-   * @param {Function} params.onError - Error callback
-   */
+  
   const processPayment = async ({
     user,
     accessToken,
@@ -38,7 +28,7 @@ export const usePayment = () => {
     setIsProcessing(true);
 
     try {
-      // Validate prerequisites
+
       const validation = validatePaymentPrerequisites({
         user,
         accessToken,
@@ -51,18 +41,15 @@ export const usePayment = () => {
 
       const { userId } = validation;
 
-      // Calculate total amount
       const totalAmountEGP = calculateTotalAmount(cartItemsDisplay);
       const totalAmountPiasters = stripeService.egpToPiasters(totalAmountEGP);
 
-      // Create Stripe checkout session
       const checkoutResult = await stripeService.createCheckoutSession(
         userId,
         totalAmountPiasters,
         accessToken
       );
 
-      // Show amount adjustment notification if needed
       if (checkoutResult.wasAdjusted) {
         const adjustedAmountEGP = stripeService.piastersToEgp(checkoutResult.adjustedAmount);
         
@@ -100,7 +87,7 @@ export const usePayment = () => {
           );
         });
       } else {
-        // No adjustment needed, proceed directly
+
         await stripeService.openCheckout(checkoutResult.url);
         onSuccess?.(checkoutResult);
       }
@@ -122,11 +109,7 @@ export const usePayment = () => {
     }
   };
 
-  /**
-   * Determines if user should use payment flow
-   * @param {Object} user - User object
-   * @returns {boolean}
-   */
+  
   const shouldUsePayment = (user) => {
     return isBuyer(user);
   };

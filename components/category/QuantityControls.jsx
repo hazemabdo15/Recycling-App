@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Dimensions, Text, TouchableOpacity, View } from 'react-native';
 import { quantityControlsStyles } from '../../styles/components/categoryStyles';
 import { colors } from '../../styles/theme';

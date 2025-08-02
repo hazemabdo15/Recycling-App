@@ -1,4 +1,4 @@
-import logger from '../../utils/logger';
+﻿import logger from '../../utils/logger';
 import { measureApiCall } from '../../utils/performanceMonitor';
 import apiService from './apiService';
 
@@ -21,8 +21,7 @@ export const addressService = {
             error: error.message,
             status: error.response?.status
           }, 'ERROR');
-          
-          // If it's a 401/403 error, the user is not properly authenticated
+
           if (error.response?.status === 401 || error.response?.status === 403) {
             logger.auth('Authentication error in address service', {
               status: error.response.status,

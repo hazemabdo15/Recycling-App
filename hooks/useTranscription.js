@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+﻿import { useCallback, useState } from 'react';
 import { getSecureApiKey } from '../config/env';
 
 export const useTranscription = () => {

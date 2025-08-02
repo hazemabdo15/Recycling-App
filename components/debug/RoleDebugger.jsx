@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+﻿import { StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { colors } from '../../styles/theme';
 import { getLabel, isBuyer, isCustomer } from '../../utils/roleLabels';
