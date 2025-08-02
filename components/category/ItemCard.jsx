@@ -42,6 +42,7 @@ const ItemCard = ({
                 onFastDecrease={onFastDecrease}
                 disabled={disabled}
                 pendingAction={pendingAction}
+                disableDecrease={quantity === 0}
             />
         </AnimatedListItem>
     );

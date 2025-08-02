@@ -11,7 +11,8 @@ const QuantityControls = ({
     onIncrease,
     onDecrease,
     onFastIncrease,
-    onFastDecrease
+    onFastDecrease,
+    disableDecrease = false
 }) => {
 
     const displayQuantity = formatQuantityDisplay(quantity, measurementUnit);
@@ -22,9 +23,11 @@ const QuantityControls = ({
             <TouchableOpacity
                 style={[
                     quantityControlsStyles.fastButton,
-                    quantityControlsStyles.fastButtonDecrease
+                    quantityControlsStyles.fastButtonDecrease,
+                    disableDecrease && { opacity: 0.5 }
                 ]}
-                onPress={onFastDecrease}
+                onPress={disableDecrease ? undefined : onFastDecrease}
+                disabled={disableDecrease}
             >
                 <View style={quantityControlsStyles.fastButtonContent}>
                     <MaterialCommunityIcons
@@ -43,8 +46,9 @@ const QuantityControls = ({
             <View style={quantityControlsStyles.mainControls}>
                 {}
                 <TouchableOpacity
-                    style={quantityControlsStyles.quantityButton}
-                    onPress={onDecrease}
+                    style={[quantityControlsStyles.quantityButton, disableDecrease && { opacity: 0.5 }]}
+                    onPress={disableDecrease ? undefined : onDecrease}
+                    disabled={disableDecrease}
                 >
                     <MaterialCommunityIcons
                         name="minus"
