@@ -192,13 +192,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     borderTopLeftRadius: scaleSize(24),
     borderTopRightRadius: scaleSize(24),
-    marginTop: scaleSize(-20),
+    marginTop: scaleSize(-24),
     paddingHorizontal: scaleSize(spacing.md),
     paddingTop: scaleSize(spacing.lg),
     paddingBottom: scaleSize(24), // Reasonable bottom padding
   },
   statsSection: {
-    marginBottom: scaleSize(spacing.lg),
+    marginBottom: scaleSize(spacing.sm),
   },
   section: {
     marginBottom: scaleSize(48), // Increased space after last section for tab bar
