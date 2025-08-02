@@ -29,8 +29,6 @@ const Index = () => {
     router.push("/notifications");
   };
 
-  const tabBarHeight = 140 + insets.bottom;
-
   return (
     <View style={styles.container}>
       <ErrorBoundary>
@@ -88,7 +86,7 @@ const Index = () => {
             <EarnPointsCard />
           </View>
 
-          <View style={[styles.section, styles.lastSection]}>
+          <View style={[styles.section, { marginBottom: scaleSize(160) + insets.bottom }]}> 
             <View style={[styles.sectionHeader, styles.centeredHeader]}>
               <Text style={styles.sectionTitle}>🔥 Trending This Week</Text>
               <Text style={styles.sectionSubtitle}>
@@ -105,7 +103,7 @@ const Index = () => {
 
 const styles = StyleSheet.create({
   lastSection: {
-    marginBottom: scaleSize(100), // More space after Top Recycled Items section
+    // marginBottom removed; now handled inline for dynamic spacing
   },
   container: {
     flex: 1,

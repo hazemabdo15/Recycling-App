@@ -394,8 +394,9 @@ const styles = StyleSheet.create({
   mainActionButtonContainer: {
     position: 'absolute',
     top: scaleSize(-20),
-    left: '50%',
-    marginLeft: scaleSize(-32),
+    left: 0,
+    right: 0,
+    alignItems: 'center',
     zIndex: 30,
   },
   mainActionButton: {
