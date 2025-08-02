@@ -45,6 +45,8 @@ const CategoriesGrid = ({
           category.items?.map((item) => {
             const normalizedItem = normalizeItemData({
               ...item,
+              categoryId: item.categoryId || category._id,
+              categoryName: item.categoryName || category.name,
               category: category
             });
             const itemKey = getCartKey(normalizedItem);
@@ -57,7 +59,7 @@ const CategoriesGrid = ({
           }) || []
         )
         .filter((item) => item.name.toLowerCase().includes(searchLower));
-      
+
       return { filteredCategories: [], filteredItems: items };
     } else {
       const cats = categories.filter((category) =>
