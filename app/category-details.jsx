@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { FlatList, StatusBar, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CategoryHeader, EmptyState, ItemCard } from "../components/category";
-import { ErrorState, LoadingState } from "../components/common";
+import { ErrorState, Loader } from "../components/common";
 import { Toast } from "../components/ui";
 import { useAuth } from "../context/AuthContext";
 import { useCategoryItems } from "../hooks/useAPI";
@@ -347,7 +347,7 @@ const CategoryDetails = () => {
           backgroundColor="transparent"
           translucent
         />
-        <LoadingState message={`Loading ${categoryName} items...`} />
+        <Loader />
       </View>
     );
   }

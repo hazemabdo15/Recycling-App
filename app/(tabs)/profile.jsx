@@ -1,15 +1,15 @@
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Alert,
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
+import { Loader } from '../../components/common';
 import RecyclingModal from "../../components/Modals/RecyclingModal";
 import { useAuth } from "../../context/AuthContext";
 import { useUserPoints } from "../../hooks/useUserPoints";
@@ -137,8 +137,7 @@ function ProfileContent() {
   if (authLoading) {
     return (
       <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator size="large" color="#059669" />
-        <Text style={{ marginTop: 10, color: "#6b7280" }}>Loading...</Text>
+        <Loader />
       </View>
     );
   }
@@ -325,11 +324,7 @@ function ProfileContent() {
           </View>
 
           {loading ? (
-            <ActivityIndicator
-              size="large"
-              color="green"
-              style={{ marginTop: 20 }}
-            />
+            <Loader style={{ marginTop: 20 }} />
           ) : filteredOrders.length === 0 ? (
             user?.role === "buyer" ? (
               <View style={styles.buyerMessageContainer}>
