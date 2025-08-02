@@ -1,9 +1,12 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Text, View } from 'react-native';
+import { Dimensions, Text, View } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { categoryHeaderStyles } from '../../styles/components/categoryStyles';
 import { colors } from '../../styles/theme';
 import { isBuyer } from '../../utils/roleLabels';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const scale = (size) => (SCREEN_WIDTH / 375) * size;
 
 const CategoryHeader = ({
     categoryName,
@@ -17,46 +20,77 @@ const CategoryHeader = ({
     const { user } = useAuth();
     
     return (
-        <View style={[categoryHeaderStyles.header, animatedStyle]}>
-            <View style={categoryHeaderStyles.headerContentRow}>
+        <View style={[
+            categoryHeaderStyles.header,
+            animatedStyle,
+            { padding: scale(20), paddingBottom: scale(8) },
+        ]}>
+            <View style={[
+                categoryHeaderStyles.headerContentRow,
+                { marginBottom: scale(20) },
+            ]}>
                 <MaterialCommunityIcons
                     name="arrow-left"
-                    size={28}
+                    size={scale(28)}
                     color={colors.primary}
-                    style={{ marginRight: 8 }}
+                    style={{ marginRight: scale(8) }}
                     onPress={onGoBack}
                 />
-                <Text style={categoryHeaderStyles.title}>{categoryName}</Text>
+                <Text style={[
+                    categoryHeaderStyles.title,
+                    { fontSize: scale(32), marginBottom: scale(8), letterSpacing: scale(-0.5) },
+                ]}>{categoryName}</Text>
             </View>
-            <View style={[categoryHeaderStyles.headerStats]}>
+            <View style={[
+                categoryHeaderStyles.headerStats,
+                { borderRadius: scale(18), padding: scale(16) },
+            ]}>
                 <View style={categoryHeaderStyles.statItem}>
                     <MaterialCommunityIcons
                         name="package-variant"
-                        size={20}
+                        size={scale(20)}
                         color={colors.primary}
                     />
-                    <Text style={categoryHeaderStyles.statText}>{totalItems}</Text>
-                    <Text style={categoryHeaderStyles.statLabel}>Items</Text>
+                    <Text style={[
+                        categoryHeaderStyles.statText,
+                        { fontSize: scale(20), marginTop: scale(4), marginBottom: scale(2) },
+                    ]}>{totalItems}</Text>
+                    <Text style={[
+                        categoryHeaderStyles.statLabel,
+                        { fontSize: scale(12) },
+                    ]}>Items</Text>
                 </View>
                 {!isBuyer(user) && (
                     <View style={categoryHeaderStyles.statItem}>
                         <MaterialCommunityIcons
                             name="star"
-                            size={20}
+                            size={scale(20)}
                             color={colors.accent}
                         />
-                        <Text style={categoryHeaderStyles.statText}>{totalPoints}</Text>
-                        <Text style={categoryHeaderStyles.statLabel}>Eco Points</Text>
+                        <Text style={[
+                            categoryHeaderStyles.statText,
+                            { fontSize: scale(20), marginTop: scale(4), marginBottom: scale(2) },
+                        ]}>{totalPoints}</Text>
+                        <Text style={[
+                            categoryHeaderStyles.statLabel,
+                            { fontSize: scale(12) },
+                        ]}>Eco Points</Text>
                     </View>
                 )}
                 <View style={categoryHeaderStyles.statItem}>
                     <MaterialCommunityIcons
                         name="cash"
-                        size={20}
+                        size={scale(20)}
                         color={colors.secondary}
                     />
-                    <Text style={categoryHeaderStyles.statText}>{totalValue} EGP</Text>
-                    <Text style={categoryHeaderStyles.statLabel}>You&apos;ll Earn</Text>
+                    <Text style={[
+                        categoryHeaderStyles.statText,
+                        { fontSize: scale(20), marginTop: scale(4), marginBottom: scale(2) },
+                    ]}>{totalValue} EGP</Text>
+                    <Text style={[
+                        categoryHeaderStyles.statLabel,
+                        { fontSize: scale(12) },
+                    ]}>You&apos;ll Earn</Text>
                 </View>
             </View>
         </View>

@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useRef } from "react";
-import { StyleSheet, Text, TouchableOpacity, View, ScrollView } from "react-native";
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { EarnPointsCard } from "../../components/cards";
 import { ErrorBoundary } from "../../components/common";
@@ -11,6 +11,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useNotifications } from "../../context/NotificationContext";
 import { colors, spacing } from "../../styles/theme";
 import { getLabel } from "../../utils/roleLabels";
+import { scaleSize } from '../../utils/scale';
 
 const Index = () => {
   const insets = useSafeAreaInsets();
@@ -112,8 +113,8 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   heroSection: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xl,
+    paddingHorizontal: scaleSize(spacing.lg),
+    paddingBottom: scaleSize(spacing.xl),
   },
   headerRow: {
     flexDirection: "row",
@@ -122,35 +123,35 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   appName: {
-    fontSize: 24,
+    fontSize: scaleSize(24),
     fontWeight: "bold",
     color: colors.white,
     letterSpacing: -0.5,
   },
   notificationButton: {
     position: "relative",
-    padding: spacing.sm,
-    borderRadius: 20,
+    padding: scaleSize(spacing.sm),
+    borderRadius: scaleSize(20),
     backgroundColor: "rgba(255, 255, 255, 0.15)",
   },
   connectionDot: {
     position: "absolute",
-    bottom: 2,
-    left: 2,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    bottom: scaleSize(2),
+    left: scaleSize(2),
+    width: scaleSize(8),
+    height: scaleSize(8),
+    borderRadius: scaleSize(4),
     borderWidth: 1,
     borderColor: colors.white,
   },
   notificationBadge: {
     position: "absolute",
-    top: 2,
-    right: 2,
+    top: scaleSize(2),
+    right: scaleSize(2),
     backgroundColor: colors.accent,
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
+    borderRadius: scaleSize(10),
+    minWidth: scaleSize(20),
+    height: scaleSize(20),
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
@@ -158,66 +159,66 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     color: colors.white,
-    fontSize: 12,
+    fontSize: scaleSize(12),
     fontWeight: "bold",
   },
   heroContent: {
     alignItems: "center",
-    paddingTop: spacing.sm,
+    paddingTop: scaleSize(spacing.sm),
   },
   welcomeText: {
-    fontSize: 16,
+    fontSize: scaleSize(16),
     color: colors.white,
     opacity: 0.9,
-    marginBottom: spacing.xs,
+    marginBottom: scaleSize(spacing.xs),
   },
   heroTitle: {
-    fontSize: 32,
+    fontSize: scaleSize(32),
     fontWeight: "bold",
     color: colors.white,
     textAlign: "center",
-    marginBottom: spacing.sm,
+    marginBottom: scaleSize(spacing.sm),
     letterSpacing: -1,
   },
   heroSubtitle: {
-    fontSize: 16,
+    fontSize: scaleSize(16),
     color: colors.white,
     textAlign: "center",
     opacity: 0.85,
-    lineHeight: 24,
-    maxWidth: 280,
+    lineHeight: scaleSize(24),
+    maxWidth: scaleSize(280),
   },
   contentSection: {
     backgroundColor: colors.background,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    marginTop: -20,
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.lg,
+    borderTopLeftRadius: scaleSize(24),
+    borderTopRightRadius: scaleSize(24),
+    marginTop: scaleSize(-20),
+    paddingHorizontal: scaleSize(spacing.md),
+    paddingTop: scaleSize(spacing.lg),
   },
   statsSection: {
-    marginBottom: spacing.lg,
+    marginBottom: scaleSize(spacing.lg),
   },
   section: {
-    marginBottom: spacing.xl,
+    marginBottom: scaleSize(spacing.xl),
   },
   sectionHeader: {
-    marginBottom: spacing.md,
+    marginBottom: scaleSize(spacing.md),
   },
   centeredHeader: {
     alignItems: "center",
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: scaleSize(20),
     fontWeight: "bold",
     color: colors.text,
-    marginBottom: spacing.xs,
+    marginBottom: scaleSize(spacing.xs),
     textAlign: "center",
   },
   sectionSubtitle: {
-    fontSize: 14,
+    fontSize: scaleSize(14),
     color: colors.textLight,
-    lineHeight: 20,
+    lineHeight: scaleSize(20),
     textAlign: "center",
   },
 });

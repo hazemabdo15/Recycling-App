@@ -9,6 +9,7 @@ import { SearchBar } from "../../components/ui";
 import { useAuth } from "../../context/AuthContext";
 import { colors, spacing } from "../../styles/theme";
 import { getLabel } from "../../utils/roleLabels";
+import { scaleSize } from '../../utils/scale';
 
 const Explore = () => {
   const [searchText, setSearchText] = useState("");
@@ -106,48 +107,48 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   heroSection: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
+    paddingHorizontal: scaleSize(spacing.lg),
+    paddingBottom: scaleSize(spacing.lg),
+    borderBottomLeftRadius: scaleSize(32),
+    borderBottomRightRadius: scaleSize(32),
     shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: scaleSize(4) },
     shadowOpacity: 0.18,
-    shadowRadius: 16,
+    shadowRadius: scaleSize(16),
     elevation: 12,
     backgroundColor: colors.primary + '10',
   },
   heroSectionBg: {
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
+    borderBottomLeftRadius: scaleSize(32),
+    borderBottomRightRadius: scaleSize(32),
     overflow: "hidden",
   },
   heroContent: {
     alignItems: "center",
-    paddingTop: spacing.sm,
+    paddingTop: scaleSize(spacing.sm),
   },
   heroTitle: {
-    fontSize: 24,
+    fontSize: scaleSize(24),
     fontWeight: "bold",
     color: colors.white,
     textAlign: "center",
-    marginBottom: spacing.sm,
+    marginBottom: scaleSize(spacing.sm),
     letterSpacing: -0.5,
   },
   heroSubtitle: {
-    fontSize: 14,
+    fontSize: scaleSize(14),
     color: colors.white,
     textAlign: "center",
     opacity: 0.85,
-    lineHeight: 22,
-    maxWidth: 280,
+    lineHeight: scaleSize(22),
+    maxWidth: scaleSize(280),
   },
   contentContainer: {
     flex: 1,
     paddingTop: 0,
   },
   searchBarWrapper: {
-    marginTop: spacing.md,
+    marginTop: scaleSize(spacing.md),
     marginBottom: 0,
     zIndex: 11,
   },

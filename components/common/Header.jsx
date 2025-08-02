@@ -2,9 +2,13 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { colors, typography } from '../../styles/theme';
 import { getLoggedInUser } from '../../utils/authUtils';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+const scale = (size) => (SCREEN_WIDTH / 375) * size; // 375 is iPhone 11 width
 
 const Header = () => {
     const router = useRouter();
@@ -32,25 +36,25 @@ const Header = () => {
     };
 
     return (
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingHorizontal: scale(20), paddingVertical: scale(15) }]}> 
             <View style={styles.brandContainer}>
-                <MaterialCommunityIcons name="recycle" size={28} color={colors.primary} />
-                <Text style={styles.brandText}>EcoPickup</Text>
+                <MaterialCommunityIcons name="recycle" size={scale(28)} color={colors.primary} />
+                <Text style={[styles.brandText, { fontSize: scale(20), marginLeft: scale(8) }]}>EcoPickup</Text>
             </View>
-            <View style={styles.headerRight}>
-                <TouchableOpacity style={styles.headerButton}>
-                    <MaterialCommunityIcons name="bell-outline" size={24} color="#333" />
+            <View style={[styles.headerRight, { gap: scale(12) }]}> 
+                <TouchableOpacity style={[styles.headerButton, { width: scale(40), height: scale(40), borderRadius: scale(12) }]}> 
+                    <MaterialCommunityIcons name="bell-outline" size={scale(24)} color="#333" />
                 </TouchableOpacity>
                 {user ? (
-                        <Pressable style={styles.headerButton} onPress={handleLogoutPress}>
-                            <Ionicons name="log-out" size={24} color={colors.error} />
+                        <Pressable style={[styles.headerButton, { width: scale(40), height: scale(40), borderRadius: scale(12) }]} onPress={handleLogoutPress}>
+                            <Ionicons name="log-out" size={scale(24)} color={colors.error} />
                         </Pressable>
                     ) : (
-                        <Pressable style={styles.headerButton} onPress={handleLoginPress}>
-                            <Ionicons name="log-in" size={24} color="#333" />
+                        <Pressable style={[styles.headerButton, { width: scale(40), height: scale(40), borderRadius: scale(12) }]} onPress={handleLoginPress}>
+                            <Ionicons name="log-in" size={scale(24)} color="#333" />
                         </Pressable>
                 )}
-                </View>
+            </View>
         </View>
     );
 };
@@ -59,8 +63,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingVertical: 15,
         backgroundColor: colors.base100,
     },
     brandContainer: {
@@ -69,22 +71,16 @@ const styles = StyleSheet.create({
     },
     brandText: {
         ...typography.title,
-        fontSize: 20,
         fontWeight: 'bold',
         color: colors.primary,
-        marginLeft: 8,
     },
     headerButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 12,
         backgroundColor: '#F5F5F5',
         justifyContent: 'center',
         alignItems: 'center',
     },
     headerRight: {
         flexDirection: 'row',
-        gap: 12,
     },
 });
 export default Header;
