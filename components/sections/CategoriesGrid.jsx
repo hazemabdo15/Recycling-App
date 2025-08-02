@@ -10,7 +10,6 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { useCategories } from "../../hooks/useAPI";
 import { useCart } from "../../hooks/useCart";
-import { useToast } from "../../hooks/useToast";
 import { spacing } from "../../styles";
 import { getCartKey, getIncrementStep, normalizeItemData } from "../../utils/cartUtils";
 import { getLabel } from "../../utils/roleLabels";
@@ -19,6 +18,7 @@ import { isMaxStockReached, isOutOfStock } from '../../utils/stockUtils';
 import { CategoryCard } from "../cards";
 import { ItemCard } from "../category";
 import { FadeInView } from "../common";
+import { showGlobalToast } from "../common/GlobalToast";
 
 const CategoriesGrid = ({
   searchText = "",
@@ -45,7 +45,6 @@ const CategoriesGrid = ({
     handleFastIncreaseQuantity,
     handleFastDecreaseQuantity,
   } = useCart();
-  const { showSuccess, showError } = useToast();
   const [pendingOperations, setPendingOperations] = useState({});
 
   const { filteredCategories, filteredItems } = useMemo(() => {
@@ -86,6 +85,35 @@ const CategoriesGrid = ({
     const itemKey = getCartKey(item);
     if (pendingOperations[itemKey]) return;
 
+    // Show toast instantly for all actions
+    const normalizedItem = normalizeItemData(item);
+    const step = operation.includes('fast') ? 5 : getIncrementStep(normalizedItem.measurement_unit);
+    const unit = normalizedItem.measurement_unit === 1 ? "kg" : "";
+    if (operation.includes('increase')) {
+      if (operation === 'increase' || operation === 'fastIncrease') {
+        showGlobalToast(
+          `Added ${step}${unit} ${item.name || "item"} ${getLabel('addToPickup', user?.role)}`,
+          1200,
+          "success"
+        );
+      }
+    } else {
+      const remainingQuantity = item.quantity - step;
+      if (remainingQuantity > 0) {
+        showGlobalToast(
+          `Reduced ${item.name || "item"} by ${step}${unit}`,
+          1200,
+          "success"
+        );
+      } else {
+        showGlobalToast(
+          `Removed ${item.name || "item"} from pickup`,
+          1200,
+          "info"
+        );
+      }
+    }
+
     const timeoutId = setTimeout(() => {
       setPendingOperations((prev) => {
         const newState = { ...prev };
@@ -103,13 +131,13 @@ const CategoriesGrid = ({
       let increaseResult;
       switch (operation) {
         case 'increase':
-          increaseResult = await handleIncreaseQuantity(item, showError);
+          increaseResult = await handleIncreaseQuantity(item, showGlobalToast);
           break;
         case 'decrease':
           await handleDecreaseQuantity(item);
           break;
         case 'fastIncrease':
-          increaseResult = await handleFastIncreaseQuantity(item, showError);
+          increaseResult = await handleFastIncreaseQuantity(item, showGlobalToast);
           break;
         case 'fastDecrease':
           await handleFastDecreaseQuantity(item);
@@ -118,36 +146,14 @@ const CategoriesGrid = ({
           throw new Error(`Unknown operation: ${operation}`);
       }
 
-      const normalizedItem = normalizeItemData(item);
-      const step = operation.includes('fast') ? 5 : getIncrementStep(normalizedItem.measurement_unit);
-      const unit = normalizedItem.measurement_unit === 1 ? "kg" : "";
-
       if (operation.includes('increase')) {
-        // Only show success toast if add actually happened
         if (operation === 'increase' || operation === 'fastIncrease') {
-          if (increaseResult === true) {
-            showSuccess(
-              `Added ${step}${unit} ${item.name || "item"} ${getLabel('addToPickup', user?.role)}`,
-              2500
-            );
-          } else if (increaseResult === false) {
-            // Show maxStock toast if add was blocked
+          if (increaseResult === false) {
+            // Show maxStock toast if add was blocked by backend
             const maxMsg = `You cannot add more. Only ${item.quantity} in stock.`;
-            showError(maxMsg);
+            console.log('[CategoriesGrid] Backend blocked operation, showing toast:', maxMsg);
+            showGlobalToast(maxMsg, 1000, "error");
           }
-        }
-      } else {
-        const remainingQuantity = item.quantity - step;
-        if (remainingQuantity > 0) {
-          showSuccess(
-            `Reduced ${item.name || "item"} by ${step}${unit}`,
-            2000
-          );
-        } else {
-          showSuccess(
-            `Removed ${item.name || "item"} from pickup`,
-            2000
-          );
         }
       }
     } catch (err) {
@@ -155,7 +161,7 @@ const CategoriesGrid = ({
       const errorMessage = operation.includes('increase') 
         ? `Failed to add item ${getLabel('addToPickup', user?.role)}` 
         : "Failed to update item quantity";
-      showError(errorMessage);
+      showGlobalToast(errorMessage, 2000, "error");
     } finally {
       clearTimeout(timeoutId);
       setPendingOperations((prev) => {
@@ -164,7 +170,7 @@ const CategoriesGrid = ({
         return newState;
       });
     }
-  }, [handleIncreaseQuantity, handleDecreaseQuantity, handleFastIncreaseQuantity, handleFastDecreaseQuantity, pendingOperations, showSuccess, showError, user?.role]);
+  }, [handleIncreaseQuantity, handleDecreaseQuantity, handleFastIncreaseQuantity, handleFastDecreaseQuantity, pendingOperations, user?.role]);
 
   useEffect(() => {
     if (onFilteredCountChange) {
@@ -235,7 +241,7 @@ const CategoriesGrid = ({
                 onIncrease={async () => {
                   if (itemPendingAction || outOfStock) {
                     if (outOfStock) {
-                      showError('This item is out of stock.');
+                      showGlobalToast('This item is out of stock.', 1000, "error");
                     }
                     return;
                   }
@@ -243,25 +249,52 @@ const CategoriesGrid = ({
                   const isKg = item.measurement_unit === 1;
                   const minStockRequired = isKg ? 0.25 : 1;
                   if (typeof item.quantity === 'number' && item.quantity < minStockRequired) {
-                    showError('Not enough quantity in stock to add this item.');
+                    showGlobalToast('Not enough quantity in stock to add this item.', 1000, "error");
+                    return;
+                  }
+                  // Check if adding would exceed stock quantity
+                  const step = getIncrementStep(item.measurement_unit);
+                  const remainingStock = item.quantity - cartQuantity;
+                  console.log('[CategoriesGrid] Stock check:', {
+                    itemName: item.name,
+                    totalStock: item.quantity,
+                    cartQuantity,
+                    remainingStock,
+                    step,
+                    wouldExceed: remainingStock < step || cartQuantity + step > item.quantity
+                  });
+                  if (remainingStock < step || cartQuantity + step > item.quantity) {
+                    const maxMsg = `You cannot add more. Only ${item.quantity} in stock.`;
+                    console.log('[CategoriesGrid] Showing maxStock toast:', maxMsg);
+                    showGlobalToast(maxMsg, 1000, "error");
                     return;
                   }
                   await handleCartOperation(item, 'increase');
                 }}
                 onDecrease={() => handleCartOperation(item, 'decrease')}
                 onFastIncrease={async () => {
-                  const fastStep = 5;
                   const isKg = item.measurement_unit === 1;
                   // Block add if stock is less than minimum required (0.25 for kg, 1 for pieces)
                   const minStockRequired = isKg ? 0.25 : 1;
                   if (typeof item.quantity === 'number' && item.quantity < minStockRequired) {
-                    showError('Not enough quantity in stock to add this item.');
+                    showGlobalToast('Not enough quantity in stock to add this item.', 1000, "error");
                     return;
                   }
-                  const remainingStockFast = item.quantity - cartQuantity;
-                  if (remainingStockFast < fastStep || cartQuantity + fastStep > item.quantity) {
+                  // Check if adding 5 would exceed stock quantity
+                  const fastStep = 5;
+                  const remainingStock = item.quantity - cartQuantity;
+                  console.log('[CategoriesGrid] Fast stock check:', {
+                    itemName: item.name,
+                    totalStock: item.quantity,
+                    cartQuantity,
+                    remainingStock,
+                    fastStep,
+                    wouldExceed: remainingStock < fastStep || cartQuantity + fastStep > item.quantity
+                  });
+                  if (remainingStock < fastStep || cartQuantity + fastStep > item.quantity) {
                     const maxMsg = `You cannot add more. Only ${item.quantity} in stock.`;
-                    showError(maxMsg);
+                    console.log('[CategoriesGrid] Showing fast maxStock toast:', maxMsg);
+                    showGlobalToast(maxMsg, 1000, "error");
                     return;
                   }
                   await handleCartOperation(item, 'fastIncrease');

@@ -4,11 +4,10 @@ import { FlatList, StatusBar, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CategoryHeader, EmptyState, ItemCard } from "../components/category";
 import { ErrorState, Loader } from "../components/common";
-import { Toast } from "../components/ui";
+import { showGlobalToast } from "../components/common/GlobalToast";
 import { useAuth } from "../context/AuthContext";
 import { useCategoryItems } from "../hooks/useAPI";
 import { useCart } from "../hooks/useCart";
-import { useToast } from "../hooks/useToast";
 import { layoutStyles } from "../styles/components/commonStyles";
 import { colors } from "../styles/theme";
 import {
@@ -41,7 +40,6 @@ try {
 const CategoryDetails = () => {
   const { categoryName } = useLocalSearchParams();
   const navigation = useNavigation();
-  const { toast, showSuccess, showError, hideToast } = useToast();
   const { user } = useAuth();
 
   const [pendingOperations, setPendingOperations] = useState({});
@@ -114,7 +112,6 @@ const CategoryDetails = () => {
     // item.quantity is the stock, item.cartQuantity is the cart
     // Stock logic
     const { isOutOfStock, isMaxStockReached, canAddToCart } = require('../utils/stockUtils');
-    const step = getIncrementStep(item.measurement_unit);
     const maxReached = isMaxStockReached(item, item.cartQuantity);
     const outOfStock = isOutOfStock(item);
     return (
@@ -130,13 +127,28 @@ const CategoryDetails = () => {
           if (itemPendingAction || maxReached || outOfStock) {
             if (maxReached) {
               const maxMsg = `You cannot add more. Only ${item.quantity} in stock.`;
-              showError(maxMsg);
+              showGlobalToast(maxMsg, 1000, "error");
             }
             if (outOfStock) {
-              showError('This item is out of stock.');
+              showGlobalToast('This item is out of stock.', 2000, "error");
             }
             return;
           }
+          // Show toast instantly
+          const normalizedItem = normalizeItemData(item);
+          const step = getIncrementStep(normalizedItem.measurement_unit);
+          const unit = normalizedItem.measurement_unit === 1 ? "kg" : "";
+          const displayQuantity = step;
+          const message = getLabel(
+            "categoryToastMessages.itemAdded",
+            user?.role,
+            {
+              quantity: displayQuantity,
+              unit: unit,
+              itemName: item.name || "item",
+            }
+          );
+          showGlobalToast(message, 1200, "success");
           const timeoutId = setTimeout(() => {
             setPendingOperations((prev) => {
               const newState = { ...prev };
@@ -151,26 +163,10 @@ const CategoryDetails = () => {
             }));
             const itemWithCorrectId = { ...item, _id: itemKey };
             const addResult = await handleIncreaseQuantity(itemWithCorrectId);
-            if (addResult === true) {
-              const normalizedItem = normalizeItemData(item);
-              const step = getIncrementStep(normalizedItem.measurement_unit);
-              const unit = normalizedItem.measurement_unit === 1 ? "kg" : "";
-              // const isFirstAdd = !item.cartQuantity || item.cartQuantity === 0;
-              const displayQuantity =  step;
-              const message = getLabel(
-                "categoryToastMessages.itemAdded",
-                user?.role,
-                {
-                  quantity: displayQuantity,
-                  unit: unit,
-                  itemName: item.name || "item",
-                }
-              );
-              showSuccess(message, 1000);
-            } else if (addResult === false) {
+            if (addResult === false) {
               // Show maxStock toast if add was blocked
               const maxMsg = `You cannot add more. Only ${item.quantity} in stock.`;
-              showError(maxMsg);
+              showGlobalToast(maxMsg, 1000, "error");
             }
           } catch (err) {
             console.error("[CategoryDetails] Error increasing quantity:", err);
@@ -178,7 +174,7 @@ const CategoryDetails = () => {
               "categoryToastMessages.addFailed",
               user?.role
             );
-            showError(message);
+            showGlobalToast(message, 2000, "error");
           } finally {
             clearTimeout(timeoutId);
             setPendingOperations((prev) => {
@@ -190,6 +186,31 @@ const CategoryDetails = () => {
         }}
         onDecrease={async () => {
           if (itemPendingAction) return;
+          // Show toast instantly
+          const normalizedItem = normalizeItemData(item);
+          const step = getIncrementStep(normalizedItem.measurement_unit);
+          const unit = normalizedItem.measurement_unit === 1 ? "kg" : "";
+          let message;
+          if (item.quantity > step) {
+            message = getLabel(
+              "categoryToastMessages.itemReduced",
+              user?.role,
+              {
+                itemName: item.name || "item",
+                quantity: step,
+                unit: unit,
+              }
+            );
+          } else {
+            message = getLabel(
+              "categoryToastMessages.itemRemoved",
+              user?.role,
+              {
+                itemName: item.name || "item",
+              }
+            );
+          }
+          showGlobalToast(message, 1200, "info");
           const timeoutId = setTimeout(() => {
             setPendingOperations((prev) => {
               const newState = { ...prev };
@@ -204,38 +225,13 @@ const CategoryDetails = () => {
             }));
             const itemWithCorrectId = { ...item, _id: itemKey };
             await handleDecreaseQuantity(itemWithCorrectId);
-
-            const normalizedItem = normalizeItemData(item);
-            const step = getIncrementStep(normalizedItem.measurement_unit);
-            const unit = normalizedItem.measurement_unit === 1 ? "kg" : "";
-            if (item.quantity > step) {
-              const message = getLabel(
-                "categoryToastMessages.itemReduced",
-                user?.role,
-                {
-                  itemName: item.name || "item",
-                  quantity: step,
-                  unit: unit,
-                }
-              );
-              showSuccess(message, 1000);
-            } else {
-              const message = getLabel(
-                "categoryToastMessages.itemRemoved",
-                user?.role,
-                {
-                  itemName: item.name || "item",
-                }
-              );
-              showSuccess(message, 1000);
-            }
           } catch (err) {
             console.error("[CategoryDetails] Error decreasing quantity:", err);
             const message = getLabel(
               "categoryToastMessages.updateFailed",
               user?.role
             );
-            showError(message);
+            showGlobalToast(message, 2000, "error");
           } finally {
             clearTimeout(timeoutId);
             setPendingOperations((prev) => {
@@ -251,9 +247,22 @@ const CategoryDetails = () => {
           const fastStep = 5;
           if (!canAddToCart(item, item.cartQuantity, fastStep)) {
             const maxMsg = `You cannot add more. Only ${item.quantity} in stock.`;
-            showError(maxMsg);
+            showGlobalToast(maxMsg, 1000, "error");
             return;
           }
+          // Show toast instantly
+          const normalizedItem = normalizeItemData(item);
+          const unit = normalizedItem.measurement_unit === 1 ? "kg" : "";
+          const message = getLabel(
+            "categoryToastMessages.itemAdded",
+            user?.role,
+            {
+              quantity: fastStep,
+              unit: unit,
+              itemName: item.name || "items",
+            }
+          );
+          showGlobalToast(message, 1200, "success");
           const timeoutId = setTimeout(() => {
             setPendingOperations((prev) => {
               const newState = { ...prev };
@@ -267,18 +276,6 @@ const CategoryDetails = () => {
               [item.categoryId]: "fastIncrease",
             }));
             await handleFastIncreaseQuantity(item);
-            const normalizedItem = normalizeItemData(item);
-            const unit = normalizedItem.measurement_unit === 1 ? "kg" : "";
-            const message = getLabel(
-              "categoryToastMessages.itemAdded",
-              user?.role,
-              {
-                quantity: fastStep,
-                unit: unit,
-                itemName: item.name || "items",
-              }
-            );
-            showSuccess(message, 1000);
           } catch (err) {
             console.error(
               "[CategoryDetails] Error fast increasing quantity:",
@@ -288,7 +285,7 @@ const CategoryDetails = () => {
               "categoryToastMessages.addFailed",
               user?.role
             );
-            showError(message);
+            showGlobalToast(message, 2000, "error");
           } finally {
             clearTimeout(timeoutId);
             setPendingOperations((prev) => {
@@ -300,7 +297,31 @@ const CategoryDetails = () => {
         }}
         onFastDecrease={async () => {
           if (itemPendingAction) return;
-
+          // Show toast instantly
+          const normalizedItem = normalizeItemData(item);
+          const unit = normalizedItem.measurement_unit === 1 ? "kg" : "";
+          const remainingQuantity = item.quantity - 5;
+          let message;
+          if (remainingQuantity > 0) {
+            message = getLabel(
+              "categoryToastMessages.itemReduced",
+              user?.role,
+              {
+                itemName: item.name || "item",
+                quantity: "5",
+                unit: unit,
+              }
+            );
+          } else {
+            message = getLabel(
+              "categoryToastMessages.itemRemoved",
+              user?.role,
+              {
+                itemName: item.name || "item",
+              }
+            );
+          }
+          showGlobalToast(message, 1200, "info");
           const timeoutId = setTimeout(() => {
             setPendingOperations((prev) => {
               const newState = { ...prev };
@@ -308,38 +329,12 @@ const CategoryDetails = () => {
               return newState;
             });
           }, 1000);
-
           try {
             setPendingOperations((prev) => ({
               ...prev,
               [item.categoryId]: "fastDecrease",
             }));
             await handleFastDecreaseQuantity(item);
-
-            const normalizedItem = normalizeItemData(item);
-            const unit = normalizedItem.measurement_unit === 1 ? "kg" : "";
-            const remainingQuantity = item.quantity - 5;
-            if (remainingQuantity > 0) {
-              const message = getLabel(
-                "categoryToastMessages.itemReduced",
-                user?.role,
-                {
-                  itemName: item.name || "item",
-                  quantity: "5",
-                  unit: unit,
-                }
-              );
-              showSuccess(message, 2000);
-            } else {
-              const message = getLabel(
-                "categoryToastMessages.itemRemoved",
-                user?.role,
-                {
-                  itemName: item.name || "item",
-                }
-              );
-              showSuccess(message, 2000);
-            }
           } catch (err) {
             console.error(
               "[CategoryDetails] Error fast decreasing quantity:",
@@ -349,7 +344,7 @@ const CategoryDetails = () => {
               "categoryToastMessages.updateFailed",
               user?.role
             );
-            showError(message);
+            showGlobalToast(message, 2000, "error");
           } finally {
             clearTimeout(timeoutId);
             setPendingOperations((prev) => {
@@ -400,15 +395,6 @@ const CategoryDetails = () => {
         barStyle="dark-content"
         backgroundColor="transparent"
         translucent
-      />
-
-      {}
-      <Toast
-        visible={toast.visible}
-        message={toast.message}
-        type={toast.type}
-        onHide={hideToast}
-        duration={toast.duration}
       />
 
       <CategoryHeader
