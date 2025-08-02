@@ -146,27 +146,27 @@ export function TabBar({ state, descriptors, navigation }) {
   const leftRoutes = state.routes.slice(0, 2);
   const rightRoutes = state.routes.slice(2);
   return (
-    <View style={[styles.container, { paddingBottom: insets.bottom }]}>
-      {}
-      <TouchableOpacity
-        style={styles.mainActionButtonContainer}
-        onPress={handleMainActionPress}
-        activeOpacity={1}
-        accessible={true}
-        accessibilityRole="button"
-        accessibilityLabel="Voice input"
-        accessibilityHint="Open voice recording to add recycling items"
-      >
-        <Animated.View style={[styles.mainActionButton, mainButtonAnimatedStyle]}>
-          <MaterialCommunityIcons
-            name="microphone"
-            size={28}
-            color={colors.white}
-          />
-        </Animated.View>
-      </TouchableOpacity>
-        {}
-        <BlurView intensity={90} tint="light" style={styles.blurContainer}>
+    <View style={[styles.container, { paddingBottom: insets.bottom }]}> 
+      <View pointerEvents="box-none" style={styles.voiceButtonWrapper}>
+        <TouchableOpacity
+          style={styles.mainActionButtonContainer}
+          onPress={handleMainActionPress}
+          activeOpacity={1}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel="Voice input"
+          accessibilityHint="Open voice recording to add recycling items"
+        >
+          <Animated.View style={[styles.mainActionButton, mainButtonAnimatedStyle]}>
+            <MaterialCommunityIcons
+              name="microphone"
+              size={28}
+              color={colors.white}
+            />
+          </Animated.View>
+        </TouchableOpacity>
+      </View>
+      <BlurView intensity={90} tint="light" style={styles.blurContainer}>
           {}
           <View style={styles.notchIndicatorLeft} />
           <View style={styles.notchIndicatorRight} />
@@ -391,13 +391,25 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     textAlign: "center",
   },
+  voiceButtonWrapper: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 30,
+    pointerEvents: 'box-none',
+  },
   mainActionButtonContainer: {
     position: 'absolute',
     top: scaleSize(-20),
-    left: 0,
-    right: 0,
     alignItems: 'center',
-    zIndex: 30,
+    justifyContent: 'center',
+    zIndex: 31,
+    width: scaleSize(56),
+    height: scaleSize(56),
   },
   mainActionButton: {
     width: scaleSize(56),
