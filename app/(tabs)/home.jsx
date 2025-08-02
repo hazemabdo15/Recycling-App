@@ -187,12 +187,13 @@ const styles = StyleSheet.create({
     marginTop: scaleSize(-20),
     paddingHorizontal: scaleSize(spacing.md),
     paddingTop: scaleSize(spacing.lg),
+    paddingBottom: scaleSize(80), // Add space for tab bar
   },
   statsSection: {
     marginBottom: scaleSize(spacing.lg),
   },
   section: {
-    marginBottom: scaleSize(spacing.xl),
+    marginBottom: scaleSize(48), // Increased space after last section for tab bar
   },
   sectionHeader: {
     marginBottom: scaleSize(spacing.md),
