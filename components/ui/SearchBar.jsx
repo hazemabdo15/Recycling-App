@@ -1,6 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { scaleSize } from '../../utils/scale';
 const colors = {
   primary: "#0E9F6E",
   secondary: "#8BC34A",
@@ -101,55 +102,55 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: scaleSize(20),
   },
   searchInputContainer: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.white,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
+    borderRadius: scaleSize(borderRadius.md),
+    paddingHorizontal: scaleSize(15),
+    paddingVertical: scaleSize(12),
     shadowColor: colors.black,
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: scaleSize(2),
     },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: scaleSize(4),
     elevation: 3,
     borderWidth: 1,
     borderColor: colors.base300,
   },
   searchIcon: {
-    marginRight: 10,
+    marginRight: scaleSize(10),
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
+    fontSize: scaleSize(16),
     color: colors.black,
   },
   clearButton: {
-    padding: 4,
+    padding: scaleSize(4),
   },
   filterButton: {
     backgroundColor: colors.primary,
-    borderRadius: borderRadius.md,
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    height: 60,
+    borderRadius: scaleSize(borderRadius.md),
+    paddingVertical: scaleSize(12),
+    paddingHorizontal: scaleSize(15),
+    height: scaleSize(60),
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: colors.black,
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: scaleSize(2),
     },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: scaleSize(4),
     elevation: 3,
-    marginLeft: 5,
+    marginLeft: scaleSize(5),
   },
 });
 export default SearchBar;

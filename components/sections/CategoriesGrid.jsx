@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import { useAuth } from "../../context/AuthContext";
 import { useCategories } from "../../hooks/useAPI";
@@ -13,6 +13,7 @@ import { useToast } from "../../hooks/useToast";
 import { spacing } from "../../styles";
 import { getCartKey, getIncrementStep, normalizeItemData } from "../../utils/cartUtils";
 import { getLabel } from "../../utils/roleLabels";
+import { scaleSize } from '../../utils/scale';
 import { CategoryCard } from "../cards";
 import { ItemCard } from "../category";
 import { FadeInView } from "../common";
@@ -233,13 +234,13 @@ const CategoriesGrid = ({
 };
 const styles = StyleSheet.create({
   scrollContainer: {
-    paddingBottom: 40,
-    paddingHorizontal: 5,
+    paddingBottom: scaleSize(40),
+    paddingHorizontal: scaleSize(5),
     backgroundColor: "transparent",
   },
   itemsScrollContainer: {
-    paddingBottom: 5,
-    paddingHorizontal: spacing.sm,
+    paddingBottom: scaleSize(5),
+    paddingHorizontal: scaleSize(spacing.sm),
     backgroundColor: "transparent",
   },
   categoriesGrid: {
@@ -249,39 +250,39 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   itemsList: {
-    gap: 16,
+    gap: scaleSize(16),
     backgroundColor: "transparent",
   },
   categoryCard: {
     width: "48%",
-    marginBottom: 15,
+    marginBottom: scaleSize(15),
     backgroundColor: '#fff',
-    borderRadius: 18,
+    borderRadius: scaleSize(18),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: scaleSize(2) },
     shadowOpacity: 0.10,
-    shadowRadius: 16,
+    shadowRadius: scaleSize(16),
     elevation: 8,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingVertical: 50,
+    paddingVertical: scaleSize(50),
   },
   loadingText: {
-    marginTop: 16,
-    fontSize: 16,
+    marginTop: scaleSize(16),
+    fontSize: scaleSize(16),
     color: "#666",
   },
   errorContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingVertical: 50,
+    paddingVertical: scaleSize(50),
   },
   errorText: {
-    fontSize: 16,
+    fontSize: scaleSize(16),
     color: "#F44336",
     textAlign: "center",
   },
@@ -289,10 +290,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingVertical: 50,
+    paddingVertical: scaleSize(50),
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: scaleSize(16),
     color: "#666",
     textAlign: "center",
   },

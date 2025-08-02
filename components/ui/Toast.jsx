@@ -1,12 +1,13 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import React, { useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { colors, shadows } from '../../styles/theme';
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import React, { useEffect } from "react";
+import { StyleSheet, Text, View } from "react-native";
+import { colors, shadows } from "../../styles/theme";
+import { scaleSize } from "../../utils/scale";
 
 let Animated, runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming;
 
 try {
-  const reanimated = require('react-native-reanimated');
+  const reanimated = require("react-native-reanimated");
   Animated = reanimated.default;
   runOnJS = reanimated.runOnJS;
   useAnimatedStyle = reanimated.useAnimatedStyle;
@@ -14,7 +15,7 @@ try {
   withSpring = reanimated.withSpring;
   withTiming = reanimated.withTiming;
 } catch (_error) {
-  const { View: RNView } = require('react-native');
+  const { View: RNView } = require("react-native");
   Animated = { View: RNView };
   runOnJS = (fn) => fn;
   useAnimatedStyle = () => ({});
@@ -23,7 +24,13 @@ try {
   withTiming = (value) => value;
 }
 
-const Toast = ({ visible, message, type = 'success', onHide, duration = 3000 }) => {
+const Toast = ({
+  visible,
+  message,
+  type = "success",
+  onHide,
+  duration = 3000,
+}) => {
   const translateY = useSharedValue(-100);
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.8);
@@ -40,7 +47,6 @@ const Toast = ({ visible, message, type = 'success', onHide, duration = 3000 }) 
 
   useEffect(() => {
     if (visible) {
-
       translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
       opacity.value = withTiming(1, { duration: 300 });
       scale.value = withSpring(1, { damping: 12, stiffness: 200 });
@@ -54,43 +60,40 @@ const Toast = ({ visible, message, type = 'success', onHide, duration = 3000 }) 
   }, [visible, duration, hideToast, translateY, opacity, scale]);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateY: translateY.value },
-      { scale: scale.value }
-    ],
+    transform: [{ translateY: translateY.value }, { scale: scale.value }],
     opacity: opacity.value,
   }));
 
   const getToastConfig = () => {
     switch (type) {
-      case 'success':
+      case "success":
         return {
           backgroundColor: colors.primary,
-          icon: 'check-circle',
+          icon: "check-circle",
           iconColor: colors.white,
         };
-      case 'error':
+      case "error":
         return {
-          backgroundColor: '#ef4444',
-          icon: 'alert-circle',
+          backgroundColor: "#ef4444",
+          icon: "alert-circle",
           iconColor: colors.white,
         };
-      case 'warning':
+      case "warning":
         return {
-          backgroundColor: '#f59e0b',
-          icon: 'alert',
+          backgroundColor: "#f59e0b",
+          icon: "alert",
           iconColor: colors.white,
         };
-      case 'info':
+      case "info":
         return {
-          backgroundColor: '#3b82f6',
-          icon: 'information',
+          backgroundColor: "#3b82f6",
+          icon: "information",
           iconColor: colors.white,
         };
       default:
         return {
           backgroundColor: colors.primary,
-          icon: 'check-circle',
+          icon: "check-circle",
           iconColor: colors.white,
         };
     }
@@ -106,7 +109,7 @@ const Toast = ({ visible, message, type = 'success', onHide, duration = 3000 }) 
         style={[
           styles.toast,
           { backgroundColor: config.backgroundColor },
-          animatedStyle
+          animatedStyle,
         ]}
       >
         <MaterialCommunityIcons
@@ -123,32 +126,32 @@ const Toast = ({ visible, message, type = 'success', onHide, duration = 3000 }) 
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
-    top: 60,
-    left: 20,
-    right: 20,
+    position: "absolute",
+    top: scaleSize(60),
+    left: scaleSize(20),
+    right: scaleSize(20),
     zIndex: 1000,
-    alignItems: 'center',
+    alignItems: "center",
   },
   toast: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
-    minHeight: 48,
-    maxWidth: '90%',
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: scaleSize(16),
+    paddingVertical: scaleSize(12),
+    borderRadius: scaleSize(12),
+    minHeight: scaleSize(48),
+    maxWidth: "90%",
     ...shadows.medium,
   },
   icon: {
-    marginRight: 8,
+    marginRight: scaleSize(8),
   },
   message: {
     color: colors.white,
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: scaleSize(14),
+    fontWeight: "600",
     flex: 1,
-    textAlign: 'left',
+    textAlign: "left",
   },
 });
 

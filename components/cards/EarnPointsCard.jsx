@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect } from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { scaleSize } from '../../utils/scale';
 
 let Animated,
   useAnimatedStyle,
@@ -167,18 +168,18 @@ const EarnPointsCard = () => {
 
 const styles = StyleSheet.create({
   earnPointsCard: {
-    marginVertical: spacing.xs,
-    borderRadius: borderRadius.lg,
+    marginVertical: scaleSize(spacing.xs),
+    borderRadius: scaleSize(borderRadius.lg),
     overflow: "hidden",
     shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: scaleSize(4) },
     shadowOpacity: 0.15,
-    shadowRadius: 12,
+    shadowRadius: scaleSize(12),
     elevation: 8,
     backgroundColor: colors.white,
   },
   cardGradient: {
-    padding: spacing.lg,
+    padding: scaleSize(spacing.lg),
   },
   cardContent: {
     flexDirection: "column",
@@ -188,25 +189,25 @@ const styles = StyleSheet.create({
   factHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: spacing.md,
+    marginBottom: scaleSize(spacing.md),
   },
   factIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: scaleSize(40),
+    height: scaleSize(40),
+    borderRadius: scaleSize(20),
     alignItems: "center",
     justifyContent: "center",
-    marginRight: spacing.md,
+    marginRight: scaleSize(spacing.md),
     backgroundColor: colors.primary,
   },
   factTitle: {
-    fontSize: 18,
+    fontSize: scaleSize(18),
     fontWeight: "bold",
     color: colors.text,
     letterSpacing: -0.3,
   },
   factText: {
-    fontSize: 15,
+    fontSize: scaleSize(15),
     color: colors.textSecondary,
     textAlign: "center",
     fontWeight: "500",

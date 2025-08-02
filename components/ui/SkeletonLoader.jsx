@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
+import { scaleSize } from '../../utils/scale';
 
 const SkeletonLoader = ({ 
   width = '100%', 
@@ -93,11 +94,11 @@ const styles = StyleSheet.create({
   categoryCardSkeleton: {
     width: '48%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 20,
+    borderRadius: scaleSize(18),
+    padding: scaleSize(20),
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 15,
+    marginBottom: scaleSize(15),
     borderWidth: 1,
     borderColor: '#F3F4F6',
   },
@@ -109,15 +110,15 @@ const styles = StyleSheet.create({
   listItemSkeleton: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    borderRadius: scaleSize(12),
+    padding: scaleSize(16),
+    marginBottom: scaleSize(12),
     borderWidth: 1,
     borderColor: '#F3F4F6',
   },
   listItemContent: {
     flex: 1,
-    marginLeft: 16,
+    marginLeft: scaleSize(16),
     justifyContent: 'center',
   },
 });

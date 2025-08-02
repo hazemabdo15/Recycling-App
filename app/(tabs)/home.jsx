@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useRef } from "react";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { EarnPointsCard } from "../../components/cards";
 import { ErrorBoundary } from "../../components/common";
@@ -33,73 +33,65 @@ const Index = () => {
 
   return (
     <View style={styles.container}>
-      <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: tabBarHeight }
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
-        <ErrorBoundary>
-          <LinearGradient
-            colors={[colors.primary, colors.neutral]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={[styles.heroSection, { paddingTop: insets.top + 20 }]}
-          >
-            <View style={styles.headerRow}>
-              <Text style={styles.appName}>{getLabel('appName', user?.role)}</Text>
-              {isLoggedIn && user && !user.isGuest && !authLoading && (
-                <TouchableOpacity
-                  style={styles.notificationButton}
-                  onPress={handleNotificationPress}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons
-                    name="notifications-outline"
-                    size={24}
-                    color={colors.white}
-                  />
-                  <View style={[styles.connectionDot, { 
-                    backgroundColor: isConnected ? '#10B981' : '#EF4444' 
-                  }]} />
-                  {unreadCount > 0 && (
-                    <View style={styles.notificationBadge}>
-                      <Text style={styles.badgeText}>
-                        {unreadCount > 99 ? "99+" : unreadCount.toString()}
-                      </Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              )}
-            </View>
+      <ErrorBoundary>
+        <LinearGradient
+          colors={[colors.primary, colors.neutral]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.heroSection, { paddingTop: insets.top + 20 }]}
+        >
+          <View style={styles.headerRow}>
+            <Text style={styles.appName}>{getLabel('appName', user?.role)}</Text>
+            {isLoggedIn && user && !user.isGuest && !authLoading && (
+              <TouchableOpacity
+                style={styles.notificationButton}
+                onPress={handleNotificationPress}
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name="notifications-outline"
+                  size={24}
+                  color={colors.white}
+                />
+                <View style={[styles.connectionDot, { 
+                  backgroundColor: isConnected ? '#10B981' : '#EF4444' 
+                }]} />
+                {unreadCount > 0 && (
+                  <View style={styles.notificationBadge}>
+                    <Text style={styles.badgeText}>
+                      {unreadCount > 99 ? "99+" : unreadCount.toString()}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            )}
+          </View>
 
-            <View style={styles.heroContent}>
-              <Text style={styles.welcomeText}>Welcome Back!</Text>
-              <Text style={styles.heroTitle}>Make Every Item Count</Text>
-              <Text style={styles.heroSubtitle}>
-                {getLabel('welcomeMessage', user?.role)}
+          <View style={styles.heroContent}>
+            <Text style={styles.welcomeText}>Welcome Back!</Text>
+            <Text style={styles.heroTitle}>Make Every Item Count</Text>
+            <Text style={styles.heroSubtitle}>
+              {getLabel('welcomeMessage', user?.role)}
+            </Text>
+          </View>
+        </LinearGradient>
+
+        <View style={styles.contentSection}>
+          <View style={styles.statsSection}>
+            <EarnPointsCard />
+          </View>
+
+          <View style={styles.section}>
+            <View style={[styles.sectionHeader, styles.centeredHeader]}>
+              <Text style={styles.sectionTitle}>🔥 Trending This Week</Text>
+              <Text style={styles.sectionSubtitle}>
+                Most recycled items in your area
               </Text>
             </View>
-          </LinearGradient>
-
-          <View style={styles.contentSection}>
-            <View style={styles.statsSection}>
-              <EarnPointsCard />
-            </View>
-
-            <View style={styles.section}>
-              <View style={[styles.sectionHeader, styles.centeredHeader]}>
-                <Text style={styles.sectionTitle}>🔥 Trending This Week</Text>
-                <Text style={styles.sectionSubtitle}>
-                  Most recycled items in your area
-                </Text>
-              </View>
-              <TopRecycledSection />
-            </View>
+            <TopRecycledSection />
           </View>
-        </ErrorBoundary>
-      </ScrollView>
+        </View>
+      </ErrorBoundary>
     </View>
   );
 };

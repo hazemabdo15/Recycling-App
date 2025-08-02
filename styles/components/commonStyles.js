@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { scaleSize } from '../../utils/scale';
 import { borderRadius, colors, shadows, spacing } from '../theme';
 export const layoutStyles = StyleSheet.create({
     container: {
@@ -7,15 +8,15 @@ export const layoutStyles = StyleSheet.create({
     },
     content: {
         flex: 1,
-        paddingHorizontal: spacing.lg,
+        paddingHorizontal: scaleSize(spacing.lg),
     },
     listContainer: {
-        paddingBottom: 120,
-        paddingTop: spacing.sm,
-        paddingHorizontal: spacing.sm,
+        paddingBottom: scaleSize(120),
+        paddingTop: scaleSize(spacing.sm),
+        paddingHorizontal: scaleSize(spacing.sm),
     },
     separator: {
-        height: spacing.xs,
+        height: scaleSize(spacing.xs),
     },
 });
 export const loadingStateStyles = StyleSheet.create({
@@ -26,8 +27,8 @@ export const loadingStateStyles = StyleSheet.create({
         backgroundColor: colors.base100,
     },
     loadingText: {
-        marginTop: spacing.lg,
-        fontSize: 18,
+        marginTop: scaleSize(spacing.lg),
+        fontSize: scaleSize(18),
         color: colors.neutral,
         fontWeight: '500',
     },
@@ -38,22 +39,22 @@ export const errorStateStyles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: colors.base100,
-        paddingHorizontal: 40,
+        paddingHorizontal: scaleSize(40),
     },
     errorText: {
-        fontSize: 18,
+        fontSize: scaleSize(18),
         color: colors.secondary,
         textAlign: 'center',
         fontWeight: '500',
-        lineHeight: 24,
+        lineHeight: scaleSize(24),
     },
 });
 export const buttonStyles = StyleSheet.create({
     primaryButton: {
         backgroundColor: colors.primary,
-        paddingHorizontal: spacing.xl,
-        paddingVertical: spacing.sm,
-        borderRadius: borderRadius.lg,
+        paddingHorizontal: scaleSize(spacing.xl),
+        paddingVertical: scaleSize(spacing.sm),
+        borderRadius: scaleSize(borderRadius.lg),
         alignItems: 'center',
         justifyContent: 'center',
         ...shadows.small,
@@ -61,14 +62,14 @@ export const buttonStyles = StyleSheet.create({
     },
     primaryButtonText: {
         color: colors.white,
-        fontSize: 16,
+        fontSize: scaleSize(16),
         fontWeight: '600',
     },
     secondaryButton: {
         backgroundColor: colors.white,
-        paddingHorizontal: spacing.xl,
-        paddingVertical: spacing.sm,
-        borderRadius: borderRadius.lg,
+        paddingHorizontal: scaleSize(spacing.xl),
+        paddingVertical: scaleSize(spacing.sm),
+        borderRadius: scaleSize(borderRadius.lg),
         alignItems: 'center',
         justifyContent: 'center',
         borderWidth: 1,
@@ -78,13 +79,13 @@ export const buttonStyles = StyleSheet.create({
     },
     secondaryButtonText: {
         color: colors.primary,
-        fontSize: 16,
+        fontSize: scaleSize(16),
         fontWeight: '600',
     },
     iconButton: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
+        width: scaleSize(44),
+        height: scaleSize(44),
+        borderRadius: scaleSize(22),
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: colors.white,
@@ -95,8 +96,8 @@ export const buttonStyles = StyleSheet.create({
 export const cardStyles = StyleSheet.create({
     card: {
         backgroundColor: colors.white,
-        borderRadius: borderRadius.md,
-        padding: spacing.md,
+        borderRadius: scaleSize(borderRadius.md),
+        padding: scaleSize(spacing.md),
         ...shadows.medium,
         elevation: 6,
     },
@@ -104,36 +105,36 @@ export const cardStyles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: spacing.sm,
+        marginBottom: scaleSize(spacing.sm),
     },
     cardTitle: {
-        fontSize: 18,
+        fontSize: scaleSize(18),
         fontWeight: '600',
         color: colors.black,
     },
     cardSubtitle: {
-        fontSize: 14,
+        fontSize: scaleSize(14),
         color: colors.neutral,
-        marginTop: spacing.xs,
+        marginTop: scaleSize(spacing.xs),
     },
     cardContent: {
-        marginTop: spacing.sm,
+        marginTop: scaleSize(spacing.sm),
     },
 });
 export const badgeStyles = StyleSheet.create({
     badge: {
         backgroundColor: colors.primary,
-        paddingHorizontal: spacing.sm,
-        paddingVertical: spacing.xs,
-        borderRadius: borderRadius.lg,
+        paddingHorizontal: scaleSize(spacing.sm),
+        paddingVertical: scaleSize(spacing.xs),
+        borderRadius: scaleSize(borderRadius.lg),
         alignItems: 'center',
         justifyContent: 'center',
-        minWidth: 24,
-        minHeight: 24,
+        minWidth: scaleSize(24),
+        minHeight: scaleSize(24),
     },
     badgeText: {
         color: colors.white,
-        fontSize: 12,
+        fontSize: scaleSize(12),
         fontWeight: 'bold',
     },
     badgeSecondary: {

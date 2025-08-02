@@ -25,6 +25,7 @@ import { API_BASE_URL } from "../services/api/config";
 import { isAuthenticated } from "../services/auth";
 import { colors, spacing, typography } from "../styles/theme";
 import { getProgressStepLabel } from "../utils/roleLabels";
+import { scaleSize } from '../utils/scale';
 
 // Helper function to prepare order items - now uses cart details directly
 const prepareOrderItems = async (cartItems, cartItemDetails, accessToken, user, logWithTimestamp) => {
@@ -1164,18 +1165,18 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.xl,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+    paddingHorizontal: scaleSize(spacing.xl),
+    paddingBottom: scaleSize(spacing.xl),
+    borderBottomLeftRadius: scaleSize(24),
+    borderBottomRightRadius: scaleSize(24),
   },
   headerTitle: {
     ...typography.title,
-    fontSize: 24,
+    fontSize: scaleSize(24),
     fontWeight: "bold",
     color: colors.white,
     textAlign: "center",
-    marginBottom: spacing.lg,
+    marginBottom: scaleSize(spacing.lg),
   },
   content: {
     flex: 1,
@@ -1185,39 +1186,39 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: scaleSize(spacing.xl),
   },
   messageTitle: {
     ...typography.title,
-    fontSize: 22,
+    fontSize: scaleSize(22),
     fontWeight: "bold",
     color: colors.primary,
-    marginTop: spacing.lg,
-    marginBottom: spacing.md,
+    marginTop: scaleSize(spacing.lg),
+    marginBottom: scaleSize(spacing.md),
     textAlign: "center",
   },
   messageText: {
     ...typography.body,
     color: colors.neutral,
     textAlign: "center",
-    lineHeight: 22,
-    marginBottom: spacing.lg,
+    lineHeight: scaleSize(22),
+    marginBottom: scaleSize(spacing.lg),
   },
 
   progressContainer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: spacing.md,
+    marginTop: scaleSize(spacing.md),
   },
   progressStep: {
     flexDirection: "row",
     alignItems: "center",
   },
   progressCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: scaleSize(32),
+    height: scaleSize(32),
+    borderRadius: scaleSize(16),
     backgroundColor: "rgba(255, 255, 255, 0.3)",
     justifyContent: "center",
     alignItems: "center",
@@ -1230,7 +1231,7 @@ const styles = StyleSheet.create({
   },
   progressText: {
     ...typography.caption,
-    fontSize: 14,
+    fontSize: scaleSize(14),
     fontWeight: "bold",
     color: colors.white,
   },
@@ -1238,10 +1239,10 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   progressLine: {
-    width: 40,
-    height: 2,
+    width: scaleSize(40),
+    height: scaleSize(2),
     backgroundColor: "rgba(255, 255, 255, 0.3)",
-    marginHorizontal: spacing.sm,
+    marginHorizontal: scaleSize(spacing.sm),
   },
   progressLineActive: {
     backgroundColor: colors.white,

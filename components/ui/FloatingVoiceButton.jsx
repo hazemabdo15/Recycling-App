@@ -4,6 +4,7 @@ import { StyleSheet, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useVoiceModal } from '../../hooks/useVoiceModal';
 import { colors, shadows, spacing } from '../../styles/theme';
+import { scaleSize } from '../../utils/scale';
 
 let Animated, interpolate, useAnimatedStyle, useSharedValue, withSpring, withTiming;
 
@@ -82,9 +83,9 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   button: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: scaleSize(64),
+    height: scaleSize(64),
+    borderRadius: scaleSize(32),
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
@@ -93,7 +94,7 @@ const styles = StyleSheet.create({
   },
   gradient: {
     ...StyleSheet.absoluteFillObject,
-    borderRadius: 32,
+    borderRadius: scaleSize(32),
     backgroundColor: `${colors.primary}20`,
   },
 });

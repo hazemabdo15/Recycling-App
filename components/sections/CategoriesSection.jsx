@@ -3,6 +3,7 @@ import { memo, useCallback } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useCategories } from '../../hooks/useAPI';
 import { colors } from '../../styles/theme';
+import { scaleSize } from '../../utils/scale';
 import { CategoryCard } from '../cards';
 import { CategoriesGridSkeleton } from '../ui';
 const CategoriesSection = memo(() => {
@@ -73,29 +74,29 @@ const CategoriesSection = memo(() => {
 CategoriesSection.displayName = 'CategoriesSection';
 const styles = StyleSheet.create({
     categoriesSection: {
-        marginBottom: 30,
+        marginBottom: scaleSize(30),
     },
     categoriesHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: scaleSize(20),
     },
     categoriesTitle: {
-        fontSize: 18,
+        fontSize: scaleSize(18),
         fontWeight: '700',
         color: colors.primary,
         letterSpacing: -0.5,
-        lineHeight: 34,
-        marginBottom: 8,
+        lineHeight: scaleSize(34),
+        marginBottom: scaleSize(8),
         textTransform: 'uppercase',
         includeFontPadding: false,
     },
     viewAllText: {
-        fontSize: 16,
+        fontSize: scaleSize(16),
         color: colors.primary,
         fontWeight: '700',
-        lineHeight: 34,
+        lineHeight: scaleSize(34),
     },
     categoriesGrid: {
         flexDirection: 'row',
@@ -103,16 +104,16 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
     },
     loadingText: {
-        fontSize: 16,
+        fontSize: scaleSize(16),
         color: '#666',
         textAlign: 'center',
-        marginTop: 20,
+        marginTop: scaleSize(20),
     },
     errorText: {
-        fontSize: 16,
+        fontSize: scaleSize(16),
         color: '#F44336',
         textAlign: 'center',
-        marginTop: 20,
+        marginTop: scaleSize(20),
     },
 });
 export default CategoriesSection;
