@@ -12,7 +12,7 @@ import {
   View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { AnimatedButton, AnimatedListItem } from "../../components/common";
+import { AnimatedButton, AnimatedListItem, Loader } from "../../components/common";
 import { useAuth } from "../../context/AuthContext";
 import { useAllItems } from "../../hooks/useAPI";
 import { useCart } from "../../hooks/useCart";
@@ -294,16 +294,13 @@ const Cart = () => {
   };
 
   if (loading) {
-    return (
-      <View style={styles.emptyCartContainer}>
-        <Text style={styles.emptyCartTitle}>Loading cart...</Text>
-      </View>
-    );
+    return <Loader />;
   }
 
   if (!allItems.length) {
     return (
       <View style={styles.emptyCartContainer}>
+        <Loader style={{ height: 180 }} />
         <Text style={styles.emptyCartTitle}>Unable to load item details</Text>
         <Text style={styles.emptyCartSubtitle}>
           There was a problem fetching item data. Please try again later.
@@ -366,7 +363,7 @@ const Cart = () => {
   if (cartArray.length === 0 && !showEmptyState) {
     return (
       <View style={styles.emptyCartContainer}>
-        <Text style={styles.emptyCartTitle}>Updating cart...</Text>
+        <Loader />
       </View>
     );
   }
