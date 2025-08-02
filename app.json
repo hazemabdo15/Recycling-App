@@ -1,10 +1,10 @@
 ﻿{
   "expo": {
-    "name": "recycling-app",
-    "slug": "recycling-app",
+    "name": "EcoRecycle",
+    "slug": "EcoRecycle",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/logo.png",
     "scheme": "recyclingapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -37,9 +37,8 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
+          "image": "./assets/images/logo.png",
+          "resizeMode": "cover",
           "backgroundColor": "#0E9F6E"
         }
       ]
