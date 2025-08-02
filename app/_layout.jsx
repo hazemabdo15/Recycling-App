@@ -1,4 +1,5 @@
 import { Stack } from "expo-router";
+import SplashController from '../components/common/SplashController';
 import { AuthProvider } from '../context/AuthContext';
 import { CartProvider } from '../context/CartContext';
 import { ChatProvider } from "../context/ChatContext";
@@ -10,15 +11,16 @@ export default function RootLayout() {
       <CartProvider>
         <NotificationProvider>
           <ChatProvider>
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                animation: 'slide_from_right',
-                animationDuration: 300,
-                gestureEnabled: true,
-                gestureDirection: 'horizontal',
-              }}
-            >
+            <SplashController>
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  animation: 'slide_from_right',
+                  animationDuration: 300,
+                  gestureEnabled: true,
+                  gestureDirection: 'horizontal',
+                }}
+              >
             <Stack.Screen
               name="login"
               options={{ 
@@ -96,6 +98,7 @@ export default function RootLayout() {
               }}
             />
           </Stack>
+            </SplashController>
         </ChatProvider>
         </NotificationProvider>
         </CartProvider>

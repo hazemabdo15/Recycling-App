@@ -5,4 +5,6 @@ export { ComponentErrorBoundary, default as ErrorBoundary } from './ErrorBoundar
 export { default as Header } from './Header';
 export { default as LoginRequiredDialog } from './LoginRequiredDialog';
 export { default as RecyclingIllustration } from './RecyclingIllustration';
+export { default as SplashController } from './SplashController';
+export { default as SplashScreen } from './SplashScreen';
 
