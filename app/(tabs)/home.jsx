@@ -11,7 +11,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useNotifications } from "../../context/NotificationContext";
 import { colors, spacing } from "../../styles/theme";
 import { getLabel } from "../../utils/roleLabels";
-import { scaleSize } from '../../utils/scale';
+import { scaleSize } from "../../utils/scale";
 
 const Index = () => {
   const insets = useSafeAreaInsets();
@@ -41,7 +41,9 @@ const Index = () => {
           style={[styles.heroSection, { paddingTop: insets.top + 20 }]}
         >
           <View style={styles.headerRow}>
-            <Text style={styles.appName}>{getLabel('appName', user?.role)}</Text>
+            <Text style={styles.appName}>
+              {getLabel("appName", user?.role)}
+            </Text>
             {isLoggedIn && user && !user.isGuest && !authLoading && (
               <TouchableOpacity
                 style={styles.notificationButton}
@@ -53,9 +55,14 @@ const Index = () => {
                   size={24}
                   color={colors.white}
                 />
-                <View style={[styles.connectionDot, { 
-                  backgroundColor: isConnected ? '#10B981' : '#EF4444' 
-                }]} />
+                <View
+                  style={[
+                    styles.connectionDot,
+                    {
+                      backgroundColor: isConnected ? "#10B981" : "#EF4444",
+                    },
+                  ]}
+                />
                 {unreadCount > 0 && (
                   <View style={styles.notificationBadge}>
                     <Text style={styles.badgeText}>
@@ -71,7 +78,7 @@ const Index = () => {
             <Text style={styles.welcomeText}>Welcome Back!</Text>
             <Text style={styles.heroTitle}>Make Every Item Count</Text>
             <Text style={styles.heroSubtitle}>
-              {getLabel('welcomeMessage', user?.role)}
+              {getLabel("welcomeMessage", user?.role)}
             </Text>
           </View>
         </LinearGradient>
@@ -81,7 +88,7 @@ const Index = () => {
             <EarnPointsCard />
           </View>
 
-          <View style={styles.section}>
+          <View style={[styles.section, styles.lastSection]}>
             <View style={[styles.sectionHeader, styles.centeredHeader]}>
               <Text style={styles.sectionTitle}>🔥 Trending This Week</Text>
               <Text style={styles.sectionSubtitle}>
@@ -97,6 +104,9 @@ const Index = () => {
 };
 
 const styles = StyleSheet.create({
+  lastSection: {
+    marginBottom: scaleSize(100), // More space after Top Recycled Items section
+  },
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -187,7 +197,7 @@ const styles = StyleSheet.create({
     marginTop: scaleSize(-20),
     paddingHorizontal: scaleSize(spacing.md),
     paddingTop: scaleSize(spacing.lg),
-    paddingBottom: scaleSize(80), // Add space for tab bar
+    paddingBottom: scaleSize(24), // Reasonable bottom padding
   },
   statsSection: {
     marginBottom: scaleSize(spacing.lg),
