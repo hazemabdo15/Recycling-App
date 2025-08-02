@@ -3,7 +3,7 @@ import { Dimensions, Text, View } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { categoryHeaderStyles } from '../../styles/components/categoryStyles';
 import { colors } from '../../styles/theme';
-import { isBuyer } from '../../utils/roleLabels';
+import { getLabel, isBuyer } from '../../utils/roleLabels';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const scale = (size) => (SCREEN_WIDTH / 375) * size;
@@ -90,7 +90,7 @@ const CategoryHeader = ({
                     <Text style={[
                         categoryHeaderStyles.statLabel,
                         { fontSize: scale(12) },
-                    ]}>You&apos;ll Earn</Text>
+                    ]}>{getLabel("money", user?.role)}</Text>
                 </View>
             </View>
         </View>

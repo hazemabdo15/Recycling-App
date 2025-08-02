@@ -1,6 +1,7 @@
 ﻿import { validateQuantity } from '../../utils/cartUtils';
 import apiService from './apiService';
 
+
 export const orderService = {
 
   async createOrder(orderData) {
@@ -245,5 +246,15 @@ export const orderService = {
     } catch (error) {
       throw new Error(`Item ${index + 1}: ${error.message}`);
     }
-  }
+  },
+
+  // Alias for compatibility with code expecting getUserOrders
+  async getUserOrders(options = {}) {
+    // Support limit param if provided
+    let url = '/orders';
+    if (options && options.limit) {
+      url += `?limit=${options.limit}`;
+    }
+    return apiService.get(url);
+  },
 };

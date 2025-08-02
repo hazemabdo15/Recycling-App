@@ -1,4 +1,5 @@
 ﻿import { Stack } from "expo-router";
+import GlobalToast from '../components/common/GlobalToast';
 import SplashController from '../components/common/SplashController';
 import { AuthProvider } from '../context/AuthContext';
 import { CartProvider } from '../context/CartContext';
@@ -12,6 +13,7 @@ export default function RootLayout() {
         <NotificationProvider>
           <ChatProvider>
             <SplashController>
+              <GlobalToast />
               <Stack
                 screenOptions={{
                   headerShown: false,

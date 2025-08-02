@@ -9,44 +9,55 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { AnimatedButton, AnimatedListItem, Loader } from "../../components/common";
+import {
+  AnimatedButton,
+  AnimatedListItem,
+  Loader,
+} from "../../components/common";
 import { useAuth } from "../../context/AuthContext";
 import { useAllItems } from "../../hooks/useAPI";
 import { useCart } from "../../hooks/useCart";
 import { borderRadius, spacing, typography } from "../../styles";
 import { colors } from "../../styles/theme";
-import { getCartKey, getDisplayKey, normalizeItemData } from "../../utils/cartUtils";
+import {
+  getCartKey,
+  getDisplayKey,
+  normalizeItemData,
+} from "../../utils/cartUtils";
 import { getLabel, isBuyer } from "../../utils/roleLabels";
-import { scaleSize } from '../../utils/scale';
+import { scaleSize } from "../../utils/scale";
 
-const getRoleBasedIcon = (iconType, userRole = 'customer') => {
+const getRoleBasedIcon = (iconType, userRole = "customer") => {
   const iconMappings = {
-
     scheduleAction: {
-      customer: 'truck-fast',
-      buyer: 'credit-card-fast'
+      customer: "truck-fast",
+      buyer: "credit-card-fast",
     },
 
     emptyCart: {
-      customer: 'truck-delivery-outline',
-      buyer: 'cart-outline'
+      customer: "truck-delivery-outline",
+      buyer: "cart-outline",
     },
 
     findItems: {
-      customer: 'recycle',
-      buyer: 'store'
+      customer: "recycle",
+      buyer: "store",
     },
 
     locked: {
-      customer: 'lock',
-      buyer: 'lock'
-    }
+      customer: "lock",
+      buyer: "lock",
+    },
   };
-  
-  return iconMappings[iconType]?.[userRole] || iconMappings[iconType]?.customer || 'help-circle';
+
+  return (
+    iconMappings[iconType]?.[userRole] ||
+    iconMappings[iconType]?.customer ||
+    "help-circle"
+  );
 };
 
 const Cart = () => {
@@ -75,11 +86,9 @@ const Cart = () => {
 
   const cartArray = Object.entries(cartItems)
     .map(([itemId, quantity]) => {
-
       const itemFromDetails = cartItemDetails[itemId];
-      
-      if (itemFromDetails) {
 
+      if (itemFromDetails) {
         return {
           ...itemFromDetails,
           quantity: quantity,
@@ -92,9 +101,9 @@ const Cart = () => {
 
       const combinedItem = {
         ...(item || {}),
-        _id: (item?._id || itemId),
+        _id: item?._id || itemId,
         categoryId: item?.categoryId,
-        name: (item?.name || item?.material || "Unknown Item"),
+        name: item?.name || item?.material || "Unknown Item",
         image: item?.image,
         points: item?.points,
         price: item?.price,
@@ -102,8 +111,14 @@ const Cart = () => {
         quantity: quantity,
       };
 
-      const needsNormalization = !combinedItem._id || !combinedItem.categoryId || !combinedItem.image || combinedItem.measurement_unit === undefined;
-      return needsNormalization ? normalizeItemData(combinedItem) : combinedItem;
+      const needsNormalization =
+        !combinedItem._id ||
+        !combinedItem.categoryId ||
+        !combinedItem.image ||
+        combinedItem.measurement_unit === undefined;
+      return needsNormalization
+        ? normalizeItemData(combinedItem)
+        : combinedItem;
     })
     .filter((item) => item.quantity > 0);
 
@@ -126,10 +141,9 @@ const Cart = () => {
 
   const handleIncrease = async (item) => {
     try {
-
-      const itemWithCorrectId = { 
-        ...item, 
-        _id: getCartKey(item)
+      const itemWithCorrectId = {
+        ...item,
+        _id: getCartKey(item),
       };
       await handleIncreaseQuantity(itemWithCorrectId);
     } catch (err) {
@@ -139,10 +153,9 @@ const Cart = () => {
 
   const handleDecrease = async (item) => {
     try {
-
-      const itemWithCorrectId = { 
-        ...item, 
-        _id: getCartKey(item)
+      const itemWithCorrectId = {
+        ...item,
+        _id: getCartKey(item),
       };
       await handleDecreaseQuantity(itemWithCorrectId);
     } catch (err) {
@@ -152,7 +165,6 @@ const Cart = () => {
 
   const handleDelete = async (item) => {
     try {
-
       const itemId = getCartKey(item);
       await handleRemoveFromCart(itemId);
     } catch (err) {
@@ -250,28 +262,40 @@ const Cart = () => {
             ) : null}
           </View>
           <View style={styles.cartQuantityRow}>
-            <TouchableOpacity
-              style={[styles.cartQtyBtn, quantity <= 1 && { opacity: 0.5 }]}
-              onPress={() => handleDecrease(item)}
-              disabled={quantity <= 1}
-            >
-              <MaterialCommunityIcons
-                name="minus"
-                size={20}
-                color={colors.primary}
-              />
-            </TouchableOpacity>
-            <Text style={styles.cartQtyText}>{quantity}</Text>
-            <TouchableOpacity
-              style={styles.cartQtyBtn}
-              onPress={() => handleIncrease(item)}
-            >
-              <MaterialCommunityIcons
-                name="plus"
-                size={20}
-                color={colors.primary}
-              />
-            </TouchableOpacity>
+            {/* Get the proper minimum quantity based on measurement unit */}
+            {(() => {
+              const measurementUnit =
+                item.measurement_unit || (unit === "KG" ? 1 : 2);
+              const minQuantity = measurementUnit === 1 ? 0.25 : 1;
+              const isAtMinimum = quantity <= minQuantity;
+
+              return (
+                <>
+                  <TouchableOpacity
+                    style={[styles.cartQtyBtn, isAtMinimum && { opacity: 0.5 }]}
+                    onPress={() => handleDecrease(item)}
+                    disabled={isAtMinimum}
+                  >
+                    <MaterialCommunityIcons
+                      name="minus"
+                      size={20}
+                      color={colors.primary}
+                    />
+                  </TouchableOpacity>
+                  <Text style={styles.cartQtyText}>{quantity}</Text>
+                  <TouchableOpacity
+                    style={styles.cartQtyBtn}
+                    onPress={() => handleIncrease(item)}
+                  >
+                    <MaterialCommunityIcons
+                      name="plus"
+                      size={20}
+                      color={colors.primary}
+                    />
+                  </TouchableOpacity>
+                </>
+              );
+            })()}
           </View>
         </View>
         <View style={styles.cartActionsContainer}>
@@ -321,19 +345,21 @@ const Cart = () => {
           style={[styles.heroSection, { paddingTop: insets.top + 20 }]}
         >
           <View style={styles.heroContent}>
-            <Text style={styles.heroTitle}>{getLabel('cartTitle', user?.role)}</Text>
+            <Text style={styles.heroTitle}>
+              {getLabel("cartTitle", user?.role)}
+            </Text>
             <Text style={styles.heroSubtitle}>No items yet</Text>
             <AnimatedButton
               style={styles.heroFindBtn}
               onPress={() => router.push("/(tabs)/explore")}
             >
               <MaterialCommunityIcons
-                name={getRoleBasedIcon('findItems', user?.role)}
+                name={getRoleBasedIcon("findItems", user?.role)}
                 size={28}
                 color={colors.white}
               />
               <Text style={styles.heroFindBtnText}>
-                {getLabel('cartPage.findItemsButton', user?.role)}
+                {getLabel("cartPage.findItemsButton", user?.role)}
               </Text>
             </AnimatedButton>
           </View>
@@ -341,16 +367,16 @@ const Cart = () => {
         <View style={styles.emptyCartContainer}>
           <View style={styles.emptyCartIconWrapper}>
             <MaterialCommunityIcons
-              name={getRoleBasedIcon('emptyCart', user?.role)}
+              name={getRoleBasedIcon("emptyCart", user?.role)}
               size={80}
               color={colors.base300}
             />
           </View>
           <Text style={styles.emptyCartTitle}>
-            {getLabel('emptyCartTitle', user?.role)}
+            {getLabel("emptyCartTitle", user?.role)}
           </Text>
           <Text style={styles.emptyCartSubtitle}>
-            {getLabel('emptyCartSubtitle', user?.role)}
+            {getLabel("emptyCartSubtitle", user?.role)}
           </Text>
         </View>
       </View>
@@ -383,11 +409,14 @@ const Cart = () => {
   const MINIMUM_ORDER_VALUE = 100;
 
   const isGuest = !isLoggedIn || !user;
-  const canSchedulePickup = totalValue >= MINIMUM_ORDER_VALUE && user?.role === 'customer';
-  const canProceedToPurchase = totalValue >= MINIMUM_ORDER_VALUE && user?.role === 'buyer';
+  const canSchedulePickup =
+    totalValue >= MINIMUM_ORDER_VALUE && user?.role === "customer";
+  const canProceedToPurchase =
+    totalValue >= MINIMUM_ORDER_VALUE && user?.role === "buyer";
   const canGuestProceed = totalValue >= MINIMUM_ORDER_VALUE && isGuest;
-  const canProceed = canSchedulePickup || canProceedToPurchase || canGuestProceed;
-  
+  const canProceed =
+    canSchedulePickup || canProceedToPurchase || canGuestProceed;
+
   const remainingAmount = MINIMUM_ORDER_VALUE - totalValue;
 
   return (
@@ -405,9 +434,11 @@ const Cart = () => {
       >
         <View style={styles.heroRowHeader}>
           <View style={styles.heroContent}>
-            <Text style={styles.heroTitle}>{getLabel('cartTitle', user?.role)}</Text>
+            <Text style={styles.heroTitle}>
+              {getLabel("cartTitle", user?.role)}
+            </Text>
             <Text style={styles.heroSubtitle}>
-              {cartArray.length} {getLabel('itemsReadyFor', user?.role)}
+              {cartArray.length} {getLabel("itemsReadyFor", user?.role)}
             </Text>
             <View style={styles.checkoutSummaryRowHero}>
               {!isBuyer(user) && (
@@ -417,7 +448,9 @@ const Cart = () => {
                     size={22}
                     color={colors.accent}
                   />
-                  <Text style={styles.checkoutSummaryLabelHero}>Eco Points</Text>
+                  <Text style={styles.checkoutSummaryLabelHero}>
+                    Eco Points
+                  </Text>
                   <Text style={styles.checkoutSummaryValueHero}>
                     {totalPoints}
                   </Text>
@@ -430,7 +463,7 @@ const Cart = () => {
                   color={colors.secondary}
                 />
                 <Text style={styles.checkoutSummaryLabelHero}>
-                  You&apos;ll Earn
+                  {getLabel("money", user?.role)}
                 </Text>
                 <Text style={styles.checkoutSummaryValueHero}>
                   {totalValue.toFixed(2)} EGP
@@ -445,7 +478,9 @@ const Cart = () => {
                   color={colors.warning}
                 />
                 <Text style={styles.minimumOrderText}>
-                  {getLabel('minimumOrderMessage', user?.role, { amount: remainingAmount.toFixed(2) })}
+                  {getLabel("minimumOrderMessage", user?.role, {
+                    amount: remainingAmount.toFixed(2),
+                  })}
                 </Text>
               </View>
             )}
@@ -467,7 +502,11 @@ const Cart = () => {
                 disabled={!canProceed}
               >
                 <MaterialCommunityIcons
-                  name={canProceed ? getRoleBasedIcon('scheduleAction', user?.role) : getRoleBasedIcon('locked', user?.role)}
+                  name={
+                    canProceed
+                      ? getRoleBasedIcon("scheduleAction", user?.role)
+                      : getRoleBasedIcon("locked", user?.role)
+                  }
                   size={24}
                   color={canProceed ? colors.white : colors.white}
                 />
@@ -478,10 +517,10 @@ const Cart = () => {
                   ]}
                 >
                   {canSchedulePickup || canProceedToPurchase
-                    ? getLabel('schedulePickup', user?.role)
+                    ? getLabel("schedulePickup", user?.role)
                     : canGuestProceed
-                    ? 'Login to Continue'
-                    : getLabel('minimumOrderButton', user?.role)}
+                    ? "Login to Continue"
+                    : getLabel("minimumOrderButton", user?.role)}
                 </Text>
               </AnimatedButton>
               {cartArray.length > 0 && (

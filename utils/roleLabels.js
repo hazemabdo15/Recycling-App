@@ -1,6 +1,8 @@
-﻿
-
-export const roleLabels = {
+﻿export const roleLabels = {
+  money: {
+    customer: "You'll Earn",
+    buyer: "You'll Pay",
+  },
 
   pickup: {
     customer: "Pickup",
@@ -173,7 +175,7 @@ export const roleLabels = {
 
   earnPoints: {
     customer: "Earn points by recycling",
-    buyer: "Earn points with purchases",
+    buyer: "Recycle and help the planet",
   },
 
   itemsReadyFor: {
@@ -198,9 +200,7 @@ export const roleLabels = {
   },
 };
 
-
 export function getLabel(key, role = "customer", params = {}) {
-
   const keys = key.split(".");
   let roleMapping = roleLabels;
 
@@ -208,13 +208,11 @@ export function getLabel(key, role = "customer", params = {}) {
     if (roleMapping && typeof roleMapping === "object" && roleMapping[k]) {
       roleMapping = roleMapping[k];
     } else {
-
       return key;
     }
   }
 
   if (!roleMapping) {
-
     return key;
   }
 
@@ -229,7 +227,6 @@ export function getLabel(key, role = "customer", params = {}) {
   return label;
 }
 
-
 export function getProgressStepLabel(step, role = "customer") {
   return (
     roleLabels.progressSteps[role]?.[step] ||
@@ -238,11 +235,9 @@ export function getProgressStepLabel(step, role = "customer") {
   );
 }
 
-
 export function isBuyer(user) {
   return user?.role === "buyer";
 }
-
 
 export function isCustomer(user) {
   return user?.role === "customer" || !user?.role;

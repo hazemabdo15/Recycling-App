@@ -115,5 +115,10 @@ export const addressService = {
       },
       'addresses-delete'
     );
+  },
+
+  // Alias for compatibility with code expecting getUserAddresses
+  async getUserAddresses() {
+    return this.getAddresses();
   }
 };

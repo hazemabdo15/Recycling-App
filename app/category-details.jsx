@@ -50,7 +50,16 @@ const CategoryDetails = () => {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
 
-  const { items, loading, error } = useCategoryItems(categoryName);
+  const { items, loading, error, refetch } = useCategoryItems(categoryName);
+  const [refreshing, setRefreshing] = useState(false);
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setRefreshing(false);
+    }
+  };
   const insets = useSafeAreaInsets();
   const {
     cartItems,
@@ -61,20 +70,17 @@ const CategoryDetails = () => {
   } = useCart();
 
   const mergedItems = items.map((item) => {
-
     const needsNormalization =
       !item._id ||
       !item.categoryId ||
       !item.image ||
       item.measurement_unit === undefined;
     const processedItem = needsNormalization ? normalizeItemData(item) : item;
-
     const itemKey = getCartKey(processedItem);
-    const quantity = cartItems[itemKey] || 0;
-
+    const cartQuantity = cartItems[itemKey] || 0;
     return {
       ...processedItem,
-      quantity,
+      cartQuantity, // this is the quantity in the cart
     };
   });
 
@@ -105,17 +111,32 @@ const CategoryDetails = () => {
   const renderItem = ({ item, index }) => {
     const itemKey = getCartKey(item);
     const itemPendingAction = pendingOperations[itemKey];
-
+    // item.quantity is the stock, item.cartQuantity is the cart
+    // Stock logic
+    const { isOutOfStock, isMaxStockReached, canAddToCart } = require('../utils/stockUtils');
+    const step = getIncrementStep(item.measurement_unit);
+    const maxReached = isMaxStockReached(item, item.cartQuantity);
+    const outOfStock = isOutOfStock(item);
     return (
       <ItemCard
         item={item}
-        quantity={item.quantity}
+        quantity={item.cartQuantity}
         disabled={!!itemPendingAction}
         pendingAction={itemPendingAction}
         index={index}
+        maxReached={maxReached}
+        outOfStock={outOfStock}
         onIncrease={async () => {
-          if (itemPendingAction) return;
-
+          if (itemPendingAction || maxReached || outOfStock) {
+            if (maxReached) {
+              const maxMsg = `You cannot add more. Only ${item.quantity} in stock.`;
+              showError(maxMsg);
+            }
+            if (outOfStock) {
+              showError('This item is out of stock.');
+            }
+            return;
+          }
           const timeoutId = setTimeout(() => {
             setPendingOperations((prev) => {
               const newState = { ...prev };
@@ -123,30 +144,34 @@ const CategoryDetails = () => {
               return newState;
             });
           }, 1000);
-
           try {
             setPendingOperations((prev) => ({
               ...prev,
               [itemKey]: "increase",
             }));
             const itemWithCorrectId = { ...item, _id: itemKey };
-            await handleIncreaseQuantity(itemWithCorrectId);
-
-            const normalizedItem = normalizeItemData(item);
-            const step = getIncrementStep(normalizedItem.measurement_unit);
-            const unit = normalizedItem.measurement_unit === 1 ? "kg" : "";
-            const isFirstAdd = !item.quantity || item.quantity === 0;
-            const displayQuantity = isFirstAdd ? 1 : step;
-            const message = getLabel(
-              "categoryToastMessages.itemAdded",
-              user?.role,
-              {
-                quantity: displayQuantity,
-                unit: unit,
-                itemName: item.name || "item",
-              }
-            );
-            showSuccess(message, 1000);
+            const addResult = await handleIncreaseQuantity(itemWithCorrectId);
+            if (addResult === true) {
+              const normalizedItem = normalizeItemData(item);
+              const step = getIncrementStep(normalizedItem.measurement_unit);
+              const unit = normalizedItem.measurement_unit === 1 ? "kg" : "";
+              // const isFirstAdd = !item.cartQuantity || item.cartQuantity === 0;
+              const displayQuantity =  step;
+              const message = getLabel(
+                "categoryToastMessages.itemAdded",
+                user?.role,
+                {
+                  quantity: displayQuantity,
+                  unit: unit,
+                  itemName: item.name || "item",
+                }
+              );
+              showSuccess(message, 1000);
+            } else if (addResult === false) {
+              // Show maxStock toast if add was blocked
+              const maxMsg = `You cannot add more. Only ${item.quantity} in stock.`;
+              showError(maxMsg);
+            }
           } catch (err) {
             console.error("[CategoryDetails] Error increasing quantity:", err);
             const message = getLabel(
@@ -165,7 +190,6 @@ const CategoryDetails = () => {
         }}
         onDecrease={async () => {
           if (itemPendingAction) return;
-
           const timeoutId = setTimeout(() => {
             setPendingOperations((prev) => {
               const newState = { ...prev };
@@ -173,7 +197,6 @@ const CategoryDetails = () => {
               return newState;
             });
           }, 1000);
-
           try {
             setPendingOperations((prev) => ({
               ...prev,
@@ -224,7 +247,13 @@ const CategoryDetails = () => {
         }}
         onFastIncrease={async () => {
           if (itemPendingAction) return;
-
+          // Prevent fast-increase if it would exceed stock
+          const fastStep = 5;
+          if (!canAddToCart(item, item.cartQuantity, fastStep)) {
+            const maxMsg = `You cannot add more. Only ${item.quantity} in stock.`;
+            showError(maxMsg);
+            return;
+          }
           const timeoutId = setTimeout(() => {
             setPendingOperations((prev) => {
               const newState = { ...prev };
@@ -232,21 +261,19 @@ const CategoryDetails = () => {
               return newState;
             });
           }, 1000);
-
           try {
             setPendingOperations((prev) => ({
               ...prev,
               [item.categoryId]: "fastIncrease",
             }));
             await handleFastIncreaseQuantity(item);
-
             const normalizedItem = normalizeItemData(item);
             const unit = normalizedItem.measurement_unit === 1 ? "kg" : "";
             const message = getLabel(
               "categoryToastMessages.itemAdded",
               user?.role,
               {
-                quantity: "5",
+                quantity: fastStep,
                 unit: unit,
                 itemName: item.name || "items",
               }
@@ -414,6 +441,8 @@ const CategoryDetails = () => {
             ]}
             ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
             extraData={cartItems}
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
           />
         )}
       </Animated.View>

@@ -1,6 +1,7 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  FlatList,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,6 +15,7 @@ import { spacing } from "../../styles";
 import { getCartKey, getIncrementStep, normalizeItemData } from "../../utils/cartUtils";
 import { getLabel } from "../../utils/roleLabels";
 import { scaleSize } from '../../utils/scale';
+import { isMaxStockReached, isOutOfStock } from '../../utils/stockUtils';
 import { CategoryCard } from "../cards";
 import { ItemCard } from "../category";
 import { FadeInView } from "../common";
@@ -24,6 +26,16 @@ const CategoriesGrid = ({
   onFilteredCountChange,
   showItemsMode = false,
 }) => {
+  const [refreshing, setRefreshing] = useState(false);
+  const { refetch } = require('../../hooks/useAPI').useAllItems();
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setRefreshing(false);
+    }
+  };
   const { user } = useAuth();
   const { categories, loading, error } = useCategories();
   const {
@@ -50,10 +62,11 @@ const CategoriesGrid = ({
               category: category
             });
             const itemKey = getCartKey(normalizedItem);
-            const quantity = cartItems[itemKey] || 0;
+            // DO NOT overwrite normalizedItem.quantity (stock from API)
+            const cartQuantity = cartItems[itemKey] || 0;
             return {
               ...normalizedItem,
-              quantity,
+              cartQuantity,
               category: category,
             };
           }) || []
@@ -87,15 +100,16 @@ const CategoriesGrid = ({
         [itemKey]: operation,
       }));
 
+      let increaseResult;
       switch (operation) {
         case 'increase':
-          await handleIncreaseQuantity(item);
+          increaseResult = await handleIncreaseQuantity(item, showError);
           break;
         case 'decrease':
           await handleDecreaseQuantity(item);
           break;
         case 'fastIncrease':
-          await handleFastIncreaseQuantity(item);
+          increaseResult = await handleFastIncreaseQuantity(item, showError);
           break;
         case 'fastDecrease':
           await handleFastDecreaseQuantity(item);
@@ -107,12 +121,21 @@ const CategoriesGrid = ({
       const normalizedItem = normalizeItemData(item);
       const step = operation.includes('fast') ? 5 : getIncrementStep(normalizedItem.measurement_unit);
       const unit = normalizedItem.measurement_unit === 1 ? "kg" : "";
-      
+
       if (operation.includes('increase')) {
-        showSuccess(
-          `Added ${step}${unit} ${item.name || "item"} ${getLabel('addToPickup', user?.role)}`,
-          2500
-        );
+        // Only show success toast if add actually happened
+        if (operation === 'increase' || operation === 'fastIncrease') {
+          if (increaseResult === true) {
+            showSuccess(
+              `Added ${step}${unit} ${item.name || "item"} ${getLabel('addToPickup', user?.role)}`,
+              2500
+            );
+          } else if (increaseResult === false) {
+            // Show maxStock toast if add was blocked
+            const maxMsg = `You cannot add more. Only ${item.quantity} in stock.`;
+            showError(maxMsg);
+          }
+        }
       } else {
         const remainingQuantity = item.quantity - step;
         if (remainingQuantity > 0) {
@@ -188,34 +211,75 @@ const CategoriesGrid = ({
 
   return (
     <FadeInView delay={0}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={
-          showItemsMode ? styles.itemsScrollContainer : styles.scrollContainer
-        }
-      >
-        {showItemsMode ? (
-          <View style={styles.itemsList}>
-            {filteredItems.map((item, index) => {
-              const itemKey = getCartKey(item);
-              const itemPendingAction = pendingOperations[itemKey];
-              return (
-                <ItemCard
-                  key={itemKey || `${item.name}-${index}`}
-                  item={item}
-                  quantity={item.quantity}
-                  index={index}
-                  disabled={!!itemPendingAction}
-                  pendingAction={itemPendingAction}
-                  onIncrease={() => handleCartOperation(item, 'increase')}
-                  onDecrease={() => handleCartOperation(item, 'decrease')}
-                  onFastIncrease={() => handleCartOperation(item, 'fastIncrease')}
-                  onFastDecrease={() => handleCartOperation(item, 'fastDecrease')}
-                />
-              );
-            })}
-          </View>
-        ) : (
+      {showItemsMode ? (
+        <FlatList
+          style={styles.itemsScrollContainer}
+          data={filteredItems}
+          keyExtractor={(item) => getCartKey(item) || `${item.name}`}
+          renderItem={({ item, index }) => {
+            const itemKey = getCartKey(item);
+            const itemPendingAction = pendingOperations[itemKey];
+            const cartQuantity = cartItems[itemKey] || 0;
+            const maxReached = isMaxStockReached(item, cartQuantity);
+            const outOfStock = isOutOfStock(item);
+            return (
+              <ItemCard
+                key={itemKey || `${item.name}-${index}`}
+                item={item}
+                quantity={cartQuantity}
+                index={index}
+                disabled={!!itemPendingAction}
+                pendingAction={itemPendingAction}
+                maxReached={maxReached}
+                outOfStock={outOfStock}
+                onIncrease={async () => {
+                  if (itemPendingAction || outOfStock) {
+                    if (outOfStock) {
+                      showError('This item is out of stock.');
+                    }
+                    return;
+                  }
+                  // Block add if stock is less than minimum required (0.25 for kg, 1 for pieces)
+                  const isKg = item.measurement_unit === 1;
+                  const minStockRequired = isKg ? 0.25 : 1;
+                  if (typeof item.quantity === 'number' && item.quantity < minStockRequired) {
+                    showError('Not enough quantity in stock to add this item.');
+                    return;
+                  }
+                  await handleCartOperation(item, 'increase');
+                }}
+                onDecrease={() => handleCartOperation(item, 'decrease')}
+                onFastIncrease={async () => {
+                  const fastStep = 5;
+                  const isKg = item.measurement_unit === 1;
+                  // Block add if stock is less than minimum required (0.25 for kg, 1 for pieces)
+                  const minStockRequired = isKg ? 0.25 : 1;
+                  if (typeof item.quantity === 'number' && item.quantity < minStockRequired) {
+                    showError('Not enough quantity in stock to add this item.');
+                    return;
+                  }
+                  const remainingStockFast = item.quantity - cartQuantity;
+                  if (remainingStockFast < fastStep || cartQuantity + fastStep > item.quantity) {
+                    const maxMsg = `You cannot add more. Only ${item.quantity} in stock.`;
+                    showError(maxMsg);
+                    return;
+                  }
+                  await handleCartOperation(item, 'fastIncrease');
+                }}
+                onFastDecrease={() => handleCartOperation(item, 'fastDecrease')}
+              />
+            );
+          }}
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          contentContainerStyle={styles.itemsList}
+          showsVerticalScrollIndicator={false}
+        />
+      ) : (
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContainer}
+        >
           <View style={styles.categoriesGrid}>
             {filteredCategories.map((category, index) => (
               <CategoryCard
@@ -226,8 +290,8 @@ const CategoriesGrid = ({
               />
             ))}
           </View>
-        )}
-      </ScrollView>
+        </ScrollView>
+      )}
     </FadeInView>
   );
 };
@@ -238,7 +302,6 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   itemsScrollContainer: {
-    paddingBottom: scaleSize(5),
     paddingHorizontal: scaleSize(spacing.sm),
     backgroundColor: "transparent",
   },
@@ -258,10 +321,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: scaleSize(18),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: scaleSize(2) },
+    shadowOffset: { width: 0, height: scaleSize(3) },
     shadowOpacity: 0.10,
-    shadowRadius: scaleSize(16),
-    elevation: 8,
+    shadowRadius: scaleSize(30),
+    elevation: 50,
   },
   loadingContainer: {
     flex: 1,

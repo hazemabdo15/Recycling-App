@@ -98,7 +98,7 @@ export default function AIResultsModal() {
         });
 
         if (measurementUnit !== undefined) {
-          const minQuantity = 1;
+          const minQuantity = measurementUnit === 1 ? 0.25 : 1; // Use 0.25 for kg items, 1 for pieces
           
           console.log(`[AI Results Modal] Min quantity for measurement_unit ${measurementUnit}:`, minQuantity);
           
@@ -168,7 +168,7 @@ export default function AIResultsModal() {
 
         const measurementUnit = item.databaseItem?.measurement_unit;
         const step = measurementUnit === 1 ? 0.25 : 1;
-        const minValue = 1;
+        const minValue = measurementUnit === 1 ? 0.25 : 1; // Use 0.25 for kg items, 1 for pieces
         const newQuantity = Math.max(minValue, item.quantity + (delta * step));
         return { ...item, quantity: newQuantity };
       }

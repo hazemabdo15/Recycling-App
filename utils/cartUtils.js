@@ -8,8 +8,8 @@ export const getIncrementStep = (measurementUnit) => {
 };
 
 export const getMinimumQuantity = (measurementUnit) => {
-
-    return 1;
+    // Return 0.25 for kg items, 1 for pieces
+    return measurementUnit === 1 ? 0.25 : 1;
 };
 
 export const validateQuantity = (item) => {
@@ -25,13 +25,13 @@ export const validateQuantity = (item) => {
     }
     
     if (measurementUnit === 1) {
-
-        if (quantity < 1) {
-            throw new Error("For KG items, minimum quantity is 1.");
+        // For KG items, minimum quantity is 0.25
+        if (quantity < 0.25) {
+            throw new Error("For KG items, minimum quantity is 0.25.");
         }
-
-        if (quantity > 1 && quantity % 0.25 !== 0) {
-            throw new Error("For KG items, quantity must be in 0.25 increments (e.g., 1.0, 1.25, 1.5, 1.75, 2.0).");
+        // Check if quantity is in 0.25 increments
+        if (quantity % 0.25 !== 0) {
+            throw new Error("For KG items, quantity must be in 0.25 increments (e.g., 0.25, 0.5, 0.75, 1.0, 1.25).");
         }
     } else if (measurementUnit === 2) {
 

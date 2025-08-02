@@ -15,7 +15,9 @@ const QuantityControls = ({
     onDecrease,
     onFastIncrease,
     onFastDecrease,
-    disableDecrease = false
+    disableDecrease = false,
+    maxReached = false,
+    outOfStock = false
 }) => {
     const displayQuantity = formatQuantityDisplay(quantity, measurementUnit);
     return (
@@ -94,8 +96,10 @@ const QuantityControls = ({
                     style={[
                         quantityControlsStyles.quantityButton,
                         { width: scale(32), height: scale(32), borderRadius: scale(16) },
+                        (maxReached || outOfStock) && { opacity: 0.5 },
                     ]}
-                    onPress={onIncrease}
+                    onPress={maxReached || outOfStock ? undefined : onIncrease}
+                    disabled={maxReached || outOfStock}
                 >
                     <MaterialCommunityIcons
                         name="plus"
@@ -109,8 +113,10 @@ const QuantityControls = ({
                     quantityControlsStyles.fastButton,
                     quantityControlsStyles.fastButtonIncrease,
                     { width: scale(44), height: scale(44), borderRadius: scale(18) },
+                    (maxReached || outOfStock) && { opacity: 0.5 },
                 ]}
-                onPress={onFastIncrease}
+                onPress={maxReached || outOfStock ? undefined : onFastIncrease}
+                disabled={maxReached || outOfStock}
             >
                 <View style={quantityControlsStyles.fastButtonContent}>
                     <MaterialCommunityIcons

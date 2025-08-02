@@ -1,6 +1,7 @@
 ﻿import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router } from 'expo-router';
+import { showGlobalToast } from '../../components/common/GlobalToast';
 import { API_CONFIG, BASE_URLS } from './config';
-
 let notifyTokenExpired = null;
 
 const getNotifyTokenExpired = () => {
@@ -8,9 +9,7 @@ const getNotifyTokenExpired = () => {
     try {
       const authContextModule = require('../../context/AuthContext');
       notifyTokenExpired = authContextModule.notifyTokenExpired;
-    } catch (error) {
-
-    }
+    } catch (_error) {}
   }
   return notifyTokenExpired;
 };
@@ -35,11 +34,11 @@ class OptimizedAPIService {
   async initialize() {
     if (this.isInitialized) return;
     
-    try {
+        try {
       this.accessToken = await AsyncStorage.getItem('accessToken');
       this.isInitialized = true;
-    } catch (error) {
-      console.error('API Service initialization failed:', error);
+    } catch (_error) {
+            // console.error('API Service initialization failed:', _error);
     }
   }
 
@@ -167,10 +166,10 @@ class OptimizedAPIService {
         await this.clearTokens();
         return null;
       }
-    } catch (error) {
-      this.processQueue(error, null);
-      await this.clearTokens();
-      return null;
+        } catch (_error) {
+            this.processQueue(_error, null);
+            await this.clearTokens();
+            return null;
     } finally {
       this.isRefreshing = false;
     }
@@ -247,6 +246,15 @@ class OptimizedAPIService {
             headers
           });
         } else {
+          // Show toast and redirect to login
+          showGlobalToast('Session expired, please log in again.');
+          if (getNotifyTokenExpired()) getNotifyTokenExpired()();
+          // Use expo-router to redirect
+          setTimeout(() => {
+            try {
+              router.replace('/login');
+            } catch (_e) {}
+          }, 1000);
           throw new Error('Session expired');
         }
       }
@@ -275,12 +283,19 @@ class OptimizedAPIService {
         if (error.message && error.message.includes('Category with ID') && error.message.includes('not found')) {
           console.log(`[API] ${endpoint}: Known category validation error detected - error handled by enhanced verification system`);
         } else {
-          console.error(`[API] ${endpoint}:`, error.message);
+                    console.error(`[API] ${endpoint}:`, error.message);
         }
       }
 
       if (error.message === 'Session expired' || error.status === 401) {
         await this.clearTokens();
+        showGlobalToast('Session expired, please log in again.');
+        if (getNotifyTokenExpired()) getNotifyTokenExpired()();
+        setTimeout(() => {
+          try {
+            router.replace('/login');
+          } catch (_e) {}
+        }, 1000);
       }
       
       throw error;
@@ -335,8 +350,8 @@ class OptimizedAPIService {
       try {
         const newToken = await this.refreshToken();
         return !!newToken;
-      } catch (error) {
-        return false;
+            } catch (_error) {
+                return false;
       }
     }
     
@@ -358,8 +373,8 @@ class OptimizedAPIService {
       const REFRESH_THRESHOLD = 5 * 60 * 1000;
       
       return timeUntilExpiry <= REFRESH_THRESHOLD && timeUntilExpiry > 0;
-    } catch (error) {
-      return false;
+         } catch (_error) {
+             return false;
     }
   }
 
@@ -368,8 +383,8 @@ class OptimizedAPIService {
       try {
         await this.refreshToken();
         return true;
-      } catch (error) {
-        return false;
+             } catch (_error) {
+                 return false;
       }
     }
     return true;

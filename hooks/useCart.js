@@ -21,38 +21,43 @@ export const useCart = () => {
     removingItems,
   } = useCartContext();
 
-  const handleIncreaseQuantity = async (item) => {
-
+  const handleIncreaseQuantity = async (item, showError) => {
     const needsNormalization = !item._id || !item.categoryId || !item.image || item.measurement_unit === undefined;
     const processedItem = needsNormalization ? normalizeItemData(item) : item;
-    const { _id, measurement_unit } = processedItem;
-
+    const { _id, measurement_unit, quantity: stockQuantity } = processedItem;
     const currentQuantity = getItemQuantity(_id);
     let newQuantity;
-    
     if (currentQuantity === 0) {
-      newQuantity = 1;
+      // Special case: for kg items, if stock < 0.25, block addition; for pieces, if stock < 1
+      const minStockRequired = measurement_unit === 1 ? 0.25 : 1;
+      if ((typeof stockQuantity === 'number') && stockQuantity < minStockRequired) {
+        if (typeof showError === 'function') {
+          showError('Not enough quantity in stock to add this item.');
+        }
+        return false;
+      }
+      // Use proper step increment for first addition - 0.25 for kg items, 1 for pieces
+      const step = getIncrementStep(measurement_unit);
+      newQuantity = step;
     } else {
       const step = getIncrementStep(measurement_unit);
       newQuantity = calculateQuantity(currentQuantity, step, 'add');
     }
-    
     try {
       if (currentQuantity === 0) {
-
-        const cartItem = createCartItem(processedItem, 1);
+        const cartItem = createCartItem(processedItem, newQuantity);
         await handleAddSingleItem(cartItem);
       } else {
-
         const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit);
-
         if (result && !result.success && result.reason === 'Operation already pending') {
           console.log('⏸️ [useCart] Update skipped - operation already pending');
           return;
         }
       }
+      return true;
     } catch (error) {
       console.error('[useCart] handleIncreaseQuantity error:', error);
+      return false;
     }
   };
 
@@ -65,14 +70,17 @@ export const useCart = () => {
     const currentQuantity = getItemQuantity(_id);
     let newQuantity;
     
-    if (currentQuantity <= 1) {
+    const step = getIncrementStep(measurement_unit);
+    const minQuantity = step; // 0.25 for kg items, 1 for pieces
+    
+    if (currentQuantity <= minQuantity) {
       newQuantity = 0;
     } else {
-      const step = getIncrementStep(measurement_unit);
       newQuantity = calculateQuantity(currentQuantity, step, 'subtract');
 
-      if (newQuantity < 1) {
-        newQuantity = 1;
+      // Ensure we don't go below minimum quantity
+      if (newQuantity < minQuantity) {
+        newQuantity = minQuantity;
       }
     }
     
@@ -92,41 +100,44 @@ export const useCart = () => {
     }
   };
 
-  const handleFastIncreaseQuantity = async (item) => {
-
+  const handleFastIncreaseQuantity = async (item, showError) => {
     const needsNormalization = !item._id || !item.categoryId || !item.image || item.measurement_unit === undefined;
     const processedItem = needsNormalization ? normalizeItemData(item) : item;
-    const { _id, measurement_unit } = processedItem;
-
+    const { _id, measurement_unit, quantity: stockQuantity } = processedItem;
     const currentQuantity = getItemQuantity(_id);
     let newQuantity;
-    
     if (currentQuantity === 0) {
+      // Block add for kg items with stock < 0.25, for pieces with stock < 1
+      const minStockRequired = measurement_unit === 1 ? 0.25 : 1;
+      if ((typeof stockQuantity === 'number') && stockQuantity < minStockRequired) {
+        if (typeof showError === 'function') {
+          showError('Not enough quantity in stock to add this item.');
+        }
+        return false;
+      }
       newQuantity = 5;
     } else {
       newQuantity = currentQuantity + 5;
     }
-    
     try {
       if (currentQuantity === 0) {
         let formattedQuantity = newQuantity;
-        
         if (measurement_unit === 1) {
           formattedQuantity = parseFloat(newQuantity.toFixed(2));
         }
-
         const cartItem = createCartItem(processedItem, formattedQuantity);
         await handleAddSingleItem(cartItem);
       } else {
         const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit);
-        
         if (result && !result.success && result.reason === 'Operation already pending') {
           console.log('⏸️ [useCart] Fast update skipped - operation already pending');
           return;
         }
       }
+      return true;
     } catch (error) {
       console.error('[useCart] handleFastIncreaseQuantity error:', error);
+      return false;
     }
   };
 
@@ -139,7 +150,9 @@ export const useCart = () => {
     const currentQuantity = getItemQuantity(_id);
     let newQuantity = currentQuantity - 5;
 
-    if (newQuantity < 1) {
+    // Use proper minimum quantity based on measurement unit
+    const minQuantity = measurement_unit === 1 ? 0.25 : 1;
+    if (newQuantity < minQuantity) {
       newQuantity = 0;
     }
     

@@ -2,7 +2,7 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useCallback, useState } from "react";
-import { ScrollView, StatusBar, StyleSheet, Text, View } from "react-native";
+import { StatusBar, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CategoriesGrid } from "../../components/sections";
 import { SearchBar } from "../../components/ui";
@@ -81,13 +81,8 @@ const Explore = () => {
           />
         </View>
       </View>
-      <ScrollView
-        style={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingBottom: tabBarHeight,
-          marginHorizontal: spacing.lg,
-        }}
+      <View
+        style={[styles.contentContainer, { paddingBottom: tabBarHeight, marginHorizontal: spacing.lg }]}
       >
         <View style={{ marginTop: 10 }}>
           <CategoriesGrid
@@ -97,7 +92,7 @@ const Explore = () => {
             showItemsMode={showItemsMode}
           />
         </View>
-      </ScrollView>
+      </View>
     </View>
   );
 };
