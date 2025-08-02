@@ -38,22 +38,28 @@ const ReviewPhase = ({
   const { isProcessing, processPayment, shouldUsePayment } = usePayment();
 
   useEffect(() => {
-    console.log('[ReviewPhase] Using cart item details directly, no API call needed');
+    console.log(
+      "[ReviewPhase] Using cart item details directly, no API call needed"
+    );
 
     const itemsFromCart = Object.values(cartItemDetails || {});
-    
-    if (itemsFromCart.length > 0) {
 
+    if (itemsFromCart.length > 0) {
       setAllItems(itemsFromCart);
       setItemsLoaded(true);
-      console.log('[ReviewPhase] Loaded', itemsFromCart.length, 'items from cart context');
+      console.log(
+        "[ReviewPhase] Loaded",
+        itemsFromCart.length,
+        "items from cart context"
+      );
     } else {
-
       if (cartItems && Object.keys(cartItems).length > 0) {
-        console.log('[ReviewPhase] Cart items exist but details not loaded yet, waiting...');
+        console.log(
+          "[ReviewPhase] Cart items exist but details not loaded yet, waiting..."
+        );
         setItemsLoaded(false);
       } else {
-        console.log('[ReviewPhase] No cart items found');
+        console.log("[ReviewPhase] No cart items found");
         setAllItems([]);
         setItemsLoaded(true);
       }
@@ -64,15 +70,15 @@ const ReviewPhase = ({
     if (itemsLoaded && cartItems && allItems.length > 0) {
       const displayItems = Object.entries(cartItems).map(
         ([categoryId, quantity]) => {
+          let realItem = allItems.find((item) => item._id === categoryId);
 
-          let realItem = allItems.find(item => item._id === categoryId);
-          
           if (!realItem) {
-
-            realItem = allItems.find(item => {
+            realItem = allItems.find((item) => {
               const normalizedItem = normalizeItemData(item);
-              return normalizedItem.categoryId === categoryId ||
-                     String(normalizedItem.id) === String(categoryId);
+              return (
+                normalizedItem.categoryId === categoryId ||
+                String(normalizedItem.id) === String(categoryId)
+              );
             });
           }
 
@@ -81,43 +87,56 @@ const ReviewPhase = ({
             return {
               categoryId,
               quantity,
-              itemName: normalizedItem.name || normalizedItem.itemName || normalizedItem.categoryName || `Item ${categoryId.slice(-4)}`,
-              measurement_unit: normalizedItem.measurement_unit === 1 ? "KG" : "Piece",
+              itemName:
+                normalizedItem.name ||
+                normalizedItem.itemName ||
+                normalizedItem.categoryName ||
+                `Item ${categoryId.slice(-4)}`,
+              measurement_unit:
+                normalizedItem.measurement_unit === 1 ? "KG" : "Piece",
               points: normalizedItem.points || 10,
               price: normalizedItem.price || 5.0,
               image: normalizedItem.image,
               totalPoints: (normalizedItem.points || 10) * quantity,
               totalPrice: (normalizedItem.price || 5.0) * quantity,
-              isValidItem: true
+              isValidItem: true,
             };
           } else {
-
-            console.warn(`[ReviewPhase] Item ${categoryId} not found in catalog - may be discontinued`);
+            console.warn(
+              `[ReviewPhase] Item ${categoryId} not found in catalog - may be discontinued`
+            );
 
             let itemName = "Recycling Item";
             let measurementUnit = "KG";
 
-            const validCartItems = Object.entries(cartItems).map(([id, qty]) => {
-              const foundItem = allItems.find(item => {
-                const normalized = normalizeItemData(item);
-                return normalized.categoryId === id || String(normalized._id) === String(id);
-              });
-              return foundItem ? normalizeItemData(foundItem) : null;
-            }).filter(Boolean);
-            
+            const validCartItems = Object.entries(cartItems)
+              .map(([id, qty]) => {
+                const foundItem = allItems.find((item) => {
+                  const normalized = normalizeItemData(item);
+                  return (
+                    normalized.categoryId === id ||
+                    String(normalized._id) === String(id)
+                  );
+                });
+                return foundItem ? normalizeItemData(foundItem) : null;
+              })
+              .filter(Boolean);
+
             if (validCartItems.length > 0) {
               const sampleItem = validCartItems[0];
-              itemName = `${sampleItem.categoryName || 'Recycling'} Item`;
-              measurementUnit = sampleItem.measurement_unit === 1 ? "KG" : "Piece";
+              itemName = `${sampleItem.categoryName || "Recycling"} Item`;
+              measurementUnit =
+                sampleItem.measurement_unit === 1 ? "KG" : "Piece";
             } else if (allItems.length > 0) {
-
-              const sampleItem = allItems.find(item => item.categoryName) || allItems[0];
+              const sampleItem =
+                allItems.find((item) => item.categoryName) || allItems[0];
               if (sampleItem?.categoryName) {
                 itemName = `${sampleItem.categoryName} Item`;
-                measurementUnit = sampleItem.measurement_unit === 1 ? "KG" : "Piece";
+                measurementUnit =
+                  sampleItem.measurement_unit === 1 ? "KG" : "Piece";
               }
             }
-            
+
             return {
               categoryId,
               quantity,
@@ -128,53 +147,53 @@ const ReviewPhase = ({
               image: null,
               totalPoints: 10 * quantity,
               totalPrice: 5.0 * quantity,
-              isValidItem: false
+              isValidItem: false,
             };
           }
         }
       );
 
-      const validItems = displayItems.filter(item => item.isValidItem);
-      const invalidItems = displayItems.filter(item => !item.isValidItem);
-      
+      const validItems = displayItems.filter((item) => item.isValidItem);
+      const invalidItems = displayItems.filter((item) => !item.isValidItem);
+
       if (invalidItems.length > 0) {
-        console.warn(`[ReviewPhase] Found ${invalidItems.length} invalid/stale cart items out of ${displayItems.length} total`);
+        console.warn(
+          `[ReviewPhase] Found ${invalidItems.length} invalid/stale cart items out of ${displayItems.length} total`
+        );
       }
-      
-      console.log('[ReviewPhase] Cart summary:', {
+
+      console.log("[ReviewPhase] Cart summary:", {
         totalItems: displayItems.length,
         validItems: validItems.length,
         invalidItems: invalidItems.length,
-        itemNames: displayItems.map(item => ({ name: item.itemName, valid: item.isValidItem }))
+        itemNames: displayItems.map((item) => ({
+          name: item.itemName,
+          valid: item.isValidItem,
+        })),
       });
 
       setCartItemsDisplay(displayItems);
     }
   }, [itemsLoaded, cartItems, allItems]);
 
-  
   const handlePaymentFlow = async (cartItemsArray, userData) => {
     await processPayment({
       user,
       accessToken,
       cartItemsDisplay,
-      onSuccess: (result) => {
-
-      },
+      onSuccess: (result) => {},
       onError: (error) => {
         console.error("[ReviewPhase] Payment failed:", error.message);
       },
     });
   };
 
-  
   const handleRegularOrderFlow = (cartItemsArray, userData) => {
     if (typeof onConfirm === "function") {
       onConfirm(cartItemsArray, userData);
     }
   };
 
-  
   const handleConfirm = async () => {
     if (!cartItems || typeof cartItems !== "object") {
       console.error("[ReviewPhase] Invalid cartItems format:", cartItems);
@@ -183,34 +202,45 @@ const ReviewPhase = ({
 
     const cartItemsArray = Object.entries(cartItems).map(
       ([categoryId, quantity]) => {
+        let realItem = allItems.find((item) => item._id === categoryId);
 
-        let realItem = allItems.find(item => item._id === categoryId);
-        
         if (!realItem) {
-
-          realItem = allItems.find(item => {
+          realItem = allItems.find((item) => {
             const normalizedItem = normalizeItemData(item);
-            return normalizedItem.categoryId === categoryId ||
-                   String(normalizedItem.id) === String(categoryId);
+            return (
+              normalizedItem.categoryId === categoryId ||
+              String(normalizedItem.id) === String(categoryId)
+            );
           });
         }
 
         if (realItem) {
           const normalizedItem = normalizeItemData(realItem);
-          const measurementUnit = typeof normalizedItem.measurement_unit === 'string' 
-            ? (normalizedItem.measurement_unit === "KG" ? 1 : 2) 
-            : Number(normalizedItem.measurement_unit);
-            
+          const measurementUnit =
+            typeof normalizedItem.measurement_unit === "string"
+              ? normalizedItem.measurement_unit === "KG"
+                ? 1
+                : 2
+              : Number(normalizedItem.measurement_unit);
+
           return {
             _id: normalizedItem._id || normalizedItem.id || categoryId,
             categoryId: categoryId,
             quantity: quantity,
-            name: normalizedItem.name || normalizedItem.itemName || normalizedItem.categoryName || 'Unknown Item',
-            categoryName: normalizedItem.categoryName || 'Unknown Category',
+            name:
+              normalizedItem.name ||
+              normalizedItem.itemName ||
+              normalizedItem.categoryName ||
+              "Unknown Item",
+            categoryName: normalizedItem.categoryName || "Unknown Category",
             measurement_unit: measurementUnit,
             points: normalizedItem.points || 10,
             price: normalizedItem.price || 5.0,
-            image: normalizedItem.image || `${(normalizedItem.name || normalizedItem.itemName || 'item').toLowerCase().replace(/\s+/g, "-")}.png`,
+            image:
+              normalizedItem.image ||
+              `${(normalizedItem.name || normalizedItem.itemName || "item")
+                .toLowerCase()
+                .replace(/\s+/g, "-")}.png`,
           };
         } else {
           return {
@@ -218,7 +248,7 @@ const ReviewPhase = ({
             categoryId: categoryId,
             quantity: quantity,
             name: `Recycling Item`,
-            categoryName: 'Unknown Category',
+            categoryName: "Unknown Category",
             measurement_unit: 1,
             points: 10,
             price: 5.0,
@@ -228,16 +258,23 @@ const ReviewPhase = ({
       }
     );
 
-    const userData = user ? {
-      userId: user._id || user.userId,
-      phoneNumber: user.phoneNumber,
-      userName: user.name || user.userName,
-      email: user.email,
-      imageUrl: (typeof user.imageUrl === 'string' && user.imageUrl && user.imageUrl.trim())
-        || (typeof user.image === 'string' && user.image && user.image.trim())
-        || 'https://via.placeholder.com/150/0000FF/808080?text=User',
-      role: user.role,
-    } : null;
+    const userData = user
+      ? {
+          userId: user._id || user.userId,
+          phoneNumber: user.phoneNumber,
+          userName: user.name || user.userName,
+          email: user.email,
+          imageUrl:
+            (typeof user.imageUrl === "string" &&
+              user.imageUrl &&
+              user.imageUrl.trim()) ||
+            (typeof user.image === "string" &&
+              user.image &&
+              user.image.trim()) ||
+            "https://via.placeholder.com/150/0000FF/808080?text=User",
+          role: user.role,
+        }
+      : null;
 
     if (shouldUsePayment(user)) {
       await handlePaymentFlow(cartItemsArray, userData);
@@ -271,7 +308,9 @@ const ReviewPhase = ({
         ) : (
           <View style={styles.placeholderImage}>
             <MaterialCommunityIcons
-              name={item.isValidItem ? "package-variant" : "alert-circle-outline"}
+              name={
+                item.isValidItem ? "package-variant" : "alert-circle-outline"
+              }
               size={24}
               color={item.isValidItem ? colors.base300 : colors.warning}
             />
@@ -283,7 +322,11 @@ const ReviewPhase = ({
             <Text style={styles.itemName}>{item.itemName}</Text>
             {!item.isValidItem && (
               <View style={styles.warningBadge}>
-                <MaterialCommunityIcons name="alert" size={12} color={colors.warning} />
+                <MaterialCommunityIcons
+                  name="alert"
+                  size={12}
+                  color={colors.warning}
+                />
                 <Text style={styles.warningText}>Unavailable</Text>
               </View>
             )}
@@ -317,7 +360,13 @@ const ReviewPhase = ({
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
           <View style={{ flex: 1 }}>
             <Text style={styles.title}>Review Your Order</Text>
             <Text style={styles.subtitle}>
@@ -342,18 +391,25 @@ const ReviewPhase = ({
         </View>
       ) : (
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {cartItemsDisplay.filter(item => !item.isValidItem).length > 0 && (
+          {cartItemsDisplay.filter((item) => !item.isValidItem).length > 0 && (
             <View style={styles.warningBanner}>
-              <MaterialCommunityIcons name="alert-circle" size={20} color={colors.warning} />
+              <MaterialCommunityIcons
+                name="alert-circle"
+                size={20}
+                color={colors.warning}
+              />
               <View style={styles.warningBannerText}>
-                <Text style={styles.warningBannerTitle}>Some items may be unavailable</Text>
+                <Text style={styles.warningBannerTitle}>
+                  Some items may be unavailable
+                </Text>
                 <Text style={styles.warningBannerSubtitle}>
-                  These items might have been removed from the catalog. You can still proceed with your order.
+                  These items might have been removed from the catalog. You can
+                  still proceed with your order.
                 </Text>
               </View>
             </View>
           )}
-          
+
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <MaterialCommunityIcons
@@ -421,24 +477,31 @@ const ReviewPhase = ({
 
         <AnimatedButton
           style={[
-            styles.confirmButton, 
-            (!itemsLoaded || isProcessing) && styles.disabledButton
+            styles.confirmButton,
+            (!itemsLoaded || isProcessing) && styles.disabledButton,
           ]}
           onPress={handleConfirm}
           disabled={!itemsLoaded || isProcessing}
         >
           {isProcessing ? (
-            <MaterialCommunityIcons name="loading" size={20} color={colors.white} />
+            <MaterialCommunityIcons
+              name="loading"
+              size={20}
+              color={colors.white}
+            />
           ) : (
-            <MaterialCommunityIcons name="check" size={20} color={colors.white} />
+            <MaterialCommunityIcons
+              name="check"
+              size={20}
+              color={colors.white}
+            />
           )}
           <Text style={styles.confirmButtonText}>
-            {isProcessing 
-              ? 'Processing...' 
-              : user?.role === 'buyer' 
-                ? 'Pay & Confirm Order' 
-                : 'Confirm Order'
-            }
+            {isProcessing
+              ? "Processing..."
+              : user?.role === "buyer"
+              ? "Pay & Confirm Order"
+              : "Confirm Order"}
           </Text>
         </AnimatedButton>
       </View>

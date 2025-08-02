@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 
 import { useAuth } from '../../context/AuthContext';
+import { useCart } from '../../hooks/useCart';
 import { borderRadius, spacing, typography } from '../../styles';
 import { colors } from '../../styles/theme';
 import { getLabel, isBuyer } from '../../utils/roleLabels';
@@ -18,6 +19,7 @@ import { AnimatedButton } from '../common';
 
 const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
   const { user } = useAuth();
+  const { handleClearCart } = useCart();
   const [copied, setCopied] = useState(false);
   const rotateValue = useRef(new Animated.Value(0)).current;
 
@@ -60,8 +62,13 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
     }
   };
 
-  const handleDone = () => {
-
+  const handleDone = async () => {
+    try {
+      await handleClearCart();
+      console.log('[ConfirmationPhase] Cart cleared locally after confirmation');
+    } catch (err) {
+      console.warn('[ConfirmationPhase] Failed to clear cart locally:', err);
+    }
     if (onFinish && typeof onFinish === 'function') {
       onFinish();
     } else if (onNewRequest && typeof onNewRequest === 'function') {
