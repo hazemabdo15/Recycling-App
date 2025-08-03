@@ -8,6 +8,7 @@ import {
   StatusBar,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -17,6 +18,7 @@ import {
   AnimatedListItem,
   Loader,
 } from "../../components/common";
+import { showGlobalToast } from "../../components/common/GlobalToast";
 import { useAuth } from "../../context/AuthContext";
 import { useAllItems } from "../../hooks/useAPI";
 import { useCart } from "../../hooks/useCart";
@@ -70,11 +72,13 @@ const Cart = () => {
     handleDecreaseQuantity,
     handleRemoveFromCart,
     handleClearCart,
+    handleSetQuantity,
     removingItems,
   } = useCart();
   const { items: allItems, loading: itemsLoading } = useAllItems();
   const [loading, setLoading] = useState(true);
   const [showEmptyState, setShowEmptyState] = useState(false);
+  const [inputValues, setInputValues] = useState({});
 
   useEffect(() => {
     if (!itemsLoading) {
@@ -141,13 +145,40 @@ const Cart = () => {
 
   const handleIncrease = async (item) => {
     try {
+      // Get the actual stock quantity from the original item data
+      const originalItem = safeAllItems.find(
+        (originalItem) => originalItem._id === item._id || originalItem.categoryId === item.categoryId
+      );
+      
+      const actualStockQuantity = originalItem?.quantity || originalItem?.available_quantity || originalItem?.stock_quantity || originalItem?.quantity_available;
+      const measurementUnit = item.measurement_unit || (item.unit === "KG" ? 1 : 2);
+      const incrementStep = measurementUnit === 1 ? 0.25 : 1;
+      const newQuantity = item.quantity + incrementStep;
+      
+      // Stock validation - check against actual stock quantity
+      if (actualStockQuantity !== undefined && newQuantity > actualStockQuantity) {
+        const unitText = item.unit || (measurementUnit === 1 ? "KG" : "Pieces");
+        setTimeout(() => {
+          showGlobalToast(`Cannot add more. Only ${actualStockQuantity} ${unitText} available in stock`, 4000, 'error');
+        }, 0);
+        return;
+      }
+
       const itemWithCorrectId = {
         ...item,
         _id: getCartKey(item),
       };
       await handleIncreaseQuantity(itemWithCorrectId);
+      
+      // Clear input value to sync with new cart quantity
+      const itemKey = getCartKey(item);
+      setInputValue(itemKey, "");
+      
     } catch (err) {
       console.error("[Cart] Error increasing quantity:", err);
+      setTimeout(() => {
+        showGlobalToast("Failed to increase quantity", 3000, 'error');
+      }, 0);
     }
   };
 
@@ -158,8 +189,17 @@ const Cart = () => {
         _id: getCartKey(item),
       };
       await handleDecreaseQuantity(itemWithCorrectId);
+      
+      // Clear input value to sync with new cart quantity
+      const itemKey = getCartKey(item);
+      setInputValue(itemKey, "");
+      
+      // No toast for normal decrease operation
     } catch (err) {
       console.error("[Cart] Error decreasing quantity:", err);
+      setTimeout(() => {
+        showGlobalToast("Failed to decrease quantity", 3000, 'error');
+      }, 0);
     }
   };
 
@@ -167,17 +207,134 @@ const Cart = () => {
     try {
       const itemId = getCartKey(item);
       await handleRemoveFromCart(itemId);
+      setTimeout(() => {
+        showGlobalToast("Item removed from cart", 2500, 'info');
+      }, 0);
     } catch (err) {
       console.error("[Cart] Error removing item:", err);
+      setTimeout(() => {
+        showGlobalToast("Failed to remove item", 3000, 'error');
+      }, 0);
     }
   };
 
   const handleClearAll = async () => {
     try {
       await handleClearCart();
+      // No toast for clear cart action - not a manual input
     } catch (err) {
       console.error("[Cart] Error clearing cart:", err);
+      setTimeout(() => {
+        showGlobalToast("Failed to clear cart", 3000, 'error');
+      }, 0);
     }
+  };
+
+  const handleManualInput = async (item, inputValue) => {
+    try {
+      const measurementUnit = item.measurement_unit || (item.unit === "KG" ? 1 : 2);
+      let parsedValue = parseFloat(inputValue);
+
+      // Handle zero quantity - remove item from cart
+      if (parsedValue === 0) {
+        const itemId = getCartKey(item);
+        await handleRemoveFromCart(itemId);
+        // Use setTimeout to avoid render cycle conflicts
+        setTimeout(() => {
+          showGlobalToast("Item removed from cart", 2500, 'info');
+        }, 0);
+        return true;
+      }
+
+      // Validation and smart rounding based on measurement unit
+      if (measurementUnit === 1) {
+        // KG - smart rounding to nearest multiple of 0.25
+        if (parsedValue <= 0) {
+          setTimeout(() => {
+            showGlobalToast("Please enter a valid quantity (minimum 0.25 KG)", 4000, 'error');
+          }, 0);
+          return false;
+        }
+        
+        // Smart rounding logic for KG
+        const originalValue = parsedValue;
+        parsedValue = Math.floor(parsedValue / 0.25) * 0.25;
+        const diff = parsedValue + 0.25 - originalValue;
+        if (diff <= 0.125) parsedValue += 0.25;
+        parsedValue = Math.round(parsedValue * 100) / 100;
+        
+        // Minimum quantity check after rounding
+        if (parsedValue < 0.25) {
+          parsedValue = 0.25;
+        }
+      } else {
+        // Pieces - smart rounding to nearest whole number
+        if (parsedValue <= 0) {
+          setTimeout(() => {
+            showGlobalToast("Please enter a valid quantity (minimum 1 piece)", 4000, 'error');
+          }, 0);
+          return false;
+        }
+        
+        // Smart rounding for pieces
+        parsedValue = Math.round(parsedValue);
+        
+        // Minimum quantity check after rounding
+        if (parsedValue < 1) {
+          parsedValue = 1;
+        }
+      }
+
+      // Get the actual stock quantity from the original item data (not cart quantity)
+      const originalItem = safeAllItems.find(
+        (originalItem) => originalItem._id === item._id || originalItem.categoryId === item.categoryId
+      );
+      
+      const actualStockQuantity = originalItem?.quantity || originalItem?.available_quantity || originalItem?.stock_quantity || originalItem?.quantity_available;
+      
+      // Stock validation - check against actual stock quantity
+      if (actualStockQuantity !== undefined && parsedValue > actualStockQuantity) {
+        const unitText = item.unit || (measurementUnit === 1 ? "KG" : "Pieces");
+        setTimeout(() => {
+          showGlobalToast(`Only ${actualStockQuantity} ${unitText} available in stock`, 4000, 'error');
+        }, 0);
+        return false;
+      }
+
+      const itemWithCorrectId = {
+        ...item,
+        _id: getCartKey(item),
+      };
+
+      await handleSetQuantity(itemWithCorrectId, parsedValue);
+      
+      // Show consolidated success message
+      const unitText = item.unit || (measurementUnit === 1 ? "KG" : "pieces");
+      setTimeout(() => {
+        showGlobalToast(`Quantity updated to ${parsedValue} ${unitText}`, 2500, 'success');
+      }, 0);
+      return true;
+    } catch (err) {
+      console.error("[Cart] Error setting manual quantity:", err);
+      setTimeout(() => {
+        showGlobalToast("Failed to update quantity", 3000, 'error');
+      }, 0);
+      return false;
+    }
+  };
+
+  const getInputValue = (itemKey, defaultValue) => {
+    // Always show the actual cart quantity unless user is actively editing
+    return inputValues[itemKey] !== undefined && inputValues[itemKey] !== "" 
+      ? inputValues[itemKey] 
+      : String(defaultValue);
+  };
+
+  const setInputValue = (itemKey, value) => {
+    setInputValues(prev => ({
+      ...prev,
+      [itemKey]: value
+    }));
   };
 
   const renderCartItem = ({ item, index }) => {
@@ -282,7 +439,38 @@ const Cart = () => {
                       color={colors.primary}
                     />
                   </TouchableOpacity>
-                  <Text style={styles.cartQtyText}>{quantity}</Text>
+                  <TextInput
+                    style={styles.cartQtyText}
+                    value={getInputValue(getCartKey(item), quantity)}
+                    onChangeText={(text) => setInputValue(getCartKey(item), text)}
+                    onEndEditing={(e) => {
+                      const inputValue = e.nativeEvent.text.trim();
+                      const itemKey = getCartKey(item);
+                      
+                      if (inputValue === "" || inputValue === String(quantity)) {
+                        // Clear input value to show actual cart quantity
+                        setInputValue(itemKey, "");
+                        return;
+                      }
+                      
+                      // Use requestAnimationFrame to avoid render cycle conflicts
+                      requestAnimationFrame(() => {
+                        handleManualInput(item, inputValue).then((success) => {
+                          if (success) {
+                            // Clear input value so it shows the updated cart quantity
+                            setInputValue(itemKey, "");
+                          } else {
+                            // Revert immediately on failure
+                            setInputValue(itemKey, "");
+                          }
+                        });
+                      });
+                    }}
+                    keyboardType="numeric"
+                    selectTextOnFocus
+                    textAlign="center"
+                    maxLength={6}
+                  />
                   <TouchableOpacity
                     style={styles.cartQtyBtn}
                     onPress={() => handleIncrease(item)}

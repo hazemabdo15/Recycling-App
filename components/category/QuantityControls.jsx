@@ -16,7 +16,6 @@ const QuantityControls = ({
     onDecrease,
     onFastIncrease,
     onFastDecrease,
-    onManualInput, // not used anymore
     disableDecrease = false,
     maxReached = false,
     outOfStock = false,
@@ -26,6 +25,7 @@ const QuantityControls = ({
     const [inputValue, setInputValue] = React.useState(quantity?.toString() || '');
     const inputRef = useRef(null);
     const lastValidValue = useRef(quantity?.toString() || '');
+    
     React.useEffect(() => {
         // Always sync input and last valid value to prop, including zero
         setInputValue((quantity === 0 ? '0' : quantity?.toString()) || '');
@@ -44,39 +44,76 @@ const QuantityControls = ({
         // Allow zero for removal
         if (val === '' || val === '0' || val === 0) {
             if (onQuantityInput) onQuantityInput(0);
+            showGlobalToast('Item removed from cart', 2000, 'info');
             return;
         }
+        
         if (measurementUnit === 1) { // kg
             let num = parseFloat(val);
             if (isNaN(num) || num < 0.25) {
                 showGlobalToast('Please enter a valid quantity (minimum 0.25 kg)', 2000, 'error');
-                setTimeout(() => setInputValue(lastValidValue.current), 0);
+                // Instant reversion - no setTimeout delay
+                setInputValue(lastValidValue.current);
                 return;
             }
+            
+            // Smart rounding logic
+            const originalNum = num;
             num = Math.floor(num / 0.25) * 0.25;
             const diff = num + 0.25 - parseFloat(val);
             if (diff <= 0.125) num += 0.25;
             num = Math.round(num * 100) / 100;
+            
+            // Stock validation
             if (typeof maxQuantity === 'number' && num > maxQuantity) {
                 showGlobalToast(`Not enough stock. Only ${maxQuantity} kg available.`, 2000, 'error');
-                setTimeout(() => setInputValue(lastValidValue.current), 0);
+                // Instant reversion - no setTimeout delay
+                setInputValue(lastValidValue.current);
                 return;
             }
+            
             if (onQuantityInput) onQuantityInput(num);
-        } else {
+            
+            // Show ONE consolidated message based on what happened
+            if (Math.abs(originalNum - num) > 0.01) {
+                // Show rounding + success in one message
+                showGlobalToast(`Rounded to ${num} kg and added to cart`, 2500, 'success');
+            } else {
+                // Show simple success message
+                showGlobalToast(`Added ${num} kg to the cart`, 2000, 'success');
+            }
+            
+        } else { // pieces
             let num = parseFloat(val);
             if (isNaN(num) || num < 1) {
                 showGlobalToast('Please enter a valid quantity (minimum 1 piece)', 2000, 'error');
-                setTimeout(() => setInputValue(lastValidValue.current), 0);
+                // Instant reversion - no setTimeout delay
+                setInputValue(lastValidValue.current);
                 return;
             }
+            
+            // Smart rounding for pieces (always whole numbers)
+            const originalNum = num;
             num = Math.round(num);
+            
+            // Stock validation
             if (typeof maxQuantity === 'number' && num > maxQuantity) {
                 showGlobalToast(`Not enough stock. Only ${maxQuantity} pieces available.`, 2000, 'error');
-                setTimeout(() => setInputValue(lastValidValue.current), 0);
+                // Instant reversion - no setTimeout delay
+                setInputValue(lastValidValue.current);
                 return;
             }
+            
             if (onQuantityInput) onQuantityInput(num);
+            
+            // Show ONE consolidated message based on what happened
+            if (Math.abs(originalNum - num) > 0.01) {
+                // Show rounding + success in one message
+                showGlobalToast(`Rounded to ${num} pieces and added to cart`, 2500, 'success');
+            } else {
+                // Show simple success message
+                showGlobalToast(`Added ${num} pieces to the cart`, 2000, 'success');
+            }
         }
     };
 
