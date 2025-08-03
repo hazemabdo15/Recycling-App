@@ -18,12 +18,12 @@ import {
   AnimatedListItem,
   Loader,
 } from "../../components/common";
-import { showGlobalToast } from "../../components/common/GlobalToast";
 import { useAuth } from "../../context/AuthContext";
 import { useAllItems } from "../../hooks/useAPI";
 import { useCart } from "../../hooks/useCart";
 import { borderRadius, spacing, typography } from "../../styles";
 import { colors } from "../../styles/theme";
+import { CartMessageTypes, showCartMessage, showMaxStockMessage } from "../../utils/cartMessages";
 import {
   getCartKey,
   getDisplayKey,
@@ -160,10 +160,8 @@ const Cart = () => {
         
         // Stock validation - check against actual stock quantity
         if (actualStockQuantity !== undefined && newQuantity > actualStockQuantity) {
-          const unitText = item.unit || (measurementUnit === 1 ? "KG" : "Pieces");
-          setTimeout(() => {
-            showGlobalToast(`Cannot add more. Only ${actualStockQuantity} ${unitText} available in stock`, 4000, 'error');
-          }, 0);
+          const normalizedItem = normalizeItemData(item);
+          showMaxStockMessage(normalizedItem.name, item.quantity, normalizedItem.measurement_unit);
           return;
         }
       }
@@ -174,15 +172,27 @@ const Cart = () => {
       };
       await handleIncreaseQuantity(itemWithCorrectId);
       
+      // Show unified success message
+      const normalizedItem = normalizeItemData(item);
+      showCartMessage(CartMessageTypes.ADD_SINGLE, {
+        itemName: normalizedItem.name,
+        quantity: incrementStep,
+        measurementUnit: normalizedItem.measurement_unit,
+        isBuyer: user?.role === 'buyer'
+      });
+      
       // Clear input value to sync with new cart quantity
       const itemKey = getCartKey(item);
       setInputValue(itemKey, "");
       
     } catch (err) {
       console.error("[Cart] Error increasing quantity:", err);
-      setTimeout(() => {
-        showGlobalToast("Failed to increase quantity", 3000, 'error');
-      }, 0);
+      const normalizedItem = normalizeItemData(item);
+      showCartMessage(CartMessageTypes.OPERATION_FAILED, {
+        itemName: normalizedItem.name,
+        measurementUnit: normalizedItem.measurement_unit,
+        isBuyer: user?.role === 'buyer'
+      });
     }
   };
 
@@ -194,16 +204,32 @@ const Cart = () => {
       };
       await handleDecreaseQuantity(itemWithCorrectId);
       
+      // Show unified message
+      const normalizedItem = normalizeItemData(item);
+      const measurementUnit = item.measurement_unit || (item.unit === "KG" ? 1 : 2);
+      const decrementStep = measurementUnit === 1 ? 0.25 : 1;
+      const remainingQuantity = Math.max(0, item.quantity - decrementStep);
+      
+      showCartMessage(CartMessageTypes.REMOVE_SINGLE, {
+        itemName: normalizedItem.name,
+        quantity: decrementStep,
+        measurementUnit: measurementUnit,
+        remainingQuantity: remainingQuantity,
+        isBuyer: user?.role === 'buyer'
+      });
+      
       // Clear input value to sync with new cart quantity
       const itemKey = getCartKey(item);
       setInputValue(itemKey, "");
       
-      // No toast for normal decrease operation
     } catch (err) {
       console.error("[Cart] Error decreasing quantity:", err);
-      setTimeout(() => {
-        showGlobalToast("Failed to decrease quantity", 3000, 'error');
-      }, 0);
+      const normalizedItem = normalizeItemData(item);
+      showCartMessage(CartMessageTypes.OPERATION_FAILED, {
+        itemName: normalizedItem.name,
+        measurementUnit: item.measurement_unit || (item.unit === "KG" ? 1 : 2),
+        isBuyer: user?.role === 'buyer'
+      });
     }
   };
 
@@ -211,26 +237,37 @@ const Cart = () => {
     try {
       const itemId = getCartKey(item);
       await handleRemoveFromCart(itemId);
-      setTimeout(() => {
-        showGlobalToast("Item removed from cart", 2500, 'info');
-      }, 0);
+      
+      // Show unified message for removal
+      const normalizedItem = normalizeItemData(item);
+      showCartMessage(CartMessageTypes.REMOVE_ALL, {
+        itemName: normalizedItem.name,
+        measurementUnit: normalizedItem.measurement_unit,
+        isBuyer: user?.role === 'buyer'
+      });
     } catch (err) {
       console.error("[Cart] Error removing item:", err);
-      setTimeout(() => {
-        showGlobalToast("Failed to remove item", 3000, 'error');
-      }, 0);
+      const normalizedItem = normalizeItemData(item);
+      showCartMessage(CartMessageTypes.OPERATION_FAILED, {
+        itemName: normalizedItem.name,
+        measurementUnit: item.measurement_unit || (item.unit === "KG" ? 1 : 2),
+        isBuyer: user?.role === 'buyer'
+      });
     }
   };
 
   const handleClearAll = async () => {
     try {
       await handleClearCart();
-      // No toast for clear cart action - not a manual input
+      // No toast for clear cart action - it's a bulk operation
     } catch (err) {
       console.error("[Cart] Error clearing cart:", err);
-      setTimeout(() => {
-        showGlobalToast("Failed to clear cart", 3000, 'error');
-      }, 0);
+      // For clear cart failures, we can still use a generic error
+      showCartMessage(CartMessageTypes.OPERATION_FAILED, {
+        itemName: "cart",
+        measurementUnit: 2,
+        isBuyer: user?.role === 'buyer'
+      });
     }
   };
 
@@ -243,10 +280,13 @@ const Cart = () => {
       if (parsedValue === 0) {
         const itemId = getCartKey(item);
         await handleRemoveFromCart(itemId);
-        // Use setTimeout to avoid render cycle conflicts
-        setTimeout(() => {
-          showGlobalToast("Item removed from cart", 2500, 'info');
-        }, 0);
+        // Show unified removal message
+        const normalizedItem = normalizeItemData(item);
+        showCartMessage(CartMessageTypes.REMOVE_ALL, {
+          itemName: normalizedItem.name,
+          measurementUnit: normalizedItem.measurement_unit,
+          isBuyer: user?.role === 'buyer'
+        });
         return true;
       }
 
@@ -254,9 +294,12 @@ const Cart = () => {
       if (measurementUnit === 1) {
         // KG - smart rounding to nearest multiple of 0.25
         if (parsedValue <= 0) {
-          setTimeout(() => {
-            showGlobalToast("Please enter a valid quantity (minimum 0.25 KG)", 4000, 'error');
-          }, 0);
+          const normalizedItem = normalizeItemData(item);
+          showCartMessage(CartMessageTypes.INVALID_QUANTITY, {
+            itemName: normalizedItem.name,
+            measurementUnit: measurementUnit,
+            isBuyer: user?.role === 'buyer'
+          });
           return false;
         }
         
@@ -274,9 +317,12 @@ const Cart = () => {
       } else {
         // Pieces - smart rounding to nearest whole number
         if (parsedValue <= 0) {
-          setTimeout(() => {
-            showGlobalToast("Please enter a valid quantity (minimum 1 piece)", 4000, 'error');
-          }, 0);
+          const normalizedItem = normalizeItemData(item);
+          showCartMessage(CartMessageTypes.INVALID_QUANTITY, {
+            itemName: normalizedItem.name,
+            measurementUnit: measurementUnit,
+            isBuyer: user?.role === 'buyer'
+          });
           return false;
         }
         
@@ -300,10 +346,8 @@ const Cart = () => {
         
         // Stock validation - check against actual stock quantity
         if (actualStockQuantity !== undefined && parsedValue > actualStockQuantity) {
-          const unitText = item.unit || (measurementUnit === 1 ? "KG" : "Pieces");
-          setTimeout(() => {
-            showGlobalToast(`Only ${actualStockQuantity} ${unitText} available in stock`, 4000, 'error');
-          }, 0);
+          const normalizedItem = normalizeItemData(item);
+          showMaxStockMessage(normalizedItem.name, item.quantity, normalizedItem.measurement_unit);
           return false;
         }
       }
@@ -315,17 +359,34 @@ const Cart = () => {
 
       await handleSetQuantity(itemWithCorrectId, parsedValue);
       
-      // Show consolidated success message
-      const unitText = item.unit || (measurementUnit === 1 ? "KG" : "pieces");
-      setTimeout(() => {
-        showGlobalToast(`Quantity updated to ${parsedValue} ${unitText}`, 2500, 'success');
-      }, 0);
+      // Show unified success message based on the operation
+      const normalizedItem = normalizeItemData(item);
+      if (parsedValue > item.quantity) {
+        const added = parsedValue - item.quantity;
+        showCartMessage(CartMessageTypes.MANUAL_SET, {
+          itemName: normalizedItem.name,
+          quantity: added,
+          measurementUnit: normalizedItem.measurement_unit,
+          isBuyer: user?.role === 'buyer'
+        });
+      } else if (parsedValue < item.quantity) {
+        // Show the final quantity when decreasing, not removal
+        showCartMessage(CartMessageTypes.MANUAL_SET, {
+          itemName: normalizedItem.name,
+          quantity: parsedValue,
+          measurementUnit: normalizedItem.measurement_unit,
+          isBuyer: user?.role === 'buyer'
+        });
+      }
       return true;
     } catch (err) {
       console.error("[Cart] Error setting manual quantity:", err);
-      setTimeout(() => {
-        showGlobalToast("Failed to update quantity", 3000, 'error');
-      }, 0);
+      const normalizedItem = normalizeItemData(item);
+      showCartMessage(CartMessageTypes.OPERATION_FAILED, {
+        itemName: normalizedItem.name,
+        measurementUnit: normalizedItem.measurement_unit,
+        isBuyer: user?.role === 'buyer'
+      });
       return false;
     }
   };

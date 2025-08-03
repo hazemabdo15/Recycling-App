@@ -4,12 +4,12 @@ import { FlatList, StatusBar, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CategoryHeader, EmptyState, ItemCard } from "../components/category";
 import { ErrorState, Loader } from "../components/common";
-import { showGlobalToast } from "../components/common/GlobalToast";
 import { useAuth } from "../context/AuthContext";
 import { useCategoryItems } from "../hooks/useAPI";
 import { useCart } from "../hooks/useCart";
 import { layoutStyles } from "../styles/components/commonStyles";
 import { colors } from "../styles/theme";
+import { CartMessageTypes, showCartMessage, showMaxStockMessage } from "../utils/cartMessages";
 import {
   calculateCartStats,
   getCartKey,
@@ -17,7 +17,7 @@ import {
   getIncrementStep,
   normalizeItemData,
 } from "../utils/cartUtils";
-import { getLabel, isBuyer } from "../utils/roleLabels";
+import { isBuyer } from "../utils/roleLabels";
 
 let Animated, useAnimatedStyle, useSharedValue, withSpring, withTiming;
 
@@ -129,10 +129,36 @@ const CategoryDetails = () => {
       console.log('No item found, returning');
       return;
     }
+
+    // Validate minimum quantity based on measurement unit
+    const measurementUnit = item.measurement_unit || (item.unit === "KG" ? 1 : 2);
+    if (value > 0) {
+      if (measurementUnit === 1 && value < 0.25) {
+        showCartMessage(CartMessageTypes.INVALID_QUANTITY, {
+          itemName: item.name,
+          measurementUnit: measurementUnit,
+          isBuyer: user?.role === 'buyer'
+        });
+        return;
+      } else if (measurementUnit === 2 && value < 1) {
+        showCartMessage(CartMessageTypes.INVALID_QUANTITY, {
+          itemName: item.name,
+          measurementUnit: measurementUnit,
+          isBuyer: user?.role === 'buyer'
+        });
+        return;
+      }
+    }
+
     // Only check stock for buyer users
     if (isBuyer(user) && value > item.quantity) {
       console.log('Value exceeds stock:', { value, stock: item.quantity });
-      showGlobalToast(`Not enough stock. Only ${item.quantity} available.`, 2000, 'error');
+      showCartMessage(CartMessageTypes.STOCK_ERROR, {
+        itemName: item.name,
+        maxStock: item.quantity,
+        measurementUnit: item.measurement_unit,
+        isBuyer: true
+      });
       return;
     }
     const itemKey = getCartKey(item);
@@ -141,9 +167,31 @@ const CategoryDetails = () => {
       console.log('Calling handleSetQuantity with:', { item: item.name, value });
       const result = await handleSetQuantity(item, value);
       console.log('handleSetQuantity result:', result);
+      
+      // Show success message for manual input
+      if (value === 0) {
+        // Only show removal message when quantity is set to 0
+        showCartMessage(CartMessageTypes.MANUAL_REMOVED, {
+          itemName: item.name,
+          measurementUnit: item.measurement_unit,
+          isBuyer: user?.role === 'buyer'
+        });
+      } else {
+        // Always show the final quantity for manual set
+        showCartMessage(CartMessageTypes.MANUAL_SET, {
+          itemName: item.name,
+          quantity: value,
+          measurementUnit: item.measurement_unit,
+          isBuyer: user?.role === 'buyer'
+        });
+      }
     } catch (_err) {
       console.log('handleSetQuantity error:', _err);
-      showGlobalToast("Failed to set quantity", 2000, "error");
+      showCartMessage(CartMessageTypes.OPERATION_FAILED, {
+        itemName: item.name,
+        measurementUnit: item.measurement_unit,
+        isBuyer: user?.role === 'buyer'
+      });
     } finally {
       setPendingOperations((prev) => {
         const newState = { ...prev };
@@ -189,29 +237,29 @@ const CategoryDetails = () => {
           // Only check stock limits for buyer users
           if (isBuyer(user) && (itemPendingAction || maxReached || outOfStock)) {
             if (maxReached) {
-              const maxMsg = `You cannot add more. Only ${item.quantity} in stock.`;
-              showGlobalToast(maxMsg, 1000, "error");
+              showMaxStockMessage(item.name, item.quantity, item.measurement_unit);
             }
             if (outOfStock) {
-              showGlobalToast("This item is out of stock.", 2000, "error");
+              showCartMessage(CartMessageTypes.STOCK_ERROR, {
+                itemName: item.name,
+                maxStock: 0,
+                measurementUnit: item.measurement_unit,
+                isBuyer: true
+              });
             }
             return;
           }
           // Show toast instantly
           const normalizedItem = normalizeItemData(item);
           const step = getIncrementStep(normalizedItem.measurement_unit);
-          const unit = normalizedItem.measurement_unit === 1 ? "kg" : "";
-          const displayQuantity = step;
-          const message = getLabel(
-            "categoryToastMessages.itemAdded",
-            user?.role,
-            {
-              quantity: displayQuantity,
-              unit: unit,
-              itemName: item.name || "item",
-            }
-          );
-          showGlobalToast(message, 1200, "success");
+          
+          showCartMessage(CartMessageTypes.ADD_SINGLE, {
+            itemName: item.name || "item",
+            quantity: step,
+            measurementUnit: normalizedItem.measurement_unit,
+            isBuyer: user?.role === 'buyer'
+          });
+          
           const timeoutId = setTimeout(() => {
             setPendingOperations((prev) => {
               const newState = { ...prev };
@@ -228,16 +276,15 @@ const CategoryDetails = () => {
             const addResult = await handleIncreaseQuantity(itemWithCorrectId);
             if (addResult === false) {
               // Show maxStock toast if add was blocked
-              const maxMsg = `You cannot add more. Only ${item.quantity} in stock.`;
-              showGlobalToast(maxMsg, 1000, "error");
+              showMaxStockMessage(item.name, item.quantity, item.measurement_unit);
             }
           } catch (err) {
             console.error("[CategoryDetails] Error increasing quantity:", err);
-            const message = getLabel(
-              "categoryToastMessages.addFailed",
-              user?.role
-            );
-            showGlobalToast(message, 2000, "error");
+            showCartMessage(CartMessageTypes.OPERATION_FAILED, {
+              itemName: item.name,
+              measurementUnit: item.measurement_unit,
+              isBuyer: user?.role === 'buyer'
+            });
           } finally {
             clearTimeout(timeoutId);
             setPendingOperations((prev) => {
@@ -252,28 +299,24 @@ const CategoryDetails = () => {
           // Show toast instantly
           const normalizedItem = normalizeItemData(item);
           const step = getIncrementStep(normalizedItem.measurement_unit);
-          const unit = normalizedItem.measurement_unit === 1 ? "kg" : "";
-          let message;
-          if (item.quantity > step) {
-            message = getLabel(
-              "categoryToastMessages.itemReduced",
-              user?.role,
-              {
-                itemName: item.name || "item",
-                quantity: step,
-                unit: unit,
-              }
-            );
+          const remainingQuantity = item.cartQuantity - step;
+          
+          if (remainingQuantity > 0) {
+            showCartMessage(CartMessageTypes.REMOVE_SINGLE, {
+              itemName: item.name || "item",
+              quantity: step,
+              measurementUnit: normalizedItem.measurement_unit,
+              remainingQuantity: remainingQuantity,
+              isBuyer: user?.role === 'buyer'
+            });
           } else {
-            message = getLabel(
-              "categoryToastMessages.itemRemoved",
-              user?.role,
-              {
-                itemName: item.name || "item",
-              }
-            );
+            showCartMessage(CartMessageTypes.ITEM_REMOVED, {
+              itemName: item.name || "item",
+              measurementUnit: normalizedItem.measurement_unit,
+              isBuyer: user?.role === 'buyer'
+            });
           }
-          showGlobalToast(message, 1200, "info");
+          
           const timeoutId = setTimeout(() => {
             setPendingOperations((prev) => {
               const newState = { ...prev };
@@ -290,11 +333,11 @@ const CategoryDetails = () => {
             await handleDecreaseQuantity(itemWithCorrectId);
           } catch (err) {
             console.error("[CategoryDetails] Error decreasing quantity:", err);
-            const message = getLabel(
-              "categoryToastMessages.updateFailed",
-              user?.role
-            );
-            showGlobalToast(message, 2000, "error");
+            showCartMessage(CartMessageTypes.OPERATION_FAILED, {
+              itemName: item.name,
+              measurementUnit: item.measurement_unit,
+              isBuyer: user?.role === 'buyer'
+            });
           } finally {
             clearTimeout(timeoutId);
             setPendingOperations((prev) => {
@@ -309,23 +352,19 @@ const CategoryDetails = () => {
           // Only prevent fast-increase for buyer users based on stock
           const fastStep = 5;
           if (isBuyer(user) && !canAddToCart(item, item.cartQuantity, fastStep)) {
-            const maxMsg = `You cannot add more. Only ${item.quantity} in stock.`;
-            showGlobalToast(maxMsg, 1000, "error");
+            showMaxStockMessage(item.name, item.quantity, item.measurement_unit);
             return;
           }
           // Show toast instantly
           const normalizedItem = normalizeItemData(item);
-          const unit = normalizedItem.measurement_unit === 1 ? "kg" : "";
-          const message = getLabel(
-            "categoryToastMessages.itemAdded",
-            user?.role,
-            {
-              quantity: fastStep,
-              unit: unit,
-              itemName: item.name || "items",
-            }
-          );
-          showGlobalToast(message, 1200, "success");
+          
+          showCartMessage(CartMessageTypes.ADD_FAST, {
+            itemName: item.name || "item",
+            quantity: fastStep,
+            measurementUnit: normalizedItem.measurement_unit,
+            isBuyer: user?.role === 'buyer'
+          });
+          
           const timeoutId = setTimeout(() => {
             setPendingOperations((prev) => {
               const newState = { ...prev };
@@ -344,11 +383,7 @@ const CategoryDetails = () => {
               "[CategoryDetails] Error fast increasing quantity:",
               err
             );
-            const message = getLabel(
-              "categoryToastMessages.addFailed",
-              user?.role
-            );
-            showGlobalToast(message, 2000, "error");
+            showCartMessage(CartMessageTypes.OPERATION_FAILED);
           } finally {
             clearTimeout(timeoutId);
             setPendingOperations((prev) => {
@@ -362,29 +397,25 @@ const CategoryDetails = () => {
           if (itemPendingAction) return;
           // Show toast instantly
           const normalizedItem = normalizeItemData(item);
-          const unit = normalizedItem.measurement_unit === 1 ? "kg" : "";
-          const remainingQuantity = item.quantity - 5;
-          let message;
+          const fastStep = 5;
+          const remainingQuantity = item.cartQuantity - fastStep;
+          
           if (remainingQuantity > 0) {
-            message = getLabel(
-              "categoryToastMessages.itemReduced",
-              user?.role,
-              {
-                itemName: item.name || "item",
-                quantity: "5",
-                unit: unit,
-              }
-            );
+            showCartMessage(CartMessageTypes.REMOVE_FAST, {
+              itemName: item.name || "item",
+              quantity: fastStep,
+              measurementUnit: normalizedItem.measurement_unit,
+              remainingQuantity: remainingQuantity,
+              isBuyer: user?.role === 'buyer'
+            });
           } else {
-            message = getLabel(
-              "categoryToastMessages.itemRemoved",
-              user?.role,
-              {
-                itemName: item.name || "item",
-              }
-            );
+            showCartMessage(CartMessageTypes.ITEM_REMOVED, {
+              itemName: item.name || "item",
+              measurementUnit: normalizedItem.measurement_unit,
+              isBuyer: user?.role === 'buyer'
+            });
           }
-          showGlobalToast(message, 1200, "info");
+          
           const timeoutId = setTimeout(() => {
             setPendingOperations((prev) => {
               const newState = { ...prev };
@@ -403,11 +434,7 @@ const CategoryDetails = () => {
               "[CategoryDetails] Error fast decreasing quantity:",
               err
             );
-            const message = getLabel(
-              "categoryToastMessages.updateFailed",
-              user?.role
-            );
-            showGlobalToast(message, 2000, "error");
+            showCartMessage(CartMessageTypes.OPERATION_FAILED);
           } finally {
             clearTimeout(timeoutId);
             setPendingOperations((prev) => {
