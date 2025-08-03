@@ -13,9 +13,11 @@ import {
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { showGlobalToast } from '../components/common/GlobalToast';
+import { useAuth } from '../context/AuthContext';
 import { useAllItems } from '../hooks/useAPI';
 import { useCart } from '../hooks/useCart';
 import { borderRadius, colors, spacing, typography } from '../styles/theme';
+import { isBuyer } from '../utils/roleLabels';
 
 let Reanimated, interpolate, runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming;
 
@@ -44,7 +46,8 @@ const MODAL_HEIGHT = height * 0.85;
 const DISMISS_THRESHOLD = 150;
 
 export default function AIResultsModal() {
-  const { handleAddToCart, cartItems } = useCart();
+  const { user } = useAuth();
+  const { handleAddToCart, cartItems } = useCart(user);
   const { items: allItems } = useAllItems();
   const params = useLocalSearchParams();
   const { 
@@ -200,20 +203,27 @@ export default function AIResultsModal() {
       return;
     }
     
-    // Create a map of stock quantities for quick lookup
-    const stockMap = {};
-    allItems.forEach(item => {
-      const stockQuantity = item.quantity || item.available_quantity || item.stock_quantity || item.quantity_available;
-      if (stockQuantity !== undefined) {
-        stockMap[item._id] = stockQuantity;
-      }
-    });
+    // Only apply stock validation for buyer users
+    const applyStockValidation = isBuyer(user);
     
-    // Create a map of current cart quantities for quick lookup
+    // Create a map of stock quantities for quick lookup (only if needed for buyers)
+    const stockMap = {};
+    if (applyStockValidation) {
+      allItems.forEach(item => {
+        const stockQuantity = item.quantity || item.available_quantity || item.stock_quantity || item.quantity_available;
+        if (stockQuantity !== undefined) {
+          stockMap[item._id] = stockQuantity;
+        }
+      });
+    }
+    
+    // Create a map of current cart quantities for quick lookup (only if needed for buyers)
     const currentCartQuantities = {};
-    Object.entries(cartItems).forEach(([itemId, quantity]) => {
-      currentCartQuantities[itemId] = quantity;
-    });
+    if (applyStockValidation) {
+      Object.entries(cartItems).forEach(([itemId, quantity]) => {
+        currentCartQuantities[itemId] = quantity;
+      });
+    }
     
     const processedItems = [];
     const stockWarnings = [];
@@ -222,6 +232,24 @@ export default function AIResultsModal() {
     availableMaterials.forEach(material => {
       const itemId = material.databaseItem._id;
       const requestedQuantity = material.quantity;
+      
+      // For customers (non-buyers), add full requested quantity without stock checks
+      if (!applyStockValidation) {
+        processedItems.push({
+          _id: material.databaseItem._id,
+          categoryId: material.databaseItem.categoryId,
+          categoryName: material.databaseItem.categoryName,
+          name: material.databaseItem.name,
+          image: material.databaseItem.image,
+          points: material.databaseItem.points,
+          price: material.databaseItem.price,
+          measurement_unit: material.databaseItem.measurement_unit,
+          quantity: requestedQuantity
+        });
+        return;
+      }
+      
+      // For buyers, apply stock validation
       const currentCartQuantity = currentCartQuantities[itemId] || 0;
       const stockQuantity = stockMap[itemId];
       
@@ -288,8 +316,8 @@ export default function AIResultsModal() {
       console.log('🔄 [AI Results Modal] Adding items to cart:', processedItems);
       handleAddToCart(processedItems);
       
-      // Show appropriate message based on stock warnings
-      if (stockWarnings.length > 0) {
+      // Show appropriate message based on role and stock warnings (only for buyers)
+      if (applyStockValidation && stockWarnings.length > 0) {
         if (stockWarnings.length === 1) {
           const warning = stockWarnings[0];
           const availableToAdd = warning.availableStock - warning.currentInCart;
@@ -308,7 +336,7 @@ export default function AIResultsModal() {
           );
         }
       } else {
-        // No stock issues, show regular success message
+        // No stock issues or customer user, show regular success message
         const addedCount = processedItems.length;
         showGlobalToast(
           `${addedCount} item${addedCount > 1 ? 's' : ''} added to cart`,
@@ -322,7 +350,7 @@ export default function AIResultsModal() {
 
     router.dismissAll();
     router.push('/(tabs)/cart');
-  }, [materials, handleAddToCart, validationResults, cartItems, allItems]);
+  }, [materials, handleAddToCart, validationResults, cartItems, allItems, user]);
 
   const browseMore = useCallback(() => {
 

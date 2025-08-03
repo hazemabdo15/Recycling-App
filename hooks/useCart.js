@@ -1,7 +1,8 @@
 ﻿import { useCartContext } from '../context/CartContext';
 import { calculateQuantity, createCartItem, getIncrementStep, normalizeItemData } from '../utils/cartUtils';
+import { isBuyer } from '../utils/roleLabels';
 
-export const useCart = () => {
+export const useCart = (user = null) => {
   const {
     cartItems,
     cartItemDetails,
@@ -28,13 +29,16 @@ export const useCart = () => {
     const currentQuantity = getItemQuantity(_id);
     let newQuantity;
     if (currentQuantity === 0) {
-      // Special case: for kg items, if stock < 0.25, block addition; for pieces, if stock < 1
-      const minStockRequired = measurement_unit === 1 ? 0.25 : 1;
-      if ((typeof stockQuantity === 'number') && stockQuantity < minStockRequired) {
-        if (typeof showError === 'function') {
-          showError('Not enough quantity in stock to add this item.');
+      // Only apply stock validation for buyer users
+      if (isBuyer(user)) {
+        // Special case: for kg items, if stock < 0.25, block addition; for pieces, if stock < 1
+        const minStockRequired = measurement_unit === 1 ? 0.25 : 1;
+        if ((typeof stockQuantity === 'number') && stockQuantity < minStockRequired) {
+          if (typeof showError === 'function') {
+            showError('Not enough quantity in stock to add this item.');
+          }
+          return false;
         }
-        return false;
       }
       // Use proper step increment for first addition - 0.25 for kg items, 1 for pieces
       const step = getIncrementStep(measurement_unit);
@@ -107,13 +111,16 @@ export const useCart = () => {
     const currentQuantity = getItemQuantity(_id);
     let newQuantity;
     if (currentQuantity === 0) {
-      // Block add for kg items with stock < 0.25, for pieces with stock < 1
-      const minStockRequired = measurement_unit === 1 ? 0.25 : 1;
-      if ((typeof stockQuantity === 'number') && stockQuantity < minStockRequired) {
-        if (typeof showError === 'function') {
-          showError('Not enough quantity in stock to add this item.');
+      // Only apply stock validation for buyer users
+      if (isBuyer(user)) {
+        // Block add for kg items with stock < 0.25, for pieces with stock < 1
+        const minStockRequired = measurement_unit === 1 ? 0.25 : 1;
+        if ((typeof stockQuantity === 'number') && stockQuantity < minStockRequired) {
+          if (typeof showError === 'function') {
+            showError('Not enough quantity in stock to add this item.');
+          }
+          return false;
         }
-        return false;
       }
       newQuantity = 5;
     } else {

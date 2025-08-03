@@ -63,7 +63,7 @@ export function TabBar({ state, descriptors, navigation }) {
   const insets = useSafeAreaInsets();
   const { openVoiceModal } = useVoiceModal();
   const { user } = useAuth();
-  const { cartItems } = useCart();
+  const { cartItems } = useCart(user);
 
   const getTabLabel = (routeName) => {
     return getLabel(`tabLabels.${routeName}`, user?.role) || routeName;

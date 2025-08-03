@@ -19,7 +19,7 @@ import { AnimatedButton } from '../common';
 
 const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
   const { user } = useAuth();
-  const { handleClearCart } = useCart();
+  const { handleClearCart } = useCart(user);
   const [copied, setCopied] = useState(false);
   const rotateValue = useRef(new Animated.Value(0)).current;
 

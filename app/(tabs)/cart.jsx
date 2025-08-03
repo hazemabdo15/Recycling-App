@@ -74,7 +74,7 @@ const Cart = () => {
     handleClearCart,
     handleSetQuantity,
     removingItems,
-  } = useCart();
+  } = useCart(user);
   const { items: allItems, loading: itemsLoading } = useAllItems();
   const [loading, setLoading] = useState(true);
   const [showEmptyState, setShowEmptyState] = useState(false);
@@ -145,23 +145,27 @@ const Cart = () => {
 
   const handleIncrease = async (item) => {
     try {
-      // Get the actual stock quantity from the original item data
-      const originalItem = safeAllItems.find(
-        (originalItem) => originalItem._id === item._id || originalItem.categoryId === item.categoryId
-      );
-      
-      const actualStockQuantity = originalItem?.quantity || originalItem?.available_quantity || originalItem?.stock_quantity || originalItem?.quantity_available;
       const measurementUnit = item.measurement_unit || (item.unit === "KG" ? 1 : 2);
       const incrementStep = measurementUnit === 1 ? 0.25 : 1;
       const newQuantity = item.quantity + incrementStep;
-      
-      // Stock validation - check against actual stock quantity
-      if (actualStockQuantity !== undefined && newQuantity > actualStockQuantity) {
-        const unitText = item.unit || (measurementUnit === 1 ? "KG" : "Pieces");
-        setTimeout(() => {
-          showGlobalToast(`Cannot add more. Only ${actualStockQuantity} ${unitText} available in stock`, 4000, 'error');
-        }, 0);
-        return;
+
+      // Only apply stock validation for buyers
+      if (isBuyer(user)) {
+        // Get the actual stock quantity from the original item data
+        const originalItem = safeAllItems.find(
+          (originalItem) => originalItem._id === item._id || originalItem.categoryId === item.categoryId
+        );
+        
+        const actualStockQuantity = originalItem?.quantity || originalItem?.available_quantity || originalItem?.stock_quantity || originalItem?.quantity_available;
+        
+        // Stock validation - check against actual stock quantity
+        if (actualStockQuantity !== undefined && newQuantity > actualStockQuantity) {
+          const unitText = item.unit || (measurementUnit === 1 ? "KG" : "Pieces");
+          setTimeout(() => {
+            showGlobalToast(`Cannot add more. Only ${actualStockQuantity} ${unitText} available in stock`, 4000, 'error');
+          }, 0);
+          return;
+        }
       }
 
       const itemWithCorrectId = {
@@ -285,20 +289,23 @@ const Cart = () => {
         }
       }
 
-      // Get the actual stock quantity from the original item data (not cart quantity)
-      const originalItem = safeAllItems.find(
-        (originalItem) => originalItem._id === item._id || originalItem.categoryId === item.categoryId
-      );
-      
-      const actualStockQuantity = originalItem?.quantity || originalItem?.available_quantity || originalItem?.stock_quantity || originalItem?.quantity_available;
-      
-      // Stock validation - check against actual stock quantity
-      if (actualStockQuantity !== undefined && parsedValue > actualStockQuantity) {
-        const unitText = item.unit || (measurementUnit === 1 ? "KG" : "Pieces");
-        setTimeout(() => {
-          showGlobalToast(`Only ${actualStockQuantity} ${unitText} available in stock`, 4000, 'error');
-        }, 0);
-        return false;
+      // Only apply stock validation for buyers
+      if (isBuyer(user)) {
+        // Get the actual stock quantity from the original item data (not cart quantity)
+        const originalItem = safeAllItems.find(
+          (originalItem) => originalItem._id === item._id || originalItem.categoryId === item.categoryId
+        );
+        
+        const actualStockQuantity = originalItem?.quantity || originalItem?.available_quantity || originalItem?.stock_quantity || originalItem?.quantity_available;
+        
+        // Stock validation - check against actual stock quantity
+        if (actualStockQuantity !== undefined && parsedValue > actualStockQuantity) {
+          const unitText = item.unit || (measurementUnit === 1 ? "KG" : "Pieces");
+          setTimeout(() => {
+            showGlobalToast(`Only ${actualStockQuantity} ${unitText} available in stock`, 4000, 'error');
+          }, 0);
+          return false;
+        }
       }
 
       const itemWithCorrectId = {

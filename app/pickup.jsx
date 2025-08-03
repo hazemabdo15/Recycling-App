@@ -198,7 +198,7 @@ export default function Pickup() {
     accessToken,
     loading: authContextLoading,
   } = useAuth();
-  const { cartItems, cartItemDetails, fetchBackendCart, handleClearCart } = useCart();
+  const { cartItems, cartItemDetails, fetchBackendCart, handleClearCart } = useCart(user);
 
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState(null);

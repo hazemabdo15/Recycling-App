@@ -17,7 +17,7 @@ import {
   getIncrementStep,
   normalizeItemData,
 } from "../utils/cartUtils";
-import { getLabel } from "../utils/roleLabels";
+import { getLabel, isBuyer } from "../utils/roleLabels";
 
 let Animated, useAnimatedStyle, useSharedValue, withSpring, withTiming;
 
@@ -66,7 +66,7 @@ const CategoryDetails = () => {
     handleFastIncreaseQuantity,
     handleFastDecreaseQuantity,
     handleSetQuantity,
-  } = useCart();
+  } = useCart(user);
 
   const mergedItems = items.map((item) => {
     const needsNormalization =
@@ -129,8 +129,8 @@ const CategoryDetails = () => {
       console.log('No item found, returning');
       return;
     }
-    // Check stock before setting
-    if (value > item.quantity) {
+    // Only check stock for buyer users
+    if (isBuyer(user) && value > item.quantity) {
       console.log('Value exceeds stock:', { value, stock: item.quantity });
       showGlobalToast(`Not enough stock. Only ${item.quantity} available.`, 2000, 'error');
       return;
@@ -156,15 +156,24 @@ const CategoryDetails = () => {
   const renderItem = ({ item, index }) => {
     const itemKey = getCartKey(item);
     const itemPendingAction = pendingOperations[itemKey];
-    // item.quantity is the stock, item.cartQuantity is the cart
-    // Stock logic
-    const {
-      isOutOfStock,
-      isMaxStockReached,
-      canAddToCart,
-    } = require("../utils/stockUtils");
-    const maxReached = isMaxStockReached(item, item.cartQuantity);
-    const outOfStock = isOutOfStock(item);
+    
+    // Stock logic - only for buyer users
+    let maxReached = false;
+    let outOfStock = false;
+    let canAddToCart = () => true; // Default to always allow for non-buyers
+    
+    if (isBuyer(user)) {
+      const stockUtils = require("../utils/stockUtils");
+      const {
+        isOutOfStock,
+        isMaxStockReached,
+        canAddToCart: stockCanAddToCart,
+      } = stockUtils;
+      maxReached = isMaxStockReached(item, item.cartQuantity);
+      outOfStock = isOutOfStock(item);
+      canAddToCart = stockCanAddToCart;
+    }
+    
     return (
       <ItemCard
         item={item}
@@ -174,9 +183,11 @@ const CategoryDetails = () => {
         index={index}
         maxReached={maxReached}
         outOfStock={outOfStock}
+        user={user}
         onManualInput={(val) => handleManualInput(item, val)}
         onIncrease={async () => {
-          if (itemPendingAction || maxReached || outOfStock) {
+          // Only check stock limits for buyer users
+          if (isBuyer(user) && (itemPendingAction || maxReached || outOfStock)) {
             if (maxReached) {
               const maxMsg = `You cannot add more. Only ${item.quantity} in stock.`;
               showGlobalToast(maxMsg, 1000, "error");
@@ -295,9 +306,9 @@ const CategoryDetails = () => {
         }}
         onFastIncrease={async () => {
           if (itemPendingAction) return;
-          // Prevent fast-increase if it would exceed stock
+          // Only prevent fast-increase for buyer users based on stock
           const fastStep = 5;
-          if (!canAddToCart(item, item.cartQuantity, fastStep)) {
+          if (isBuyer(user) && !canAddToCart(item, item.cartQuantity, fastStep)) {
             const maxMsg = `You cannot add more. Only ${item.quantity} in stock.`;
             showGlobalToast(maxMsg, 1000, "error");
             return;

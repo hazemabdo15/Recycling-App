@@ -2,6 +2,7 @@
 import { itemCardStyles } from '../../styles/components/categoryStyles';
 import { colors } from '../../styles/theme';
 import { getUnitDisplay } from '../../utils/cartUtils';
+import { isBuyer } from '../../utils/roleLabels';
 import { isMaxStockReached, isOutOfStock } from '../../utils/stockUtils';
 import { AnimatedListItem } from '../common';
 import ItemImage from './ItemImage';
@@ -20,12 +21,14 @@ const ItemCard = ({
     onManualInput,
     disabled = false,
     pendingAction = null,
-    index = 0
+    index = 0,
+    user = null
 }) => {
     const unitDisplay = getUnitDisplay(item.measurement_unit);
-    // Always use item.quantity (stock from API) for outOfStock badge, not cartQuantity
-    const outOfStock = isOutOfStock({ quantity: item.quantity });
-    const maxReached = isMaxStockReached(item, quantity);
+    // Only show stock-related logic for buyers
+    const showStockLogic = isBuyer(user);
+    const outOfStock = showStockLogic ? isOutOfStock({ quantity: item.quantity }) : false;
+    const maxReached = showStockLogic ? isMaxStockReached(item, quantity) : false;
     
     return (
         <AnimatedListItem
@@ -38,7 +41,7 @@ const ItemCard = ({
                 opacity: outOfStock ? 0.6 : 1,
             }}
         >
-            {outOfStock && (
+            {showStockLogic && outOfStock && (
                 <View style={styles.outOfStockBadge}>
                     <Text style={styles.outOfStockText}>Out of Stock</Text>
                 </View>
@@ -69,12 +72,12 @@ const ItemCard = ({
                 onFastDecrease={onFastDecrease}
                 onManualInput={onManualInput}
                 onQuantityInput={(val) => onManualInput(val)}
-                maxQuantity={item.quantity}
+                maxQuantity={showStockLogic ? item.quantity : undefined}
                 disabled={disabled}
                 pendingAction={pendingAction}
                 disableDecrease={quantity === 0}
-                maxReached={maxReached}
-                outOfStock={outOfStock}
+                maxReached={showStockLogic ? maxReached : false}
+                outOfStock={showStockLogic ? outOfStock : false}
             />
         </AnimatedListItem>
     );

@@ -32,8 +32,8 @@ const ReviewPhase = ({
   const [cartItemsDisplay, setCartItemsDisplay] = useState([]);
 
   const { user: contextUser } = useAuth();
-  const { cartItemDetails } = useCart();
   const user = propUser || contextUser;
+  const { cartItemDetails } = useCart(user);
 
   const { isProcessing, processPayment, shouldUsePayment } = usePayment();
 

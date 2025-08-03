@@ -12,7 +12,7 @@ import { useCategories } from "../../hooks/useAPI";
 import { useCart } from "../../hooks/useCart";
 import { spacing } from "../../styles";
 import { getCartKey, getIncrementStep, normalizeItemData } from "../../utils/cartUtils";
-import { getLabel } from "../../utils/roleLabels";
+import { getLabel, isBuyer } from "../../utils/roleLabels";
 import { scaleSize } from '../../utils/scale';
 import { isMaxStockReached, isOutOfStock } from '../../utils/stockUtils';
 import { CategoryCard } from "../cards";
@@ -45,14 +45,14 @@ const CategoriesGrid = ({
     handleFastIncreaseQuantity,
     handleFastDecreaseQuantity,
     handleSetQuantity,
-  } = useCart();
+  } = useCart(user);
   const [pendingOperations, setPendingOperations] = useState({});
 
   const handleManualInput = async (item, value) => {
     if (!item) return;
     
-    // Check stock before setting
-    if (value > item.quantity) {
+    // Only check stock for buyer users
+    if (isBuyer(user) && value > item.quantity) {
       showGlobalToast(`Not enough stock. Only ${item.quantity} available.`, 2000, 'error');
       return;
     }
@@ -252,8 +252,15 @@ const CategoriesGrid = ({
             const itemKey = getCartKey(item);
             const itemPendingAction = pendingOperations[itemKey];
             const cartQuantity = cartItems[itemKey] || 0;
-            const maxReached = isMaxStockReached(item, cartQuantity);
-            const outOfStock = isOutOfStock(item);
+            
+            // Only apply stock validation for buyer users
+            let maxReached = false;
+            let outOfStock = false;
+            if (isBuyer(user)) {
+              maxReached = isMaxStockReached(item, cartQuantity);
+              outOfStock = isOutOfStock(item);
+            }
+            
             return (
               <ItemCard
                 key={itemKey || `${item.name}-${index}`}
@@ -264,65 +271,74 @@ const CategoriesGrid = ({
                 pendingAction={itemPendingAction}
                 maxReached={maxReached}
                 outOfStock={outOfStock}
+                user={user}
                 onManualInput={(val) => handleManualInput(item, val)}
                 onIncrease={async () => {
-                  if (itemPendingAction || outOfStock) {
+                  // Only check stock limitations for buyer users
+                  if (isBuyer(user) && (itemPendingAction || outOfStock)) {
                     if (outOfStock) {
                       showGlobalToast('This item is out of stock.', 1000, "error");
                     }
                     return;
                   }
-                  // Block add if stock is less than minimum required (0.25 for kg, 1 for pieces)
-                  const isKg = item.measurement_unit === 1;
-                  const minStockRequired = isKg ? 0.25 : 1;
-                  if (typeof item.quantity === 'number' && item.quantity < minStockRequired) {
-                    showGlobalToast('Not enough quantity in stock to add this item.', 1000, "error");
-                    return;
-                  }
-                  // Check if adding would exceed stock quantity
-                  const step = getIncrementStep(item.measurement_unit);
-                  const remainingStock = item.quantity - cartQuantity;
-                  console.log('[CategoriesGrid] Stock check:', {
-                    itemName: item.name,
-                    totalStock: item.quantity,
-                    cartQuantity,
-                    remainingStock,
-                    step,
-                    wouldExceed: remainingStock < step || cartQuantity + step > item.quantity
-                  });
-                  if (remainingStock < step || cartQuantity + step > item.quantity) {
-                    const maxMsg = `You cannot add more. Only ${item.quantity} in stock.`;
-                    console.log('[CategoriesGrid] Showing maxStock toast:', maxMsg);
-                    showGlobalToast(maxMsg, 1000, "error");
-                    return;
+                  
+                  // Only block add based on stock for buyer users
+                  if (isBuyer(user)) {
+                    // Block add if stock is less than minimum required (0.25 for kg, 1 for pieces)
+                    const isKg = item.measurement_unit === 1;
+                    const minStockRequired = isKg ? 0.25 : 1;
+                    if (typeof item.quantity === 'number' && item.quantity < minStockRequired) {
+                      showGlobalToast('Not enough quantity in stock to add this item.', 1000, "error");
+                      return;
+                    }
+                    // Check if adding would exceed stock quantity
+                    const step = getIncrementStep(item.measurement_unit);
+                    const remainingStock = item.quantity - cartQuantity;
+                    console.log('[CategoriesGrid] Stock check:', {
+                      itemName: item.name,
+                      totalStock: item.quantity,
+                      cartQuantity,
+                      remainingStock,
+                      step,
+                      wouldExceed: remainingStock < step || cartQuantity + step > item.quantity
+                    });
+                    if (remainingStock < step || cartQuantity + step > item.quantity) {
+                      const maxMsg = `You cannot add more. Only ${item.quantity} in stock.`;
+                      console.log('[CategoriesGrid] Showing maxStock toast:', maxMsg);
+                      showGlobalToast(maxMsg, 1000, "error");
+                      return;
+                    }
                   }
                   await handleCartOperation(item, 'increase');
                 }}
                 onDecrease={() => handleCartOperation(item, 'decrease')}
                 onFastIncrease={async () => {
-                  const isKg = item.measurement_unit === 1;
-                  // Block add if stock is less than minimum required (0.25 for kg, 1 for pieces)
-                  const minStockRequired = isKg ? 0.25 : 1;
-                  if (typeof item.quantity === 'number' && item.quantity < minStockRequired) {
-                    showGlobalToast('Not enough quantity in stock to add this item.', 1000, "error");
-                    return;
-                  }
-                  // Check if adding 5 would exceed stock quantity
-                  const fastStep = 5;
-                  const remainingStock = item.quantity - cartQuantity;
-                  console.log('[CategoriesGrid] Fast stock check:', {
-                    itemName: item.name,
-                    totalStock: item.quantity,
-                    cartQuantity,
-                    remainingStock,
-                    fastStep,
-                    wouldExceed: remainingStock < fastStep || cartQuantity + fastStep > item.quantity
-                  });
-                  if (remainingStock < fastStep || cartQuantity + fastStep > item.quantity) {
-                    const maxMsg = `You cannot add more. Only ${item.quantity} in stock.`;
-                    console.log('[CategoriesGrid] Showing fast maxStock toast:', maxMsg);
-                    showGlobalToast(maxMsg, 1000, "error");
-                    return;
+                  // Only apply stock limitations for buyer users
+                  if (isBuyer(user)) {
+                    const isKg = item.measurement_unit === 1;
+                    // Block add if stock is less than minimum required (0.25 for kg, 1 for pieces)
+                    const minStockRequired = isKg ? 0.25 : 1;
+                    if (typeof item.quantity === 'number' && item.quantity < minStockRequired) {
+                      showGlobalToast('Not enough quantity in stock to add this item.', 1000, "error");
+                      return;
+                    }
+                    // Check if adding 5 would exceed stock quantity
+                    const fastStep = 5;
+                    const remainingStock = item.quantity - cartQuantity;
+                    console.log('[CategoriesGrid] Fast stock check:', {
+                      itemName: item.name,
+                      totalStock: item.quantity,
+                      cartQuantity,
+                      remainingStock,
+                      fastStep,
+                      wouldExceed: remainingStock < fastStep || cartQuantity + fastStep > item.quantity
+                    });
+                    if (remainingStock < fastStep || cartQuantity + fastStep > item.quantity) {
+                      const maxMsg = `You cannot add more. Only ${item.quantity} in stock.`;
+                      console.log('[CategoriesGrid] Showing fast maxStock toast:', maxMsg);
+                      showGlobalToast(maxMsg, 1000, "error");
+                      return;
+                    }
                   }
                   await handleCartOperation(item, 'fastIncrease');
                 }}
