@@ -286,7 +286,7 @@ export async function verifyMaterialsAgainstDatabase(extractedMaterials) {
             price: dbItem.price,
             measurement_unit: dbItem.measurement_unit,
             image: dbItem.image,
-            categoryId: dbItem._id,
+            categoryId: dbItem.categoryId,
             categoryName: dbItem.categoryName
           },
 
