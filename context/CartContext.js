@@ -279,23 +279,30 @@ export const CartProvider = ({ children }) => {
       }
       const finalCart = await getCart(isLoggedIn);
       const finalItemsObj = {};
+      const finalItemDetailsObj = {};
       (finalCart.items || []).forEach((backendItem) => {
         const itemKey = getCartKey(backendItem);
         finalItemsObj[itemKey] = backendItem.quantity;
+        finalItemDetailsObj[itemKey] = backendItem;
       });
       setCartItems(finalItemsObj);
+      setCartItemDetails(finalItemDetailsObj);
       setError(null);
     } catch (err) {
       try {
         const revertCart = await getCart(isLoggedIn);
         const revertItemsObj = {};
+        const revertItemDetailsObj = {};
         (revertCart.items || []).forEach((item) => {
           const itemKey = getCartKey(item);
           revertItemsObj[itemKey] = item.quantity;
+          revertItemDetailsObj[itemKey] = item;
         });
         setCartItems(revertItemsObj);
+        setCartItemDetails(revertItemDetailsObj);
       } catch (_revertErr) {
         setCartItems({});
+        setCartItemDetails({});
       }
       setError(err.message || "Failed to add items");
       throw err;

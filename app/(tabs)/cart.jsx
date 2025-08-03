@@ -362,10 +362,10 @@ const Cart = () => {
       // Show unified success message based on the operation
       const normalizedItem = normalizeItemData(item);
       if (parsedValue > item.quantity) {
-        const added = parsedValue - item.quantity;
+        // Always show the final quantity for manual set, not the added amount
         showCartMessage(CartMessageTypes.MANUAL_SET, {
           itemName: normalizedItem.name,
-          quantity: added,
+          quantity: parsedValue,
           measurementUnit: normalizedItem.measurement_unit,
           isBuyer: user?.role === 'buyer'
         });

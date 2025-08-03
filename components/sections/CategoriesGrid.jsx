@@ -95,10 +95,10 @@ const CategoriesGrid = ({
           isBuyer: user?.role === 'buyer'
         });
       } else if (value > currentQuantity) {
-        const added = value - currentQuantity;
+        // Always show the final quantity for manual set, not the added amount
         showCartMessage(CartMessageTypes.MANUAL_SET, {
           itemName: normalizedItem.name,
-          quantity: added,
+          quantity: value,
           measurementUnit: normalizedItem.measurement_unit,
           isBuyer: user?.role === 'buyer'
         });
