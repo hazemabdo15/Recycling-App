@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { showGlobalToast } from '../components/common/GlobalToast';
+import { useAllItems } from '../hooks/useAPI';
 import { useCart } from '../hooks/useCart';
 import { borderRadius, colors, spacing, typography } from '../styles/theme';
 
@@ -42,7 +44,8 @@ const MODAL_HEIGHT = height * 0.85;
 const DISMISS_THRESHOLD = 150;
 
 export default function AIResultsModal() {
-  const { handleAddToCart } = useCart();
+  const { handleAddToCart, cartItems } = useCart();
+  const { items: allItems } = useAllItems();
   const params = useLocalSearchParams();
   const { 
     extractedMaterials = '[]', 
@@ -181,7 +184,6 @@ export default function AIResultsModal() {
   }, []);
 
   const addToCart = useCallback(() => {
-
     if (validationResults.hasErrors) {
       const errorMessage = `Please fix quantity issues:\n${validationResults.errors.map(error => 
         `• ${error.material}: minimum ${error.minQuantity} ${error.unit}`
@@ -190,48 +192,134 @@ export default function AIResultsModal() {
       return;
     }
 
+    console.log('🚀 [AI Results Modal] Starting cart addition with stock validation');
+    
     const availableMaterials = materials.filter(item => item.available && item.databaseItem);
     if (availableMaterials.length === 0) {
       alert('No available materials to add to cart. Items marked in red are not yet in our database.');
       return;
     }
-
-    const cartItems = availableMaterials.map(item => ({
-      _id: item.databaseItem._id,
-      
-      categoryId: item.databaseItem.categoryId,
-      categoryName: item.databaseItem.categoryName,
-      name: item.databaseItem.name,
-      image: item.databaseItem.image,
-      points: item.databaseItem.points,
-      price: item.databaseItem.price,
-      measurement_unit: item.databaseItem.measurement_unit,
-      quantity: item.quantity
-    }));
     
-    console.log('🚀 [AI Results Modal] Starting cart addition process');
-    console.log('📦 [AI Results Modal] Items to add:', cartItems);
-    console.log('📋 [AI Results Modal] Available materials from AI:', availableMaterials);
-    console.log('🔄 [AI Results Modal] These items will be merged with existing cart items');
-
-    cartItems.forEach((item, index) => {
-      console.log(`[AI Results Modal] Cart item ${index + 1}:`, {
-        name: item.name,
-        categoryName: item.categoryName,
-        quantity: item.quantity,
-        measurement_unit: item.measurement_unit,
-        measurementUnitType: typeof item.measurement_unit,
-        categoryId: item.categoryId
-      });
+    // Create a map of stock quantities for quick lookup
+    const stockMap = {};
+    allItems.forEach(item => {
+      const stockQuantity = item.quantity || item.available_quantity || item.stock_quantity || item.quantity_available;
+      if (stockQuantity !== undefined) {
+        stockMap[item._id] = stockQuantity;
+      }
     });
-
-    console.log('🔄 [AI Results Modal] Calling handleAddToCart with items:', cartItems);
-
-    handleAddToCart(cartItems);
+    
+    // Create a map of current cart quantities for quick lookup
+    const currentCartQuantities = {};
+    Object.entries(cartItems).forEach(([itemId, quantity]) => {
+      currentCartQuantities[itemId] = quantity;
+    });
+    
+    const processedItems = [];
+    const stockWarnings = [];
+    let totalDiscardedItems = 0;
+    
+    availableMaterials.forEach(material => {
+      const itemId = material.databaseItem._id;
+      const requestedQuantity = material.quantity;
+      const currentCartQuantity = currentCartQuantities[itemId] || 0;
+      const stockQuantity = stockMap[itemId];
+      
+      console.log(`[AI Results Modal] Processing ${material.material}:`, {
+        itemId,
+        requestedQuantity,
+        currentCartQuantity,
+        stockQuantity
+      });
+      
+      if (stockQuantity === undefined) {
+        // No stock limit, add full quantity
+        processedItems.push({
+          _id: material.databaseItem._id,
+          categoryId: material.databaseItem.categoryId,
+          categoryName: material.databaseItem.categoryName,
+          name: material.databaseItem.name,
+          image: material.databaseItem.image,
+          points: material.databaseItem.points,
+          price: material.databaseItem.price,
+          measurement_unit: material.databaseItem.measurement_unit,
+          quantity: requestedQuantity
+        });
+        return;
+      }
+      
+      // Calculate how much we can actually add
+      const availableToAdd = Math.max(0, stockQuantity - currentCartQuantity);
+      const quantityToAdd = Math.min(requestedQuantity, availableToAdd);
+      const discardedQuantity = requestedQuantity - quantityToAdd;
+      
+      if (quantityToAdd > 0) {
+        processedItems.push({
+          _id: material.databaseItem._id,
+          categoryId: material.databaseItem.categoryId,
+          categoryName: material.databaseItem.categoryName,
+          name: material.databaseItem.name,
+          image: material.databaseItem.image,
+          points: material.databaseItem.points,
+          price: material.databaseItem.price,
+          measurement_unit: material.databaseItem.measurement_unit,
+          quantity: quantityToAdd
+        });
+      }
+      
+      if (discardedQuantity > 0) {
+        const unitText = material.databaseItem.measurement_unit === 1 ? 'kg' : 'pieces';
+        stockWarnings.push({
+          name: material.databaseItem.name,
+          discarded: discardedQuantity,
+          unit: unitText,
+          availableStock: stockQuantity,
+          currentInCart: currentCartQuantity
+        });
+        totalDiscardedItems++;
+      }
+    });
+    
+    console.log('📦 [AI Results Modal] Final processed items:', processedItems);
+    console.log('⚠️ [AI Results Modal] Stock warnings:', stockWarnings);
+    
+    // Show stock warnings if any
+    if (stockWarnings.length > 0) {
+      if (stockWarnings.length === 1) {
+        const warning = stockWarnings[0];
+        showGlobalToast(
+          `${warning.name}: Only ${warning.availableStock - warning.currentInCart} ${warning.unit} available. ${warning.discarded} ${warning.unit} discarded.`,
+          4000,
+          'warning'
+        );
+      } else {
+        showGlobalToast(
+          `${totalDiscardedItems} items had quantities reduced due to stock limits`,
+          4000,
+          'warning'
+        );
+      }
+    }
+    
+    // Add items to cart if we have any to add
+    if (processedItems.length > 0) {
+      console.log('🔄 [AI Results Modal] Adding items to cart:', processedItems);
+      handleAddToCart(processedItems);
+      
+      // Show success message
+      const addedCount = processedItems.length;
+      showGlobalToast(
+        `${addedCount} item${addedCount > 1 ? 's' : ''} added to cart`,
+        2500,
+        'success'
+      );
+    } else {
+      showGlobalToast('No items could be added due to stock limitations', 3000, 'error');
+    }
 
     router.dismissAll();
     router.push('/(tabs)/cart');
-  }, [materials, handleAddToCart, validationResults]);
+  }, [materials, handleAddToCart, validationResults, cartItems, allItems]);
 
   const browseMore = useCallback(() => {
 

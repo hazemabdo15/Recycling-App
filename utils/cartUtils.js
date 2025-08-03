@@ -43,6 +43,56 @@ export const validateQuantity = (item) => {
     }
 };
 
+// Helper function for stock validation in AI voice modal
+export const validateStockForAIItems = (aiItems, currentCartQuantities, stockMap) => {
+    const processedItems = [];
+    const stockWarnings = [];
+    let totalDiscardedItems = 0;
+    
+    aiItems.forEach(material => {
+        const itemId = material._id;
+        const requestedQuantity = material.quantity;
+        const currentCartQuantity = currentCartQuantities[itemId] || 0;
+        const stockQuantity = stockMap[itemId];
+        
+        if (stockQuantity === undefined) {
+            // No stock limit, add full quantity
+            processedItems.push(material);
+            return;
+        }
+        
+        // Calculate how much we can actually add
+        const availableToAdd = Math.max(0, stockQuantity - currentCartQuantity);
+        const quantityToAdd = Math.min(requestedQuantity, availableToAdd);
+        const discardedQuantity = requestedQuantity - quantityToAdd;
+        
+        if (quantityToAdd > 0) {
+            processedItems.push({
+                ...material,
+                quantity: quantityToAdd
+            });
+        }
+        
+        if (discardedQuantity > 0) {
+            const unitText = material.measurement_unit === 1 ? 'kg' : 'pieces';
+            stockWarnings.push({
+                name: material.name,
+                discarded: discardedQuantity,
+                unit: unitText,
+                availableStock: stockQuantity,
+                currentInCart: currentCartQuantity
+            });
+            totalDiscardedItems++;
+        }
+    });
+    
+    return {
+        processedItems,
+        stockWarnings,
+        totalDiscardedItems
+    };
+};
+
 export const normalizeItemData = (item) => {
 
     if (!item) {
