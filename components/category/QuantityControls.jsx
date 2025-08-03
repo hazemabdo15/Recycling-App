@@ -1,8 +1,9 @@
 ﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Dimensions, Text, TouchableOpacity, View } from 'react-native';
+import React, { useRef } from 'react';
+import { Dimensions, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { quantityControlsStyles } from '../../styles/components/categoryStyles';
 import { colors } from '../../styles/theme';
-import { formatQuantityDisplay } from '../../utils/cartUtils';
+import { showGlobalToast } from '../common/GlobalToast';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const scale = (size) => (SCREEN_WIDTH / 375) * size;
@@ -15,11 +16,71 @@ const QuantityControls = ({
     onDecrease,
     onFastIncrease,
     onFastDecrease,
+    onManualInput, // not used anymore
     disableDecrease = false,
     maxReached = false,
-    outOfStock = false
+    outOfStock = false,
+    onQuantityInput, // new prop for direct input
+    maxQuantity, // stock quantity for validation
 }) => {
-    const displayQuantity = formatQuantityDisplay(quantity, measurementUnit);
+    const [inputValue, setInputValue] = React.useState(quantity?.toString() || '');
+    const inputRef = useRef(null);
+    const lastValidValue = useRef(quantity?.toString() || '');
+    React.useEffect(() => {
+        // Always sync input and last valid value to prop, including zero
+        setInputValue((quantity === 0 ? '0' : quantity?.toString()) || '');
+        // Only update lastValidValue if the prop matches the input (cart update succeeded)
+        lastValidValue.current = (quantity === 0 ? '0' : quantity?.toString()) || '';
+    }, [quantity]);
+
+    // Only update local state on change, validate on end editing
+    const handleInputChange = (val) => {
+        setInputValue(val);
+    };
+
+    const handleEndEditing = (e) => {
+        const val = e.nativeEvent.text;
+        
+        // Allow zero for removal
+        if (val === '' || val === '0' || val === 0) {
+            if (onQuantityInput) onQuantityInput(0);
+            return;
+        }
+        if (measurementUnit === 1) { // kg
+            let num = parseFloat(val);
+            if (isNaN(num) || num < 0.25) {
+                showGlobalToast('Please enter a valid quantity (minimum 0.25 kg)', 2000, 'error');
+                setTimeout(() => setInputValue(lastValidValue.current), 0);
+                return;
+            }
+            num = Math.floor(num / 0.25) * 0.25;
+            const diff = num + 0.25 - parseFloat(val);
+            if (diff <= 0.125) num += 0.25;
+            num = Math.round(num * 100) / 100;
+            if (typeof maxQuantity === 'number' && num > maxQuantity) {
+                showGlobalToast(`Not enough stock. Only ${maxQuantity} kg available.`, 2000, 'error');
+                setTimeout(() => setInputValue(lastValidValue.current), 0);
+                return;
+            }
+            if (onQuantityInput) onQuantityInput(num);
+        } else {
+            let num = parseFloat(val);
+            if (isNaN(num) || num < 1) {
+                showGlobalToast('Please enter a valid quantity (minimum 1 piece)', 2000, 'error');
+                setTimeout(() => setInputValue(lastValidValue.current), 0);
+                return;
+            }
+            num = Math.round(num);
+            if (typeof maxQuantity === 'number' && num > maxQuantity) {
+                showGlobalToast(`Not enough stock. Only ${maxQuantity} pieces available.`, 2000, 'error');
+                setTimeout(() => setInputValue(lastValidValue.current), 0);
+                return;
+            }
+            if (onQuantityInput) onQuantityInput(num);
+        }
+    };
+
+    // maxQuantity is passed from ItemCard as item.quantity
     return (
         <View style={[
             quantityControlsStyles.quantityControlsContainer,
@@ -57,7 +118,7 @@ const QuantityControls = ({
                     borderRadius: scale(14),
                     paddingHorizontal: scale(8),
                     paddingVertical: scale(4),
-                    marginHorizontal: scale(8),
+                    marginHorizontal: scale(5),
                 },
             ]}>
                 <TouchableOpacity
@@ -75,19 +136,29 @@ const QuantityControls = ({
                         color={colors.white}
                     />
                 </TouchableOpacity>
-                <View style={[
-                    quantityControlsStyles.quantityDisplay,
-                    { minWidth: scale(60), paddingHorizontal: scale(16) },
-                ]}>
-                    <Text style={[
-                        quantityControlsStyles.quantityText,
-                        { fontSize: scale(16), lineHeight: scale(20) },
-                    ]}>
-                        {displayQuantity}
-                    </Text>
+                <View
+                    style={[
+                        quantityControlsStyles.quantityDisplay,
+                        { minWidth: scale(90), paddingHorizontal: scale(0), borderWidth: 1, borderColor: colors.primary, borderRadius: scale(10), backgroundColor: colors.white, elevation: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+                    ]}
+                >
+                    <TextInput
+                        ref={inputRef}
+                        style={[
+                            quantityControlsStyles.quantityText,
+                            { fontSize: scale(16), lineHeight: scale(20), color: colors.primary, fontWeight: 'bold', letterSpacing: 0.5, flex: 1, textAlign: 'center', paddingVertical: 0, paddingHorizontal: 0, backgroundColor: 'transparent' },
+                        ]}
+                        value={inputValue}
+                        onChangeText={handleInputChange}
+                        onEndEditing={handleEndEditing}
+                        keyboardType={measurementUnit === 1 ? 'decimal-pad' : 'number-pad'}
+                        editable={!maxReached && !outOfStock}
+                        returnKeyType="done"
+                        selectTextOnFocus
+                    />
                     <Text style={[
                         quantityControlsStyles.unitText,
-                        { fontSize: scale(11), marginTop: scale(-2) },
+                        { fontSize: scale(11), marginTop: scale(-2), color: colors.primary, marginLeft: 2 },
                     ]}>
                         {unitDisplay}
                     </Text>

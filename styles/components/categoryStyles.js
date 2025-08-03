@@ -196,10 +196,11 @@ export const quantityControlsStyles = StyleSheet.create({
         elevation: 1,
     },
     quantityDisplay: {
-        minWidth: 60,
+        minWidth: 120,
         alignItems: 'center',
         justifyContent: 'center',
         paddingHorizontal: spacing.md,
+        marginHorizontal: spacing.xs,
     },
     quantityText: {
         fontSize: 16,
@@ -212,6 +213,7 @@ export const quantityControlsStyles = StyleSheet.create({
         fontWeight: '500',
         color: colors.neutral,
         marginTop: -2,
+        marginHorizontal: spacing.xs,
     },
     fastButton: {
         width: 44,

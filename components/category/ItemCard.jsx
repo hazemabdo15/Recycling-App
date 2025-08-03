@@ -17,6 +17,7 @@ const ItemCard = ({
     onDecrease,
     onFastIncrease,
     onFastDecrease,
+    onManualInput,
     disabled = false,
     pendingAction = null,
     index = 0
@@ -25,6 +26,7 @@ const ItemCard = ({
     // Always use item.quantity (stock from API) for outOfStock badge, not cartQuantity
     const outOfStock = isOutOfStock({ quantity: item.quantity });
     const maxReached = isMaxStockReached(item, quantity);
+    
     return (
         <AnimatedListItem
             index={index}
@@ -65,6 +67,9 @@ const ItemCard = ({
                 onDecrease={onDecrease}
                 onFastIncrease={onFastIncrease}
                 onFastDecrease={onFastDecrease}
+                onManualInput={onManualInput}
+                onQuantityInput={(val) => onManualInput(val)}
+                maxQuantity={item.quantity}
                 disabled={disabled}
                 pendingAction={pendingAction}
                 disableDecrease={quantity === 0}

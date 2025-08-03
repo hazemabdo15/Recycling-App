@@ -1,26 +1,43 @@
-﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Audio } from 'expo-av';
-import * as Haptics from 'expo-haptics';
-import { router } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+﻿import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Audio } from "expo-av";
+import * as Haptics from "expo-haptics";
+import { router } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    Dimensions,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from 'react-native';
-import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAIWorkflow } from '../hooks/useAIWorkflow';
-import { borderRadius, colors, shadows, spacing, typography } from '../styles/theme';
+  Animated,
+  Dimensions,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import {
+  Gesture,
+  GestureDetector,
+  GestureHandlerRootView,
+} from "react-native-gesture-handler";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useAIWorkflow } from "../hooks/useAIWorkflow";
+import {
+  borderRadius,
+  colors,
+  shadows,
+  spacing,
+  typography,
+} from "../styles/theme";
 
-let Reanimated, interpolate, runOnJS, useAnimatedStyle, useSharedValue, withRepeat, withSpring, withTiming;
+let Reanimated,
+  interpolate,
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSpring,
+  withTiming;
 
 try {
-  const reanimated = require('react-native-reanimated');
+  const reanimated = require("react-native-reanimated");
   Reanimated = reanimated.default;
   interpolate = reanimated.interpolate;
   runOnJS = reanimated.runOnJS;
@@ -30,7 +47,7 @@ try {
   withSpring = reanimated.withSpring;
   withTiming = reanimated.withTiming;
 } catch (_error) {
-  const { View: RNView } = require('react-native');
+  const { View: RNView } = require("react-native");
   Reanimated = { View: RNView };
   interpolate = (value, input, output) => output[0];
   runOnJS = (fn) => fn;
@@ -41,7 +58,7 @@ try {
   withTiming = (value) => value;
 }
 
-const { height } = Dimensions.get('window');
+const { height } = Dimensions.get("window");
 const MODAL_HEIGHT = height * 0.75;
 const DISMISS_THRESHOLD = 150;
 export default function VoiceModal() {
@@ -106,10 +123,7 @@ export default function VoiceModal() {
       };
       animate();
       const interval = setInterval(() => {
-        setWaveformData(prev => [
-          ...prev.slice(-20),
-          Math.random() * 100,
-        ]);
+        setWaveformData((prev) => [...prev.slice(-20), Math.random() * 100]);
       }, 100);
       return () => clearInterval(interval);
     } else {
@@ -162,8 +176,8 @@ export default function VoiceModal() {
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       const { status } = await Audio.requestPermissionsAsync();
-      if (status !== 'granted') {
-        alert('Microphone permission is required to record audio');
+      if (status !== "granted") {
+        alert("Microphone permission is required to record audio");
         return;
       }
       await Audio.setAudioModeAsync({
@@ -174,7 +188,7 @@ export default function VoiceModal() {
       const recordingOptions = {
         ...Audio.RecordingOptionsPresets.HIGH_QUALITY,
         android: {
-          extension: '.m4a',
+          extension: ".m4a",
           outputFormat: Audio.AndroidOutputFormat.MPEG_4,
           audioEncoder: Audio.AndroidAudioEncoder.AAC,
           sampleRate: 16000,
@@ -182,7 +196,7 @@ export default function VoiceModal() {
           bitRate: 128000,
         },
         ios: {
-          extension: '.m4a',
+          extension: ".m4a",
           outputFormat: Audio.IOSOutputFormat.MPEG4AAC,
           audioQuality: Audio.IOSAudioQuality.HIGH,
           sampleRate: 16000,
@@ -193,11 +207,11 @@ export default function VoiceModal() {
           linearPCMIsFloat: false,
         },
         web: {
-          mimeType: 'audio/webm;codecs=opus',
+          mimeType: "audio/webm;codecs=opus",
           bitsPerSecond: 128000,
         },
       };
-      
+
       const { recording: newRecording } = await Audio.Recording.createAsync(
         recordingOptions
       );
@@ -205,11 +219,11 @@ export default function VoiceModal() {
       setIsRecording(true);
       setRecordingDuration(0);
       durationInterval.current = setInterval(() => {
-        setRecordingDuration(prev => prev + 1);
+        setRecordingDuration((prev) => prev + 1);
       }, 1000);
     } catch (error) {
-      console.error('Failed to start recording:', error);
-      alert('Failed to start recording');
+      console.error("Failed to start recording:", error);
+      alert("Failed to start recording");
     }
   };
   const stopRecording = async () => {
@@ -224,8 +238,8 @@ export default function VoiceModal() {
       recording.current = null;
       setWaveformData([]);
     } catch (error) {
-      console.error('Failed to stop recording:', error);
-      alert('Failed to stop recording');
+      console.error("Failed to stop recording:", error);
+      alert("Failed to stop recording");
     }
   };
   const playRecording = async () => {
@@ -246,8 +260,8 @@ export default function VoiceModal() {
         }
       });
     } catch (error) {
-      console.error('Failed to play recording:', error);
-      alert('Failed to play recording');
+      console.error("Failed to play recording:", error);
+      alert("Failed to play recording");
     }
   };
   const stopPlayback = async () => {
@@ -257,7 +271,7 @@ export default function VoiceModal() {
         setIsPlaying(false);
       }
     } catch (error) {
-      console.error('Failed to stop playback:', error);
+      console.error("Failed to stop playback:", error);
     }
   };
   const deleteRecording = async () => {
@@ -271,50 +285,60 @@ export default function VoiceModal() {
   };
   const sendRecording = async () => {
     await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    
+
     if (!recordedURI) {
-      alert('No recording found');
+      alert("No recording found");
       return;
     }
 
     try {
       const result = await processAudioToMaterials(recordedURI);
-      
-      if (result.success) {
 
+      if (result.success) {
         try {
           router.replace({
-            pathname: '/ai-results-modal',
+            pathname: "/ai-results-modal",
             params: {
-              extractedMaterials: JSON.stringify(result.extractedMaterials || []),
+              extractedMaterials: JSON.stringify(
+                result.extractedMaterials || []
+              ),
               verifiedMaterials: JSON.stringify(result.verifiedMaterials || []),
-              transcription: result.transcription || '',
-            }
+              transcription: result.transcription || "",
+            },
           });
         } catch (navError) {
-          console.error('Navigation error:', navError);
+          console.error("Navigation error:", navError);
 
-          const availableCount = result.verifiedMaterials?.filter(m => m.available)?.length || 0;
+          const availableCount =
+            result.verifiedMaterials?.filter((m) => m.available)?.length || 0;
           const totalCount = result.verifiedMaterials?.length || 0;
-          alert(`✅ Materials processed!\nFound: ${totalCount} items\nAvailable in database: ${availableCount}\n\nGo to explore tab to add items manually.`);
+          alert(
+            `✅ Materials processed!\nFound: ${totalCount} items\nAvailable in database: ${availableCount}\n\nGo to explore tab to add items manually.`
+          );
           dismissModal();
         }
       } else {
         alert(`AI Processing Failed: ${result.error}`);
       }
     } catch (error) {
-      console.error('Send recording error:', error);
-      alert('Failed to process your recording. Please try again.');
+      console.error("Send recording error:", error);
+      alert("Failed to process your recording. Please try again.");
     }
   };
   const formatDuration = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `${mins.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
   };
   return (
     <GestureHandlerRootView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="transparent"
+        translucent
+      />
       {}
       <TouchableOpacity
         style={styles.backdrop}
@@ -324,20 +348,29 @@ export default function VoiceModal() {
       {}
       <GestureDetector gesture={panGesture}>
         <Reanimated.View
-          style={[styles.modal, animatedModalStyle, { paddingTop: insets.top + 20 }]}
+          style={[
+            styles.modal,
+            animatedModalStyle,
+            { paddingTop: insets.top + 20 },
+          ]}
         >
           {}
           <View style={styles.handleBar} />
           {}
-          <View style={styles.header}>
-          </View>
+          <View style={styles.header}></View>
           {}
           <View style={styles.visualizationContainer}>
             {isRecording ? (
               <View style={styles.waveformContainer}>
                 <View style={styles.recordingStatus}>
-                  <MaterialCommunityIcons name="microphone" size={24} color={colors.white} />
-                  <Text style={styles.listeningText}>I&apos;m listening...</Text>
+                  <MaterialCommunityIcons
+                    name="microphone"
+                    size={24}
+                    color={colors.white}
+                  />
+                  <Text style={styles.listeningText}>
+                    I&apos;m listening...
+                  </Text>
                 </View>
                 <View style={styles.waveform}>
                   {waveformData.map((height, index) => (
@@ -358,30 +391,62 @@ export default function VoiceModal() {
             ) : (
               <View style={styles.promptContainer}>
                 <View style={styles.aiAvatar}>
-                  <MaterialCommunityIcons name="robot" size={36} color={colors.primary} />
+                  <MaterialCommunityIcons
+                    name="robot"
+                    size={36}
+                    color={colors.primary}
+                  />
                 </View>
-                <Text style={styles.promptTitle}>How can I help you recycle today?</Text>
+                <Text style={styles.promptTitle}>
+                  How can I help you recycle today?
+                </Text>
                 <View style={styles.examplesContainer}>
-                  <Text style={styles.examplesLabel}>Try saying something like:</Text>
+                  <Text style={styles.examplesLabel}>
+                    Try saying something like:
+                  </Text>
                   <View style={styles.examplesList}>
                     <View style={styles.examplesRow}>
                       <View style={styles.exampleItem}>
-                        <MaterialCommunityIcons name="bottle-soda" size={16} color={colors.primary} />
-                        <Text style={styles.exampleText}>&ldquo;I have 2 kilos of plastic bottles&rdquo;</Text>
+                        <MaterialCommunityIcons
+                          name="bottle-soda"
+                          size={16}
+                          color={colors.primary}
+                        />
+                        <Text style={styles.exampleText}>
+                          &ldquo;I have 2 kilos of plastic bottles&rdquo;
+                        </Text>
                       </View>
                       <View style={styles.exampleItem}>
-                        <MaterialCommunityIcons name="newspaper" size={16} color={colors.primary} />
-                        <Text style={styles.exampleText}>&ldquo;5 kilos of shredded papers&rdquo;</Text>
+                        <MaterialCommunityIcons
+                          name="newspaper"
+                          size={16}
+                          color={colors.primary}
+                        />
+                        <Text style={styles.exampleText}>
+                          &ldquo;5 kilos of shredded papers&rdquo;
+                        </Text>
                       </View>
                     </View>
                     <View style={styles.examplesRow}>
                       <View style={styles.exampleItem}>
-                        <MaterialCommunityIcons name="silverware" size={16} color={colors.primary} />
-                        <Text style={styles.exampleText}>&ldquo;Metal cans and aluminum&rdquo;</Text>
+                        <MaterialCommunityIcons
+                          name="silverware"
+                          size={16}
+                          color={colors.primary}
+                        />
+                        <Text style={styles.exampleText}>
+                          &ldquo;Metal cans and aluminum&rdquo;
+                        </Text>
                       </View>
                       <View style={styles.exampleItem}>
-                        <MaterialCommunityIcons name="bottle-wine" size={16} color={colors.primary} />
-                        <Text style={styles.exampleText}>&ldquo;Glass jars and bottles&rdquo;</Text>
+                        <MaterialCommunityIcons
+                          name="bottle-wine"
+                          size={16}
+                          color={colors.primary}
+                        />
+                        <Text style={styles.exampleText}>
+                          &ldquo;Glass jars and bottles&rdquo;
+                        </Text>
                       </View>
                     </View>
                   </View>
@@ -389,7 +454,9 @@ export default function VoiceModal() {
               </View>
             )}
             {recordingDuration > 0 && isRecording && (
-              <Text style={styles.duration}>{formatDuration(recordingDuration)}</Text>
+              <Text style={styles.duration}>
+                {formatDuration(recordingDuration)}
+              </Text>
             )}
           </View>
           {}
@@ -400,7 +467,11 @@ export default function VoiceModal() {
                   <TouchableOpacity
                     style={[
                       styles.recordButton,
-                      { backgroundColor: isRecording ? colors.accent : colors.primary }
+                      {
+                        backgroundColor: isRecording
+                          ? colors.accent
+                          : colors.primary,
+                      },
                     ]}
                     onPress={isRecording ? stopRecording : startRecording}
                     activeOpacity={0.8}
@@ -413,7 +484,9 @@ export default function VoiceModal() {
                   </TouchableOpacity>
                 </Reanimated.View>
                 <Text style={styles.hint}>
-                  {isRecording ? "Tap to stop recording" : "Tap to start recording"}
+                  {isRecording
+                    ? "Tap to stop recording"
+                    : "Tap to start recording"}
                 </Text>
               </View>
             ) : (
@@ -445,21 +518,32 @@ export default function VoiceModal() {
                     />
                   </TouchableOpacity>
                 </View>
-                <TouchableOpacity 
-                  style={[styles.sendButton, isProcessing && styles.sendButtonDisabled]} 
+                <TouchableOpacity
+                  style={[
+                    styles.sendButton,
+                    isProcessing && styles.sendButtonDisabled,
+                  ]}
                   onPress={sendRecording}
                   disabled={isProcessing}
                 >
                   {isProcessing ? (
                     <>
                       <Reanimated.View style={spinnerStyle}>
-                        <MaterialCommunityIcons name="reload" size={20} color={colors.white} />
+                        <MaterialCommunityIcons
+                          name="reload"
+                          size={20}
+                          color={colors.white}
+                        />
                       </Reanimated.View>
                       <Text style={styles.sendButtonText}>Processing...</Text>
                     </>
                   ) : (
                     <>
-                      <MaterialCommunityIcons name="send" size={20} color={colors.white} />
+                      <MaterialCommunityIcons
+                        name="send"
+                        size={20}
+                        color={colors.white}
+                      />
                       <Text style={styles.sendButtonText}>Send to AI</Text>
                     </>
                   )}
@@ -475,14 +559,14 @@ export default function VoiceModal() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
   },
   modal: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
@@ -500,39 +584,39 @@ const styles = StyleSheet.create({
     height: 5,
     backgroundColor: colors.base300,
     borderRadius: 3,
-    alignSelf: 'center',
+    alignSelf: "center",
     marginVertical: spacing.sm,
   },
   header: {
     paddingVertical: spacing.sm,
     marginBottom: spacing.sm,
-    alignItems: 'center',
+    alignItems: "center",
   },
   title: {
     ...typography.title,
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: "700",
     color: colors.black,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 32,
   },
   visualizationContainer: {
     flex: 1,
-    justifyContent: 'flex-start',
-    alignItems: 'center',
+    justifyContent: "flex-start",
+    alignItems: "center",
     paddingVertical: spacing.md,
     paddingTop: spacing.lg,
     minHeight: 200,
   },
   waveformContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: spacing.xl,
   },
   waveform: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
+    flexDirection: "row",
+    alignItems: "flex-end",
     height: 80,
-    justifyContent: 'center',
+    justifyContent: "center",
     marginBottom: spacing.lg,
     paddingHorizontal: spacing.lg,
   },
@@ -546,17 +630,17 @@ const styles = StyleSheet.create({
   recordingIndicator: {
     ...typography.subtitle,
     color: colors.accent,
-    fontWeight: '700',
+    fontWeight: "700",
     letterSpacing: 2,
     fontSize: 16,
   },
   duration: {
     ...typography.title,
     fontSize: 36,
-    fontWeight: '300',
+    fontWeight: "300",
     color: colors.primary,
     marginTop: spacing.lg,
-    fontVariant: ['tabular-nums'],
+    fontVariant: ["tabular-nums"],
     letterSpacing: 1,
   },
   controlsContainer: {
@@ -564,24 +648,24 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.md,
   },
   recordingControls: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: spacing.lg,
   },
   recordButton: {
     width: 88,
     height: 88,
     borderRadius: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: spacing.xl,
     ...shadows.large,
     elevation: 0,
   },
   hint: {
     ...typography.subtitle,
-    textAlign: 'center',
+    textAlign: "center",
     color: colors.neutral,
-    fontWeight: '500',
+    fontWeight: "500",
     fontSize: 16,
     lineHeight: 22,
   },
@@ -589,9 +673,9 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.lg,
   },
   playbackControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     backgroundColor: colors.base100,
     borderRadius: borderRadius.lg,
     paddingVertical: spacing.xl,
@@ -606,28 +690,28 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 28,
     backgroundColor: colors.white,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     ...shadows.medium,
     elevation: 3,
   },
   durationContainer: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
     paddingHorizontal: spacing.lg,
   },
   playbackDuration: {
     ...typography.title,
     fontSize: 22,
-    fontWeight: '600',
+    fontWeight: "600",
     color: colors.primary,
-    fontVariant: ['tabular-nums'],
+    fontVariant: ["tabular-nums"],
     letterSpacing: 1,
   },
   sendButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: colors.primary,
     borderRadius: borderRadius.lg,
     paddingVertical: spacing.lg + 2,
@@ -642,15 +726,15 @@ const styles = StyleSheet.create({
   sendButtonText: {
     ...typography.subtitle,
     color: colors.white,
-    fontWeight: '700',
+    fontWeight: "700",
     marginLeft: spacing.sm,
     fontSize: 17,
   },
   promptContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingHorizontal: spacing.sm,
     flex: 1,
-    justifyContent: 'flex-start',
+    justifyContent: "flex-start",
     paddingTop: spacing.sm,
   },
   aiAvatar: {
@@ -658,19 +742,19 @@ const styles = StyleSheet.create({
     height: 70,
     borderRadius: 35,
     backgroundColor: colors.base100,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: spacing.sm,
     ...shadows.medium,
     borderWidth: 2,
-    borderColor: colors.primary + '20',
+    borderColor: colors.primary + "20",
   },
   promptTitle: {
     ...typography.title,
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: "600",
     color: colors.black,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: spacing.md,
     lineHeight: 26,
   },
@@ -681,23 +765,23 @@ const styles = StyleSheet.create({
   examplesLabel: {
     ...typography.subtitle,
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: "600",
     color: colors.neutral,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: spacing.md,
   },
   examplesList: {
     gap: spacing.sm,
   },
   examplesRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.sm,
     marginBottom: spacing.sm,
   },
   exampleItem: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.base100,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.sm,
@@ -717,13 +801,13 @@ const styles = StyleSheet.create({
     ...typography.subtitle,
     fontSize: 14,
     color: colors.neutral,
-    textAlign: 'center',
+    textAlign: "center",
     opacity: 0.8,
     marginTop: spacing.sm,
   },
   recordingStatus: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.primary,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.xl,
@@ -735,7 +819,7 @@ const styles = StyleSheet.create({
   listeningText: {
     ...typography.subtitle,
     color: colors.white,
-    fontWeight: '600',
+    fontWeight: "600",
     marginLeft: spacing.sm,
     fontSize: 16,
   },

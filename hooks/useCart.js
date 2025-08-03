@@ -172,6 +172,42 @@ export const useCart = () => {
     }
   };
 
+  // Set quantity directly (for manual input)
+  const handleSetQuantity = async (item, newQuantity) => {
+    console.log('useCart handleSetQuantity called with:', { item: item?.name, newQuantity });
+    const needsNormalization = !item._id || !item.categoryId || !item.image || item.measurement_unit === undefined;
+    const processedItem = needsNormalization ? normalizeItemData(item) : item;
+    const { _id, measurement_unit } = processedItem;
+    const currentQuantity = getItemQuantity(_id);
+    console.log('useCart handleSetQuantity processed:', { _id, measurement_unit, newQuantity, currentQuantity });
+    
+    if (newQuantity <= 0) {
+      console.log('useCart handleSetQuantity: removing item (quantity <= 0)');
+      await handleRemoveFromCart(_id);
+      return { success: true };
+    }
+    
+    try {
+      if (currentQuantity === 0) {
+        // Item doesn't exist in cart, add it
+        console.log('useCart handleSetQuantity: adding new item to cart');
+        const cartItem = createCartItem(processedItem, newQuantity);
+        const result = await handleAddSingleItem(cartItem);
+        console.log('useCart handleSetQuantity: handleAddSingleItem result:', result);
+        return result || { success: true };
+      } else {
+        // Item exists in cart, update quantity
+        console.log('useCart handleSetQuantity: updating existing item quantity');
+        const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit);
+        console.log('useCart handleSetQuantity: handleUpdateQuantity result:', result);
+        return result;
+      }
+    } catch (error) {
+      console.error('useCart handleSetQuantity error:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
   return {
     cartItems,
     cartItemDetails,
@@ -180,6 +216,7 @@ export const useCart = () => {
     handleDecreaseQuantity,
     handleFastIncreaseQuantity,
     handleFastDecreaseQuantity,
+    handleSetQuantity,
     handleClearCart,
     handleRemoveFromCart,
     handleAddToCart,

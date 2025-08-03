@@ -65,6 +65,7 @@ const CategoryDetails = () => {
     handleDecreaseQuantity,
     handleFastIncreaseQuantity,
     handleFastDecreaseQuantity,
+    handleSetQuantity,
   } = useCart();
 
   const mergedItems = items.map((item) => {
@@ -106,12 +107,62 @@ const CategoryDetails = () => {
     cartItems
   );
 
+  const handleManualInput = async (itemOrValue, valueMaybe) => {
+    console.log('handleManualInput called with:', { itemOrValue, valueMaybe });
+    
+    // itemOrValue can be item or value depending on call
+    let item, value;
+    if (typeof valueMaybe === 'undefined') {
+      // Called as onManualInput(item)
+      item = itemOrValue;
+      console.log('Called with just item, returning early');
+      return; // Do nothing on just focus/click
+    } else {
+      // Called as onManualInput(value) from QuantityControls
+      item =  itemOrValue;
+      value = valueMaybe;
+    }
+    
+    console.log('Processing manual input:', { item: item?.name, value, itemQuantity: item?.quantity });
+    
+    if (!item) {
+      console.log('No item found, returning');
+      return;
+    }
+    // Check stock before setting
+    if (value > item.quantity) {
+      console.log('Value exceeds stock:', { value, stock: item.quantity });
+      showGlobalToast(`Not enough stock. Only ${item.quantity} available.`, 2000, 'error');
+      return;
+    }
+    const itemKey = getCartKey(item);
+    setPendingOperations((prev) => ({ ...prev, [itemKey]: "manualInput" }));
+    try {
+      console.log('Calling handleSetQuantity with:', { item: item.name, value });
+      const result = await handleSetQuantity(item, value);
+      console.log('handleSetQuantity result:', result);
+    } catch (_err) {
+      console.log('handleSetQuantity error:', _err);
+      showGlobalToast("Failed to set quantity", 2000, "error");
+    } finally {
+      setPendingOperations((prev) => {
+        const newState = { ...prev };
+        delete newState[itemKey];
+        return newState;
+      });
+    }
+  };
+
   const renderItem = ({ item, index }) => {
     const itemKey = getCartKey(item);
     const itemPendingAction = pendingOperations[itemKey];
     // item.quantity is the stock, item.cartQuantity is the cart
     // Stock logic
-    const { isOutOfStock, isMaxStockReached, canAddToCart } = require('../utils/stockUtils');
+    const {
+      isOutOfStock,
+      isMaxStockReached,
+      canAddToCart,
+    } = require("../utils/stockUtils");
     const maxReached = isMaxStockReached(item, item.cartQuantity);
     const outOfStock = isOutOfStock(item);
     return (
@@ -123,6 +174,7 @@ const CategoryDetails = () => {
         index={index}
         maxReached={maxReached}
         outOfStock={outOfStock}
+        onManualInput={(val) => handleManualInput(item, val)}
         onIncrease={async () => {
           if (itemPendingAction || maxReached || outOfStock) {
             if (maxReached) {
@@ -130,7 +182,7 @@ const CategoryDetails = () => {
               showGlobalToast(maxMsg, 1000, "error");
             }
             if (outOfStock) {
-              showGlobalToast('This item is out of stock.', 2000, "error");
+              showGlobalToast("This item is out of stock.", 2000, "error");
             }
             return;
           }
@@ -416,20 +468,22 @@ const CategoryDetails = () => {
         {mergedItems.length === 0 ? (
           <EmptyState categoryName={categoryName} onAddItem={handleAddItem} />
         ) : (
-          <FlatList
-            data={mergedItems}
-            renderItem={renderItem}
-            keyExtractor={(item) => getDisplayKey(item)}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={[
-              layoutStyles.listContainer,
-              { paddingBottom: 32 },
-            ]}
-            ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
-            extraData={cartItems}
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-          />
+          <>
+            <FlatList
+              data={mergedItems}
+              renderItem={renderItem}
+              keyExtractor={(item) => getDisplayKey(item)}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={[
+                layoutStyles.listContainer,
+                { paddingBottom: 32 },
+              ]}
+              ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
+              extraData={cartItems}
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+            />
+          </>
         )}
       </Animated.View>
     </View>
