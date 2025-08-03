@@ -44,8 +44,34 @@ const CategoriesGrid = ({
     handleDecreaseQuantity,
     handleFastIncreaseQuantity,
     handleFastDecreaseQuantity,
+    handleSetQuantity,
   } = useCart();
   const [pendingOperations, setPendingOperations] = useState({});
+
+  const handleManualInput = async (item, value) => {
+    if (!item) return;
+    
+    // Check stock before setting
+    if (value > item.quantity) {
+      showGlobalToast(`Not enough stock. Only ${item.quantity} available.`, 2000, 'error');
+      return;
+    }
+    
+    const itemKey = getCartKey(item);
+    setPendingOperations((prev) => ({ ...prev, [itemKey]: "manualInput" }));
+    
+    try {
+      await handleSetQuantity(item, value);
+    } catch (_err) {
+      showGlobalToast("Failed to set quantity", 2000, "error");
+    } finally {
+      setPendingOperations((prev) => {
+        const newState = { ...prev };
+        delete newState[itemKey];
+        return newState;
+      });
+    }
+  };
 
   const { filteredCategories, filteredItems } = useMemo(() => {
     const searchLower = searchText.toLowerCase();
@@ -238,6 +264,7 @@ const CategoriesGrid = ({
                 pendingAction={itemPendingAction}
                 maxReached={maxReached}
                 outOfStock={outOfStock}
+                onManualInput={(val) => handleManualInput(item, val)}
                 onIncrease={async () => {
                   if (itemPendingAction || outOfStock) {
                     if (outOfStock) {
