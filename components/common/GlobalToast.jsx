@@ -55,7 +55,7 @@ const GlobalToast = () => {
     backgroundColor = colors.error;
     icon = '✖';
   } else if (type === 'warning') {
-    backgroundColor = colors.accent;
+    backgroundColor = colors.warning;
     icon = '⚠️';
   } else if (type === 'info') {
     backgroundColor = colors.neutral;

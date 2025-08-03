@@ -11,7 +11,7 @@
   white: "#ffffff",
   black: "#171717",
   error: "#EF4444",
-  warning: "#F59E0B",
+  warning: "#a79d31ff",
   success: "#10B981",
   info: "#3B82F6",
   background: "#FAFAFA",

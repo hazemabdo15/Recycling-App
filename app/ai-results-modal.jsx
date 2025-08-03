@@ -283,36 +283,39 @@ export default function AIResultsModal() {
     console.log('📦 [AI Results Modal] Final processed items:', processedItems);
     console.log('⚠️ [AI Results Modal] Stock warnings:', stockWarnings);
     
-    // Show stock warnings if any
-    if (stockWarnings.length > 0) {
-      if (stockWarnings.length === 1) {
-        const warning = stockWarnings[0];
-        showGlobalToast(
-          `${warning.name}: Only ${warning.availableStock - warning.currentInCart} ${warning.unit} available. ${warning.discarded} ${warning.unit} discarded.`,
-          4000,
-          'warning'
-        );
-      } else {
-        showGlobalToast(
-          `${totalDiscardedItems} items had quantities reduced due to stock limits`,
-          4000,
-          'warning'
-        );
-      }
-    }
-    
     // Add items to cart if we have any to add
     if (processedItems.length > 0) {
       console.log('🔄 [AI Results Modal] Adding items to cart:', processedItems);
       handleAddToCart(processedItems);
       
-      // Show success message
-      const addedCount = processedItems.length;
-      showGlobalToast(
-        `${addedCount} item${addedCount > 1 ? 's' : ''} added to cart`,
-        2500,
-        'success'
-      );
+      // Show appropriate message based on stock warnings
+      if (stockWarnings.length > 0) {
+        if (stockWarnings.length === 1) {
+          const warning = stockWarnings[0];
+          const availableToAdd = warning.availableStock - warning.currentInCart;
+          showGlobalToast(
+            `${warning.name}: Only ${availableToAdd} ${warning.unit} available. ${warning.discarded} ${warning.unit} discarded.`,
+            4000,
+            'warning'
+          );
+        } else {
+          // Multiple items with stock issues
+          const addedCount = processedItems.length;
+          showGlobalToast(
+            `${addedCount} item${addedCount > 1 ? 's' : ''} added to cart. ${totalDiscardedItems} items had quantities reduced due to stock limits.`,
+            4000,
+            'warning'
+          );
+        }
+      } else {
+        // No stock issues, show regular success message
+        const addedCount = processedItems.length;
+        showGlobalToast(
+          `${addedCount} item${addedCount > 1 ? 's' : ''} added to cart`,
+          2500,
+          'success'
+        );
+      }
     } else {
       showGlobalToast('No items could be added due to stock limitations', 3000, 'error');
     }
