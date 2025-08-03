@@ -179,7 +179,7 @@ const QuantityControls = ({
                         onChangeText={handleInputChange}
                         onEndEditing={handleEndEditing}
                         keyboardType={measurementUnit === 1 ? 'decimal-pad' : 'number-pad'}
-                        editable={!maxReached && !outOfStock}
+                        editable={!outOfStock}
                         returnKeyType="done"
                         selectTextOnFocus
                     />
