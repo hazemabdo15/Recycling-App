@@ -152,7 +152,6 @@ const CategoryDetails = () => {
 
     // Only check stock for buyer users
     if (isBuyer(user) && value > item.quantity) {
-      console.log('Value exceeds stock:', { value, stock: item.quantity });
       showCartMessage(CartMessageTypes.STOCK_ERROR, {
         itemName: item.name,
         maxStock: item.quantity,

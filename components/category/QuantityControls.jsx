@@ -20,6 +20,7 @@ const QuantityControls = ({
     outOfStock = false,
     onQuantityInput, // new prop for direct input
     maxQuantity, // stock quantity for validation
+    itemName = 'Item', // item name for toast messages
 }) => {
     const [inputValue, setInputValue] = React.useState(quantity?.toString() || '');
     const inputRef = useRef(null);
@@ -64,7 +65,9 @@ const QuantityControls = ({
             
             // Stock validation
             if (typeof maxQuantity === 'number' && num > maxQuantity) {
-                // Remove duplicate toast - parent will handle unified messaging
+                // Show stock error message for buyers
+                const { showMaxStockMessage } = require('../../utils/cartMessages');
+                showMaxStockMessage(itemName, maxQuantity, measurementUnit);
                 // Instant reversion - no setTimeout delay
                 setInputValue(lastValidValue.current);
                 return;
@@ -91,7 +94,9 @@ const QuantityControls = ({
             
             // Stock validation
             if (typeof maxQuantity === 'number' && num > maxQuantity) {
-                // Remove duplicate toast - parent will handle unified messaging
+                // Show stock error message for buyers
+                const { showMaxStockMessage } = require('../../utils/cartMessages');
+                showMaxStockMessage(itemName, maxQuantity, measurementUnit);
                 // Instant reversion - no setTimeout delay
                 setInputValue(lastValidValue.current);
                 return;

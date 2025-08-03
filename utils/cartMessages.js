@@ -137,11 +137,12 @@ export const showCartMessage = (type, options = {}) => {
 
     case CartMessageTypes.STOCK_ERROR:
       if (isBuyer) {
+        const maxStockText = measurementUnit === 1 ? maxStock.toFixed(2) : maxStock.toString();
         if (maxStock === 0) {
           message = `${itemName} is out of stock`;
           toastType = 'error';
         } else {
-          message = `Not enough stock. Only ${maxStock} ${unit} available`;
+          message = `Not enough stock. Only ${maxStockText} ${unit} available`;
           toastType = 'error';
         }
       } else {
@@ -181,12 +182,13 @@ export const showCartMessage = (type, options = {}) => {
  */
 export const showStockWarning = (itemName, currentStock, measurementUnit = 2) => {
   const unit = getUnitText(measurementUnit);
+  const stockText = measurementUnit === 1 ? currentStock.toFixed(2) : currentStock.toString();
   let message;
   
   if (currentStock === 0) {
     message = `${itemName} is out of stock`;
   } else {
-    message = `Only ${currentStock} ${unit} of ${itemName} in stock`;
+    message = `Only ${stockText} ${unit} of ${itemName} in stock`;
   }
   
   showGlobalToast(message, 2000, 'warning');
@@ -197,6 +199,7 @@ export const showStockWarning = (itemName, currentStock, measurementUnit = 2) =>
  */
 export const showMaxStockMessage = (itemName, maxStock, measurementUnit = 2) => {
   const unit = getUnitText(measurementUnit);
-  const message = `Cannot add more. Only ${maxStock} ${unit} available`;
+  const maxStockText = measurementUnit === 1 ? maxStock.toFixed(2) : maxStock.toString();
+  const message = `Cannot add more. Only ${maxStockText} ${unit} available`;
   showGlobalToast(message, 1000, 'error');
 };

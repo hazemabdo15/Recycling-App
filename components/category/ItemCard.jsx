@@ -73,6 +73,7 @@ const ItemCard = ({
                 onManualInput={onManualInput}
                 onQuantityInput={(val) => onManualInput(val)}
                 maxQuantity={showStockLogic ? item.quantity : undefined}
+                itemName={item.name}
                 disabled={disabled}
                 pendingAction={pendingAction}
                 disableDecrease={quantity === 0}
