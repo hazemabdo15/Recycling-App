@@ -210,8 +210,20 @@ export default function AIResultsModal() {
     const stockMap = {};
     if (applyStockValidation) {
       allItems.forEach(item => {
-        const stockQuantity = item.quantity || item.available_quantity || item.stock_quantity || item.quantity_available;
-        if (stockQuantity !== undefined) {
+        // Fix: Handle 0 values properly - use nullish coalescing and explicit checks
+        let stockQuantity;
+        if (item.quantity !== undefined && item.quantity !== null) {
+          stockQuantity = item.quantity;
+        } else if (item.available_quantity !== undefined && item.available_quantity !== null) {
+          stockQuantity = item.available_quantity;
+        } else if (item.stock_quantity !== undefined && item.stock_quantity !== null) {
+          stockQuantity = item.stock_quantity;
+        } else if (item.quantity_available !== undefined && item.quantity_available !== null) {
+          stockQuantity = item.quantity_available;
+        }
+        
+        // Include items with 0 stock in the map
+        if (stockQuantity !== undefined && stockQuantity !== null) {
           stockMap[item._id] = stockQuantity;
         }
       });
@@ -227,9 +239,8 @@ export default function AIResultsModal() {
     
     const processedItems = [];
     const stockWarnings = [];
-    let totalDiscardedItems = 0;
     
-    availableMaterials.forEach(material => {
+    availableMaterials.forEach((material, index) => {
       const itemId = material.databaseItem._id;
       const requestedQuantity = material.quantity;
       
@@ -253,13 +264,6 @@ export default function AIResultsModal() {
       const currentCartQuantity = currentCartQuantities[itemId] || 0;
       const stockQuantity = stockMap[itemId];
       
-      console.log(`[AI Results Modal] Processing ${material.material}:`, {
-        itemId,
-        requestedQuantity,
-        currentCartQuantity,
-        stockQuantity
-      });
-      
       if (stockQuantity === undefined) {
         // No stock limit, add full quantity
         processedItems.push({
@@ -272,6 +276,21 @@ export default function AIResultsModal() {
           price: material.databaseItem.price,
           measurement_unit: material.databaseItem.measurement_unit,
           quantity: requestedQuantity
+        });
+        return;
+      }
+      
+      // Check if item is out of stock (stock quantity is 0 or negative)
+      if (stockQuantity <= 0) {
+        // Don't add out of stock items, but record as discarded
+        const unitText = material.databaseItem.measurement_unit === 1 ? 'kg' : 'pieces';
+        stockWarnings.push({
+          name: material.databaseItem.name,
+          discarded: requestedQuantity,
+          unit: unitText,
+          availableStock: stockQuantity,
+          currentInCart: currentCartQuantity,
+          reason: 'out_of_stock'
         });
         return;
       }
@@ -304,7 +323,6 @@ export default function AIResultsModal() {
           availableStock: stockQuantity,
           currentInCart: currentCartQuantity
         });
-        totalDiscardedItems++;
       }
     });
     
@@ -318,22 +336,39 @@ export default function AIResultsModal() {
       
       // Show appropriate message based on role and stock warnings (only for buyers)
       if (applyStockValidation && stockWarnings.length > 0) {
+        const outOfStockWarnings = stockWarnings.filter(w => w.reason === 'out_of_stock');
+        const limitWarnings = stockWarnings.filter(w => w.reason !== 'out_of_stock');
+        
         if (stockWarnings.length === 1) {
           const warning = stockWarnings[0];
-          const availableToAdd = warning.availableStock - warning.currentInCart;
-          showGlobalToast(
-            `${warning.name}: Only ${availableToAdd} ${warning.unit} available. ${warning.discarded} ${warning.unit} discarded.`,
-            4000,
-            'warning'
-          );
+          if (warning.reason === 'out_of_stock') {
+            showGlobalToast(
+              `${warning.name} is out of stock and was not added to cart.`,
+              4000,
+              'error'
+            );
+          } else {
+            const availableToAdd = warning.availableStock - warning.currentInCart;
+            showGlobalToast(
+              `${warning.name}: Only ${availableToAdd} ${warning.unit} available. ${warning.discarded} ${warning.unit} discarded.`,
+              4000,
+              'warning'
+            );
+          }
         } else {
           // Multiple items with stock issues
           const addedCount = processedItems.length;
-          showGlobalToast(
-            `${addedCount} item${addedCount > 1 ? 's' : ''} added to cart. ${totalDiscardedItems} items had quantities reduced due to stock limits.`,
-            4000,
-            'warning'
-          );
+          let message = `${addedCount} item${addedCount > 1 ? 's' : ''} added to cart.`;
+          
+          if (outOfStockWarnings.length > 0) {
+            message += ` ${outOfStockWarnings.length} item${outOfStockWarnings.length > 1 ? 's were' : ' was'} out of stock.`;
+          }
+          
+          if (limitWarnings.length > 0) {
+            message += ` ${limitWarnings.length} item${limitWarnings.length > 1 ? 's had' : ' had'} quantities reduced due to stock limits.`;
+          }
+          
+          showGlobalToast(message, 4000, 'warning');
         }
       } else {
         // No stock issues or customer user, show regular success message
@@ -344,8 +379,12 @@ export default function AIResultsModal() {
           'success'
         );
       }
-    } else {
+    } else if (stockWarnings.length > 0) {
+      // No items added but we have warnings (all items were out of stock or limited)
       showGlobalToast('No items could be added due to stock limitations', 3000, 'error');
+    } else {
+      // No items and no warnings - shouldn't happen but just in case
+      showGlobalToast('No items could be added', 3000, 'error');
     }
 
     router.dismissAll();
