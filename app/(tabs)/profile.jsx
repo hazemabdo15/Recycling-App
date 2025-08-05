@@ -1,4 +1,5 @@
-﻿import { useRouter } from "expo-router";
+﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   Alert,
@@ -31,7 +32,6 @@ function ProfileContent() {
   const [allOrders, setAllOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("incoming");
-  const [menuVisible, setMenuVisible] = useState(false);
   const { userPoints, getUserPoints } = useUserPoints({
     userId: isLoggedIn && user?._id ? user._id : null,
     name: isLoggedIn && user?.name ? user.name : null,
@@ -130,9 +130,8 @@ function ProfileContent() {
   const handleLogout = async () => {
     try {
       console.log("Logging out user...");
-      setMenuVisible(false);
-      await logout();
       router.replace("/login");
+      await logout();
     } catch (error) {
       console.error("Logout failed", error);
       Alert.alert(
@@ -140,6 +139,17 @@ function ProfileContent() {
         "There was an error logging out. Please try again."
       );
     }
+  };
+
+  const confirmLogout = () => {
+    Alert.alert(
+      "Logout",
+      "Are you sure you want to logout?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Yes", style: "destructive", onPress: handleLogout },
+      ]
+    );
   };
 
   if (authLoading) {
@@ -256,20 +266,11 @@ function ProfileContent() {
           <Text style={styles.userInfoSmall}>Cairo, July 2025</Text>
         </View>
         <TouchableOpacity
-          onPress={() => setMenuVisible(!menuVisible)}
+          onPress={confirmLogout}
           style={styles.menuButton}
+          accessibilityLabel="Logout"
         >
-          <Text style={styles.menuIcon}>☰</Text>
-          {menuVisible && (
-            <View style={styles.menuDropdown}>
-              <TouchableOpacity
-                onPress={handleLogout}
-                style={styles.menuItemButton}
-              >
-                <Text style={styles.menuItem}>Logout</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+          <MaterialCommunityIcons name="logout" size={28} color="#dc2626" />
         </TouchableOpacity>
       </View>
       <View style={styles.statsContainer}>
