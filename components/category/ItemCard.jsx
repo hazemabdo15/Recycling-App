@@ -39,16 +39,19 @@ const ItemCard = ({
                 borderRadius: scale(18),
                 marginVertical: scale(8),
                 opacity: outOfStock ? 0.6 : 1,
+                minHeight: scale(180), // Increased card height
             }}
         >
-            {showStockLogic && outOfStock && (
-                <View style={styles.outOfStockBadge}>
-                    <Text style={styles.outOfStockText}>Out of Stock</Text>
-                </View>
-            )}
+            {/* Unified badge: top right, only one shown at a time */}
+            <View style={outOfStock ? styles.outOfStockBadge : styles.stockRightBadge}>
+                <Text style={outOfStock ? styles.outOfStockText : styles.stockRightText}>
+                    {outOfStock ? 'Out of Stock' : (typeof item.quantity === 'number' ? `Stock: ${item.quantity} ${unitDisplay}` : 'Stock: N/A')}
+                </Text>
+            </View>
             <View style={{
                 ...itemCardStyles.itemContent,
                 marginBottom: scale(16),
+                paddingTop: scale(12), // Extra top padding to push content below badge
             }}>
                 <ItemImage
                     imageUri={item.image}
@@ -85,6 +88,30 @@ const ItemCard = ({
 };
 
 const styles = StyleSheet.create({
+    stockRightBadge: {
+        position: 'absolute',
+        top: 10,
+        right: 10,
+        backgroundColor: colors.base200 || '#F3F4F6',
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        zIndex: 12,
+        minWidth: 60,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.08,
+        shadowRadius: 2,
+        elevation: 2,
+    },
+    stockRightText: {
+        color: colors.primary || '#0E9F6E',
+        fontWeight: '600',
+        fontSize: 12,
+        letterSpacing: 0.2,
+    },
     outOfStockBadge: {
         position: 'absolute',
         top: 10,
@@ -93,7 +120,15 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         paddingHorizontal: 10,
         paddingVertical: 4,
-        zIndex: 10,
+        zIndex: 12,
+        minWidth: 60,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.08,
+        shadowRadius: 2,
+        elevation: 2,
     },
     outOfStockText: {
         color: colors.white,

@@ -40,7 +40,8 @@ const Explore = () => {
     setFilteredCount(count);
   };
 
-  const tabBarHeight = 140 + insets.bottom;
+  // Use a more accurate tab bar height for proper bottom padding
+  const tabBarHeight = 80 + insets.bottom;
 
   return (
     <View style={styles.container}>
@@ -81,17 +82,15 @@ const Explore = () => {
           />
         </View>
       </View>
-      <View
-        style={[styles.contentContainer, { paddingBottom: tabBarHeight, marginHorizontal: spacing.lg }]}
-      >
-        <View style={{ marginTop: 10 }}>
-          <CategoriesGrid
-            searchText={searchText}
-            onCategoryPress={handleCategoryPress}
-            onFilteredCountChange={handleFilteredCountChange}
-            showItemsMode={showItemsMode}
-          />
-        </View>
+      {/* Remove extra wrappers and let CategoriesGrid fill the rest of the page */}
+      <View style={[styles.contentContainer, { flex: 1, paddingBottom: 0, marginHorizontal: 0 }]}>
+        <CategoriesGrid
+          searchText={searchText}
+          onCategoryPress={handleCategoryPress}
+          onFilteredCountChange={handleFilteredCountChange}
+          showItemsMode={showItemsMode}
+          flatListBottomPadding={tabBarHeight + 24} // Pass extra bottom padding for FlatList
+        />
       </View>
     </View>
   );

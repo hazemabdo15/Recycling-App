@@ -11,11 +11,19 @@ import { useAuth } from "../../context/AuthContext";
 import { useCategories } from "../../hooks/useAPI";
 import { useCart } from "../../hooks/useCart";
 import { spacing } from "../../styles";
-import { CartMessageTypes, showCartMessage, showMaxStockMessage } from "../../utils/cartMessages";
-import { getCartKey, getIncrementStep, normalizeItemData } from "../../utils/cartUtils";
+import {
+  CartMessageTypes,
+  showCartMessage,
+  showMaxStockMessage,
+} from "../../utils/cartMessages";
+import {
+  getCartKey,
+  getIncrementStep,
+  normalizeItemData,
+} from "../../utils/cartUtils";
 import { isBuyer } from "../../utils/roleLabels";
-import { scaleSize } from '../../utils/scale';
-import { isMaxStockReached, isOutOfStock } from '../../utils/stockUtils';
+import { scaleSize } from "../../utils/scale";
+import { isMaxStockReached, isOutOfStock } from "../../utils/stockUtils";
 import { CategoryCard } from "../cards";
 import { ItemCard } from "../category";
 import { FadeInView } from "../common";
@@ -26,9 +34,10 @@ const CategoriesGrid = ({
   onCategoryPress,
   onFilteredCountChange,
   showItemsMode = false,
+  flatListBottomPadding = 0,
 }) => {
   const [refreshing, setRefreshing] = useState(false);
-  const { refetch } = require('../../hooks/useAPI').useAllItems();
+  const { refetch } = require("../../hooks/useAPI").useAllItems();
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
@@ -51,7 +60,7 @@ const CategoriesGrid = ({
 
   const handleManualInput = async (item, value) => {
     if (!item) return;
-    
+
     const normalizedItem = normalizeItemData(item);
     const currentQuantity = cartItems[getCartKey(item)] || 0;
 
@@ -61,38 +70,42 @@ const CategoriesGrid = ({
         showCartMessage(CartMessageTypes.INVALID_QUANTITY, {
           itemName: normalizedItem.name,
           measurementUnit: normalizedItem.measurement_unit,
-          isBuyer: user?.role === 'buyer'
+          isBuyer: user?.role === "buyer",
         });
         return;
       } else if (normalizedItem.measurement_unit === 2 && value < 1) {
         showCartMessage(CartMessageTypes.INVALID_QUANTITY, {
           itemName: normalizedItem.name,
           measurementUnit: normalizedItem.measurement_unit,
-          isBuyer: user?.role === 'buyer'
+          isBuyer: user?.role === "buyer",
         });
         return;
       }
     }
-    
+
     // Only check stock for buyer users
     if (isBuyer(user) && value > item.quantity) {
-      showMaxStockMessage(normalizedItem.name, item.quantity, normalizedItem.measurement_unit);
+      showMaxStockMessage(
+        normalizedItem.name,
+        item.quantity,
+        normalizedItem.measurement_unit
+      );
       return;
     }
-    
+
     const itemKey = getCartKey(item);
     setPendingOperations((prev) => ({ ...prev, [itemKey]: "manualInput" }));
-    
+
     try {
       await handleSetQuantity(item, value);
-      
+
       // Show unified message based on the operation
       if (value === 0) {
         // Only show removal message when quantity is set to 0
         showCartMessage(CartMessageTypes.MANUAL_REMOVED, {
           itemName: normalizedItem.name,
           measurementUnit: normalizedItem.measurement_unit,
-          isBuyer: user?.role === 'buyer'
+          isBuyer: user?.role === "buyer",
         });
       } else if (value > currentQuantity) {
         // Always show the final quantity for manual set, not the added amount
@@ -100,7 +113,7 @@ const CategoriesGrid = ({
           itemName: normalizedItem.name,
           quantity: value,
           measurementUnit: normalizedItem.measurement_unit,
-          isBuyer: user?.role === 'buyer'
+          isBuyer: user?.role === "buyer",
         });
       } else if (value < currentQuantity) {
         // Show quantity change, not removal
@@ -108,14 +121,14 @@ const CategoriesGrid = ({
           itemName: normalizedItem.name,
           quantity: value,
           measurementUnit: normalizedItem.measurement_unit,
-          isBuyer: user?.role === 'buyer'
+          isBuyer: user?.role === "buyer",
         });
       }
     } catch (_err) {
       showCartMessage(CartMessageTypes.OPERATION_FAILED, {
         itemName: normalizedItem.name,
         measurementUnit: normalizedItem.measurement_unit,
-        isBuyer: user?.role === 'buyer'
+        isBuyer: user?.role === "buyer",
       });
     } finally {
       setPendingOperations((prev) => {
@@ -128,26 +141,27 @@ const CategoriesGrid = ({
 
   const { filteredCategories, filteredItems } = useMemo(() => {
     const searchLower = searchText.toLowerCase();
-    
+
     if (showItemsMode) {
       const items = categories
-        .flatMap((category) =>
-          category.items?.map((item) => {
-            const normalizedItem = normalizeItemData({
-              ...item,
-              categoryId: item.categoryId || category._id,
-              categoryName: item.categoryName || category.name,
-              category: category
-            });
-            const itemKey = getCartKey(normalizedItem);
-            // DO NOT overwrite normalizedItem.quantity (stock from API)
-            const cartQuantity = cartItems[itemKey] || 0;
-            return {
-              ...normalizedItem,
-              cartQuantity,
-              category: category,
-            };
-          }) || []
+        .flatMap(
+          (category) =>
+            category.items?.map((item) => {
+              const normalizedItem = normalizeItemData({
+                ...item,
+                categoryId: item.categoryId || category._id,
+                categoryName: item.categoryName || category.name,
+                category: category,
+              });
+              const itemKey = getCartKey(normalizedItem);
+              // DO NOT overwrite normalizedItem.quantity (stock from API)
+              const cartQuantity = cartItems[itemKey] || 0;
+              return {
+                ...normalizedItem,
+                cartQuantity,
+                category: category,
+              };
+            }) || []
         )
         .filter((item) => item.name.toLowerCase().includes(searchLower));
 
@@ -160,100 +174,122 @@ const CategoriesGrid = ({
     }
   }, [categories, showItemsMode, searchText, cartItems]);
 
-  const handleCartOperation = useCallback(async (item, operation) => {
-    const itemKey = getCartKey(item);
-    if (pendingOperations[itemKey]) return;
+  const handleCartOperation = useCallback(
+    async (item, operation) => {
+      const itemKey = getCartKey(item);
+      if (pendingOperations[itemKey]) return;
 
-    // Get normalized item data
-    const normalizedItem = normalizeItemData(item);
-    const step = operation.includes('fast') ? 5 : getIncrementStep(normalizedItem.measurement_unit);
+      // Get normalized item data
+      const normalizedItem = normalizeItemData(item);
+      const step = operation.includes("fast")
+        ? 5
+        : getIncrementStep(normalizedItem.measurement_unit);
 
-    const timeoutId = setTimeout(() => {
-      setPendingOperations((prev) => {
-        const newState = { ...prev };
-        delete newState[itemKey];
-        return newState;
-      });
-    }, 2000);
+      const timeoutId = setTimeout(() => {
+        setPendingOperations((prev) => {
+          const newState = { ...prev };
+          delete newState[itemKey];
+          return newState;
+        });
+      }, 2000);
 
-    try {
-      setPendingOperations((prev) => ({
-        ...prev,
-        [itemKey]: operation,
-      }));
+      try {
+        setPendingOperations((prev) => ({
+          ...prev,
+          [itemKey]: operation,
+        }));
 
-      let increaseResult;
-      switch (operation) {
-        case 'increase':
-          increaseResult = await handleIncreaseQuantity(item, showGlobalToast);
-          if (increaseResult !== false) {
-            showCartMessage(CartMessageTypes.ADD_SINGLE, {
+        let increaseResult;
+        switch (operation) {
+          case "increase":
+            increaseResult = await handleIncreaseQuantity(
+              item,
+              showGlobalToast
+            );
+            if (increaseResult !== false) {
+              showCartMessage(CartMessageTypes.ADD_SINGLE, {
+                itemName: normalizedItem.name,
+                quantity: step,
+                measurementUnit: normalizedItem.measurement_unit,
+                isBuyer: user?.role === "buyer",
+              });
+            }
+            break;
+          case "decrease":
+            await handleDecreaseQuantity(item);
+            showCartMessage(CartMessageTypes.REMOVE_SINGLE, {
               itemName: normalizedItem.name,
               quantity: step,
               measurementUnit: normalizedItem.measurement_unit,
-              isBuyer: user?.role === 'buyer'
+              remainingQuantity: Math.max(0, (item.cartQuantity || 0) - step),
+              isBuyer: user?.role === "buyer",
             });
-          }
-          break;
-        case 'decrease':
-          await handleDecreaseQuantity(item);
-          showCartMessage(CartMessageTypes.REMOVE_SINGLE, {
-            itemName: normalizedItem.name,
-            quantity: step,
-            measurementUnit: normalizedItem.measurement_unit,
-            remainingQuantity: Math.max(0, (item.cartQuantity || 0) - step),
-            isBuyer: user?.role === 'buyer'
-          });
-          break;
-        case 'fastIncrease':
-          increaseResult = await handleFastIncreaseQuantity(item, showGlobalToast);
-          if (increaseResult !== false) {
-            showCartMessage(CartMessageTypes.ADD_FAST, {
+            break;
+          case "fastIncrease":
+            increaseResult = await handleFastIncreaseQuantity(
+              item,
+              showGlobalToast
+            );
+            if (increaseResult !== false) {
+              showCartMessage(CartMessageTypes.ADD_FAST, {
+                itemName: normalizedItem.name,
+                quantity: step,
+                measurementUnit: normalizedItem.measurement_unit,
+                isBuyer: user?.role === "buyer",
+              });
+            }
+            break;
+          case "fastDecrease":
+            await handleFastDecreaseQuantity(item);
+            showCartMessage(CartMessageTypes.REMOVE_FAST, {
               itemName: normalizedItem.name,
               quantity: step,
               measurementUnit: normalizedItem.measurement_unit,
-              isBuyer: user?.role === 'buyer'
+              remainingQuantity: Math.max(0, (item.cartQuantity || 0) - step),
+              isBuyer: user?.role === "buyer",
             });
-          }
-          break;
-        case 'fastDecrease':
-          await handleFastDecreaseQuantity(item);
-          showCartMessage(CartMessageTypes.REMOVE_FAST, {
-            itemName: normalizedItem.name,
-            quantity: step,
-            measurementUnit: normalizedItem.measurement_unit,
-            remainingQuantity: Math.max(0, (item.cartQuantity || 0) - step),
-            isBuyer: user?.role === 'buyer'
-          });
-          break;
-        default:
-          throw new Error(`Unknown operation: ${operation}`);
-      }
+            break;
+          default:
+            throw new Error(`Unknown operation: ${operation}`);
+        }
 
-      if (operation.includes('increase')) {
-        if (operation === 'increase' || operation === 'fastIncrease') {
-          if (increaseResult === false) {
-            // Show unified stock error message
-            showMaxStockMessage(normalizedItem.name, item.quantity || 0, normalizedItem.measurement_unit);
+        if (operation.includes("increase")) {
+          if (operation === "increase" || operation === "fastIncrease") {
+            if (increaseResult === false) {
+              // Show unified stock error message
+              showMaxStockMessage(
+                normalizedItem.name,
+                item.quantity || 0,
+                normalizedItem.measurement_unit
+              );
+            }
           }
         }
+      } catch (err) {
+        console.error(`[CategoriesGrid] Error ${operation} quantity:`, err);
+        showCartMessage(CartMessageTypes.OPERATION_FAILED, {
+          itemName: normalizedItem.name,
+          measurementUnit: normalizedItem.measurement_unit,
+          isBuyer: user?.role === "buyer",
+        });
+      } finally {
+        clearTimeout(timeoutId);
+        setPendingOperations((prev) => {
+          const newState = { ...prev };
+          delete newState[itemKey];
+          return newState;
+        });
       }
-    } catch (err) {
-      console.error(`[CategoriesGrid] Error ${operation} quantity:`, err);
-      showCartMessage(CartMessageTypes.OPERATION_FAILED, {
-        itemName: normalizedItem.name,
-        measurementUnit: normalizedItem.measurement_unit,
-        isBuyer: user?.role === 'buyer'
-      });
-    } finally {
-      clearTimeout(timeoutId);
-      setPendingOperations((prev) => {
-        const newState = { ...prev };
-        delete newState[itemKey];
-        return newState;
-      });
-    }
-  }, [handleIncreaseQuantity, handleDecreaseQuantity, handleFastIncreaseQuantity, handleFastDecreaseQuantity, pendingOperations, user]);
+    },
+    [
+      handleIncreaseQuantity,
+      handleDecreaseQuantity,
+      handleFastIncreaseQuantity,
+      handleFastDecreaseQuantity,
+      pendingOperations,
+      user,
+    ]
+  );
 
   useEffect(() => {
     if (onFilteredCountChange) {
@@ -309,7 +345,7 @@ const CategoriesGrid = ({
             const itemKey = getCartKey(item);
             const itemPendingAction = pendingOperations[itemKey];
             const cartQuantity = cartItems[itemKey] || 0;
-            
+
             // Only apply stock validation for buyer users
             let maxReached = false;
             let outOfStock = false;
@@ -317,7 +353,7 @@ const CategoriesGrid = ({
               maxReached = isMaxStockReached(item, cartQuantity);
               outOfStock = isOutOfStock(item);
             }
-            
+
             return (
               <ItemCard
                 key={itemKey || `${item.name}-${index}`}
@@ -334,78 +370,112 @@ const CategoriesGrid = ({
                   // Only check stock limitations for buyer users
                   if (isBuyer(user) && (itemPendingAction || outOfStock)) {
                     if (outOfStock) {
-                      showGlobalToast('This item is out of stock.', 1000, "error");
+                      showGlobalToast(
+                        "This item is out of stock.",
+                        1000,
+                        "error"
+                      );
                     }
                     return;
                   }
-                  
+
                   // Only block add based on stock for buyer users
                   if (isBuyer(user)) {
                     // Block add if stock is less than minimum required (0.25 for kg, 1 for pieces)
                     const isKg = item.measurement_unit === 1;
                     const minStockRequired = isKg ? 0.25 : 1;
-                    if (typeof item.quantity === 'number' && item.quantity < minStockRequired) {
-                      showGlobalToast('Not enough quantity in stock to add this item.', 1000, "error");
+                    if (
+                      typeof item.quantity === "number" &&
+                      item.quantity < minStockRequired
+                    ) {
+                      showGlobalToast(
+                        "Not enough quantity in stock to add this item.",
+                        1000,
+                        "error"
+                      );
                       return;
                     }
                     // Check if adding would exceed stock quantity
                     const step = getIncrementStep(item.measurement_unit);
                     const remainingStock = item.quantity - cartQuantity;
-                    console.log('[CategoriesGrid] Stock check:', {
+                    console.log("[CategoriesGrid] Stock check:", {
                       itemName: item.name,
                       totalStock: item.quantity,
                       cartQuantity,
                       remainingStock,
                       step,
-                      wouldExceed: remainingStock < step || cartQuantity + step > item.quantity
+                      wouldExceed:
+                        remainingStock < step ||
+                        cartQuantity + step > item.quantity,
                     });
-                    if (remainingStock < step || cartQuantity + step > item.quantity) {
+                    if (
+                      remainingStock < step ||
+                      cartQuantity + step > item.quantity
+                    ) {
                       const maxMsg = `You cannot add more. Only ${item.quantity} in stock.`;
-                      console.log('[CategoriesGrid] Showing maxStock toast:', maxMsg);
+                      console.log(
+                        "[CategoriesGrid] Showing maxStock toast:",
+                        maxMsg
+                      );
                       showGlobalToast(maxMsg, 1000, "error");
                       return;
                     }
                   }
-                  await handleCartOperation(item, 'increase');
+                  await handleCartOperation(item, "increase");
                 }}
-                onDecrease={() => handleCartOperation(item, 'decrease')}
+                onDecrease={() => handleCartOperation(item, "decrease")}
                 onFastIncrease={async () => {
                   // Only apply stock limitations for buyer users
                   if (isBuyer(user)) {
                     const isKg = item.measurement_unit === 1;
                     // Block add if stock is less than minimum required (0.25 for kg, 1 for pieces)
                     const minStockRequired = isKg ? 0.25 : 1;
-                    if (typeof item.quantity === 'number' && item.quantity < minStockRequired) {
-                      showGlobalToast('Not enough quantity in stock to add this item.', 1000, "error");
+                    if (
+                      typeof item.quantity === "number" &&
+                      item.quantity < minStockRequired
+                    ) {
+                      showGlobalToast(
+                        "Not enough quantity in stock to add this item.",
+                        1000,
+                        "error"
+                      );
                       return;
                     }
                     // Check if adding 5 would exceed stock quantity
                     const fastStep = 5;
                     const remainingStock = item.quantity - cartQuantity;
-                    console.log('[CategoriesGrid] Fast stock check:', {
+                    console.log("[CategoriesGrid] Fast stock check:", {
                       itemName: item.name,
                       totalStock: item.quantity,
                       cartQuantity,
                       remainingStock,
                       fastStep,
-                      wouldExceed: remainingStock < fastStep || cartQuantity + fastStep > item.quantity
+                      wouldExceed:
+                        remainingStock < fastStep ||
+                        cartQuantity + fastStep > item.quantity,
                     });
-                    if (remainingStock < fastStep || cartQuantity + fastStep > item.quantity) {
+                    if (
+                      remainingStock < fastStep ||
+                      cartQuantity + fastStep > item.quantity
+                    ) {
                       const maxMsg = `You cannot add more. Only ${item.quantity} in stock.`;
-                      console.log('[CategoriesGrid] Showing fast maxStock toast:', maxMsg);
+                      console.log(
+                        "[CategoriesGrid] Showing fast maxStock toast:",
+                        maxMsg
+                      );
                       showGlobalToast(maxMsg, 1000, "error");
                       return;
                     }
                   }
-                  await handleCartOperation(item, 'fastIncrease');
+                  await handleCartOperation(item, "fastIncrease");
                 }}
-                onFastDecrease={() => handleCartOperation(item, 'fastDecrease')}
+                onFastDecrease={() => handleCartOperation(item, "fastDecrease")}
               />
             );
           }}
           refreshing={refreshing}
           onRefresh={handleRefresh}
-          contentContainerStyle={styles.itemsList}
+          contentContainerStyle={[styles.itemsList, { paddingBottom: flatListBottomPadding }]}
           showsVerticalScrollIndicator={false}
         />
       ) : (
@@ -451,11 +521,11 @@ const styles = StyleSheet.create({
   categoryCard: {
     width: "48%",
     marginBottom: scaleSize(15),
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: scaleSize(18),
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: scaleSize(3) },
-    shadowOpacity: 0.10,
+    shadowOpacity: 0.1,
     shadowRadius: scaleSize(30),
     elevation: 50,
   },
