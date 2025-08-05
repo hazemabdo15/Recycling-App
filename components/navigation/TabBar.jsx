@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
     bottom: scaleSize(5),
     left: scaleSize(20),
     right: scaleSize(20),
-    height: scaleSize(80),
+    height: scaleSize(90),
     backgroundColor: 'transparent',
   },
   blurContainer: {
