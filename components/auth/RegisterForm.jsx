@@ -1,11 +1,15 @@
-﻿import { Ionicons } from '@expo/vector-icons';
-import { Picker } from '@react-native-picker/picker';
+﻿import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Dimensions, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../styles/theme';
 
-const RegisterForm = ({ onSubmit, loading}) => {
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const scaleSize = (size) => (SCREEN_WIDTH / 375) * size;
+
+const RegisterForm = ({ onSubmit, loading }) => {
     const [name, setName] = useState('');
     const [number, setNumber] = useState('');
     const [email, setEmail] = useState('');
@@ -15,136 +19,372 @@ const RegisterForm = ({ onSubmit, loading}) => {
     const [confirmShowPassword, setConfirmShowPassword] = useState(false);
     const [role, setRole] = useState('customer');
     const router = useRouter();
+    const insets = useSafeAreaInsets();
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Sign Up Now!</Text>
-            <TextInput
-                style={styles.input}
-                placeholder="Name"
-                value={name}
-                onChangeText={setName}
+            <LinearGradient
+                colors={[colors.primary, colors.secondary]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={StyleSheet.absoluteFill}
             />
-            <TextInput
-                style={styles.input}
-                placeholder='Mobile Number 01xxxxx-xxxx'
-                value={number}
-                keyboardType='phone-pad'
-                onChangeText={setNumber}
-            />
-            <TextInput
-                style={styles.input}
-                placeholder="Email"
-                value={email}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                onChangeText={setEmail}
-            />
-            <View style={styles.passwordContainer}>
-                    <TextInput
-                      style={styles.passwordInput}
-                      placeholder="Password"
-                      secureTextEntry={!showPassword}
-                      value={password}
-                      onChangeText={setPassword}
-                    />
-                    <Pressable
-                      onPress={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: 10, top: 12 }}
-                      accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
-                    >
-                      <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={20} color="#666" />
-                    </Pressable>
-            </View>
-            <View style={styles.passwordContainer}>
-                    <TextInput
-                      style={styles.passwordInput}
-                      placeholder="Confirm Password"
-                      secureTextEntry={!confirmShowPassword}
-                      value={confirmPassword}
-                      onChangeText={setConfirmPassword}
-                    />
-                    <Pressable
-                      onPress={() => setConfirmShowPassword(!confirmShowPassword)} style={{ position: 'absolute', right: 10, top: 12 }}
-                      accessibilityLabel={confirmShowPassword ? 'Hide password' : 'Show password'}
-                    >
-                      <Ionicons name={confirmShowPassword ? 'eye-off' : 'eye'} size={20} color="#666" />
-                    </Pressable>
-            </View>
-            <Text style={styles.label}>Registering as:</Text>
-                <View style={styles.pickerContainer}>
-                    <Picker
-                    selectedValue={role}
-                    onValueChange={(itemValue) => setRole(itemValue)}
-                    style={styles.picker}
-                    >
-                    <Picker.Item label="Customer" value="customer" />
-                    <Picker.Item label="Buyer" value="buyer" />
-                    </Picker>
+            
+            {/* Header Section */}
+            <View style={[styles.headerSection, { paddingTop: insets.top + scaleSize(20) }]}>
+                <View style={styles.logoContainer}>
+                    <MaterialCommunityIcons name="account-plus" size={scaleSize(50)} color={colors.white} />
                 </View>
-            <Pressable
-                disabled={loading}
-                onPress={() =>
-                    onSubmit({ name, number, email, password, confirmPassword, role })
-                }
-                style={[styles.button, loading && { opacity: 0.5 }]}
-                >
-                <Text>{loading ? "Please wait..." : "Register"}</Text>
-            </Pressable>
+                <Text style={styles.title}>Join EcoRecycle</Text>
+                <Text style={styles.subtitle}>Create your account to start your eco journey</Text>
+            </View>
 
-            <Pressable
-                 onPress={() => router.push('/login')}>
-                <Text style={styles.linkText}>Already have an account? Login</Text>
-            </Pressable>
+            {/* Form Card */}
+            <ScrollView 
+                style={styles.formCard}
+                showsVerticalScrollIndicator={false}
+                bounces={false}
+            >
+                <View style={styles.formContent}>
+                    {/* Name Input */}
+                    <View style={styles.inputWrapper}>
+                        <Ionicons name="person-outline" size={scaleSize(20)} color={colors.neutral} style={styles.inputIcon} />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Full Name"
+                            placeholderTextColor={colors.neutral}
+                            value={name}
+                            onChangeText={setName}
+                        />
+                    </View>
+
+                    {/* Phone Input */}
+                    <View style={styles.inputWrapper}>
+                        <Ionicons name="call-outline" size={scaleSize(20)} color={colors.neutral} style={styles.inputIcon} />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Mobile Number (01xxxxxxxxx)"
+                            placeholderTextColor={colors.neutral}
+                            value={number}
+                            keyboardType="phone-pad"
+                            onChangeText={setNumber}
+                        />
+                    </View>
+
+                    {/* Email Input */}
+                    <View style={styles.inputWrapper}>
+                        <Ionicons name="mail-outline" size={scaleSize(20)} color={colors.neutral} style={styles.inputIcon} />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Email address"
+                            placeholderTextColor={colors.neutral}
+                            value={email}
+                            autoCapitalize="none"
+                            keyboardType="email-address"
+                            onChangeText={setEmail}
+                        />
+                    </View>
+
+                    {/* Password Input */}
+                    <View style={styles.inputWrapper}>
+                        <Ionicons name="lock-closed-outline" size={scaleSize(20)} color={colors.neutral} style={styles.inputIcon} />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Password"
+                            placeholderTextColor={colors.neutral}
+                            secureTextEntry={!showPassword}
+                            value={password}
+                            onChangeText={setPassword}
+                        />
+                        <Pressable
+                            onPress={() => setShowPassword(!showPassword)}
+                            style={styles.eyeIcon}
+                            accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+                        >
+                            <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={scaleSize(20)} color={colors.neutral} />
+                        </Pressable>
+                    </View>
+
+                    {/* Confirm Password Input */}
+                    <View style={styles.inputWrapper}>
+                        <Ionicons name="lock-closed-outline" size={scaleSize(20)} color={colors.neutral} style={styles.inputIcon} />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Confirm Password"
+                            placeholderTextColor={colors.neutral}
+                            secureTextEntry={!confirmShowPassword}
+                            value={confirmPassword}
+                            onChangeText={setConfirmPassword}
+                        />
+                        <Pressable
+                            onPress={() => setConfirmShowPassword(!confirmShowPassword)}
+                            style={styles.eyeIcon}
+                            accessibilityLabel={confirmShowPassword ? 'Hide password' : 'Show password'}
+                        >
+                            <Ionicons name={confirmShowPassword ? 'eye-off' : 'eye'} size={scaleSize(20)} color={colors.neutral} />
+                        </Pressable>
+                    </View>
+
+                    {/* Role Selection */}
+                    <View style={styles.roleSection}>
+                        <Text style={styles.roleLabel}>I am registering as:</Text>
+                        <View style={styles.roleContainer}>
+                            <Pressable
+                                style={[styles.roleOption, role === 'customer' && styles.roleOptionActive]}
+                                onPress={() => setRole('customer')}
+                            >
+                                <MaterialCommunityIcons 
+                                    name="account" 
+                                    size={scaleSize(24)} 
+                                    color={role === 'customer' ? colors.white : colors.primary} 
+                                />
+                                <Text style={[styles.roleText, role === 'customer' && styles.roleTextActive]}>
+                                    Customer
+                                </Text>
+                                <Text style={[styles.roleSubtext, role === 'customer' && styles.roleSubtextActive]}>
+                                    Sell recyclables
+                                </Text>
+                            </Pressable>
+                            
+                            <Pressable
+                                style={[styles.roleOption, role === 'buyer' && styles.roleOptionActive]}
+                                onPress={() => setRole('buyer')}
+                            >
+                                <MaterialCommunityIcons 
+                                    name="domain" 
+                                    size={scaleSize(24)} 
+                                    color={role === 'buyer' ? colors.white : colors.primary} 
+                                />
+                                <Text style={[styles.roleText, role === 'buyer' && styles.roleTextActive]}>
+                                    Buyer
+                                </Text>
+                                <Text style={[styles.roleSubtext, role === 'buyer' && styles.roleSubtextActive]}>
+                                    Buy recyclables
+                                </Text>
+                            </Pressable>
+                        </View>
+                    </View>
+
+                    {/* Register Button */}
+                    <Pressable
+                        disabled={loading}
+                        onPress={() => onSubmit({ name, number, email, password, confirmPassword, role })}
+                        style={[styles.registerButton, loading && styles.registerButtonDisabled]}
+                        android_ripple={{ color: 'rgba(255,255,255,0.2)' }}
+                    >
+                        <LinearGradient
+                            colors={loading ? [colors.neutral, colors.neutral] : [colors.primary, colors.secondary]}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 0 }}
+                            style={styles.registerButtonGradient}
+                        >
+                            {loading && <View style={styles.loadingSpinner} />}
+                            <Text style={styles.registerText}>
+                                {loading ? "Creating Account..." : "Create Account"}
+                            </Text>
+                        </LinearGradient>
+                    </Pressable>
+
+                    {/* Login Link */}
+                    <Pressable onPress={() => router.push('/login')} style={styles.loginLinkContainer}>
+                        <Text style={styles.loginLinkText}>
+                            Already have an account? <Text style={styles.loginLinkBold}>Sign In</Text>
+                        </Text>
+                    </Pressable>
+                </View>
+            </ScrollView>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { padding: 20, marginTop: 100 },
-    title: { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 20, color: colors.primary },
-    input: { borderWidth: 1, borderColor: '#ccc', padding: 12, marginBottom: 10, borderRadius: 5 },
-    label: { fontSize: 16, marginBottom: 5 },
-    pickerContainer: {
-        borderWidth: 1,
-        borderColor: '#ccc',
-        borderRadius: 5,
-        marginBottom: 20,
+    container: { 
+        flex: 1,
+        backgroundColor: colors.base100,
     },
-    picker: {
-        height: 50,
-        width: '100%',
-    },
-    button: {
-        backgroundColor: colors.primary,
-        padding: 12,
-        borderRadius: 5,
+    headerSection: {
         alignItems: 'center',
-        marginTop: 10
+        justifyContent: 'center',
+        paddingHorizontal: scaleSize(20),
+        paddingBottom: scaleSize(20),
+        minHeight: scaleSize(200),
     },
-    buttonText: {
-        color: colors.white,
-        fontWeight: 'bold',
-        fontSize: 16
+    logoContainer: {
+        width: scaleSize(80),
+        height: scaleSize(80),
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        borderRadius: scaleSize(40),
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: scaleSize(16),
+        shadowColor: colors.black,
+        shadowOffset: { width: 0, height: scaleSize(4) },
+        shadowOpacity: 0.3,
+        shadowRadius: scaleSize(8),
+        elevation: 50,
     },
-    linkText: {
-        marginTop: 15,
+    title: { 
+        fontSize: scaleSize(26), 
+        fontWeight: 'bold', 
+        color: colors.white, 
+        textAlign: 'center', 
+        marginBottom: scaleSize(8),
+        textShadowColor: 'rgba(0, 0, 0, 0.3)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 3,
+    },
+    subtitle: {
+        fontSize: scaleSize(15),
+        color: 'rgba(255, 255, 255, 0.9)',
         textAlign: 'center',
-        color: colors.primary,
-        textDecorationLine: 'underline'
+        lineHeight: scaleSize(20),
     },
-    passwordContainer: {
-        width: '100%',
-        maxWidth: 350,
+    formCard: {
+        flex: 1,
+        backgroundColor: colors.white,
+        borderTopLeftRadius: scaleSize(25),
+        borderTopRightRadius: scaleSize(25),
+        shadowColor: colors.black,
+        shadowOffset: { width: 0, height: -scaleSize(4) },
+        shadowOpacity: 0.1,
+        shadowRadius: scaleSize(12),
+        elevation: 12,
+    },
+    formContent: {
+        paddingHorizontal: scaleSize(24),
+        paddingTop: scaleSize(24),
+        paddingBottom: scaleSize(40),
+    },
+    inputWrapper: {
         flexDirection: 'row',
         alignItems: 'center',
+        backgroundColor: colors.base50,
+        borderRadius: scaleSize(14),
+        marginBottom: scaleSize(14),
+        paddingHorizontal: scaleSize(16),
+        paddingVertical: scaleSize(4),
         borderWidth: 1,
-        borderColor: '#ccc',
-        borderRadius: 5,
-        marginBottom: 15,
+        borderColor: colors.base200,
+        shadowColor: colors.black,
+        shadowOffset: { width: 0, height: scaleSize(2) },
+        shadowOpacity: 0.05,
+        shadowRadius: scaleSize(4),
+        elevation: 2,
     },
-    passwordInput: {
+    inputIcon: {
+        marginRight: scaleSize(12),
+    },
+    input: {
         flex: 1,
-        padding: 12,
+        fontSize: scaleSize(15),
+        color: colors.black,
+        paddingVertical: scaleSize(14),
+    },
+    eyeIcon: {
+        padding: scaleSize(8),
+    },
+    roleSection: {
+        marginVertical: scaleSize(20),
+    },
+    roleLabel: {
+        fontSize: scaleSize(16),
+        fontWeight: '600',
+        color: colors.black,
+        marginBottom: scaleSize(12),
+        textAlign: 'center',
+    },
+    roleContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        gap: scaleSize(12),
+    },
+    roleOption: {
+        flex: 1,
+        backgroundColor: colors.base50,
+        borderRadius: scaleSize(16),
+        padding: scaleSize(16),
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: colors.base200,
+        shadowColor: colors.black,
+        shadowOffset: { width: 0, height: scaleSize(2) },
+        shadowOpacity: 0.05,
+        shadowRadius: scaleSize(4),
+        elevation: 2,
+    },
+    roleOptionActive: {
+        backgroundColor: colors.primary,
+        borderColor: colors.primary,
+        shadowColor: colors.primary,
+        shadowOpacity: 0.3,
+        elevation: 6,
+    },
+    roleText: {
+        fontSize: scaleSize(14),
+        fontWeight: '600',
+        color: colors.black,
+        marginTop: scaleSize(8),
+    },
+    roleTextActive: {
+        color: colors.white,
+    },
+    roleSubtext: {
+        fontSize: scaleSize(12),
+        color: colors.neutral,
+        marginTop: scaleSize(4),
+        textAlign: 'center',
+    },
+    roleSubtextActive: {
+        color: 'rgba(255, 255, 255, 0.9)',
+    },
+    registerButton: {
+        borderRadius: scaleSize(16),
+        marginTop: scaleSize(20),
+        marginBottom: scaleSize(20),
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: scaleSize(4) },
+        shadowOpacity: 0.3,
+        shadowRadius: scaleSize(8),
+        elevation: 8,
+    },
+    registerButtonDisabled: {
+        shadowOpacity: 0.1,
+        elevation: 2,
+    },
+    registerButtonGradient: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: scaleSize(16),
+        borderRadius: scaleSize(16),
+    },
+    loadingSpinner: {
+        width: scaleSize(20),
+        height: scaleSize(20),
+        borderRadius: scaleSize(10),
+        borderWidth: 2,
+        borderColor: colors.white,
+        borderTopColor: 'transparent',
+        marginRight: scaleSize(8),
+    },
+    registerText: {
+        color: colors.white,
+        fontWeight: 'bold',
+        fontSize: scaleSize(16),
+        letterSpacing: 0.5,
+    },
+    loginLinkContainer: {
+        alignItems: 'center',
+        paddingVertical: scaleSize(16),
+    },
+    loginLinkText: {
+        fontSize: scaleSize(14),
+        color: colors.neutral,
+        textAlign: 'center',
+    },
+    loginLinkBold: {
+        fontWeight: 'bold',
+        color: colors.primary,
     },
 })
 

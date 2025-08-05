@@ -1,12 +1,13 @@
 ﻿import { Alert } from 'react-native';
 import { clearSession, setAccessToken } from '../utils/authUtils';
 import apiService from './api/apiService';
+import { API_ENDPOINTS } from './api/config';
 
 export const loginUser = async ({ email, password }) => {
   try {
     console.log('[Auth] Sending login request for:', email);
     
-    const response = await apiService.post('/auth/login', {
+    const response = await apiService.post(API_ENDPOINTS.AUTH.LOGIN, {
       email,
       password,
     });
@@ -34,7 +35,7 @@ export const initialSetupForRegister = async (email) => {
   try {
     console.log('[Auth] Initiating signup for:', email);
     
-    const response = await apiService.post('/auth/initiateSignup', { email });
+    const response = await apiService.post(API_ENDPOINTS.AUTH.REGISTER_INIT, { email });
     console.log('[Auth] OTP sent successfully');
     
     return response;
@@ -55,21 +56,25 @@ export const completeRegister = async (
 ) => {
   try {
     console.log('[Auth] Completing registration for:', email);
-    console.log('[Auth] Registration data:', { 
-      name: fullName, 
-      email, 
-      phoneNumber: number, 
-      otpCode, 
-      role, 
-      provider 
+    console.log('[Auth] Step 1: Verifying OTP...');
+    console.log('[Auth] OTP endpoint:', API_ENDPOINTS.AUTH.REGISTER_VERIFY_OTP);
+    
+    // Step 1: Verify the OTP
+    await apiService.post(API_ENDPOINTS.AUTH.REGISTER_VERIFY_OTP, {
+      email,
+      otpCode,
     });
     
-    const response = await apiService.post('/auth/verifyRegisterToken', {
+    console.log('[Auth] OTP verified successfully');
+    
+    // Step 2: Create the user account
+    console.log('[Auth] Step 2: Creating user account...');
+    console.log('[Auth] Create user endpoint:', API_ENDPOINTS.AUTH.REGISTER_CREATE_USER);
+    const response = await apiService.post(API_ENDPOINTS.AUTH.REGISTER_CREATE_USER, {
       name: fullName,
       email,
       password,
       phoneNumber: number,
-      otpCode,
       role,
       provider,
     });
@@ -84,6 +89,7 @@ export const completeRegister = async (
     return response;
   } catch (error) {
     console.error('[Auth] Registration error:', error.message);
+    console.error('[Auth] Error details:', error);
     Alert.alert('Error', error.message || 'Registration failed');
     throw error;
   }
@@ -93,7 +99,7 @@ export const forgotPassword = async (email) => {
   try {
     console.log('[Auth] Requesting password reset for:', email);
     
-    const response = await apiService.post('/auth/forgotPassword', { email });
+    const response = await apiService.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, { email });
     console.log('[Auth] Password reset OTP sent');
     
     return response;
@@ -107,7 +113,7 @@ export const resetPassword = async (email, otpCode, newPassword) => {
   try {
     console.log('[Auth] Resetting password for:', email);
     
-    const response = await apiService.post('/auth/resetPassword', {
+    const response = await apiService.post(API_ENDPOINTS.AUTH.RESET_PASSWORD, {
       email,
       otpCode,
       newPassword
@@ -126,7 +132,7 @@ export const logoutUser = async () => {
     console.log('[Auth] Starting logout process...');
 
     try {
-      await apiService.post('/auth/logout');
+      await apiService.post(API_ENDPOINTS.AUTH.LOGOUT);
       console.log('[Auth] Backend logout successful');
     } catch (backendError) {
       console.warn('[Auth] Backend logout failed, continuing with local cleanup:', backendError.message);

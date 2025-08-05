@@ -61,7 +61,7 @@ export default function RegisterScreen() {
   };
 
   return (
-    <View>
+    <View style={{ flex: 1 }}>
       <RegisterForm onSubmit={handleRegister} loading={loading} />
     </View>
   );

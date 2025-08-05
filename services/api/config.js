@@ -26,7 +26,8 @@ export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: `${API_BASE_URL}/api/auth/login`,
     REGISTER_INIT: `${API_BASE_URL}/api/auth/initiateSignup`,
-    REGISTER_VERIFY: `${API_BASE_URL}/api/auth/verifyRegisterToken`,
+    REGISTER_VERIFY_OTP: `${API_BASE_URL}/api/auth/verifyOtp`,
+    REGISTER_CREATE_USER: `${API_BASE_URL}/api/auth/register`,
     REFRESH: `${API_BASE_URL}/api/auth/refresh`,
     LOGOUT: `${API_BASE_URL}/api/auth/logout`,
     FORGOT_PASSWORD: `${API_BASE_URL}/api/auth/forgotPassword`,
