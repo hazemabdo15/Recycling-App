@@ -38,20 +38,22 @@ const ItemCard = ({
         opacity: outOfStock ? 0.6 : 1,
       }}
     >
-      {/* Unified badge: top right, only one shown at a time */}
-      <View
-        style={outOfStock ? styles.outOfStockBadge : styles.stockRightBadge}
-      >
-        <Text
-          style={outOfStock ? styles.outOfStockText : styles.stockRightText}
+      {/* Unified badge: top right, only one shown at a time - only for buyers */}
+      {showStockLogic && (
+        <View
+          style={outOfStock ? styles.outOfStockBadge : styles.stockRightBadge}
         >
-          {outOfStock
-            ? "Out of Stock"
-            : typeof item.quantity === "number"
-            ? `Stock: ${item.quantity} ${unitDisplay}`
-            : "Stock: N/A"}
-        </Text>
-      </View>
+          <Text
+            style={outOfStock ? styles.outOfStockText : styles.stockRightText}
+          >
+            {outOfStock
+              ? "Out of Stock"
+              : typeof item.quantity === "number"
+              ? `Stock: ${item.quantity} ${unitDisplay}`
+              : "Stock: N/A"}
+          </Text>
+        </View>
+      )}
       <View
         style={{
           ...itemCardStyles.itemContent,
