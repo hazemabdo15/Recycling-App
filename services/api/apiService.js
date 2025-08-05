@@ -1,13 +1,13 @@
-﻿import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router } from 'expo-router';
-import { showGlobalToast } from '../../components/common/GlobalToast';
-import { API_CONFIG, BASE_URLS } from './config';
+﻿import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
+import { showGlobalToast } from "../../components/common/GlobalToast";
+import { API_CONFIG, BASE_URLS } from "./config";
 let notifyTokenExpired = null;
 
 const getNotifyTokenExpired = () => {
   if (!notifyTokenExpired) {
     try {
-      const authContextModule = require('../../context/AuthContext');
+      const authContextModule = require("../../context/AuthContext");
       notifyTokenExpired = authContextModule.notifyTokenExpired;
     } catch (_error) {}
   }
@@ -33,24 +33,27 @@ class OptimizedAPIService {
 
   async initialize() {
     if (this.isInitialized) return;
-    
-        try {
-      this.accessToken = await AsyncStorage.getItem('accessToken');
+
+    try {
+      this.accessToken = await AsyncStorage.getItem("accessToken");
       this.isInitialized = true;
     } catch (_error) {
-            // console.error('API Service initialization failed:', _error);
+      // console.error('API Service initialization failed:', _error);
     }
   }
 
   async setAccessToken(token) {
+    console.log(`[API] Setting access token: ${token ? `${token.substring(0, 20)}...` : 'null'}`);
     this.accessToken = token;
     if (token) {
-      await AsyncStorage.setItem('accessToken', token);
+      await AsyncStorage.setItem("accessToken", token);
+      console.log(`[API] Access token saved to AsyncStorage`);
 
       this.tokenCache.clear();
       this.lastTokenCheck = 0;
     } else {
-      await AsyncStorage.removeItem('accessToken');
+      await AsyncStorage.removeItem("accessToken");
+      console.log(`[API] Access token removed from AsyncStorage`);
     }
   }
 
@@ -58,7 +61,7 @@ class OptimizedAPIService {
     this.accessToken = null;
     this.tokenCache.clear();
     this.lastTokenCheck = 0;
-    await AsyncStorage.multiRemove(['accessToken', 'user']);
+    await AsyncStorage.multiRemove(["accessToken", "user"]);
 
     const notify = getNotifyTokenExpired();
     if (notify) notify();
@@ -75,8 +78,8 @@ class OptimizedAPIService {
     this.abortController.abort();
     this.abortController = new AbortController();
     this.clearAllTimeouts();
-    
-    await AsyncStorage.multiRemove(['accessToken', 'user']);
+
+    await AsyncStorage.multiRemove(["accessToken", "user"]);
   }
 
   isTokenExpired(token) {
@@ -85,14 +88,14 @@ class OptimizedAPIService {
     const now = Date.now();
     const cacheKey = token.substring(0, 50);
     const cached = this.tokenCache.get(cacheKey);
-    
-    if (cached && (now - cached.timestamp) < 5000) {
+
+    if (cached && now - cached.timestamp < 5000) {
       return cached.expired;
     }
 
     try {
-      if (token.startsWith('mock.')) {
-        const parts = token.split('.');
+      if (token.startsWith("mock.")) {
+        const parts = token.split(".");
         if (parts.length >= 2) {
           const payload = JSON.parse(atob(parts[1]));
           const currentTime = Math.floor(Date.now() / 1000);
@@ -104,20 +107,23 @@ class OptimizedAPIService {
         return false;
       }
 
-      const parts = token.split('.');
+      const parts = token.split(".");
       if (parts.length !== 3) return true;
-      
+
       const base64Payload = parts[1];
-      const paddedPayload = base64Payload + '='.repeat((4 - base64Payload.length % 4) % 4);
+      const paddedPayload =
+        base64Payload + "=".repeat((4 - (base64Payload.length % 4)) % 4);
       const decoded = atob(paddedPayload);
       const payload = JSON.parse(decoded);
       const currentTime = Math.floor(Date.now() / 1000);
-      const willExpireSoon = currentTime >= (payload.exp - 30);
+      const willExpireSoon = currentTime >= payload.exp - 30;
 
-      this.tokenCache.set(cacheKey, { expired: willExpireSoon, timestamp: now });
+      this.tokenCache.set(cacheKey, {
+        expired: willExpireSoon,
+        timestamp: now,
+      });
       return willExpireSoon;
     } catch (_error) {
-
       this.tokenCache.set(cacheKey, { expired: true, timestamp: now });
       return true;
     }
@@ -148,28 +154,32 @@ class OptimizedAPIService {
       const timeoutId = setTimeout(() => controller.abort(), 10000);
 
       const response = await fetch(`${this.baseURL}/auth/refresh`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        signal: controller.signal
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
+        console.log(
+          "[Auth] Token refresh successful new Access token :",
+          data.accessToken
+        );
         await this.setAccessToken(data.accessToken);
         this.processQueue(null, data.accessToken);
         return data.accessToken;
       } else {
-        this.processQueue(new Error('Token refresh failed'), null);
+        this.processQueue(new Error("Token refresh failed"), null);
         await this.clearTokens();
         return null;
       }
-        } catch (_error) {
-            this.processQueue(_error, null);
-            await this.clearTokens();
-            return null;
+    } catch (_error) {
+      this.processQueue(_error, null);
+      await this.clearTokens();
+      return null;
     } finally {
       this.isRefreshing = false;
     }
@@ -214,55 +224,73 @@ class OptimizedAPIService {
     this.createRequestTimeout(requestId, timeout);
 
     try {
-      const url = endpoint.startsWith('http') ? endpoint : `${this.baseURL}${endpoint}`;
+      const url = endpoint.startsWith("http")
+        ? endpoint
+        : `${this.baseURL}${endpoint}`;
       const headers = {
-        'Content-Type': 'application/json',
-        ...options.headers
+        "Content-Type": "application/json",
+        ...options.headers,
       };
 
       if (this.accessToken) {
         headers.Authorization = `Bearer ${this.accessToken}`;
+        console.log(`[API] Using access token for ${endpoint}: ${this.accessToken.substring(0, 20)}...`);
+      } else {
+        console.log(`[API] No access token available for ${endpoint}`);
       }
 
       if (options.body instanceof FormData) {
-        delete headers['Content-Type'];
+        delete headers["Content-Type"];
       }
 
       const requestOptions = {
         ...options,
         headers,
-        credentials: 'include',
-        signal: controller.signal
+        credentials: "include",
+        signal: controller.signal,
       };
 
       let response = await fetch(url, requestOptions);
 
-      if (response.status === 401 && this.accessToken && !endpoint.includes('/auth/refresh')) {
+      if (
+        response.status === 401 &&
+        this.accessToken &&
+        !endpoint.includes("/auth/refresh")
+      ) {
+        console.log(`[API] 401 detected for ${endpoint}, attempting refresh...`);
         const newToken = await this.refreshToken();
         if (newToken) {
-          headers.Authorization = `Bearer ${newToken}`;
+          console.log(`[API] Refresh successful, retrying ${endpoint} with new token`);
+          // Create fresh headers with new token
+          const refreshedHeaders = {
+            ...headers,
+            Authorization: `Bearer ${newToken}`
+          };
+          
           response = await fetch(url, {
             ...requestOptions,
-            headers
+            headers: refreshedHeaders,
           });
+          console.log(`[API] Retry response status: ${response.status}`);
         } else {
+          console.log(`[API] Refresh failed, logging out user`);
           // Show toast and redirect to login
-          showGlobalToast('Session expired, please log in again.');
+          showGlobalToast("Session expired, please log in again.");
           if (getNotifyTokenExpired()) getNotifyTokenExpired()();
           // Use expo-router to redirect
           setTimeout(() => {
             try {
-              router.replace('/login');
+              router.replace("/login");
             } catch (_e) {}
           }, 1000);
-          throw new Error('Session expired');
+          throw new Error("Session expired");
         }
       }
 
-      const contentType = response.headers.get('content-type');
+      const contentType = response.headers.get("content-type");
       let data;
-      
-      if (contentType && contentType.includes('application/json')) {
+
+      if (contentType && contentType.includes("application/json")) {
         data = await response.json();
       } else {
         data = await response.text();
@@ -277,84 +305,87 @@ class OptimizedAPIService {
 
       return data;
     } catch (error) {
-
-      if (error.name !== 'AbortError') {
-
-        if (error.message && error.message.includes('Category with ID') && error.message.includes('not found')) {
-          console.log(`[API] ${endpoint}: Known category validation error detected - error handled by enhanced verification system`);
+      if (error.name !== "AbortError") {
+        if (
+          error.message &&
+          error.message.includes("Category with ID") &&
+          error.message.includes("not found")
+        ) {
+          console.log(
+            `[API] ${endpoint}: Known category validation error detected - error handled by enhanced verification system`
+          );
         } else {
-                    console.error(`[API] ${endpoint}:`, error.message);
+          console.error(`[API] ${endpoint}:`, error.message);
         }
       }
 
-      if (error.message === 'Session expired' || error.status === 401) {
+      if (error.message === "Session expired" || error.status === 401) {
         await this.clearTokens();
-        showGlobalToast('Session expired, please log in again.');
+        showGlobalToast("Session expired, please log in again.");
         if (getNotifyTokenExpired()) getNotifyTokenExpired()();
         setTimeout(() => {
           try {
-            router.replace('/login');
+            router.replace("/login");
           } catch (_e) {}
         }, 1000);
       }
-      
+
       throw error;
     } finally {
-
       this.clearRequestTimeout(requestId);
       this.pendingRequests.delete(requestId);
     }
   }
 
   async get(endpoint, options = {}) {
-    return this.apiCall(endpoint, { method: 'GET', ...options });
+    return this.apiCall(endpoint, { method: "GET", ...options });
   }
 
   async post(endpoint, data, options = {}) {
     return this.apiCall(endpoint, {
-      method: 'POST',
+      method: "POST",
       body: data instanceof FormData ? data : JSON.stringify(data),
-      ...options
+      ...options,
     });
   }
 
   async put(endpoint, data, options = {}) {
     return this.apiCall(endpoint, {
-      method: 'PUT',
+      method: "PUT",
       body: JSON.stringify(data),
-      ...options
+      ...options,
     });
   }
 
   async patch(endpoint, data, options = {}) {
     return this.apiCall(endpoint, {
-      method: 'PATCH',
+      method: "PATCH",
       body: JSON.stringify(data),
-      ...options
+      ...options,
     });
   }
 
   async delete(endpoint, options = {}) {
-    return this.apiCall(endpoint, { method: 'DELETE', ...options });
+    return this.apiCall(endpoint, { method: "DELETE", ...options });
   }
 
   async isAuthenticated() {
     if (!this.accessToken) {
       await this.initialize();
     }
-    
+
     if (!this.accessToken) return false;
-    
+
     const isExpired = this.isTokenExpired(this.accessToken);
     if (isExpired) {
       try {
         const newToken = await this.refreshToken();
         return !!newToken;
-            } catch (_error) {
-                return false;
+      } catch (_error) {
+        return false;
       }
     }
-    
+
     return true;
   }
 
@@ -364,17 +395,17 @@ class OptimizedAPIService {
 
   shouldRefreshToken() {
     if (!this.accessToken) return false;
-    
+
     try {
-      const payload = JSON.parse(atob(this.accessToken.split('.')[1]));
+      const payload = JSON.parse(atob(this.accessToken.split(".")[1]));
       const exp = payload.exp * 1000;
       const now = Date.now();
       const timeUntilExpiry = exp - now;
       const REFRESH_THRESHOLD = 5 * 60 * 1000;
-      
+
       return timeUntilExpiry <= REFRESH_THRESHOLD && timeUntilExpiry > 0;
-         } catch (_error) {
-             return false;
+    } catch (_error) {
+      return false;
     }
   }
 
@@ -383,8 +414,8 @@ class OptimizedAPIService {
       try {
         await this.refreshToken();
         return true;
-             } catch (_error) {
-                 return false;
+      } catch (_error) {
+        return false;
       }
     }
     return true;

@@ -1,13 +1,14 @@
 ﻿import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    Alert,
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  FlatList,
+  Image,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { Loader } from '../../components/common';
 import RecyclingModal from "../../components/Modals/RecyclingModal";
@@ -37,6 +38,7 @@ function ProfileContent() {
     email: isLoggedIn && user?.email ? user.email : null,
   });
   const [modalVisible, setModalVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const getTabDisplayName = (tab) => {
     switch (tab) {
@@ -84,7 +86,6 @@ function ProfileContent() {
       setLoading(true);
       const response = await orderService.getOrders();
       console.log('[Profile] Orders API response:', response);
-
       setAllOrders(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error("Failed to fetch orders", error);
@@ -94,6 +95,12 @@ function ProfileContent() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchOrders();
+    setRefreshing(false);
   };
 
   const handleCancelOrder = (orderId) => {
@@ -162,171 +169,166 @@ function ProfileContent() {
 
   const isGuest = !isLoggedIn || !user?.email;
 
-  return (
-    <ScrollView
-      contentContainerStyle={isGuest ? styles.guestContainer : styles.container}
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.profileHeader}>
-        {!isGuest && (
-          <View style={{ flex: 1 }}>
-            <Text style={styles.userName}>{user?.name || "Guest"}</Text>
-            <Text style={styles.userInfo}>
-              {user?.email || "No email available"}
-            </Text>
-            <Text style={styles.userInfo}>
-              {user?.phoneNumber?.padStart(11, "0") || "No phone number"}
-            </Text>
-            <Text style={styles.userInfoSmall}>Cairo, July 2025</Text>
+  if (isGuest) {
+    return (
+      <View style={styles.guestContainer}>
+        <View style={styles.guestContent}>
+          <View style={styles.guestIcon}>
+            <Text style={styles.guestIconText}>👤</Text>
           </View>
-        )}
-        {!isGuest && (
-          <TouchableOpacity
-            onPress={() => setMenuVisible(!menuVisible)}
-            style={styles.menuButton}
-          >
-            <Text style={styles.menuIcon}>☰</Text>
-            {menuVisible && (
-              <View style={styles.menuDropdown}>
-                <TouchableOpacity
-                  onPress={handleLogout}
-                  style={styles.menuItemButton}
-                >
-                  <Text style={styles.menuItem}>Logout</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {isGuest ? (
-        <View style={styles.guestContainer}>
-          <View style={styles.guestContent}>
-            <View style={styles.guestIcon}>
-              <Text style={styles.guestIconText}>👤</Text>
-            </View>
-
-            <Text style={styles.guestTitle}>Welcome, Guest!</Text>
-            <Text style={styles.guestSubtitle}>
-              You&apos;re browsing in guest mode
-            </Text>
-
-            <View style={styles.benefitsContainer}>
-              <Text style={styles.benefitsTitle}>Join us to enjoy:</Text>
-              <View style={styles.benefitItem}>
-                <Text style={styles.benefitIcon}>♻️</Text>
-                <Text style={styles.benefitText}>
-                  Track your recycling impact
-                </Text>
-              </View>
-              <View style={styles.benefitItem}>
-                <Text style={styles.benefitIcon}>🎯</Text>
-                <Text style={styles.benefitText}>
-                  Earn points for every order
-                </Text>
-              </View>
-              <View style={styles.benefitItem}>
-                <Text style={styles.benefitIcon}>📱</Text>
-                <Text style={styles.benefitText}>Manage orders easily</Text>
-              </View>
-              <View style={styles.benefitItem}>
-                <Text style={styles.benefitIcon}>🏆</Text>
-                <Text style={styles.benefitText}>Unlock membership tiers</Text>
-              </View>
-            </View>
-
-            <View style={styles.guestActions}>
-              <TouchableOpacity
-                onPress={() => {
-                  console.log("Login button pressed");
-                  router.push("/login");
-                }}
-                style={styles.loginButton}
-              >
-                <Text style={styles.loginButtonText}>
-                  Login to Your Account
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() => {
-                  console.log("Sign up button pressed");
-                  router.push("/register");
-                }}
-                style={styles.signupButton}
-              >
-                <Text style={styles.signupButtonText}>Create New Account</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.guestBrowse}>
-              <Text style={styles.guestBrowseText}>
-                Or continue browsing as guest
+          <Text style={styles.guestTitle}>Welcome, Guest!</Text>
+          <Text style={styles.guestSubtitle}>
+            You&apos;re browsing in guest mode
+          </Text>
+          <View style={styles.benefitsContainer}>
+            <Text style={styles.benefitsTitle}>Join us to enjoy:</Text>
+            <View style={styles.benefitItem}>
+              <Text style={styles.benefitIcon}>♻️</Text>
+              <Text style={styles.benefitText}>
+                Track your recycling impact
               </Text>
-              <TouchableOpacity
-                onPress={() => router.push("/home")}
-                style={styles.browseButton}
-              >
-                <Text style={styles.browseButtonText}>Browse Services</Text>
-              </TouchableOpacity>
             </View>
+            <View style={styles.benefitItem}>
+              <Text style={styles.benefitIcon}>🎯</Text>
+              <Text style={styles.benefitText}>
+                Earn points for every order
+              </Text>
+            </View>
+            <View style={styles.benefitItem}>
+              <Text style={styles.benefitIcon}>📱</Text>
+              <Text style={styles.benefitText}>Manage orders easily</Text>
+            </View>
+            <View style={styles.benefitItem}>
+              <Text style={styles.benefitIcon}>🏆</Text>
+              <Text style={styles.benefitText}>Unlock membership tiers</Text>
+            </View>
+          </View>
+          <View style={styles.guestActions}>
+            <TouchableOpacity
+              onPress={() => {
+                console.log("Login button pressed");
+                router.push("/login");
+              }}
+              style={styles.loginButton}
+            >
+              <Text style={styles.loginButtonText}>
+                Login to Your Account
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                console.log("Sign up button pressed");
+                router.push("/register");
+              }}
+              style={styles.signupButton}
+            >
+              <Text style={styles.signupButtonText}>Create New Account</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.guestBrowse}>
+            <Text style={styles.guestBrowseText}>
+              Or continue browsing as guest
+            </Text>
+            <TouchableOpacity
+              onPress={() => router.push("/home")}
+              style={styles.browseButton}
+            >
+              <Text style={styles.browseButtonText}>Browse Services</Text>
+            </TouchableOpacity>
           </View>
         </View>
-      ) : (
-        <>
-          <View style={styles.statsContainer}>
-            <StatBox label="Total Recycles" value={stats.totalRecycles} />
-            {!isBuyer(user) && (
-              <StatBox
-                label="Points Collected"
-                value={userPoints ? userPoints : 0}
-              />
-            )}
-            <StatBox label="Membership Tier" value={stats.tier} />
-          </View>
+      </View>
+    );
+  }
 
-
-          {isCustomer(user) && (
-            <>
+  // ListHeaderComponent for profile header, stats, redeem, tabs
+  const renderListHeader = () => (
+    <>
+      <View style={styles.profileHeader}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.userName}>{user?.name || "Guest"}</Text>
+          <Text style={styles.userInfo}>
+            {user?.email || "No email available"}
+          </Text>
+          <Text style={styles.userInfo}>
+            {user?.phoneNumber?.padStart(11, "0") || "No phone number"}
+          </Text>
+          <Text style={styles.userInfoSmall}>Cairo, July 2025</Text>
+        </View>
+        <TouchableOpacity
+          onPress={() => setMenuVisible(!menuVisible)}
+          style={styles.menuButton}
+        >
+          <Text style={styles.menuIcon}>☰</Text>
+          {menuVisible && (
+            <View style={styles.menuDropdown}>
               <TouchableOpacity
-                style={styles.redeemButton}
-                onPress={() => setModalVisible(true)}
+                onPress={handleLogout}
+                style={styles.menuItemButton}
               >
-                <Text style={styles.redeemButtonText}>Redeem and Return</Text>
+                <Text style={styles.menuItem}>Logout</Text>
               </TouchableOpacity>
-              
-              <RecyclingModal 
-                visible={modalVisible}
-                onClose={() => setModalVisible(false)}
-                totalPoints={userPoints}
-                onPointsUpdated={getUserPoints}
-              />
-             
-            </>
+            </View>
           )}
+        </TouchableOpacity>
+      </View>
+      <View style={styles.statsContainer}>
+        <StatBox label="Total Recycles" value={stats.totalRecycles} />
+        {!isBuyer(user) && (
+          <StatBox
+            label="Points Collected"
+            value={userPoints ? userPoints : 0}
+          />
+        )}
+        <StatBox label="Membership Tier" value={stats.tier} />
+      </View>
+      {isCustomer(user) && (
+        <>
+          <TouchableOpacity
+            style={styles.redeemButton}
+            onPress={() => setModalVisible(true)}
+          >
+            <Text style={styles.redeemButtonText}>Redeem and Return</Text>
+          </TouchableOpacity>
+          <RecyclingModal 
+            visible={modalVisible}
+            onClose={() => setModalVisible(false)}
+            totalPoints={userPoints}
+            onPointsUpdated={getUserPoints}
+          />
+        </>
+      )}
+      <View style={styles.tabsContainer}>
+        {tabs.map((tab) => (
+          <TouchableOpacity
+            key={tab}
+            onPress={() => setActiveTab(tab)}
+            style={activeTab === tab ? styles.activeTab : styles.tab}
+          >
+            <Text
+              style={
+                activeTab === tab ? styles.activeTabText : styles.tabText
+              }
+            >
+              {getTabDisplayName(tab)}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </>
+  );
 
-          <View style={styles.tabsContainer}>
-            {tabs.map((tab) => (
-              <TouchableOpacity
-                key={tab}
-                onPress={() => setActiveTab(tab)}
-                style={activeTab === tab ? styles.activeTab : styles.tab}
-              >
-                <Text
-                  style={
-                    activeTab === tab ? styles.activeTabText : styles.tabText
-                  }
-                >
-                  {getTabDisplayName(tab)}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+  if (loading) {
+    return <Loader style={{ marginTop: 20 }} />;
+  }
 
-          {loading ? (
-            <Loader style={{ marginTop: 20 }} />
-          ) : filteredOrders.length === 0 ? (
+  if (filteredOrders.length === 0) {
+    return (
+      <>
+        <FlatList
+          data={[]}
+          ListHeaderComponent={renderListHeader}
+          ListEmptyComponent={
             user?.role === "buyer" ? (
               <View style={styles.buyerMessageContainer}>
                 <Text style={styles.buyerMessageTitle}>
@@ -354,54 +356,71 @@ function ProfileContent() {
                 </Text>
               </View>
             )
-          ) : (
-            filteredOrders.map((order) => (
-              <View key={order._id} style={styles.orderCard}>
-                <Text style={styles.orderText}>
-                  Date: {new Date(order.createdAt).toLocaleDateString()}
+          }
+          contentContainerStyle={styles.container}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        />
+      </>
+    );
+  }
+
+  return (
+    <FlatList
+      data={filteredOrders}
+      keyExtractor={(order) => order._id}
+      renderItem={({ item: order }) => (
+        <View style={styles.orderCard}>
+          <Text style={styles.orderText}>
+            Date: {new Date(order.createdAt).toLocaleDateString()}
+          </Text>
+          <Text style={styles.orderStatus}>Status: {order.status}</Text>
+          {order.items.map((item, i) => (
+            <View key={item._id || i} style={styles.orderItem}>
+              <Image
+                source={{ uri: item.image }}
+                style={styles.itemImage}
+              />
+              <View style={styles.itemDetails}>
+                <Text style={styles.itemName}>{item.itemName}</Text>
+                <Text style={styles.itemInfo}>
+                  Quantity: {item.quantity}{" "}
+                  {item.measurement_unit === 1 ? "kg" : "pcs"}
                 </Text>
-                <Text style={styles.orderStatus}>Status: {order.status}</Text>
-                {order.items.map((item, i) => (
-                  <View key={item._id || i} style={styles.orderItem}>
-                    <Image
-                      source={{ uri: item.image }}
-                      style={styles.itemImage}
-                    />
-                    <View style={styles.itemDetails}>
-                      <Text style={styles.itemName}>{item.itemName}</Text>
-                      <Text style={styles.itemInfo}>
-                        Quantity: {item.quantity}{" "}
-                        {item.measurement_unit === 1 ? "kg" : "pcs"}
-                      </Text>
-                      {!isBuyer(user) && (
-                        <Text style={styles.itemInfo}>Points: {item.points}</Text>
-                      )}
-                      <Text style={styles.itemInfo}>
-                        Price: {item.price} EGP
-                      </Text>
-                    </View>
-                  </View>
-                ))}
-                <Text style={styles.addressText}>
-                  {order.address.street}, Bldg {order.address.building}, Floor{" "}
-                  {order.address.floor}, {order.address.area},{" "}
-                  {order.address.city}
+                {!isBuyer(user) && (
+                  <Text style={styles.itemInfo}>Points: {item.points}</Text>
+                )}
+                <Text style={styles.itemInfo}>
+                  Price: {item.price} EGP
                 </Text>
-                {activeTab === "incoming" &&
-                  order.status?.toLowerCase() !== "accepted" && (
-                    <TouchableOpacity
-                      onPress={() => handleCancelOrder(order._id)}
-                      style={styles.cancelButton}
-                    >
-                      <Text style={styles.cancelButtonText}>Cancel Order</Text>
-                    </TouchableOpacity>
-                  )}
               </View>
-            ))
-          )}
-        </>
+            </View>
+          ))}
+          <Text style={styles.addressText}>
+            {order.address.street}, Bldg {order.address.building}, Floor{" "}
+            {order.address.floor}, {order.address.area},{" "}
+            {order.address.city}
+          </Text>
+          {activeTab === "incoming" &&
+            order.status?.toLowerCase() !== "accepted" &&
+            !isBuyer(user) && (
+              <TouchableOpacity
+                onPress={() => handleCancelOrder(order._id)}
+                style={styles.cancelButton}
+              >
+                <Text style={styles.cancelButtonText}>Cancel Order</Text>
+              </TouchableOpacity>
+            )}
+        </View>
       )}
-    </ScrollView>
+      ListHeaderComponent={renderListHeader}
+      contentContainerStyle={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+      showsVerticalScrollIndicator={false}
+    />
   );
 }
 
@@ -415,7 +434,12 @@ function StatBox({ label, value }) {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: scaleSize(35), backgroundColor: "#f0fdf4", paddingBottom: scaleSize(100) },
+  container: {
+    padding: scaleSize(35),
+    backgroundColor: "#f0fdf4", // unify background for all main content
+    paddingBottom: scaleSize(40), // reduce padding to avoid color split at bottom
+    flexGrow: 1, // ensure FlatList fills available space
+  },
   centered: { justifyContent: "center", alignItems: "center" },
   profileHeader: {
     flexDirection: "row",
@@ -539,10 +563,11 @@ const styles = StyleSheet.create({
   },
   cancelButtonText: { color: "white", textAlign: "center", fontSize: scaleSize(12) },
   guestContainer: {
-    backgroundColor: "#f0fdf4",
+    backgroundColor: "#f0fdf4", // match main container
     paddingHorizontal: scaleSize(24),
     paddingVertical: scaleSize(10),
-    paddingBottom: scaleSize(75),
+    paddingBottom: scaleSize(40), // match container
+    flexGrow: 1,
   },
   guestContent: {
     alignItems: "center",

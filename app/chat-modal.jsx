@@ -9,8 +9,6 @@ import {
     StyleSheet,
     KeyboardAvoidingView,
     Platform,
-    Keyboard,
-    TouchableWithoutFeedback,
     Modal 
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -38,6 +36,7 @@ const MessageItem = React.memo(({ msg }) => (
     return prevProps.msg.id === nextProps.msg.id && 
            prevProps.msg.content === nextProps.msg.content;
 });
+MessageItem.displayName = "MessageItem";
 
 export default function ChatModal() {
     const [messages, setMessages] = useState([]);

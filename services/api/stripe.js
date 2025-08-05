@@ -1,14 +1,10 @@
-﻿import axios from "axios";
-import * as Linking from "expo-linking";
+﻿import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
-import { API_BASE_URL } from "./config";
-
+import apiService from './apiService';
 
 export const stripeService = {
-  
   async createCheckoutSession(userId, amount, accessToken) {
     try {
-
       if (!userId) {
         throw new Error("User ID is required");
       }
@@ -25,7 +21,6 @@ export const stripeService = {
       const validatedAmount = Math.max(amount, MINIMUM_AMOUNT_PIASTERS);
 
       if (validatedAmount !== amount) {
-
       }
 
       const successUrl = Linking.createURL(
@@ -42,14 +37,14 @@ export const stripeService = {
         cancelUrl,
       };
 
-      const response = await axios.post(
-        `${API_BASE_URL}/api/users/${userId}/create-checkout-session`,
+      const response = await apiService.post(
+        `/users/${userId}/create-checkout-session`,
         payload,
         {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
+          // headers: {
+          //   Authorization: `Bearer ${accessToken}`,
+          //   "Content-Type": "application/json",
+          // },
           timeout: 15000,
         }
       );
@@ -98,7 +93,6 @@ export const stripeService = {
     }
   },
 
-  
   async openCheckout(checkoutUrl) {
     try {
       await WebBrowser.openBrowserAsync(checkoutUrl);
@@ -108,18 +102,15 @@ export const stripeService = {
     }
   },
 
-  
   validateAmount(amount) {
     const MINIMUM_AMOUNT_PIASTERS = 2500;
     return Math.max(amount, MINIMUM_AMOUNT_PIASTERS);
   },
 
-  
   egpToPiasters(egp) {
     return Math.round(egp * 100);
   },
 
-  
   piastersToEgp(piasters) {
     return piasters / 100;
   },
