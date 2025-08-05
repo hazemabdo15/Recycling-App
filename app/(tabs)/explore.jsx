@@ -140,6 +140,7 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     paddingTop: 0,
+    marginTop: scaleSize(spacing.lg),
   },
   searchBarWrapper: {
     marginTop: scaleSize(spacing.md),

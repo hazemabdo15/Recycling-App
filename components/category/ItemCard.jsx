@@ -1,141 +1,141 @@
-﻿import { Dimensions, StyleSheet, Text, View } from 'react-native';
-import { itemCardStyles } from '../../styles/components/categoryStyles';
-import { colors } from '../../styles/theme';
-import { getUnitDisplay } from '../../utils/cartUtils';
-import { isBuyer } from '../../utils/roleLabels';
-import { isMaxStockReached, isOutOfStock } from '../../utils/stockUtils';
-import { AnimatedListItem } from '../common';
-import ItemImage from './ItemImage';
-import ItemInfo from './ItemInfo';
-import QuantityControls from './QuantityControls';
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const scale = (size) => (SCREEN_WIDTH / 375) * size;
+﻿import { StyleSheet, Text, View } from "react-native";
+import { itemCardStyles } from "../../styles/components/categoryStyles";
+import { colors } from "../../styles/theme";
+import { getUnitDisplay } from "../../utils/cartUtils";
+import { isBuyer } from "../../utils/roleLabels";
+import { isMaxStockReached, isOutOfStock } from "../../utils/stockUtils";
+import { AnimatedListItem } from "../common";
+import ItemImage from "./ItemImage";
+import ItemInfo from "./ItemInfo";
+import QuantityControls from "./QuantityControls";
 
 const ItemCard = ({
-    item,
-    quantity,
-    onIncrease,
-    onDecrease,
-    onFastIncrease,
-    onFastDecrease,
-    onManualInput,
-    disabled = false,
-    pendingAction = null,
-    index = 0,
-    user = null
+  item,
+  quantity,
+  onIncrease,
+  onDecrease,
+  onFastIncrease,
+  onFastDecrease,
+  onManualInput,
+  disabled = false,
+  pendingAction = null,
+  index = 0,
+  user = null,
 }) => {
-    const unitDisplay = getUnitDisplay(item.measurement_unit);
-    // Only show stock-related logic for buyers
-    const showStockLogic = isBuyer(user);
-    const outOfStock = showStockLogic ? isOutOfStock({ quantity: item.quantity }) : false;
-    const maxReached = showStockLogic ? isMaxStockReached(item, quantity) : false;
-    
-    return (
-        <AnimatedListItem
-            index={index}
-            style={{
-                ...itemCardStyles.itemCard,
-                padding: scale(16),
-                borderRadius: scale(18),
-                marginVertical: scale(8),
-                opacity: outOfStock ? 0.6 : 1,
-                minHeight: scale(180), // Increased card height
-            }}
+  const unitDisplay = getUnitDisplay(item.measurement_unit);
+  // Only show stock-related logic for buyers
+  const showStockLogic = isBuyer(user);
+  const outOfStock = showStockLogic
+    ? isOutOfStock({ quantity: item.quantity })
+    : false;
+  const maxReached = showStockLogic ? isMaxStockReached(item, quantity) : false;
+
+  return (
+    <AnimatedListItem
+      index={index}
+      style={{
+        ...itemCardStyles.itemCard,
+        opacity: outOfStock ? 0.6 : 1,
+      }}
+    >
+      {/* Unified badge: top right, only one shown at a time */}
+      <View
+        style={outOfStock ? styles.outOfStockBadge : styles.stockRightBadge}
+      >
+        <Text
+          style={outOfStock ? styles.outOfStockText : styles.stockRightText}
         >
-            {/* Unified badge: top right, only one shown at a time */}
-            <View style={outOfStock ? styles.outOfStockBadge : styles.stockRightBadge}>
-                <Text style={outOfStock ? styles.outOfStockText : styles.stockRightText}>
-                    {outOfStock ? 'Out of Stock' : (typeof item.quantity === 'number' ? `Stock: ${item.quantity} ${unitDisplay}` : 'Stock: N/A')}
-                </Text>
-            </View>
-            <View style={{
-                ...itemCardStyles.itemContent,
-                marginBottom: scale(16),
-                paddingTop: scale(12), // Extra top padding to push content below badge
-            }}>
-                <ItemImage
-                    imageUri={item.image}
-                    points={item.points}
-                    containerStyle={{ width: scale(80), height: scale(80), borderRadius: scale(12), marginRight: scale(16) }}
-                />
-                <ItemInfo
-                    name={item.name}
-                    price={item.price}
-                    measurementUnit={item.measurement_unit}
-                    unitDisplay={unitDisplay}
-                />
-            </View>
-            <QuantityControls
-                quantity={quantity}
-                unitDisplay={unitDisplay}
-                measurementUnit={item.measurement_unit}
-                onIncrease={onIncrease}
-                onDecrease={onDecrease}
-                onFastIncrease={onFastIncrease}
-                onFastDecrease={onFastDecrease}
-                onManualInput={onManualInput}
-                onQuantityInput={(val) => onManualInput(val)}
-                maxQuantity={showStockLogic ? item.quantity : undefined}
-                itemName={item.name}
-                disabled={disabled}
-                pendingAction={pendingAction}
-                disableDecrease={quantity === 0}
-                maxReached={showStockLogic ? maxReached : false}
-                outOfStock={showStockLogic ? outOfStock : false}
-            />
-        </AnimatedListItem>
-    );
+          {outOfStock
+            ? "Out of Stock"
+            : typeof item.quantity === "number"
+            ? `Stock: ${item.quantity} ${unitDisplay}`
+            : "Stock: N/A"}
+        </Text>
+      </View>
+      <View
+        style={{
+          ...itemCardStyles.itemContent,
+        }}
+      >
+        <ItemImage imageUri={item.image} points={item.points} />
+        <ItemInfo
+          name={item.name}
+          price={item.price}
+          measurementUnit={item.measurement_unit}
+          unitDisplay={unitDisplay}
+        />
+      </View>
+      <QuantityControls
+        quantity={quantity}
+        unitDisplay={unitDisplay}
+        measurementUnit={item.measurement_unit}
+        onIncrease={onIncrease}
+        onDecrease={onDecrease}
+        onFastIncrease={onFastIncrease}
+        onFastDecrease={onFastDecrease}
+        onManualInput={onManualInput}
+        onQuantityInput={(val) => onManualInput(val)}
+        maxQuantity={showStockLogic ? item.quantity : undefined}
+        itemName={item.name}
+        disabled={disabled}
+        pendingAction={pendingAction}
+        disableDecrease={quantity === 0}
+        maxReached={showStockLogic ? maxReached : false}
+        outOfStock={showStockLogic ? outOfStock : false}
+      />
+    </AnimatedListItem>
+  );
 };
 
 const styles = StyleSheet.create({
-    stockRightBadge: {
-        position: 'absolute',
-        top: 10,
-        right: 10,
-        backgroundColor: colors.base200 || '#F3F4F6',
-        borderRadius: 8,
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        zIndex: 12,
-        minWidth: 60,
-        alignItems: 'center',
-        justifyContent: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.08,
-        shadowRadius: 2,
-        elevation: 2,
-    },
-    stockRightText: {
-        color: colors.primary || '#0E9F6E',
-        fontWeight: '600',
-        fontSize: 12,
-        letterSpacing: 0.2,
-    },
-    outOfStockBadge: {
-        position: 'absolute',
-        top: 10,
-        right: 10,
-        backgroundColor: colors.error,
-        borderRadius: 8,
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        zIndex: 12,
-        minWidth: 60,
-        alignItems: 'center',
-        justifyContent: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.08,
-        shadowRadius: 2,
-        elevation: 2,
-    },
-    outOfStockText: {
-        color: colors.white,
-        fontWeight: 'bold',
-        fontSize: 12,
-        letterSpacing: 0.5,
-    },
+  stockRightBadge: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    backgroundColor: colors.base200 || "#F3F4F6",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    zIndex: 12,
+    minWidth: 60,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  stockRightText: {
+    color: colors.primary || "#0E9F6E",
+    fontWeight: "600",
+    fontSize: 12,
+    letterSpacing: 0.2,
+  },
+  outOfStockBadge: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    backgroundColor: colors.error,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    zIndex: 12,
+    minWidth: 60,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  outOfStockText: {
+    color: colors.white,
+    fontWeight: "bold",
+    fontSize: 12,
+    letterSpacing: 0.5,
+  },
 });
 
 export default ItemCard;
