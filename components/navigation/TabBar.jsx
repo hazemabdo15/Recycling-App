@@ -293,10 +293,10 @@ function TabBarItem({ route, label, isFocused, index, onPress, onLongPress, buil
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
-    bottom: scaleSize(20),
+    bottom: scaleSize(5),
     left: scaleSize(20),
     right: scaleSize(20),
-    height: scaleSize(70),
+    height: scaleSize(80),
     backgroundColor: 'transparent',
   },
   blurContainer: {

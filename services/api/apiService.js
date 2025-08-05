@@ -116,7 +116,7 @@ class OptimizedAPIService {
 
       this.tokenCache.set(cacheKey, { expired: willExpireSoon, timestamp: now });
       return willExpireSoon;
-    } catch (error) {
+    } catch (_error) {
 
       this.tokenCache.set(cacheKey, { expired: true, timestamp: now });
       return true;
