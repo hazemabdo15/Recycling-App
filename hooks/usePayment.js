@@ -2,11 +2,11 @@
 import { Alert } from 'react-native';
 import { stripeService } from '../services/api/stripe';
 import {
-    calculateTotalAmount,
-    formatAmount,
-    getPaymentErrorMessage,
-    isBuyer,
-    validatePaymentPrerequisites,
+  calculateTotalAmount,
+  formatAmount,
+  getPaymentErrorMessage,
+  isBuyer,
+  validatePaymentPrerequisites,
 } from '../utils/paymentUtils';
 
 
@@ -49,6 +49,17 @@ export const usePayment = () => {
         totalAmountPiasters,
         accessToken
       );
+
+      console.log('[Payment Hook] Checkout result received:', checkoutResult);
+
+      if (!checkoutResult) {
+        throw new Error('No checkout result returned from service');
+      }
+
+      if (!checkoutResult.url) {
+        console.error('[Payment Hook] Checkout result missing URL:', checkoutResult);
+        throw new Error('No checkout URL available');
+      }
 
       if (checkoutResult.wasAdjusted) {
         const adjustedAmountEGP = stripeService.piastersToEgp(checkoutResult.adjustedAmount);

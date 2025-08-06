@@ -6,6 +6,7 @@ export const useCart = (user = null) => {
   const {
     cartItems,
     cartItemDetails,
+    updateTrigger,
     getItemQuantity,
     handleAddToCart,
     handleAddSingleItem,
@@ -218,6 +219,7 @@ export const useCart = (user = null) => {
   return {
     cartItems,
     cartItemDetails,
+    updateTrigger,
     getItemQuantity,
     handleIncreaseQuantity,
     handleDecreaseQuantity,

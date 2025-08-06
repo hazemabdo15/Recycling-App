@@ -3,7 +3,6 @@ import { useCallback, useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
 import LoginForm from "../components/auth/LoginForm";
 import { useAuth } from "../context/AuthContext";
-import { useCartContext } from "../context/CartContext";
 import { loginUser } from "../services/auth";
 import { getLoggedInUser } from "../utils/authUtils";
 
@@ -11,11 +10,9 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [checkingUser, setCheckingUser] = useState(true);
   const { login, isLoggedIn, user } = useAuth();
-  const { refreshCart } = useCartContext();
 
   useFocusEffect(
     useCallback(() => {
-      let isActive = true;
       const checkUser = async () => {
         try {
           console.log("[LoginScreen] Checking auth state...");
@@ -46,10 +43,6 @@ export default function LoginScreen() {
       };
 
       checkUser();
-
-      return () => {
-        isActive = false;
-      };
     }, [isLoggedIn, user])
   );
 
@@ -79,13 +72,6 @@ export default function LoginScreen() {
 
       await login(user, accessToken);
       console.log("[Login] AuthContext updated successfully");
-
-      try {
-        await refreshCart();
-        console.log("[Login] Cart refreshed after login");
-      } catch (cartErr) {
-        console.warn("[Login] Failed to refresh cart after login:", cartErr);
-      }
 
       if (user.role === "delivery") {
         console.log("[Login] Redirecting to delivery dashboard");

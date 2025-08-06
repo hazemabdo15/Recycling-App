@@ -1,7 +1,7 @@
 ﻿import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   FlatList,
   Image,
@@ -80,51 +80,96 @@ const Cart = () => {
   const [showEmptyState, setShowEmptyState] = useState(false);
   const [inputValues, setInputValues] = useState({});
 
+  // Cart is already synced via CartContext, no need for manual refresh on focus
+
   useEffect(() => {
+    console.log('[Cart] Items loading state changed:', itemsLoading, 'current loading:', loading);
     if (!itemsLoading) {
       setLoading(false);
     }
-  }, [itemsLoading]);
+  }, [itemsLoading, loading]);
 
-  const safeAllItems = Array.isArray(allItems) ? allItems : [];
+  // Debug logging for cart items
+  useEffect(() => {
+    console.log('[Cart] Cart state changed:', {
+      cartItemsCount: Object.keys(cartItems).length,
+      cartItemsDetailsCount: Object.keys(cartItemDetails).length,
+      cartItems: cartItems,
+      cartItemDetails: cartItemDetails,
+      isLoggedIn: isLoggedIn
+    });
+  }, [cartItems, cartItemDetails, isLoggedIn]);
 
-  const cartArray = Object.entries(cartItems)
-    .map(([itemId, quantity]) => {
-      const itemFromDetails = cartItemDetails[itemId];
+  const safeAllItems = useMemo(() => {
+    return Array.isArray(allItems) ? allItems : [];
+  }, [allItems]);
 
-      if (itemFromDetails) {
-        return {
-          ...itemFromDetails,
+  const cartArray = useMemo(() => {
+    console.log('[Cart] Recalculating cartArray...');
+    console.log('[Cart] cartItems keys:', Object.keys(cartItems));
+    console.log('[Cart] cartItemDetails keys:', Object.keys(cartItemDetails));
+    
+    if (Object.keys(cartItems).length === 0) {
+      console.log('[Cart] No cartItems, returning empty array');
+      return [];
+    }
+
+    const result = Object.entries(cartItems)
+      .map(([itemId, quantity]) => {
+        console.log('[Cart] Processing item:', itemId, 'quantity:', quantity);
+        const itemFromDetails = cartItemDetails[itemId];
+
+        if (itemFromDetails) {
+          console.log('[Cart] Found item in details:', itemFromDetails.name);
+          return {
+            ...itemFromDetails,
+            quantity: quantity,
+          };
+        }
+
+        console.log('[Cart] Item not in details, searching in allItems for:', itemId);
+        const item = safeAllItems.find(
+          (item) => item._id === itemId || item.categoryId === itemId
+        );
+
+        if (!item) {
+          console.log('[Cart] Item not found in allItems, creating basic item');
+        }
+
+        const combinedItem = {
+          ...(item || {}),
+          _id: item?._id || itemId,
+          categoryId: item?.categoryId || itemId,
+          name: item?.name || item?.material || "Unknown Item",
+          image: item?.image || null,
+          points: item?.points || 0,
+          price: item?.price || 0,
+          measurement_unit: item?.measurement_unit || 1,
           quantity: quantity,
         };
-      }
 
-      const item = safeAllItems.find(
-        (item) => item._id === itemId || item.categoryId === itemId
-      );
+        const needsNormalization =
+          !combinedItem._id ||
+          !combinedItem.categoryId ||
+          !combinedItem.image ||
+          combinedItem.measurement_unit === undefined;
+        
+        const result = needsNormalization
+          ? normalizeItemData(combinedItem)
+          : combinedItem;
+        
+        console.log('[Cart] Final processed item:', result.name, 'quantity:', result.quantity);
+        return result;
+      })
+      .filter((item) => {
+        const hasQuantity = item && item.quantity > 0;
+        console.log('[Cart] Filter check for:', item?.name, 'quantity:', item?.quantity, 'passes:', hasQuantity);
+        return hasQuantity;
+      });
 
-      const combinedItem = {
-        ...(item || {}),
-        _id: item?._id || itemId,
-        categoryId: item?.categoryId,
-        name: item?.name || item?.material || "Unknown Item",
-        image: item?.image,
-        points: item?.points,
-        price: item?.price,
-        measurement_unit: item?.measurement_unit,
-        quantity: quantity,
-      };
-
-      const needsNormalization =
-        !combinedItem._id ||
-        !combinedItem.categoryId ||
-        !combinedItem.image ||
-        combinedItem.measurement_unit === undefined;
-      return needsNormalization
-        ? normalizeItemData(combinedItem)
-        : combinedItem;
-    })
-    .filter((item) => item.quantity > 0);
+    console.log('[Cart] Final cartArray length:', result.length);
+    return result;
+  }, [cartItems, cartItemDetails, safeAllItems]);
 
   useEffect(() => {
     if (cartArray.length === 0) {
@@ -570,7 +615,7 @@ const Cart = () => {
     );
   };
 
-  if (loading) {
+  if (loading && cartArray.length === 0) {
     return <Loader />;
   }
 

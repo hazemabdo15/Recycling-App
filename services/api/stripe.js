@@ -49,9 +49,20 @@ export const stripeService = {
         }
       );
 
-      const { url, sessionId } = response.data;
+      console.log("[Stripe Service] Response received:", JSON.stringify(response, null, 2));
+
+      if (!response) {
+        throw new Error("No data returned from server");
+      }
+
+      // Note: apiService.post returns the data directly, not wrapped in response.data
+      const { url, sessionId } = response;
+
+      console.log("[Stripe Service] Extracted URL:", url);
+      console.log("[Stripe Service] Extracted Session ID:", sessionId);
 
       if (!url) {
+        console.error("[Stripe Service] Server response missing URL field:", response);
         throw new Error("No checkout URL returned from server");
       }
 
@@ -67,13 +78,15 @@ export const stripeService = {
         error.message
       );
 
-      if (error.response) {
-        const { status, data } = error.response;
+      // Since apiService handles HTTP errors and throws them directly,
+      // we need to check the error properties directly
+      if (error.status) {
+        const { status, data } = error;
         console.error("[Stripe Service] Server error:", { status, data });
 
         switch (status) {
           case 400:
-            throw new Error(data?.error || "Invalid payment request");
+            throw new Error(data?.error || error.message || "Invalid payment request");
           case 401:
             throw new Error("Authentication failed. Please log in again.");
           case 404:
@@ -81,9 +94,9 @@ export const stripeService = {
           case 500:
             throw new Error("Payment service error. Please try again.");
           default:
-            throw new Error(data?.error || "Payment processing failed");
+            throw new Error(data?.error || error.message || "Payment processing failed");
         }
-      } else if (error.request) {
+      } else if (error.message && error.message.includes("fetch")) {
         throw new Error(
           "Cannot connect to payment service. Check your internet connection."
         );

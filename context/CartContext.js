@@ -1,13 +1,13 @@
-﻿import { createContext, useContext, useEffect, useState } from "react";
+﻿import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import {
-    addItemToCart,
-    clearCart as apiClearCart,
-    clearAuthData,
-    getCart,
-    removeItemFromCart,
-    testBackendConnectivity,
-    testMinimalPost,
-    updateCartItem,
+  addItemToCart,
+  clearCart as apiClearCart,
+  clearAuthData,
+  getCart,
+  removeItemFromCart,
+  testBackendConnectivity,
+  testMinimalPost,
+  updateCartItem,
 } from "../services/api/cart.js";
 import { createCartItem, getCartKey, normalizeItemData, validateQuantity } from "../utils/cartUtils";
 import { useAuth } from "./AuthContext";
@@ -23,6 +23,8 @@ export const CartProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [pendingOperations, setPendingOperations] = useState(new Set());
   const [removingItems, setRemovingItems] = useState(new Set());
+  const [updateTrigger, setUpdateTrigger] = useState(0);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
   const [cartItemDetails, setCartItemDetails] = useState({});
 
@@ -30,13 +32,11 @@ export const CartProvider = ({ children }) => {
     let didCancel = false;
 
     if (authLoading) {
-
       return;
     }
     console.log('[CartContext] Auth state changed, isLoggedIn:', isLoggedIn, 'user:', user, 'authLoading:', authLoading);
 
     if (!isLoggedIn && !authLoading) {
-
       console.log('[CartContext] User logged out, clearing cart state and session');
       setCartItems({});
       setCartItemDetails({});
@@ -44,22 +44,43 @@ export const CartProvider = ({ children }) => {
       setPendingOperations(new Set());
       setRemovingItems(new Set());
       setLoading(false);
+      setHasLoadedOnce(false);
 
       clearAuthData();
       return;
     }
 
     if (isLoggedIn && !authLoading) {
-
       setLoading(true);
       (async () => {
         try {
+          // Add a small delay to ensure auth state is fully settled
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          console.log('[CartContext] Loading authenticated cart...');
           const cart = await getCart(isLoggedIn);
           if (didCancel) return;
 
+          console.log('[CartContext] Raw cart response:', cart);
           const itemsObj = {};
           const itemDetailsObj = {};
           const cartItems = cart.data?.data?.items || cart.data?.items || cart.items || [];
+          console.log('[CartContext] Parsed cart items array:', cartItems);
+
+          if (cartItems.length === 0) {
+            console.log('[CartContext] No items found in authenticated cart');
+            // Only clear cart state if we haven't loaded successfully before
+            if (!hasLoadedOnce) {
+              console.log('[CartContext] First load with empty cart, clearing state');
+              setCartItems({});
+              setCartItemDetails({});
+            } else {
+              console.log('[CartContext] Already loaded before, keeping existing cart state');
+            }
+            setError(null);
+            setLoading(false);
+            return;
+          }
 
           const hasCompleteData = cartItems.length > 0 && cartItems.every(item => 
             item.categoryId && item.image && item.measurement_unit !== undefined
@@ -70,7 +91,6 @@ export const CartProvider = ({ children }) => {
 
             for (const cartItem of cartItems) {
               try {
-
                 const itemKey = cartItem._id;
                 
                 if (!itemKey) {
@@ -79,7 +99,6 @@ export const CartProvider = ({ children }) => {
                 }
 
                 itemsObj[itemKey] = cartItem.quantity || 0;
-
                 itemDetailsObj[itemKey] = cartItem;
                 
                 console.log('[CartContext] Processed cart item:', cartItem.name, 'quantity:', cartItem.quantity);
@@ -97,7 +116,6 @@ export const CartProvider = ({ children }) => {
             let allItemsData = null;
             if (needsFullItemData) {
               try {
-
                 const { categoriesAPI } = await import("../services/api");
                 const response = await categoriesAPI.getAllItems(user?.role || "customer");
                 allItemsData = response.data?.items || response.data || response.items || response;
@@ -120,11 +138,9 @@ export const CartProvider = ({ children }) => {
                     };
                     console.log('[CartContext] Merged cart item with full data:', fullItemData.name);
                   } else {
-
                     itemToUse = normalizeItemData(cartItem);
                   }
                 } else {
-
                   const isIncomplete = !cartItem.categoryId || !cartItem.image || cartItem.measurement_unit === undefined;
                   if (isIncomplete) {
                     itemToUse = normalizeItemData(cartItem);
@@ -139,7 +155,6 @@ export const CartProvider = ({ children }) => {
                 }
 
                 itemsObj[itemKey] = itemToUse.quantity || 0;
-
                 itemDetailsObj[itemKey] = itemToUse;
                 
                 console.log('[CartContext] Processed cart item:', itemToUse.name, 'quantity:', itemToUse.quantity);
@@ -148,10 +163,19 @@ export const CartProvider = ({ children }) => {
               }
             }
           }
+          
+          // Set the authenticated cart
           setCartItems(itemsObj);
           setCartItemDetails(itemDetailsObj);
           setError(null);
-          console.log('[CartContext] Cart loaded successfully with new schema');
+          console.log('[CartContext] Authenticated cart loaded successfully, items:', Object.keys(itemsObj).length);
+          console.log('[CartContext] Cart items:', Object.keys(itemsObj));
+          console.log('[CartContext] Cart quantities:', Object.values(itemsObj));
+
+          // Force a re-render by updating the trigger
+          setUpdateTrigger(prev => prev + 1);
+          setHasLoadedOnce(true);
+
         } catch (err) {
           if (didCancel) return;
           console.warn(
@@ -170,7 +194,7 @@ export const CartProvider = ({ children }) => {
     return () => {
       didCancel = true;
     };
-  }, [isLoggedIn, user, authLoading]);
+  }, [isLoggedIn, user, authLoading, hasLoadedOnce]);
   const handleAddSingleItem = async (item) => {
     const normalizedItem = normalizeItemData(item);
 
@@ -460,29 +484,75 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  const refreshCart = async () => {
+  // Debug function to force cart refresh
+  const forceRefreshCart = useCallback(async () => {
+    console.log('[CartContext] Force refreshing cart...');
+    setLoading(true);
     try {
+      await refreshCart();
+      console.log('[CartContext] Force refresh completed');
+      
+      // Force UI update by incrementing a counter
+      setUpdateTrigger(prev => prev + 1);
+    } catch (error) {
+      console.error('[CartContext] Force refresh failed:', error.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [refreshCart]);
+
+  const refreshCart = useCallback(async () => {
+    try {
+      console.log('[CartContext] Refreshing cart, isLoggedIn:', isLoggedIn);
       const cart = await getCart(isLoggedIn);
       const itemsObj = {};
       const itemDetailsObj = {};
       
-      const cartItems = cart.items || [];
-      cartItems.forEach((item) => {
-
-        const itemKey = getCartKey(item);
-        itemsObj[itemKey] = item.quantity;
-        itemDetailsObj[itemKey] = {
-          ...item,
-          _id: itemKey,
-        };
-      });
+      const cartItems = cart.data?.data?.items || cart.data?.items || cart.items || [];
+      console.log('[CartContext] Refreshed cart items:', cartItems.length);
+      
+      // Handle complete vs incomplete data like in the main useEffect
+      const hasCompleteData = cartItems.length > 0 && cartItems.every(item => 
+        item.categoryId && item.image && item.measurement_unit !== undefined
+      );
+      
+      if (hasCompleteData) {
+        console.log('[CartContext] Refresh: Backend cart items have complete data');
+        cartItems.forEach((item) => {
+          const itemKey = item._id;
+          if (itemKey) {
+            itemsObj[itemKey] = item.quantity;
+            itemDetailsObj[itemKey] = {
+              ...item,
+              _id: itemKey,
+            };
+            console.log('[CartContext] Refresh processed item:', item.name, 'quantity:', item.quantity);
+          }
+        });
+      } else {
+        console.log('[CartContext] Refresh: Cart items missing essential data, using normalization');
+        cartItems.forEach((item) => {
+          const normalizedItem = normalizeItemData(item);
+          const itemKey = normalizedItem._id || getCartKey(normalizedItem);
+          if (itemKey) {
+            itemsObj[itemKey] = normalizedItem.quantity;
+            itemDetailsObj[itemKey] = {
+              ...normalizedItem,
+              _id: itemKey,
+            };
+            console.log('[CartContext] Refresh processed normalized item:', normalizedItem.name, 'quantity:', normalizedItem.quantity);
+          }
+        });
+      }
       
       setCartItems(itemsObj);
       setCartItemDetails(itemDetailsObj);
+      console.log('[CartContext] Cart refreshed successfully, total items:', Object.keys(itemsObj).length);
     } catch (err) {
+      console.error('[CartContext] Error refreshing cart:', err.message);
       throw err;
     }
-  };
+  }, [isLoggedIn]);
 
   const getItemQuantity = (identifier) => {
 
@@ -573,6 +643,7 @@ export const CartProvider = ({ children }) => {
       value={{
         cartItems,
         cartItemDetails,
+        updateTrigger,
         getItemQuantity,
         handleAddToCart,
         handleAddSingleItem,
@@ -580,6 +651,7 @@ export const CartProvider = ({ children }) => {
         handleRemoveFromCart,
         handleClearCart,
         refreshCart,
+        forceRefreshCart,
         fetchBackendCart,
         testConnectivity,
         testMinimalPostRequest,
