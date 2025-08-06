@@ -289,7 +289,7 @@ function ProfileContent() {
             style={styles.redeemButton}
             onPress={() => setModalVisible(true)}
           >
-            <Text style={styles.redeemButtonText}>Redeem and Return</Text>
+            <Text style={styles.redeemButtonText}>Redeem Your Points</Text>
           </TouchableOpacity>
           <RecyclingModal 
             visible={modalVisible}
