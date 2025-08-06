@@ -44,16 +44,17 @@ const RecyclingModal = ({ visible, onClose, totalPoints, onPointsUpdated }) => {
   const [localPoints, setLocalPoints] = useState(totalPoints || 0);
   const [isRedemptionInProgress, setIsRedemptionInProgress] = useState(false);
   const [pointsChanged, setPointsChanged] = useState(false);
+  const [redeemedType, setRedeemedType] = useState(null); // Track what was actually redeemed
 
   const { user } = useAuth();
 
-  // Update local points when modal first opens, but not during redemption
+  // Update local points when modal first opens, but not during redemption or after points have changed
   useEffect(() => {
-    if (visible && !qrVisible && !isRedemptionInProgress) {
+    if (visible && !qrVisible && !isRedemptionInProgress && !pointsChanged) {
       setLocalPoints(totalPoints || 0);
       setPointsChanged(false);
     }
-  }, [visible, totalPoints, qrVisible, isRedemptionInProgress]);
+  }, [visible, totalPoints, qrVisible, isRedemptionInProgress, pointsChanged]);
 
   const userPointsValue = localPoints;
   const requiredPoints = parseInt(amount) ? parseInt(amount) * 19 : 0;
@@ -69,13 +70,11 @@ const RecyclingModal = ({ visible, onClose, totalPoints, onPointsUpdated }) => {
         setAmount('');
         setSelectedVoucher(null);
         setRedeemedVouchers([]);
+        setRedeemedType(null);
       }
     } else {
       console.log('[RecyclingModal] Modal closed - resetting all state');
-      // Update parent points only if points were changed
-      if (pointsChanged) {
-        onPointsUpdated?.();
-      }
+      // Don't call onPointsUpdated here - it's handled in handleClose
       // Reset everything when modal closes
       setActiveOption('voucher');
       setAmount('');
@@ -85,11 +84,20 @@ const RecyclingModal = ({ visible, onClose, totalPoints, onPointsUpdated }) => {
       setRedeemedVouchers([]);
       setIsRedemptionInProgress(false);
       setPointsChanged(false);
+      setRedeemedType(null);
     }
-  }, [visible, qrVisible, onPointsUpdated, pointsChanged]);
+  }, [visible, qrVisible]);
 
   const handleClose = () => {
     console.log('[RecyclingModal] Manual close triggered');
+    // If points were changed, update parent immediately before closing
+    if (pointsChanged) {
+      console.log('[RecyclingModal] Points were changed, updating parent immediately');
+      console.log('[RecyclingModal] Calling onPointsUpdated...');
+      onPointsUpdated?.();
+    } else {
+      console.log('[RecyclingModal] No points changed, skipping parent update');
+    }
     onClose();
   };
 
@@ -119,6 +127,7 @@ const RecyclingModal = ({ visible, onClose, totalPoints, onPointsUpdated }) => {
         setQrValue(`Cashback: ${amount} EGP redeemed!`);
         setQrVisible(true);
         setPointsChanged(true);
+        setRedeemedType("money");
         
         // Don't call parent callback immediately to prevent re-render
         // onPointsUpdated?.();
@@ -152,6 +161,7 @@ const RecyclingModal = ({ visible, onClose, totalPoints, onPointsUpdated }) => {
         setQrVisible(true);
         setRedeemedVouchers([...redeemedVouchers, voucher.id]);
         setPointsChanged(true);
+        setRedeemedType("voucher");
         
         // Don't call parent callback immediately to prevent re-render
         // onPointsUpdated?.();
@@ -187,7 +197,7 @@ const RecyclingModal = ({ visible, onClose, totalPoints, onPointsUpdated }) => {
           <TouchableOpacity
             onPress={() => {
               setActiveOption("voucher");
-              setQrVisible(false);
+              // No need to hide QR anymore - it will be controlled by the display logic
             }}
             style={[
               styles.option,
@@ -212,7 +222,7 @@ const RecyclingModal = ({ visible, onClose, totalPoints, onPointsUpdated }) => {
           <TouchableOpacity
             onPress={() => {
               setActiveOption("money");
-              setQrVisible(false);
+              // No need to hide QR anymore - it will be controlled by the display logic
             }}
             style={[
               styles.option,
@@ -319,9 +329,9 @@ const RecyclingModal = ({ visible, onClose, totalPoints, onPointsUpdated }) => {
           </View>
         )}
 
-        {qrVisible && (
+        {qrVisible && redeemedType === activeOption && (
           <View style={styles.qrContainer}>
-            {activeOption === 'voucher' ? (
+            {redeemedType === 'voucher' ? (
               <>
                 <Text style={styles.qrTitle}>Your Voucher</Text>
                 <View style={styles.qrCodeWrapper}>
@@ -332,7 +342,7 @@ const RecyclingModal = ({ visible, onClose, totalPoints, onPointsUpdated }) => {
                   Show this QR code to the merchant to redeem
                 </Text>
               </>
-            ) : (
+            ) : redeemedType === 'money' ? (
               <>
                 <Text style={styles.qrTitle}>Cashback Redeemed!</Text>
                 <Text style={styles.qrText}>{qrValue}</Text>
@@ -340,11 +350,11 @@ const RecyclingModal = ({ visible, onClose, totalPoints, onPointsUpdated }) => {
                   You will receive your cashback soon.
                 </Text>
               </>
-            )}
+            ) : null}
           </View>
         )}
 
-        {!qrVisible && (
+        {(!qrVisible || (qrVisible && redeemedType !== activeOption)) && (
           <TouchableOpacity
             onPress={handleRedeem}
             style={[
@@ -372,7 +382,7 @@ const RecyclingModal = ({ visible, onClose, totalPoints, onPointsUpdated }) => {
           </TouchableOpacity>
         )}
 
-        {qrVisible && (
+        {qrVisible && redeemedType === activeOption && (
           <TouchableOpacity onPress={handleClose} style={styles.doneButton}>
             <Text style={styles.doneButtonText}>Done</Text>
           </TouchableOpacity>
