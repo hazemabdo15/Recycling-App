@@ -97,7 +97,7 @@ const SplashController = ({ children, onDataLoaded }) => {
           categoriesAPI.getAllItems(user?.role || 'customer'),
         ];
 
-        if (isLoggedIn && user) {
+        if (isLoggedIn && user.role === 'customer' || user.role === 'buyer') {
           updateProgress(75, 'Loading your data...');
 
           try {
