@@ -145,29 +145,34 @@ export function TabBar({ state, descriptors, navigation }) {
   });
   const leftRoutes = state.routes.slice(0, 2);
   const rightRoutes = state.routes.slice(2);
+  // Only show voice button on these tabs
+  const allowedTabs = ['home', 'explore', 'cart', 'profile'];
+  const currentRoute = state.routes[state.index]?.name;
   return (
     <View style={[styles.container, { paddingBottom: insets.bottom }]}> 
-      <View pointerEvents="box-none" style={styles.voiceButtonWrapper}>
-        <TouchableOpacity
-          style={styles.mainActionButtonContainer}
-          onPress={handleMainActionPress}
-          activeOpacity={1}
-          accessible={true}
-          accessibilityRole="button"
-          accessibilityLabel="Voice input"
-          accessibilityHint="Open voice recording to add recycling items"
-        >
-          <Animated.View style={[styles.mainActionButton, mainButtonAnimatedStyle]}>
-            <MaterialCommunityIcons
-              name="microphone"
-              size={28}
-              color={colors.white}
-            />
-          </Animated.View>
-        </TouchableOpacity>
-      </View>
+      {allowedTabs.includes(currentRoute) && (
+        <View pointerEvents="box-none" style={styles.voiceButtonWrapper}>
+          <TouchableOpacity
+            style={styles.mainActionButtonContainer}
+            onPress={handleMainActionPress}
+            activeOpacity={1}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Voice input"
+            accessibilityHint="Open voice recording to add recycling items"
+          >
+            <Animated.View style={[styles.mainActionButton, mainButtonAnimatedStyle]}>
+              <MaterialCommunityIcons
+                name="microphone"
+                size={28}
+                color={colors.white}
+              />
+            </Animated.View>
+          </TouchableOpacity>
+        </View>
+      )}
       <BlurView intensity={90} tint="light" style={styles.blurContainer}>
-          {}
+          {/* ...existing code... */}
           <View style={styles.notchIndicatorLeft} />
           <View style={styles.notchIndicatorRight} />
           <View style={styles.tabContainer}>
@@ -220,9 +225,9 @@ export function TabBar({ state, descriptors, navigation }) {
             </View>
           </View>
         </BlurView>
-      </View>
-    );
-  }
+    </View>
+  );
+}
 function TabBarItem({ route, label, isFocused, index, onPress, onLongPress, buildHref, options, badgeCount = 0, userRole = 'customer' }) {
   const scale = useSharedValue(1);
   const opacity = useSharedValue(isFocused ? 1 : 0.6);

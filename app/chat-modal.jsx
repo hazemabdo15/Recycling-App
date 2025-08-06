@@ -63,7 +63,7 @@ export default function ChatModal() {
             setCurrentPlaceholder((prev) => (prev + 1) % placeholders.length);
         }, 2000);
         return () => clearInterval(interval);
-    }, []);
+    }, [placeholders.length]);
 
     const parseResponse = useCallback((text) => {
         const cleaned = text.replace(/\*\*/g, '').replace(/\*/g, '');

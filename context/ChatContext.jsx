@@ -1,31 +1,23 @@
-﻿import { Ionicons } from '@expo/vector-icons';
-import { router, useNavigation, usePathname } from 'expo-router';
-import { createContext, useContext, useState, useEffect, useRef} from 'react';
-import { StyleSheet, TouchableOpacity, Animated, Easing } from 'react-native';
-import { colors } from '../styles';
+﻿import { router, usePathname } from 'expo-router';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { Animated, Easing, StyleSheet, TouchableOpacity } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { colors } from '../styles';
 
 const ChatContext = createContext();
 
 export const ChatProvider = ({ children }) => {
     const pathname = usePathname();
     const pulseAnim = useRef(new Animated.Value(1)).current;
-    const hiddenPaths = [
-        '/',
-        'chat-modal', 
-        'login', 
-        'register', 
-        'notifications', 
-        'ai-results-modal', 
-        'voice-modal',
-        '/chat-modal',
-        '/login', 
-        '/register', 
-        '/notifications', 
-        '/ai-results-modal', 
-        '/voice-modal'
+    // Only show FAB on these tab routes (support both '/home' and '/(tabs)/home' etc)
+    const allowedTabs = [
+        'home',
+        'explore',
+        'cart',
+        'profile',
     ];
-    const shouldHideFAB = !pathname || hiddenPaths.includes(pathname);
+    const lastSegment = pathname ? pathname.split('/').filter(Boolean).pop() : '';
+    const shouldHideFAB = !lastSegment || !allowedTabs.includes(lastSegment);
     const [modalOpen, setModalOpen] = useState(shouldHideFAB);
 
 
