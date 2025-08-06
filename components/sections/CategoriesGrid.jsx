@@ -199,6 +199,39 @@ const CategoriesGrid = ({
           [itemKey]: operation,
         }));
 
+        // Show toast instantly before async operation
+        if (operation === "increase") {
+          showCartMessage(CartMessageTypes.ADD_SINGLE, {
+            itemName: normalizedItem.name,
+            quantity: step,
+            measurementUnit: normalizedItem.measurement_unit,
+            isBuyer: user?.role === "buyer",
+          });
+        } else if (operation === "decrease") {
+          showCartMessage(CartMessageTypes.REMOVE_SINGLE, {
+            itemName: normalizedItem.name,
+            quantity: step,
+            measurementUnit: normalizedItem.measurement_unit,
+            remainingQuantity: Math.max(0, (item.cartQuantity || 0) - step),
+            isBuyer: user?.role === "buyer",
+          });
+        } else if (operation === "fastIncrease") {
+          showCartMessage(CartMessageTypes.ADD_FAST, {
+            itemName: normalizedItem.name,
+            quantity: step,
+            measurementUnit: normalizedItem.measurement_unit,
+            isBuyer: user?.role === "buyer",
+          });
+        } else if (operation === "fastDecrease") {
+          showCartMessage(CartMessageTypes.REMOVE_FAST, {
+            itemName: normalizedItem.name,
+            quantity: step,
+            measurementUnit: normalizedItem.measurement_unit,
+            remainingQuantity: Math.max(0, (item.cartQuantity || 0) - step),
+            isBuyer: user?.role === "buyer",
+          });
+        }
+
         let increaseResult;
         switch (operation) {
           case "increase":
@@ -206,48 +239,18 @@ const CategoriesGrid = ({
               item,
               showGlobalToast
             );
-            if (increaseResult !== false) {
-              showCartMessage(CartMessageTypes.ADD_SINGLE, {
-                itemName: normalizedItem.name,
-                quantity: step,
-                measurementUnit: normalizedItem.measurement_unit,
-                isBuyer: user?.role === "buyer",
-              });
-            }
             break;
           case "decrease":
             await handleDecreaseQuantity(item);
-            showCartMessage(CartMessageTypes.REMOVE_SINGLE, {
-              itemName: normalizedItem.name,
-              quantity: step,
-              measurementUnit: normalizedItem.measurement_unit,
-              remainingQuantity: Math.max(0, (item.cartQuantity || 0) - step),
-              isBuyer: user?.role === "buyer",
-            });
             break;
           case "fastIncrease":
             increaseResult = await handleFastIncreaseQuantity(
               item,
               showGlobalToast
             );
-            if (increaseResult !== false) {
-              showCartMessage(CartMessageTypes.ADD_FAST, {
-                itemName: normalizedItem.name,
-                quantity: step,
-                measurementUnit: normalizedItem.measurement_unit,
-                isBuyer: user?.role === "buyer",
-              });
-            }
             break;
           case "fastDecrease":
             await handleFastDecreaseQuantity(item);
-            showCartMessage(CartMessageTypes.REMOVE_FAST, {
-              itemName: normalizedItem.name,
-              quantity: step,
-              measurementUnit: normalizedItem.measurement_unit,
-              remainingQuantity: Math.max(0, (item.cartQuantity || 0) - step),
-              isBuyer: user?.role === "buyer",
-            });
             break;
           default:
             throw new Error(`Unknown operation: ${operation}`);

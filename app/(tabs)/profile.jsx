@@ -416,7 +416,7 @@ function ProfileContent() {
         </View>
       )}
       ListHeaderComponent={renderListHeader}
-      contentContainerStyle={styles.container}
+      contentContainerStyle={[styles.container, { paddingBottom: scaleSize(120) }]}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }

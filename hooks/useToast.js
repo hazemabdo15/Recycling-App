@@ -1,26 +1,10 @@
-﻿import { useCallback, useState } from 'react';
+﻿import { useCallback } from 'react';
+import { showGlobalToast } from '../components/common/GlobalToast';
 
+// Unified toast hook using the new global toast system
 export const useToast = () => {
-  const [toast, setToast] = useState({
-    visible: false,
-    message: '',
-    type: 'success',
-  });
-
-  const showToast = useCallback((message, type = 'success', duration = 3000) => {
-    setToast({
-      visible: true,
-      message,
-      type,
-      duration,
-    });
-  }, []);
-
-  const hideToast = useCallback(() => {
-    setToast(prev => ({
-      ...prev,
-      visible: false,
-    }));
+  const showToast = useCallback((message, type = 'success', duration = 2000) => {
+    showGlobalToast(message, duration, type);
   }, []);
 
   const showSuccess = useCallback((message, duration) => {
@@ -40,9 +24,7 @@ export const useToast = () => {
   }, [showToast]);
 
   return {
-    toast,
     showToast,
-    hideToast,
     showSuccess,
     showError,
     showWarning,

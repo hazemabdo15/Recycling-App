@@ -58,8 +58,8 @@ try {
   withTiming = (value) => value;
 }
 
-const { height } = Dimensions.get("window");
-const MODAL_HEIGHT = height * 0.75;
+const { height: SCREEN_HEIGHT } = Dimensions.get("window");
+const MODAL_HEIGHT = SCREEN_HEIGHT * 0.75;
 const DISMISS_THRESHOLD = 150;
 export default function VoiceModal() {
   const insets = useSafeAreaInsets();
@@ -332,6 +332,10 @@ export default function VoiceModal() {
       .toString()
       .padStart(2, "0")}`;
   };
+  // Responsive record button size and margin
+  const recordButtonSize = SCREEN_HEIGHT < 700 ? 64 : 88;
+  const recordButtonMargin = SCREEN_HEIGHT < 700 ? 18 : spacing.xl;
+
   return (
     <GestureHandlerRootView style={styles.container}>
       <StatusBar
@@ -339,13 +343,11 @@ export default function VoiceModal() {
         backgroundColor="transparent"
         translucent
       />
-      {}
       <TouchableOpacity
         style={styles.backdrop}
         activeOpacity={1}
         onPress={dismissModal}
       />
-      {}
       <GestureDetector gesture={panGesture}>
         <Reanimated.View
           style={[
@@ -354,11 +356,8 @@ export default function VoiceModal() {
             { paddingTop: insets.top + 20 },
           ]}
         >
-          {}
           <View style={styles.handleBar} />
-          {}
           <View style={styles.header}></View>
-          {}
           <View style={styles.visualizationContainer}>
             {isRecording ? (
               <View style={styles.waveformContainer}>
@@ -459,7 +458,6 @@ export default function VoiceModal() {
               </Text>
             )}
           </View>
-          {}
           <View style={styles.controlsContainer}>
             {!recordedURI ? (
               <View style={styles.recordingControls}>
@@ -468,6 +466,10 @@ export default function VoiceModal() {
                     style={[
                       styles.recordButton,
                       {
+                        width: recordButtonSize,
+                        height: recordButtonSize,
+                        borderRadius: recordButtonSize / 2,
+                        marginBottom: recordButtonMargin,
                         backgroundColor: isRecording
                           ? colors.accent
                           : colors.primary,
@@ -478,7 +480,7 @@ export default function VoiceModal() {
                   >
                     <MaterialCommunityIcons
                       name={isRecording ? "stop" : "microphone"}
-                      size={36}
+                      size={recordButtonSize * 0.41}
                       color={colors.white}
                     />
                   </TouchableOpacity>
@@ -652,12 +654,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.lg,
   },
   recordButton: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: spacing.xl,
     ...shadows.large,
     elevation: 0,
   },
