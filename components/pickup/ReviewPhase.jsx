@@ -1,6 +1,7 @@
 ﻿import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import {
+  Alert,
   Image,
   ScrollView,
   StyleSheet,
@@ -11,6 +12,7 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../hooks/useCart";
 import { usePayment } from "../../hooks/usePayment";
+import { orderService } from "../../services/api/orders";
 
 import { borderRadius, spacing, typography } from "../../styles";
 import { colors } from "../../styles/theme";
@@ -30,12 +32,17 @@ const ReviewPhase = ({
   const [allItems, setAllItems] = useState([]);
   const [itemsLoaded, setItemsLoaded] = useState(false);
   const [cartItemsDisplay, setCartItemsDisplay] = useState([]);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
+  const [isCashOrderProcessing, setIsCashOrderProcessing] = useState(false);
 
   const { user: contextUser } = useAuth();
   const user = propUser || contextUser;
   const { cartItemDetails } = useCart(user);
 
   const { isProcessing, processPayment, shouldUsePayment } = usePayment();
+
+  // Helper to check if any processing is happening
+  const isAnyProcessing = isProcessing || isCashOrderProcessing;
 
   useEffect(() => {
     console.log(
@@ -177,15 +184,140 @@ const ReviewPhase = ({
   }, [itemsLoaded, cartItems, allItems]);
 
   const handlePaymentFlow = async (cartItemsArray, userData) => {
-    await processPayment({
-      user,
-      accessToken,
-      cartItemsDisplay,
-      onSuccess: (result) => {},
-      onError: (error) => {
-        console.error("[ReviewPhase] Payment failed:", error.message);
-      },
-    });
+    if (selectedPaymentMethod === 'cash') {
+      // For cash on delivery, create order directly without Stripe
+      await handleCashOnDeliveryOrder(cartItemsArray, userData);
+    } else {
+      // For credit card, use the existing Stripe flow
+      await processPayment({
+        user,
+        accessToken,
+        cartItemsDisplay,
+        onSuccess: (result) => {},
+        onError: (error) => {
+          console.error("[ReviewPhase] Payment failed:", error.message);
+        },
+      });
+    }
+  };
+
+  const handleCashOnDeliveryOrder = async (cartItemsArray, userData) => {
+    if (isCashOrderProcessing) return;
+    
+    setIsCashOrderProcessing(true);
+    
+    try {
+      console.log("[ReviewPhase] Creating cash on delivery order");
+      console.log("[ReviewPhase] User data received:", JSON.stringify(userData, null, 2));
+      console.log("[ReviewPhase] Selected address:", JSON.stringify(selectedAddress, null, 2));
+      console.log("[ReviewPhase] Cart items array received:", JSON.stringify(cartItemsArray, null, 2));
+      console.log("[ReviewPhase] All items for reference:", JSON.stringify(allItems, null, 2));
+      
+      // Validate required user data
+      if (!userData || !userData.userId || !userData.phoneNumber || !userData.userName || !userData.email) {
+        throw new Error("Missing required user information. Please make sure you're logged in properly.");
+      }
+      
+      // Transform cart items to match the backend expected format
+      const formattedItems = cartItemsArray.map(item => {
+        // Find the corresponding item in allItems to get the actual category data
+        const originalItem = allItems.find(origItem => origItem._id === item._id);
+        const actualCategoryId = originalItem?.categoryId || originalItem?.category?._id || originalItem?.category || item.categoryId;
+        
+        console.log(`[ReviewPhase] Processing item ${item.name}:`, {
+          itemId: item._id,
+          providedCategoryId: item.categoryId,
+          actualCategoryId: actualCategoryId,
+          originalItem: originalItem ? 'found' : 'not found'
+        });
+        
+        return {
+          _id: item._id,
+          categoryId: actualCategoryId,
+          name: item.name || item.itemName || "Unknown Item",
+          itemName: item.name || item.itemName || "Unknown Item",
+          image: item.image || `${(item.name || "item").toLowerCase().replace(/\s+/g, "-")}.png`,
+          measurement_unit: item.measurement_unit,
+          points: item.points || 0,
+          price: item.price || 0,
+          quantity: item.quantity,
+          categoryName: item.categoryName || "Unknown Category",
+          originalQuantity: null,
+          quantityAdjusted: false,
+          unit: item.measurement_unit === 1 ? "kg" : "piece"
+        };
+      });
+
+      const orderData = {
+        phoneNumber: userData.phoneNumber,
+        userName: userData.userName,
+        email: userData.email,
+        imageUrl: userData.imageUrl,
+        user: {
+          userId: userData.userId,
+          phoneNumber: userData.phoneNumber,
+          userName: userData.userName,
+          email: userData.email
+        },
+        address: {
+          city: selectedAddress.city,
+          area: selectedAddress.area,
+          street: selectedAddress.street,
+          building: selectedAddress.building || "",
+          floor: selectedAddress.floor || "",
+          apartment: selectedAddress.apartment || "",
+          landmark: selectedAddress.landmark || "",
+          isDefault: selectedAddress.isDefault || false
+        },
+        items: formattedItems,
+        status: "pending",
+        paymentMethod: 'cash_on_delivery',
+        courier: null,
+        deliveryProof: null,
+        collectedAt: null,
+        completedAt: null,
+        estimatedWeight: null,
+        quantityAdjustmentNotes: null,
+        hasQuantityAdjustments: false,
+        statusHistory: []
+      };
+
+      console.log("[ReviewPhase] Order data to be sent:", JSON.stringify(orderData, null, 2));
+
+      // Create order using the order service
+      const orderResponse = await orderService.createOrder(orderData);
+      
+      console.log("[ReviewPhase] Cash on delivery order created successfully:", orderResponse);
+      
+      // Navigate to confirmation phase with the completed cash order
+      if (typeof onConfirm === "function") {
+        onConfirm(cartItemsArray, userData, { 
+          paymentMethod: 'cash_on_delivery', 
+          orderResponse,
+          orderData,
+          isOrderComplete: true, // Flag to indicate order is already created
+          skipOrderCreation: true // Flag to skip any additional order processing
+        });
+      }
+    } catch (error) {
+      console.error("[ReviewPhase] Failed to create cash on delivery order:", error);
+      
+      let errorMessage = "Failed to create order. Please try again.";
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+        console.error("[ReviewPhase] Backend error:", error.response.data.message);
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      Alert.alert(
+        "Order Creation Failed",
+        errorMessage,
+        [{ text: "OK" }]
+      );
+    } finally {
+      setIsCashOrderProcessing(false);
+    }
   };
 
   const handleRegularOrderFlow = (cartItemsArray, userData) => {
@@ -197,6 +329,12 @@ const ReviewPhase = ({
   const handleConfirm = async () => {
     if (!cartItems || typeof cartItems !== "object") {
       console.error("[ReviewPhase] Invalid cartItems format:", cartItems);
+      return;
+    }
+
+    // For buyers, check if payment method is selected
+    if (shouldUsePayment(user) && !selectedPaymentMethod) {
+      // Payment method selection is handled in the UI
       return;
     }
 
@@ -261,9 +399,9 @@ const ReviewPhase = ({
     const userData = user
       ? {
           userId: user._id || user.userId,
-          phoneNumber: user.phoneNumber,
-          userName: user.name || user.userName,
-          email: user.email,
+          phoneNumber: user.phoneNumber || user.phone || "",
+          userName: user.name || user.userName || user.fullName || "User",
+          email: user.email || "",
           imageUrl:
             (typeof user.imageUrl === "string" &&
               user.imageUrl &&
@@ -275,6 +413,8 @@ const ReviewPhase = ({
           role: user.role,
         }
       : null;
+
+    console.log("[ReviewPhase] Prepared user data:", JSON.stringify(userData, null, 2));
 
     if (shouldUsePayment(user)) {
       await handlePaymentFlow(cartItemsArray, userData);
@@ -422,6 +562,84 @@ const ReviewPhase = ({
             {cartItemsDisplay.map((item, index) => renderCartItem(item, index))}
           </View>
 
+          {shouldUsePayment(user) && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <MaterialCommunityIcons
+                  name="credit-card"
+                  size={20}
+                  color={colors.primary}
+                />
+                <Text style={styles.sectionTitle}>Payment Method</Text>
+              </View>
+              <View style={styles.paymentMethodContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.paymentMethodCard,
+                    selectedPaymentMethod === 'cash' && styles.selectedPaymentMethod,
+                  ]}
+                  onPress={() => setSelectedPaymentMethod('cash')}
+                >
+                  <View style={styles.paymentMethodContent}>
+                    <MaterialCommunityIcons
+                      name="cash"
+                      size={24}
+                      color={selectedPaymentMethod === 'cash' ? colors.primary : colors.neutral}
+                    />
+                    <View style={styles.paymentMethodInfo}>
+                      <Text style={[
+                        styles.paymentMethodTitle,
+                        selectedPaymentMethod === 'cash' && styles.selectedPaymentMethodTitle,
+                      ]}>
+                        Cash on Delivery
+                      </Text>
+                      <Text style={styles.paymentMethodDescription}>
+                        Pay when your order is delivered
+                      </Text>
+                    </View>
+                    <View style={styles.radioButton}>
+                      {selectedPaymentMethod === 'cash' && (
+                        <View style={styles.radioButtonSelected} />
+                      )}
+                    </View>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.paymentMethodCard,
+                    selectedPaymentMethod === 'card' && styles.selectedPaymentMethod,
+                  ]}
+                  onPress={() => setSelectedPaymentMethod('card')}
+                >
+                  <View style={styles.paymentMethodContent}>
+                    <MaterialCommunityIcons
+                      name="credit-card-outline"
+                      size={24}
+                      color={selectedPaymentMethod === 'card' ? colors.primary : colors.neutral}
+                    />
+                    <View style={styles.paymentMethodInfo}>
+                      <Text style={[
+                        styles.paymentMethodTitle,
+                        selectedPaymentMethod === 'card' && styles.selectedPaymentMethodTitle,
+                      ]}>
+                        Credit Card
+                      </Text>
+                      <Text style={styles.paymentMethodDescription}>
+                        Pay securely online with your card
+                      </Text>
+                    </View>
+                    <View style={styles.radioButton}>
+                      {selectedPaymentMethod === 'card' && (
+                        <View style={styles.radioButtonSelected} />
+                      )}
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <MaterialCommunityIcons
@@ -470,7 +688,7 @@ const ReviewPhase = ({
               onBack();
             }
           }}
-          disabled={isProcessing}
+          disabled={isAnyProcessing}
         >
           <Text style={styles.backButtonText}>Back to Address</Text>
         </TouchableOpacity>
@@ -478,12 +696,12 @@ const ReviewPhase = ({
         <AnimatedButton
           style={[
             styles.confirmButton,
-            (!itemsLoaded || isProcessing) && styles.disabledButton,
+            (!itemsLoaded || isAnyProcessing || (shouldUsePayment(user) && !selectedPaymentMethod)) && styles.disabledButton,
           ]}
           onPress={handleConfirm}
-          disabled={!itemsLoaded || isProcessing}
+          disabled={!itemsLoaded || isAnyProcessing || (shouldUsePayment(user) && !selectedPaymentMethod)}
         >
-          {isProcessing ? (
+          {isAnyProcessing ? (
             <MaterialCommunityIcons
               name="loading"
               size={20}
@@ -497,10 +715,16 @@ const ReviewPhase = ({
             />
           )}
           <Text style={styles.confirmButtonText}>
-            {isProcessing
-              ? "Processing..."
-              : user?.role === "buyer"
-              ? "Pay & Confirm Order"
+            {isAnyProcessing
+              ? isCashOrderProcessing
+                ? "Creating Order..."
+                : "Processing..."
+              : shouldUsePayment(user)
+              ? selectedPaymentMethod === 'cash'
+                ? "Confirm Order"
+                : selectedPaymentMethod === 'card'
+                ? "Pay & Confirm Order"
+                : "Select Payment Method"
               : "Confirm Order"}
           </Text>
         </AnimatedButton>
@@ -755,6 +979,65 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: colors.secondary,
     fontSize: 18,
+  },
+
+  // Payment Method Styles
+  paymentMethodContainer: {
+    marginHorizontal: spacing.xl,
+    gap: spacing.md,
+  },
+  paymentMethodCard: {
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    borderWidth: 2,
+    borderColor: colors.base200,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 0,
+  },
+  selectedPaymentMethod: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primary + "05",
+  },
+  paymentMethodContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+  },
+  paymentMethodInfo: {
+    flex: 1,
+  },
+  paymentMethodTitle: {
+    ...typography.subtitle,
+    fontWeight: "bold",
+    color: colors.black,
+    marginBottom: spacing.xs,
+  },
+  selectedPaymentMethodTitle: {
+    color: colors.primary,
+  },
+  paymentMethodDescription: {
+    ...typography.body,
+    color: colors.neutral,
+    fontSize: 13,
+  },
+  radioButton: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: colors.base300,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  radioButtonSelected: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.primary,
   },
 
   footer: {

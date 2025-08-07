@@ -137,7 +137,19 @@ export const usePickupWorkflow = () => {
     }
   }, [selectedAddress]);
 
-  const createOrder = useCallback(async (cartItems, userData) => {
+  const createOrder = useCallback(async (cartItems, userData, orderCompletionInfo = null) => {
+    // Check if this is a completed cash order that doesn't need processing
+    if (orderCompletionInfo?.isOrderComplete && orderCompletionInfo?.skipOrderCreation) {
+      console.log('[Pickup Workflow] Cash order already completed, skipping order creation and proceeding to confirmation');
+      
+      // Extract the order data from the completion info
+      const order = orderCompletionInfo.orderResponse?.data || orderCompletionInfo.orderResponse;
+      setOrderData(order);
+      setCurrentPhase(3);
+      
+      return order;
+    }
+
     if (!selectedAddress) {
       throw new Error('Please select an address first');
     }
