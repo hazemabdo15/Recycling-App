@@ -14,7 +14,10 @@ import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../hooks/useCart';
 import { borderRadius, spacing, typography } from '../../styles';
 import { colors } from '../../styles/theme';
-import { getLabel, isBuyer } from '../../utils/roleLabels';
+import { getLabel } from '../../utils/roleLabels';
+import { isBuyer as isBuyerRole, shouldShowDeliveryFee, shouldShowTotalValue } from '../../utils/roleUtils';
+
+import { getDeliveryFeeForCity } from '../../utils/deliveryFees';
 import { AnimatedButton } from '../common';
 
 const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
@@ -37,20 +40,31 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
     }
   }, [trackingNumber, rotateValue]);
 
+  // ✅ Fix tracking number generation to handle nested order structure
   const trackingNumber = useMemo(() => {
-    const generateTrackingNumber = (orderId) => {
-      if (!orderId) {
-
-        return null;
-      }
-
-      console.log('[ConfirmationPhase] Using full order ID as tracking number:', orderId);
-      return orderId;
-    };
-
-    const orderId = order?._id || order?.id;
-    return generateTrackingNumber(orderId);
+    // Handle different order response structures
+    const orderId = order?._id || order?.id || order?.data?._id || order?.data?.id;
+    if (!orderId) {
+      console.warn('[ConfirmationPhase] No order ID found', { order });
+      return null;
+    }
+    
+    console.log('[ConfirmationPhase] Using order ID as tracking number:', orderId);
+    return orderId;
   }, [order]);
+
+  // ✅ Role-based calculations with nested order structure support
+  const orderItems = order?.items || order?.data?.items || [];
+  const orderAddress = order?.address || order?.data?.address || {};
+  
+  const itemsSubtotal = orderItems.reduce((sum, item) => 
+    sum + (item.price * item.quantity), 0) || 0;
+  
+  const deliveryFee = shouldShowDeliveryFee(user) && orderAddress?.city 
+    ? getDeliveryFeeForCity(orderAddress.city) 
+    : 0;
+  
+  const totalValue = itemsSubtotal + deliveryFee;
 
   const handleCopyTracking = async () => {
     try {
@@ -167,24 +181,52 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
         {order && (
           <View style={styles.orderCard}>
             <Text style={styles.orderTitle}>Order Summary</Text>
+            
             <View style={styles.orderRow}>
               <Text style={styles.orderLabel}>Items</Text>
-              <Text style={styles.orderValue}>{order.items?.length || 0} items</Text>
+              <Text style={styles.orderValue}>
+                {orderItems?.length || 0} items
+              </Text>
             </View>
-            {!isBuyer(user) && (
+            
+            {!isBuyerRole(user) && (
               <View style={styles.orderRow}>
                 <Text style={styles.orderLabel}>Total Points</Text>
                 <Text style={[styles.orderValue, { color: colors.accent }]}>
-                  {order.items?.reduce((sum, item) => sum + (item.points * item.quantity), 0) || 0}
+                  {orderItems?.reduce((sum, item) => 
+                    sum + (item.points * item.quantity), 0) || 0}
                 </Text>
               </View>
             )}
+            
             <View style={styles.orderRow}>
-              <Text style={styles.orderLabel}>Total Value</Text>
-              <Text style={[styles.orderValue, { color: colors.secondary }]}>
-                {(order.items?.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0).toFixed(2)} EGP
+              <Text style={styles.orderLabel}>
+                {isBuyerRole(user) ? 'Items Subtotal' : 'Total Value'}
+              </Text>
+              <Text style={styles.orderValue}>
+                {itemsSubtotal.toFixed(2)} EGP
               </Text>
             </View>
+            
+            {/* ✅ Only show for buyers */}
+            {shouldShowDeliveryFee(user) && (
+              <View style={styles.orderRow}>
+                <Text style={styles.orderLabel}>Delivery Fee</Text>
+                <Text style={styles.orderValue}>
+                  {deliveryFee.toFixed(2)} EGP
+                </Text>
+              </View>
+            )}
+            
+            {/* ✅ Only show total for buyers */}
+            {shouldShowTotalValue(user) && (
+              <View style={styles.orderRow}>
+                <Text style={styles.orderLabel}>Total Value</Text>
+                <Text style={[styles.orderValue, { color: colors.secondary }]}>
+                  {totalValue.toFixed(2)} EGP
+                </Text>
+              </View>
+            )}
           </View>
         )}
 

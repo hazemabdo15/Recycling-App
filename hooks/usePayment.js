@@ -18,6 +18,7 @@ export const usePayment = () => {
     user,
     accessToken,
     cartItemsDisplay,
+    deliveryFee = 0,
     onSuccess,
     onError,
   }) => {
@@ -41,7 +42,7 @@ export const usePayment = () => {
 
       const { userId } = validation;
 
-      const totalAmountEGP = calculateTotalAmount(cartItemsDisplay);
+      const totalAmountEGP = calculateTotalAmount(cartItemsDisplay, deliveryFee);
       const totalAmountPiasters = stripeService.egpToPiasters(totalAmountEGP);
 
       const checkoutResult = await stripeService.createCheckoutSession(

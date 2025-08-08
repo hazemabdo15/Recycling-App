@@ -15,13 +15,10 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { borderRadius, spacing, typography } from '../../styles';
 import { colors } from '../../styles/theme';
+
+import { CITIES } from '../../utils/deliveryFees';
 import { getLabel } from '../../utils/roleLabels';
 import { AnimatedButton } from '../common';
-
-const CITIES = [
-  'Cairo', 'Alexandria', 'Giza', 'Sharm El Sheikh', 'Hurghada', 
-  'Luxor', 'Aswan', 'Port Said', 'Suez', 'Ismailia'
-];
 
 const AREAS = {
   'Cairo': ['Nasr City', 'Maadi', 'Heliopolis', 'Zamalek', 'Downtown', 'New Cairo'],
@@ -59,7 +56,7 @@ const AddressPhase = ({ onNext, onAddressSelect, onBack, pickupWorkflow }) => {
       hasFetchedAddresses.current = false;
     }
 
-  }, [isLoggedIn, user?.email, user?.role]);
+  }, [isLoggedIn, pickupWorkflow, user?._id, user?.email, user?.role]);
 
   useEffect(() => {
     return () => {

@@ -1,15 +1,15 @@
 ﻿
 
 
-export const calculateTotalAmount = (cartItemsDisplay) => {
+export const calculateTotalAmount = (cartItemsDisplay, deliveryFee = 0) => {
   if (!Array.isArray(cartItemsDisplay)) {
-    return 0;
+    return deliveryFee;
   }
-  
-  return cartItemsDisplay.reduce((sum, item) => {
+  const itemsTotal = cartItemsDisplay.reduce((sum, item) => {
     const itemTotal = item.totalPrice || 0;
     return sum + itemTotal;
   }, 0);
+  return itemsTotal + (deliveryFee || 0);
 };
 
 
