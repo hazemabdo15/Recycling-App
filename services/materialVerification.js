@@ -1,17 +1,19 @@
 ﻿import apiService from "./api/apiService";
-let cachedDatabaseItems = null;
+let cachedDatabaseItems = new Map(); // Use Map to cache per role
 let cacheTimestamp = null;
 const CACHE_DURATION = 5 * 60 * 1000;
 
-export async function fetchDatabaseItems() {
+export async function fetchDatabaseItems(userRole = 'customer') {
   try {
-
-    if (cachedDatabaseItems && cacheTimestamp && (Date.now() - cacheTimestamp < CACHE_DURATION)) {
-      return cachedDatabaseItems;
+    // Use cached data if available and fresh (cache per role)
+    const cacheKey = userRole;
+    if (cachedDatabaseItems.has(cacheKey) && cacheTimestamp && (Date.now() - cacheTimestamp < CACHE_DURATION)) {
+      console.log('🔍 [Material Verification] Using cached data for role:', userRole);
+      return cachedDatabaseItems.get(cacheKey);
     }
 
-    console.log('🔍 [Material Verification] Fetching categories from API...');
-    const response = await apiService.get('/categories');
+    console.log('🔍 [Material Verification] Fetching categories from API for role:', userRole);
+    const response = await apiService.get(`/categories?role=${userRole}`);
     
     console.log('📊 [Material Verification] API Response:', {
       response: response,
@@ -123,7 +125,7 @@ export async function fetchDatabaseItems() {
       })));
     }
 
-    cachedDatabaseItems = result;
+    cachedDatabaseItems.set(userRole, result);
     cacheTimestamp = Date.now();
 
     console.log(`✅ Database items fetched: ${allItems.length} items from ${categoriesData.length} categories`);
@@ -237,9 +239,9 @@ function convertMeasurementUnit(measurementUnit) {
   }
 }
 
-export async function verifyMaterialsAgainstDatabase(extractedMaterials) {
+export async function verifyMaterialsAgainstDatabase(extractedMaterials, userRole = 'customer') {
   try {
-    console.log('🔍 Starting material verification...');
+    console.log('🔍 Starting material verification for role:', userRole);
     console.log('📝 Extracted materials to verify:', extractedMaterials);
     
     if (!extractedMaterials || !Array.isArray(extractedMaterials) || extractedMaterials.length === 0) {
@@ -247,7 +249,7 @@ export async function verifyMaterialsAgainstDatabase(extractedMaterials) {
       return [];
     }
 
-    const databaseItems = await fetchDatabaseItems();
+    const databaseItems = await fetchDatabaseItems(userRole);
     
     const verifiedMaterials = [];
     
@@ -357,7 +359,7 @@ export function filterAvailableMaterials(verifiedMaterials) {
 }
 
 export function clearMaterialCache() {
-  cachedDatabaseItems = null;
+  cachedDatabaseItems.clear();
   cacheTimestamp = null;
   console.log('🗑️ Material cache cleared');
 }

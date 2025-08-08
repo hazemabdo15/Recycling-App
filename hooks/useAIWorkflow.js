@@ -1,9 +1,11 @@
 ﻿import { useCallback, useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { extractMaterialsFromTranscription } from '../services/materialExtraction';
 import { verifyMaterialsAgainstDatabase } from '../services/materialVerification';
 import { useTranscription } from './useTranscription';
 
 export const useAIWorkflow = () => {
+  const { user } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState(null);
   const [extractedMaterials, setExtractedMaterials] = useState([]);
@@ -18,8 +20,10 @@ export const useAIWorkflow = () => {
     setVerifiedMaterials([]);
 
     try {
-
-      console.log('🎤 Starting transcription...');
+      // Get user role for proper pricing
+      const userRole = user?.role || 'customer';
+      console.log('🎤 Starting transcription for user role:', userRole);
+      
       const transcription = await transcribe(audioURI);
       
       if (!transcription) {
@@ -34,8 +38,8 @@ export const useAIWorkflow = () => {
       console.log('✅ Materials extracted:', materials);
       setExtractedMaterials(materials);
 
-      console.log('🔍 Verifying materials against database...');
-      const verified = await verifyMaterialsAgainstDatabase(materials);
+      console.log('🔍 Verifying materials against database with role:', userRole);
+      const verified = await verifyMaterialsAgainstDatabase(materials, userRole);
       
       console.log('✅ Materials verified:', verified);
       setVerifiedMaterials(verified);
@@ -61,7 +65,7 @@ export const useAIWorkflow = () => {
     } finally {
       setIsProcessing(false);
     }
-  }, [transcribe, transcriptionError]);
+  }, [transcribe, transcriptionError, user?.role]);
 
   const reset = useCallback(() => {
     setIsProcessing(false);

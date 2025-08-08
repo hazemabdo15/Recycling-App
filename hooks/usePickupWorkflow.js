@@ -1,7 +1,8 @@
-﻿import { useCallback, useMemo, useState } from 'react';
+﻿import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { addressService } from '../services/api/addresses';
 import { unifiedOrderService } from '../services/unifiedOrderService';
+import { workflowStateUtils } from '../utils/workflowStateUtils';
 import { useCart } from './useCart';
 
 export const usePickupWorkflow = () => {
@@ -17,6 +18,24 @@ export const usePickupWorkflow = () => {
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [orderData, setOrderData] = useState(null);
 
+  // Restore workflow state on mount (for deep link returns)
+  useEffect(() => {
+    const restoreState = async () => {
+      try {
+        const savedState = await workflowStateUtils.restoreWorkflowState();
+        if (savedState && savedState.selectedAddress) {
+          console.log('🔄 [Pickup Workflow] Restoring workflow state:', savedState);
+          setSelectedAddress(savedState.selectedAddress);
+          setCurrentPhase(savedState.currentPhase || 1);
+        }
+      } catch (error) {
+        console.error('❌ [Pickup Workflow] Failed to restore state:', error);
+      }
+    };
+
+    restoreState();
+  }, []);
+
   const nextPhase = useCallback(() => {
     setCurrentPhase(prev => Math.min(prev + 1, 3));
   }, []);
@@ -25,11 +44,15 @@ export const usePickupWorkflow = () => {
     setCurrentPhase(prev => Math.max(prev - 1, 1));
   }, []);
 
-  const reset = useCallback(() => {
+  const reset = useCallback(async () => {
     setCurrentPhase(1);
     setSelectedAddress(null);
     setOrderData(null);
     setError(null);
+    
+    // Clear any saved workflow state
+    await workflowStateUtils.clearWorkflowState();
+    console.log('🔄 [Pickup Workflow] Workflow reset and state cleared');
   }, []);
 
   const fetchAddresses = useCallback(async () => {
@@ -168,6 +191,16 @@ export const usePickupWorkflow = () => {
       throw new Error(errorMsg);
     }
     
+    // Save workflow state before potential payment redirect
+    if (orderOptions.paymentMethod === 'credit-card') {
+      console.log('💾 [Pickup Workflow] Saving state before payment redirect');
+      await workflowStateUtils.saveWorkflowState({
+        selectedAddress,
+        currentPhase,
+        cartItemDetails
+      });
+    }
+    
     setLoading(true);
     setError(null);
     try {
@@ -189,6 +222,9 @@ export const usePickupWorkflow = () => {
       setOrderData(order);
       setCurrentPhase(3);
       
+      // Clear saved state after successful order creation
+      await workflowStateUtils.clearWorkflowState();
+      
       // ✅ Return the complete order for external handlers
       return order;
     } catch (error) {
@@ -203,7 +239,7 @@ export const usePickupWorkflow = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedAddress, user, cartItemDetails]);
+  }, [selectedAddress, user, cartItemDetails, currentPhase]);
 
   // Removed validateOrderData - validation is now handled in unifiedOrderService
 
