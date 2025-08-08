@@ -65,12 +65,11 @@ export const unifiedOrderService = {
 
   transformCartToOrder(cartItems, address, userData, orderOptions = {}) {
     // Single transformation point
+
     const items = Object.entries(cartItems).map(([categoryId, item]) => {
       if (typeof item === 'number') {
-        // Handle case where cartItems is { categoryId: quantity }
         throw new Error('Cart items should contain full item data, not just quantities');
       }
-      
       return {
         _id: item._id || categoryId,
         categoryId: item.categoryId || categoryId,
@@ -83,6 +82,25 @@ export const unifiedOrderService = {
         image: item.image || `${(item.name || 'item').toLowerCase().replace(/\s+/g, '-')}.png`
       };
     });
+
+    // Calculate items subtotal
+    const itemsSubtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    // Calculate delivery fee for buyers
+    let deliveryFee = 0;
+    let totalAmount = itemsSubtotal;
+    if (userData?.role && userData.role.toLowerCase() === 'buyer') {
+      // Import getDeliveryFeeForCity dynamically to avoid circular deps
+      let getDeliveryFeeForCity;
+      try {
+        getDeliveryFeeForCity = require('../utils/deliveryFees').getDeliveryFeeForCity;
+      } catch (e) {
+        getDeliveryFeeForCity = () => 0;
+      }
+      if (address?.city) {
+        deliveryFee = getDeliveryFeeForCity(address.city);
+      }
+      totalAmount = itemsSubtotal + deliveryFee;
+    }
 
     const orderData = {
       phoneNumber: userData.phoneNumber || userData.phone || '',
@@ -119,6 +137,11 @@ export const unifiedOrderService = {
     // Only set paymentMethod if explicitly provided in orderOptions
     if (orderOptions.paymentMethod) {
       orderData.paymentMethod = orderOptions.paymentMethod;
+    }
+    // Only set deliveryFee and totalAmount for buyers
+    if (userData?.role && userData.role.toLowerCase() === 'buyer') {
+      orderData.deliveryFee = deliveryFee;
+      orderData.totalAmount = totalAmount;
     }
 
     logger.info('Order data transformed', { 
