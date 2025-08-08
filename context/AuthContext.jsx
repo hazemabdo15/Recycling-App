@@ -101,7 +101,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    if (!isLoggedIn || !accessToken) return;
+    if (!isLoggedIn || !accessToken || user?.role === 'delivery') return;
 
     console.log("[AuthContext] Setting up periodic token refresh (10 min intervals)");
 

@@ -39,7 +39,7 @@ const DeliveryInfoForm = ({
   };
 
   const handleSubmit = async () => {
-    const licenseRegex = /^[0-9]{3,4}[A-Za-z]{3}$/;
+    const licenseRegex = /^\d{10}$/;
     const nationalIdRegex = /^\d{14}$/;
     const emergencyNumberRegex = /^01\d{9}$/;
 
@@ -140,6 +140,7 @@ const DeliveryInfoForm = ({
             <TextInput
               style={styles.input}
               placeholder="License Number"
+              keyboardType='numeric'
               placeholderTextColor={colors.neutral}
               value={licenseNumber}
               onChangeText={setLicenseNumber}
