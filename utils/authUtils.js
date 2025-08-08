@@ -43,9 +43,29 @@ export async function setLoggedInUser(user) {
   try {
     console.log('[authUtils] Storing user in AsyncStorage:', user);
     console.log('[authUtils] User role being stored:', user?.role);
-    await AsyncStorage.setItem('user', JSON.stringify(user));
+    if (user?.role === 'delivery') {
+      const userWithStatus = { ...user, deliveryStatus: 'pending' };
+      await AsyncStorage.setItem('user', JSON.stringify(userWithStatus));
+    } else {
+      await AsyncStorage.setItem('user', JSON.stringify(user));
+    }
   } catch (error) {
     console.error('[authUtils] Error storing user:', error);
+  }
+}
+
+export async function setDeliveryStatus(status) {
+  try  {
+    const user = await getLoggedInUser();
+    if (user) {
+      user.deliveryStatus = status;
+      await setLoggedInUser(user);
+      console.log('[authUtils] Delivery status updated:', status);
+    } else {
+      console.warn('[authUtils] No user found to update delivery status');
+    }
+  } catch (error) {
+    console.error('[authUtils] Error updating delivery status:', error);
   }
 }
 

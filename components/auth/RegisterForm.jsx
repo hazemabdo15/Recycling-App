@@ -29,7 +29,7 @@ const RegisterForm = ({ onSubmit, loading }) => {
                 end={{ x: 1, y: 1 }}
                 style={StyleSheet.absoluteFill}
             />
-            
+
             {/* Header Section */}
             <View style={[styles.headerSection, { paddingTop: insets.top + scaleSize(20) }]}>
                 <View style={styles.logoContainer}>
@@ -40,7 +40,7 @@ const RegisterForm = ({ onSubmit, loading }) => {
             </View>
 
             {/* Form Card */}
-            <ScrollView 
+            <ScrollView
                 style={styles.formCard}
                 showsVerticalScrollIndicator={false}
                 bounces={false}
@@ -133,10 +133,10 @@ const RegisterForm = ({ onSubmit, loading }) => {
                                 style={[styles.roleOption, role === 'customer' && styles.roleOptionActive]}
                                 onPress={() => setRole('customer')}
                             >
-                                <MaterialCommunityIcons 
-                                    name="account" 
-                                    size={scaleSize(24)} 
-                                    color={role === 'customer' ? colors.white : colors.primary} 
+                                <MaterialCommunityIcons
+                                    name="account"
+                                    size={scaleSize(24)}
+                                    color={role === 'customer' ? colors.white : colors.primary}
                                 />
                                 <Text style={[styles.roleText, role === 'customer' && styles.roleTextActive]}>
                                     Customer
@@ -145,21 +145,38 @@ const RegisterForm = ({ onSubmit, loading }) => {
                                     Sell recyclables
                                 </Text>
                             </Pressable>
-                            
+
                             <Pressable
                                 style={[styles.roleOption, role === 'buyer' && styles.roleOptionActive]}
                                 onPress={() => setRole('buyer')}
                             >
-                                <MaterialCommunityIcons 
-                                    name="domain" 
-                                    size={scaleSize(24)} 
-                                    color={role === 'buyer' ? colors.white : colors.primary} 
+                                <MaterialCommunityIcons
+                                    name="domain"
+                                    size={scaleSize(24)}
+                                    color={role === 'buyer' ? colors.white : colors.primary}
                                 />
                                 <Text style={[styles.roleText, role === 'buyer' && styles.roleTextActive]}>
                                     Buyer
                                 </Text>
                                 <Text style={[styles.roleSubtext, role === 'buyer' && styles.roleSubtextActive]}>
                                     Buy recyclables
+                                </Text>
+                            </Pressable>
+
+                            <Pressable
+                                style={[styles.roleOption, role === 'delivery' && styles.roleOptionActive]}
+                                onPress={() => setRole('delivery')}
+                            >
+                                <MaterialCommunityIcons
+                                    name="truck-delivery"
+                                    size={scaleSize(24)}
+                                    color={role === 'delivery' ? colors.white : colors.primary}
+                                />
+                                <Text style={[styles.roleText, role === 'delivery' && styles.roleTextActive]}>
+                                    Delivery
+                                </Text>
+                                <Text style={[styles.roleSubtext, role === 'delivery' && styles.roleSubtextActive]}>
+                                    Pickup & deliver
                                 </Text>
                             </Pressable>
                         </View>
@@ -198,7 +215,7 @@ const RegisterForm = ({ onSubmit, loading }) => {
 }
 
 const styles = StyleSheet.create({
-    container: { 
+    container: {
         flex: 1,
         backgroundColor: colors.base100,
     },
@@ -223,11 +240,11 @@ const styles = StyleSheet.create({
         shadowRadius: scaleSize(8),
         elevation: 50,
     },
-    title: { 
-        fontSize: scaleSize(26), 
-        fontWeight: 'bold', 
-        color: colors.white, 
-        textAlign: 'center', 
+    title: {
+        fontSize: scaleSize(26),
+        fontWeight: 'bold',
+        color: colors.white,
+        textAlign: 'center',
         marginBottom: scaleSize(8),
         textShadowColor: 'rgba(0, 0, 0, 0.3)',
         textShadowOffset: { width: 0, height: 1 },

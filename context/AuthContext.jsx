@@ -2,10 +2,54 @@
 import apiService from "../services/api/apiService";
 import { isAuthenticated, logoutUser } from "../services/auth";
 import { getAccessToken, getLoggedInUser, setLoggedInUser } from '../utils/authUtils';
+import optimizedApiService from "../services/api/apiService";
 
 const AuthContext = createContext(null);
 
 let authContextInstance = null;
+
+const refreshDeliveryStatus = async () => {
+  if (!user || !user.id) {
+    console.warn("[AuthContext] Cannot refresh delivery status without a valid user");
+    return null;
+  }
+
+  try {
+    const response = await optimizedApiService.get("/delivery-status");
+    console.log("[AuthContext] Refreshed delivery status:", response);
+
+    setDeliveryStatus(response?.status|| null);
+    return response?.status || null;
+  } catch (error) {
+    console.error("[AuthContext] Error refreshing delivery status:", error);
+    return null;
+  }
+};
+
+const checkPublicDeliveryStatus = async (email) => {
+  if (!email) {
+    console.warn("[AuthContext] No delivery ID provided for public status check");
+    return null;
+  }
+
+  try {
+    console.log("[AuthContext] Checking public delivery status for:", email);
+    const response = await fetch("http://192.168.1.4:5000/api/auth/check-delivery-status", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email: email }),
+    });
+    const statusData = await response.json();
+    console.log("[AuthContext] Public delivery status check result:", statusData);
+    return statusData.deliveryStatus || null;
+  } catch (error) {
+    console.error("[AuthContext] Error checking public delivery status:", error);
+    return null;
+  }
+};
+
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -13,6 +57,7 @@ export function AuthProvider({ children }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [accessToken, setAccessToken] = useState(null);
   const [periodicCheckRunning, setPeriodicCheckRunning] = useState(false);
+  const [deliveryStatus, setDeliveryStatus] = useState(null);
 
   const handleTokenExpired = useCallback(() => {
     console.log('[AuthContext] handleTokenExpired() called - clearing auth state');
@@ -118,13 +163,13 @@ export function AuthProvider({ children }) {
     };
   }, [isLoggedIn, accessToken, periodicCheckRunning, handleTokenExpired]);
 
-  const login = async (userData, token) => {
+  const login = async (userData, token, deliveryStatus = null) => {
     try {
       console.log('[AuthContext] Login called with userData:', userData);
       console.log('[AuthContext] User role from login:', userData?.role);
       console.log('[AuthContext] Full user data:', JSON.stringify(userData, null, 2));
 
-      await setLoggedInUser(userData);
+      await setLoggedInUser(userData, deliveryStatus);
       await setAccessToken(token);
 
       setUser(userData);
@@ -208,7 +253,11 @@ export function AuthProvider({ children }) {
     accessToken,
     updateToken,
     getSessionInfo,
-  };
+    deliveryStatus,
+    setDeliveryStatus,
+    checkPublicDeliveryStatus,
+    refreshDeliveryStatus,
+    };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
