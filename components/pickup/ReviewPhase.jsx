@@ -12,12 +12,15 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../hooks/useCart";
 import { usePayment } from "../../hooks/usePayment";
-import { orderService } from "../../services/api/orders";
+// import { orderService } from "../../services/api/orders"; // Removed - using unified flow
 
 import { borderRadius, spacing, typography } from "../../styles";
 import { colors } from "../../styles/theme";
 import { normalizeItemData } from "../../utils/cartUtils";
 import { isBuyer } from "../../utils/roleLabels";
+import { isBuyer as isBuyerRole, shouldShowDeliveryFee, shouldShowTotalValue } from '../../utils/roleUtils';
+
+import { getDeliveryFeeForCity } from '../../utils/deliveryFees';
 import { AnimatedButton } from "../common";
 
 const ReviewPhase = ({
@@ -33,7 +36,17 @@ const ReviewPhase = ({
   const [itemsLoaded, setItemsLoaded] = useState(false);
   const [cartItemsDisplay, setCartItemsDisplay] = useState([]);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
+
   const [isCashOrderProcessing, setIsCashOrderProcessing] = useState(false);
+  const [deliveryFee, setDeliveryFee] = useState(0);
+  // ✅ Role-based delivery fee calculation
+  useEffect(() => {
+    if (selectedAddress && selectedAddress.city && shouldShowDeliveryFee(user)) {
+      setDeliveryFee(getDeliveryFeeForCity(selectedAddress.city));
+    } else {
+      setDeliveryFee(0);
+    }
+  }, [selectedAddress, user]);
 
   const { user: contextUser } = useAuth();
   const user = propUser || contextUser;
@@ -186,133 +199,59 @@ const ReviewPhase = ({
   const handlePaymentFlow = async (cartItemsArray, userData) => {
     if (selectedPaymentMethod === 'cash') {
       // For cash on delivery, create order directly without Stripe
-      await handleCashOnDeliveryOrder(cartItemsArray, userData);
+      await handleCashOnDeliveryOrder();
     } else {
       // For credit card, use the existing Stripe flow
       await processPayment({
         user,
         accessToken,
         cartItemsDisplay,
-        onSuccess: (result) => {},
+        deliveryFee, // Pass delivery fee to payment
+        onSuccess: async (paymentResult) => {
+          try {
+            console.log('[ReviewPhase] Payment successful, but letting deep link handler create order:', paymentResult);
+            // ✅ DON'T create order here - let the deep link handler do it
+            // This prevents duplicate order creation
+            // Just log the success, the deep link will handle order creation
+            console.log('[ReviewPhase] Payment completed, waiting for deep link return...');
+          } catch (error) {
+            console.error('[ReviewPhase] Payment processing error:', error);
+            Alert.alert(
+              "Payment Processing Error", 
+              error.message || "Payment processing failed. Please try again.",
+              [{ text: "OK" }]
+            );
+          }
+        },
         onError: (error) => {
           console.error("[ReviewPhase] Payment failed:", error.message);
+          Alert.alert(
+            "Payment Failed",
+            error.message || "Payment failed. Please try again.",
+            [{ text: "OK" }]
+          );
         },
+        // Only pass paymentMethod if user is a buyer
+        ...(isBuyerRole(user) ? { paymentMethod: 'card' } : {})
       });
     }
   };
 
-  const handleCashOnDeliveryOrder = async (cartItemsArray, userData) => {
+  const handleCashOnDeliveryOrder = async () => {
     if (isCashOrderProcessing) return;
-    
     setIsCashOrderProcessing(true);
-    
     try {
-      console.log("[ReviewPhase] Creating cash on delivery order");
-      console.log("[ReviewPhase] User data received:", JSON.stringify(userData, null, 2));
-      console.log("[ReviewPhase] Selected address:", JSON.stringify(selectedAddress, null, 2));
-      console.log("[ReviewPhase] Cart items array received:", JSON.stringify(cartItemsArray, null, 2));
-      console.log("[ReviewPhase] All items for reference:", JSON.stringify(allItems, null, 2));
-      
-      // Validate required user data
-      if (!userData || !userData.userId || !userData.phoneNumber || !userData.userName || !userData.email) {
-        throw new Error("Missing required user information. Please make sure you're logged in properly.");
-      }
-      
-      // Transform cart items to match the backend expected format
-      const formattedItems = cartItemsArray.map(item => {
-        // Find the corresponding item in allItems to get the actual category data
-        const originalItem = allItems.find(origItem => origItem._id === item._id);
-        const actualCategoryId = originalItem?.categoryId || originalItem?.category?._id || originalItem?.category || item.categoryId;
-        
-        console.log(`[ReviewPhase] Processing item ${item.name}:`, {
-          itemId: item._id,
-          providedCategoryId: item.categoryId,
-          actualCategoryId: actualCategoryId,
-          originalItem: originalItem ? 'found' : 'not found'
-        });
-        
-        return {
-          _id: item._id,
-          categoryId: actualCategoryId,
-          name: item.name || item.itemName || "Unknown Item",
-          itemName: item.name || item.itemName || "Unknown Item",
-          image: item.image || `${(item.name || "item").toLowerCase().replace(/\s+/g, "-")}.png`,
-          measurement_unit: item.measurement_unit,
-          points: item.points || 0,
-          price: item.price || 0,
-          quantity: item.quantity,
-          categoryName: item.categoryName || "Unknown Category",
-          originalQuantity: null,
-          quantityAdjusted: false,
-          unit: item.measurement_unit === 1 ? "kg" : "piece"
-        };
-      });
-
-      const orderData = {
-        phoneNumber: userData.phoneNumber,
-        userName: userData.userName,
-        email: userData.email,
-        imageUrl: userData.imageUrl,
-        user: {
-          userId: userData.userId,
-          phoneNumber: userData.phoneNumber,
-          userName: userData.userName,
-          email: userData.email
-        },
-        address: {
-          city: selectedAddress.city,
-          area: selectedAddress.area,
-          street: selectedAddress.street,
-          building: selectedAddress.building || "",
-          floor: selectedAddress.floor || "",
-          apartment: selectedAddress.apartment || "",
-          landmark: selectedAddress.landmark || "",
-          isDefault: selectedAddress.isDefault || false
-        },
-        items: formattedItems,
-        status: "pending",
-        paymentMethod: 'cash_on_delivery',
-        courier: null,
-        deliveryProof: null,
-        collectedAt: null,
-        completedAt: null,
-        estimatedWeight: null,
-        quantityAdjustmentNotes: null,
-        hasQuantityAdjustments: false,
-        statusHistory: []
-      };
-
-      console.log("[ReviewPhase] Order data to be sent:", JSON.stringify(orderData, null, 2));
-
-      // Create order using the order service
-      const orderResponse = await orderService.createOrder(orderData);
-      
-      console.log("[ReviewPhase] Cash on delivery order created successfully:", orderResponse);
-      
-      // Navigate to confirmation phase with the completed cash order
+      console.log('[ReviewPhase] Creating cash order via unified service');
+      // Use the unified order flow through onConfirm (which is createOrder from usePickupWorkflow)
       if (typeof onConfirm === "function") {
-        onConfirm(cartItemsArray, userData, { 
-          paymentMethod: 'cash_on_delivery', 
-          orderResponse,
-          orderData,
-          isOrderComplete: true, // Flag to indicate order is already created
-          skipOrderCreation: true // Flag to skip any additional order processing
-        });
+        const order = await onConfirm({ paymentMethod: 'cash' });
+        console.log('[ReviewPhase] Cash order created successfully:', order);
       }
     } catch (error) {
-      console.error("[ReviewPhase] Failed to create cash on delivery order:", error);
-      
-      let errorMessage = "Failed to create order. Please try again.";
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-        console.error("[ReviewPhase] Backend error:", error.response.data.message);
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
+      console.error('[ReviewPhase] Cash order creation failed:', error);
       Alert.alert(
         "Order Creation Failed",
-        errorMessage,
+        error.message || "Failed to create order. Please try again.",
         [{ text: "OK" }]
       );
     } finally {
@@ -423,18 +362,22 @@ const ReviewPhase = ({
     }
   };
 
-  const totalItems = cartItemsDisplay.reduce(
-    (sum, item) => sum + item.quantity,
-    0
-  );
+
+  // totalItems: number of unique items in the order (not sum of quantities)
+  const totalItems = cartItemsDisplay.filter(item => item.quantity > 0).length;
   const totalPoints = cartItemsDisplay.reduce(
     (sum, item) => sum + item.totalPoints,
     0
   );
-  const totalPrice = cartItemsDisplay.reduce(
+  // ✅ Role-based totals calculation
+  const itemsTotalPrice = cartItemsDisplay.reduce(
     (sum, item) => sum + item.totalPrice,
     0
   );
+  
+  const totalPrice = shouldShowDeliveryFee(user) 
+    ? itemsTotalPrice + deliveryFee 
+    : itemsTotalPrice;
 
   const renderCartItem = (item, index) => (
     <View key={index} style={styles.itemCard}>
@@ -654,7 +597,8 @@ const ReviewPhase = ({
                 <Text style={styles.summaryLabel}>Total Items:</Text>
                 <Text style={styles.summaryValue}>{totalItems}</Text>
               </View>
-              {!isBuyer(user) && (
+              
+              {!isBuyerRole(user) && (
                 <View style={styles.summaryRow}>
                   <Text style={styles.summaryLabel}>Total Points:</Text>
                   <View style={styles.pointsContainer}>
@@ -669,12 +613,35 @@ const ReviewPhase = ({
                   </View>
                 </View>
               )}
-              <View style={[styles.summaryRow, styles.totalRow]}>
-                <Text style={styles.totalLabel}>Total Value:</Text>
-                <Text style={styles.totalValue}>
-                  {totalPrice.toFixed(2)} EGP
+              
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>
+                  {isBuyerRole(user) ? 'Items Subtotal:' : 'Total Value:'}
+                </Text>
+                <Text style={styles.summaryValue}>
+                  {itemsTotalPrice.toFixed(2)} EGP
                 </Text>
               </View>
+              
+              {/* ✅ Only show delivery fee for buyers */}
+              {shouldShowDeliveryFee(user) && (
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Delivery Fee:</Text>
+                  <Text style={styles.summaryValue}>
+                    {deliveryFee.toFixed(2)} EGP
+                  </Text>
+                </View>
+              )}
+              
+              {/* ✅ Only show total value for buyers */}
+              {shouldShowTotalValue(user) && (
+                <View style={[styles.summaryRow, styles.totalRow]}>
+                  <Text style={styles.totalLabel}>Total Value:</Text>
+                  <Text style={styles.totalValue}>
+                    {totalPrice.toFixed(2)} EGP
+                  </Text>
+                </View>
+              )}
             </View>
           </View>
         </ScrollView>

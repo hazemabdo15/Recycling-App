@@ -1,11 +1,13 @@
-﻿import { useCallback, useMemo, useState } from 'react';
+﻿import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { addressService } from '../services/api/addresses';
-import { orderService } from '../services/api/orders';
-import { validateQuantity } from '../utils/cartUtils';
+import { unifiedOrderService } from '../services/unifiedOrderService';
+import { workflowStateUtils } from '../utils/workflowStateUtils';
+import { useCart } from './useCart';
 
 export const usePickupWorkflow = () => {
   const { user } = useAuth();
+  const { cartItemDetails } = useCart(user);
 
   const [addresses, setAddresses] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -16,6 +18,24 @@ export const usePickupWorkflow = () => {
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [orderData, setOrderData] = useState(null);
 
+  // Restore workflow state on mount (for deep link returns)
+  useEffect(() => {
+    const restoreState = async () => {
+      try {
+        const savedState = await workflowStateUtils.restoreWorkflowState();
+        if (savedState && savedState.selectedAddress) {
+          console.log('🔄 [Pickup Workflow] Restoring workflow state:', savedState);
+          setSelectedAddress(savedState.selectedAddress);
+          setCurrentPhase(savedState.currentPhase || 1);
+        }
+      } catch (error) {
+        console.error('❌ [Pickup Workflow] Failed to restore state:', error);
+      }
+    };
+
+    restoreState();
+  }, []);
+
   const nextPhase = useCallback(() => {
     setCurrentPhase(prev => Math.min(prev + 1, 3));
   }, []);
@@ -24,11 +44,15 @@ export const usePickupWorkflow = () => {
     setCurrentPhase(prev => Math.max(prev - 1, 1));
   }, []);
 
-  const reset = useCallback(() => {
+  const reset = useCallback(async () => {
     setCurrentPhase(1);
     setSelectedAddress(null);
     setOrderData(null);
     setError(null);
+    
+    // Clear any saved workflow state
+    await workflowStateUtils.clearWorkflowState();
+    console.log('🔄 [Pickup Workflow] Workflow reset and state cleared');
   }, []);
 
   const fetchAddresses = useCallback(async () => {
@@ -137,129 +161,87 @@ export const usePickupWorkflow = () => {
     }
   }, [selectedAddress]);
 
-  const createOrder = useCallback(async (cartItems, userData, orderCompletionInfo = null) => {
-    // Check if this is a completed cash order that doesn't need processing
-    if (orderCompletionInfo?.isOrderComplete && orderCompletionInfo?.skipOrderCreation) {
-      console.log('[Pickup Workflow] Cash order already completed, skipping order creation and proceeding to confirmation');
-      
-      // Extract the order data from the completion info
-      const order = orderCompletionInfo.orderResponse?.data || orderCompletionInfo.orderResponse;
-      setOrderData(order);
-      setCurrentPhase(3);
-      
-      return order;
-    }
+  // Enhanced createOrder using unified service with proper data handling
+  const createOrder = useCallback(async (orderOptions = {}) => {
+    console.log('Order creation attempt', { 
+      hasSelectedAddress: !!selectedAddress,
+      selectedAddressId: selectedAddress?._id,
+      hasUser: !!user,
+      userId: user?._id,
+      hasCartItemDetails: !!cartItemDetails,
+      cartItemCount: Object.keys(cartItemDetails || {}).length,
+      orderOptions
+    });
 
     if (!selectedAddress) {
-      throw new Error('Please select an address first');
+      const errorMsg = 'Please select an address first';
+      console.error('Order creation failed - no address:', errorMsg);
+      throw new Error(errorMsg);
+    }
+    
+    if (!user) {
+      const errorMsg = 'User authentication required';
+      console.error('Order creation failed - no user:', errorMsg);
+      throw new Error(errorMsg);
     }
 
-    if (!cartItems || cartItems.length === 0) {
-      throw new Error('Your cart is empty');
+    if (!cartItemDetails || Object.keys(cartItemDetails).length === 0) {
+      const errorMsg = 'Cart is empty - cannot create order';
+      console.error('Order creation failed - empty cart:', errorMsg);
+      throw new Error(errorMsg);
     }
-
+    
+    // Save workflow state before potential payment redirect
+    if (orderOptions.paymentMethod === 'credit-card') {
+      console.log('💾 [Pickup Workflow] Saving state before payment redirect');
+      await workflowStateUtils.saveWorkflowState({
+        selectedAddress,
+        currentPhase,
+        cartItemDetails
+      });
+    }
+    
     setLoading(true);
     setError(null);
     try {
-      console.log('[Pickup Workflow] Creating pickup order');
-      console.log(`[Pickup Workflow] Processing ${cartItems.length} items from cart`);
-
-      const orderData = {
-        address: {
-          userId: user._id || user.userId,
-          city: selectedAddress.city || '',
-          area: selectedAddress.area || '',
-          street: selectedAddress.street || '',
-          building: selectedAddress.building || '',
-          floor: selectedAddress.floor || '',
-          apartment: selectedAddress.apartment || '',
-          landmark: selectedAddress.landmark || '',
-          notes: selectedAddress.notes || '',
-          isDefault: false
-        },
-        items: cartItems.map((item, index) => {
-          const mappedItem = {
-            _id: item._id,
-            categoryId: item.categoryId,
-            image: item.image,
-            name: item.name || item.itemName || 'Unknown Item',
-            categoryName: item.categoryName || 'Unknown Category',
-            measurement_unit: Number(item.measurement_unit),
-            points: Number(item.points) || 10,
-            price: Number(item.price) || 5.0,
-            quantity: Number(item.quantity)
-          };
-          
-          console.log(`[Pickup Workflow] Processing item ${index + 1}: ${mappedItem.name} (${mappedItem.categoryName})`);
-          
-          return mappedItem;
-        }),
-        phoneNumber: userData.phoneNumber || userData.phone || '',
-        userName: userData.name || userData.userName || '',
-        imageUrl: userData.imageUrl || userData.avatar || '',
-        email: userData.email || ''
-      };
-
-      validateOrderData(orderData);
-
-      console.log('[Pickup Workflow] Complete order data being sent to backend:', JSON.stringify(orderData, null, 2));
-
-      const response = await orderService.createOrder(orderData);
-
-      const order = response.data?.data || response.data || response;
+      // Single call to unified service
+      const order = await unifiedOrderService.createPickupOrder(
+        selectedAddress, 
+        user, 
+        cartItemDetails,
+        orderOptions
+      );
+      
+      // ✅ Ensure order data is properly stored
+      console.log('Order created, storing data', { 
+        orderId: order._id || order?.data?._id, 
+        hasItems: !!(order.items || order?.data?.items),
+        itemCount: (order.items || order?.data?.items)?.length
+      });
+      
       setOrderData(order);
-      
-      console.log('[Pickup Workflow] Order created successfully:', order._id);
-
       setCurrentPhase(3);
-
-      console.log('[Pickup Workflow] Order completed successfully. Cart clearing skipped to avoid backend conflicts.');
       
+      // Clear saved state after successful order creation
+      await workflowStateUtils.clearWorkflowState();
+      
+      // ✅ Return the complete order for external handlers
       return order;
-    } catch (err) {
-
-      if (err.message && err.message.includes('Category with ID') && err.message.includes('not found')) {
-        console.log('[Pickup Workflow] Known category validation error detected - error handled by enhanced verification system');
-      } else {
-        console.error('[Pickup Workflow] Failed to create order:', err.message);
-      }
-      setError(`Failed to create order: ${err.message}`);
-      throw err;
+    } catch (error) {
+      console.error('Order creation failed in workflow', { 
+        error: error.message,
+        hasSelectedAddress: !!selectedAddress,
+        hasUser: !!user,
+        hasCartItems: !!cartItemDetails
+      });
+      setError(error.message);
+      throw error;
     } finally {
       setLoading(false);
     }
-  }, [selectedAddress, user]);
+  }, [selectedAddress, user, cartItemDetails, currentPhase]);
 
-  const validateOrderData = (orderData) => {
-    const requiredFields = ['address', 'items', 'phoneNumber', 'userName', 'email'];
-    const missingFields = requiredFields.filter(field => 
-      !orderData[field] || (Array.isArray(orderData[field]) && orderData[field].length === 0)
-    );
-    
-    if (missingFields.length > 0) {
-      throw new Error(`Missing required information: ${missingFields.join(', ')}`);
-    }
-
-    if (!orderData.address.city) {
-      throw new Error('Address must include at least city');
-    }
-
-    orderData.items.forEach((item, index) => {
-      const requiredItemFields = ['_id', 'categoryId', 'image', 'name', 'categoryName', 'measurement_unit', 'points', 'price', 'quantity'];
-      const missingItemFields = requiredItemFields.filter(field => 
-        item[field] === undefined || item[field] === null
-      );
-      
-      if (missingItemFields.length > 0) {
-        throw new Error(`Item ${index + 1} missing required fields: ${missingItemFields.join(', ')}`);
-      }
-
-      validateQuantity({
-        quantity: Number(item.quantity),
-        measurement_unit: Number(item.measurement_unit)
-      });
-    });
-  };
+  // Removed validateOrderData - validation is now handled in unifiedOrderService
 
   return useMemo(() => ({
     addresses,
