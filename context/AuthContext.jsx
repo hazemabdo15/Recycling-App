@@ -7,23 +7,6 @@ const AuthContext = createContext(null);
 
 let authContextInstance = null;
 
-// const refreshDeliveryStatus = async () => {
-//   if (!user || !user.id) {
-//     console.warn("[AuthContext] Cannot refresh delivery status without a valid user");
-//     return null;
-//   }
-
-//   try {
-//     const response = await optimizedApiService.get("/delivery-status");
-//     console.log("[AuthContext] Refreshed delivery status:", response);
-
-//     setDeliveryStatus(response?.status|| null);
-//     return response?.status || null;
-//   } catch (error) {
-//     console.error("[AuthContext] Error refreshing delivery status:", error);
-//     return null;
-//   }
-// };
 
 const checkPublicDeliveryStatus = async (email) => {
   if (!email) {
@@ -57,6 +40,24 @@ export function AuthProvider({ children }) {
   const [accessToken, setAccessToken] = useState(null);
   const [periodicCheckRunning, setPeriodicCheckRunning] = useState(false);
   const [deliveryStatus, setDeliveryStatus] = useState(null);
+
+  const refreshDeliveryStatus = async () => {
+  if (!user || !user.id) {
+    console.warn("[AuthContext] Cannot refresh delivery status without a valid user");
+    return null;
+  }
+
+  try {
+    const response = await optimizedApiService.get("/delivery-status");
+    console.log("[AuthContext] Refreshed delivery status:", response);
+
+    setDeliveryStatus(response?.status|| null);
+    return response?.status || null;
+  } catch (error) {
+    console.error("[AuthContext] Error refreshing delivery status:", error);
+    return null;
+  }
+};
 
   const handleTokenExpired = useCallback(() => {
     console.log('[AuthContext] handleTokenExpired() called - clearing auth state');
@@ -255,6 +256,7 @@ export function AuthProvider({ children }) {
     deliveryStatus,
     setDeliveryStatus,
     checkPublicDeliveryStatus,
+    refreshDeliveryStatus,
     };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
