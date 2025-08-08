@@ -9,7 +9,7 @@ import { getLoggedInUser } from "../utils/authUtils";
 export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [checkingUser, setCheckingUser] = useState(true);
-  const { login, isLoggedIn, user } = useAuth();
+  const { login, isLoggedIn, user, deliveryStatus, setDeliveryStatus } = useAuth();
 
   useFocusEffect(
     useCallback(() => {
@@ -23,11 +23,6 @@ export default function LoginScreen() {
             console.log(
               "[LoginScreen] User already logged in, redirecting to home"
             );
-            if (user.role === "delivery") {
-              router.replace("/delivery/dashboard");
-            } else {
-              router.replace("/home");
-            }
             return;
           }
 
@@ -67,16 +62,27 @@ export default function LoginScreen() {
     }
 
     try {
-      const { user, accessToken } = await loginUser({ email, password });
+      const { user, accessToken, deliveryStatus, sessionDeliveryData } = await loginUser({ email, password });
       console.log("[Login] Login API call successful");
 
-      await login(user, accessToken);
+      console.log("[Login] user:", user);
+      console.log("[Login] accessToken:", accessToken);
+
+      await login(user, accessToken, deliveryStatus);
       console.log("[Login] AuthContext updated successfully");
+      console.log("[Login] user after await login:", user);
 
       if (user.role === "delivery") {
-        console.log("[Login] Redirecting to delivery dashboard");
-        router.replace("/delivery/dashboard");
-        return;
+        console.log("[Login] User is delivery, checking delivery status");
+        console.log("delivertyStatus:", deliveryStatus);
+        if (deliveryStatus === 'pending' || deliveryStatus === 'declined') {
+          router.replace("/waitingForApproval");
+        }
+        else if (user.isApproved && deliveryStatus === 'approved') {
+          router.replace("/delivery/dashboard");
+        } else {
+          router.replace("/deliveryInfoForm");
+        }
       } else {
         router.replace("/home");
       }
