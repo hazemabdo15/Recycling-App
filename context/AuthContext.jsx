@@ -7,23 +7,23 @@ const AuthContext = createContext(null);
 
 let authContextInstance = null;
 
-const refreshDeliveryStatus = async () => {
-  if (!user || !user.id) {
-    console.warn("[AuthContext] Cannot refresh delivery status without a valid user");
-    return null;
-  }
+// const refreshDeliveryStatus = async () => {
+//   if (!user || !user.id) {
+//     console.warn("[AuthContext] Cannot refresh delivery status without a valid user");
+//     return null;
+//   }
 
-  try {
-    const response = await optimizedApiService.get("/delivery-status");
-    console.log("[AuthContext] Refreshed delivery status:", response);
+//   try {
+//     const response = await optimizedApiService.get("/delivery-status");
+//     console.log("[AuthContext] Refreshed delivery status:", response);
 
-    setDeliveryStatus(response?.status|| null);
-    return response?.status || null;
-  } catch (error) {
-    console.error("[AuthContext] Error refreshing delivery status:", error);
-    return null;
-  }
-};
+//     setDeliveryStatus(response?.status|| null);
+//     return response?.status || null;
+//   } catch (error) {
+//     console.error("[AuthContext] Error refreshing delivery status:", error);
+//     return null;
+//   }
+// };
 
 const checkPublicDeliveryStatus = async (email) => {
   if (!email) {
@@ -101,7 +101,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    if (!isLoggedIn || !accessToken || user?.role === 'delivery') return;
+    if (!isLoggedIn || !accessToken) return;
 
     console.log("[AuthContext] Setting up periodic token refresh (10 min intervals)");
 
@@ -255,7 +255,6 @@ export function AuthProvider({ children }) {
     deliveryStatus,
     setDeliveryStatus,
     checkPublicDeliveryStatus,
-    refreshDeliveryStatus,
     };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
