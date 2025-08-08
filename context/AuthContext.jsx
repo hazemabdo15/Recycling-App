@@ -1,5 +1,4 @@
 ﻿import { createContext, useCallback, useContext, useEffect, useState } from "react";
-import apiService from "../services/api/apiService";
 import { isAuthenticated, logoutUser } from "../services/auth";
 import { getAccessToken, getLoggedInUser, setLoggedInUser } from '../utils/authUtils';
 import optimizedApiService from "../services/api/apiService";
@@ -118,7 +117,7 @@ export function AuthProvider({ children }) {
           setPeriodicCheckRunning(true);
           console.log("[AuthContext] Performing periodic token refresh check...");
 
-          const refreshSuccess = await apiService.refreshIfNeeded();
+          const refreshSuccess = await optimizedApiService.refreshIfNeeded();
           console.log("[AuthContext] Periodic refreshIfNeeded result:", refreshSuccess);
           
           if (!refreshSuccess) {
