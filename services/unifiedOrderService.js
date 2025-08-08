@@ -107,7 +107,6 @@ export const unifiedOrderService = {
       },
       items,
       status: 'pending',
-      paymentMethod: orderOptions.paymentMethod === 'cash' ? 'cash' : 'credit-card',
       courier: null,
       deliveryProof: null,
       collectedAt: null,
@@ -117,6 +116,10 @@ export const unifiedOrderService = {
       hasQuantityAdjustments: false,
       statusHistory: []
     };
+    // Only set paymentMethod if explicitly provided in orderOptions
+    if (orderOptions.paymentMethod) {
+      orderData.paymentMethod = orderOptions.paymentMethod;
+    }
 
     logger.info('Order data transformed', { 
       itemCount: items.length, 

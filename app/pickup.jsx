@@ -19,111 +19,111 @@ import ReviewPhase from "../components/pickup/ReviewPhase";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../hooks/useCart";
 import { usePickupWorkflow } from "../hooks/usePickupWorkflow";
-import { API_BASE_URL } from "../services/api/config";
 import { isAuthenticated } from "../services/auth";
 import { colors, spacing, typography } from "../styles/theme";
 import { getProgressStepLabel } from "../utils/roleLabels";
+import { isBuyer } from "../utils/roleUtils";
 import { scaleSize } from "../utils/scale";
 
-const prepareOrderItems = async (cartItems, cartItemDetails, accessToken) => {
-  let orderItems = [];
+// const prepareOrderItems = async (cartItems, cartItemDetails, accessToken) => {
+//   let orderItems = [];
 
-  try {
-    if (cartItemDetails && Object.keys(cartItemDetails).length > 0) {
-      console.log(
-        "INFO",
-        "Using cart item details directly, no API call needed"
-      );
+//   try {
+//     if (cartItemDetails && Object.keys(cartItemDetails).length > 0) {
+//       console.log(
+//         "INFO",
+//         "Using cart item details directly, no API call needed"
+//       );
 
-      orderItems = Object.entries(cartItems).map(([itemId, quantity]) => {
-        const itemDetails = cartItemDetails[itemId];
-        console.log(
-          `[Pickup] Preparing order item for ID ${itemId} with quantity ${quantity}`,
-          itemDetails
-        );
-        if (itemDetails) {
-          return {
-            _id: itemDetails._id,
-            categoryId: itemDetails.categoryId,
-            quantity: Number(quantity),
-            name: itemDetails.name || itemDetails.itemName || "Unknown Item",
-            categoryName: itemDetails.categoryName || "Unknown Category",
-            measurement_unit: Number(itemDetails.measurement_unit),
-            points: Number(itemDetails.points) || 10,
-            price: Number(itemDetails.price) || 5.0,
-            image: itemDetails.image || "placeholder.png",
-          };
-        } else {
-          console.log(
-            "WARN",
-            `Missing details for item ${itemId}, using basic data`
-          );
-          return {
-            _id: itemId,
-            categoryId: itemId,
-            quantity: Number(quantity),
-            name: "Unknown Item",
-            categoryName: "Unknown Category",
-            measurement_unit: 1,
-            points: 10,
-            price: 5.0,
-            image: "placeholder.png",
-          };
-        }
-      });
+//       orderItems = Object.entries(cartItems).map(([itemId, quantity]) => {
+//         const itemDetails = cartItemDetails[itemId];
+//         console.log(
+//           `[Pickup] Preparing order item for ID ${itemId} with quantity ${quantity}`,
+//           itemDetails
+//         );
+//         if (itemDetails) {
+//           return {
+//             _id: itemDetails._id,
+//             categoryId: itemDetails.categoryId,
+//             quantity: Number(quantity),
+//             name: itemDetails.name || itemDetails.itemName || "Unknown Item",
+//             categoryName: itemDetails.categoryName || "Unknown Category",
+//             measurement_unit: Number(itemDetails.measurement_unit),
+//             points: Number(itemDetails.points) || 10,
+//             price: Number(itemDetails.price) || 5.0,
+//             image: itemDetails.image || "placeholder.png",
+//           };
+//         } else {
+//           console.log(
+//             "WARN",
+//             `Missing details for item ${itemId}, using basic data`
+//           );
+//           return {
+//             _id: itemId,
+//             categoryId: itemId,
+//             quantity: Number(quantity),
+//             name: "Unknown Item",
+//             categoryName: "Unknown Category",
+//             measurement_unit: 1,
+//             points: 10,
+//             price: 5.0,
+//             image: "placeholder.png",
+//           };
+//         }
+//       });
 
-      console.log(
-        "INFO",
-        "Prepared order items from cart context:",
-        orderItems.length
-      );
-    } else {
-      console.log(
-        "WARN",
-        "Cart item details not available, fetching from backend cart"
-      );
-      const backendCartResponse = await fetch(`${API_BASE_URL}/api/cart`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-      });
+//       console.log(
+//         "INFO",
+//         "Prepared order items from cart context:",
+//         orderItems.length
+//       );
+//     } else {
+//       console.log(
+//         "WARN",
+//         "Cart item details not available, fetching from backend cart"
+//       );
+//       const backendCartResponse = await fetch(`${API_BASE_URL}/api/cart`, {
+//         headers: {
+//           Authorization: `Bearer ${accessToken}`,
+//           "Content-Type": "application/json",
+//         },
+//       });
 
-      if (backendCartResponse.ok) {
-        const backendCartData = await backendCartResponse.json();
-        const backendItems = backendCartData.items || [];
+//       if (backendCartResponse.ok) {
+//         const backendCartData = await backendCartResponse.json();
+//         const backendItems = backendCartData.items || [];
 
-        orderItems = backendItems.map((item) => ({
-          _id: item._id,
-          categoryId: item.categoryId,
-          quantity: Number(item.quantity),
-          name: item.name || item.itemName || "Unknown Item",
-          categoryName: item.categoryName || "Unknown Category",
-          measurement_unit: Number(item.measurement_unit),
-          points: Number(item.points) || 10,
-          price: Number(item.price) || 5.0,
-          image: item.image || "placeholder.png",
-        }));
+//         orderItems = backendItems.map((item) => ({
+//           _id: item._id,
+//           categoryId: item.categoryId,
+//           quantity: Number(item.quantity),
+//           name: item.name || item.itemName || "Unknown Item",
+//           categoryName: item.categoryName || "Unknown Category",
+//           measurement_unit: Number(item.measurement_unit),
+//           points: Number(item.points) || 10,
+//           price: Number(item.price) || 5.0,
+//           image: item.image || "placeholder.png",
+//         }));
 
-        console.log(
-          "INFO",
-          "Using backend cart items for order:",
-          orderItems.length
-        );
-      }
-    }
-  } catch (error) {
-    console.log("ERROR", "Failed to prepare order items:", error.message);
-    throw new Error("Failed to prepare order data");
-  }
+//         console.log(
+//           "INFO",
+//           "Using backend cart items for order:",
+//           orderItems.length
+//         );
+//       }
+//     }
+//   } catch (error) {
+//     console.log("ERROR", "Failed to prepare order items:", error.message);
+//     throw new Error("Failed to prepare order data");
+//   }
 
-  if (orderItems.length === 0) {
-    throw new Error("No items found for order creation");
-  }
+//   if (orderItems.length === 0) {
+//     throw new Error("No items found for order creation");
+//   }
 
-  console.log("INFO", "Final order items:", JSON.stringify(orderItems));
-  return orderItems;
-};
+//   console.log("INFO", "Final order items:", JSON.stringify(orderItems));
+//   return orderItems;
+// };
 
 export default function Pickup() {
   const insets = useSafeAreaInsets();
@@ -138,7 +138,7 @@ export default function Pickup() {
   const [authError, setAuthError] = useState(null);
   const [dialogShown, setDialogShown] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
-  const [creatingOrder, setCreatingOrder] = useState(false);
+  const [, setCreatingOrder] = useState(false);
 
   const cartItemsRef = useRef(cartItems);
 
@@ -210,85 +210,109 @@ export default function Pickup() {
     setCurrentPhase = () => {},
   } = workflowHook || {};
 
-  const handleDeepLink = useCallback(async (event) => {
-    const urlObj = new URL(event.url);
-    const paymentStatus = urlObj.searchParams.get('payment');
-    const paymentIntentId = urlObj.searchParams.get('payment_intent');
-    
-    // Only process payment-related URLs
-    const isPaymentRelatedURL = paymentStatus || paymentIntentId || 
-      event.url.includes('canceled=true') || event.url.includes('cancelled=true');
-    
-    if (!isPaymentRelatedURL) {
-      console.log('INFO', 'URL is not payment-related, ignoring');
-      return;
-    }
+  const handleDeepLink = useCallback(
+    async (event) => {
+      const urlObj = new URL(event.url);
+      const paymentStatus = urlObj.searchParams.get("payment");
+      const paymentIntentId = urlObj.searchParams.get("payment_intent");
 
-    console.log('Processing payment deep link', { paymentStatus, paymentIntentId });
+      // Only process payment-related URLs
+      const isPaymentRelatedURL =
+        paymentStatus ||
+        paymentIntentId ||
+        event.url.includes("canceled=true") ||
+        event.url.includes("cancelled=true");
 
-    if (paymentStatus === 'success' || paymentIntentId) {
-      try {
-        setCreatingOrder(true);
-        
-        // ✅ Check if we have address in workflow state, if not try to restore from previous state
-        if (!selectedAddress) {
-          console.warn('No selected address found in deep link handler, attempting to use last known address');
-          // Let the createOrder function handle the validation and show appropriate error
+      if (!isPaymentRelatedURL) {
+        console.log("INFO", "URL is not payment-related, ignoring");
+        return;
+      }
+
+      console.log("Processing payment deep link", {
+        paymentStatus,
+        paymentIntentId,
+      });
+
+      if (paymentStatus === "success" || paymentIntentId) {
+        try {
+          setCreatingOrder(true);
+
+          // ✅ Check if we have address in workflow state, if not try to restore from previous state
+          if (!selectedAddress) {
+            console.warn(
+              "No selected address found in deep link handler, attempting to use last known address"
+            );
+            // Let the createOrder function handle the validation and show appropriate error
+          }
+
+          // ✅ Single order creation call through unified workflow
+          // Only pass paymentMethod if user is a buyer
+          let orderOptions = {
+            paymentStatus: "success",
+            paymentIntentId,
+          };
+          if (isBuyer(user)) {
+            orderOptions = {
+              ...orderOptions,
+              paymentMethod: "credit-card",
+            };
+          } else {
+            // Remove paymentMethod if present for customers
+            if (orderOptions.paymentMethod) delete orderOptions.paymentMethod;
+          }
+          console.log('[Pickup] Creating order with options:', orderOptions, 'User role:', user?.role);
+          const orderResult = await createOrder(orderOptions);
+
+          console.log("Deep link order created", {
+            orderId: orderResult?._id || orderResult?.data?._id,
+            hasOrderData: !!orderResult,
+          });
+
+          // ✅ Order data should now be properly stored in workflow hook
+          if (setCurrentPhase) {
+            setCurrentPhase(3);
+          }
+        } catch (error) {
+          console.error("Deep link order failed", { error: error.message });
+
+          // Enhanced error handling for specific cases
+          if (error.message.includes("Please select an address first")) {
+            Alert.alert(
+              "Address Required",
+              "Please select your delivery address and try again.",
+              [
+                {
+                  text: "Select Address",
+                  onPress: () => {
+                    if (setCurrentPhase) {
+                      setCurrentPhase(1); // Go back to address selection
+                    }
+                  },
+                },
+              ]
+            );
+          } else {
+            Alert.alert(
+              "Order Status Unclear",
+              "There was an issue processing your order. Please check your order history.",
+              [{ text: "OK" }]
+            );
+          }
+        } finally {
+          setCreatingOrder(false);
         }
-        
-        // ✅ Single order creation call through unified workflow
-        const orderResult = await createOrder({ 
-          paymentMethod: 'card',
-          paymentStatus: 'success',
-          paymentIntentId 
-        });
-        
-        console.log('Deep link order created', { 
-          orderId: orderResult?._id || orderResult?.data?._id,
-          hasOrderData: !!orderResult
-        });
-        
-        // ✅ Order data should now be properly stored in workflow hook
+      } else if (
+        event.url.includes("canceled=true") ||
+        event.url.includes("cancelled=true")
+      ) {
+        Alert.alert("Payment Cancelled", "Your payment was cancelled.");
         if (setCurrentPhase) {
-          setCurrentPhase(3);
+          setCurrentPhase(2); // Back to review
         }
-        
-      } catch (error) {
-        console.error('Deep link order failed', { error: error.message });
-        
-        // Enhanced error handling for specific cases
-        if (error.message.includes('Please select an address first')) {
-          Alert.alert(
-            "Address Required",
-            "Please select your delivery address and try again.",
-            [
-              { 
-                text: "Select Address", 
-                onPress: () => {
-                  if (setCurrentPhase) {
-                    setCurrentPhase(1); // Go back to address selection
-                  }
-                }
-              }
-            ]
-          );
-        } else {
-          Alert.alert(
-            "Order Status Unclear",
-            "There was an issue processing your order. Please check your order history.",
-            [{ text: "OK" }]
-          );
-        }
-      } finally {
-        setCreatingOrder(false);
       }
-    } else if (event.url.includes('canceled=true') || event.url.includes('cancelled=true')) {
-      Alert.alert("Payment Cancelled", "Your payment was cancelled.");
-      if (setCurrentPhase) {
-        setCurrentPhase(2); // Back to review
-      }
-    }
-  }, [createOrder, setCurrentPhase, selectedAddress]);
+    },
+    [createOrder, setCurrentPhase, selectedAddress]
+  );
 
   useEffect(() => {
     console.log("INFO", "Setting up deep link handler");
@@ -306,10 +330,16 @@ export default function Pickup() {
             url.includes("cancelled=true");
 
           if (isPaymentURL) {
-            console.log("INFO", "Initial URL appears to be payment-related, processing...");
+            console.log(
+              "INFO",
+              "Initial URL appears to be payment-related, processing..."
+            );
             handleDeepLink({ url });
           } else {
-            console.log("INFO", "Initial URL is not payment-related, skipping deep link processing");
+            console.log(
+              "INFO",
+              "Initial URL is not payment-related, skipping deep link processing"
+            );
           }
         } else {
           console.log("INFO", "No initial URL found");

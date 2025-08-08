@@ -212,7 +212,6 @@ const ReviewPhase = ({
             console.log('[ReviewPhase] Payment successful, but letting deep link handler create order:', paymentResult);
             // ✅ DON'T create order here - let the deep link handler do it
             // This prevents duplicate order creation
-            
             // Just log the success, the deep link will handle order creation
             console.log('[ReviewPhase] Payment completed, waiting for deep link return...');
           } catch (error) {
@@ -232,6 +231,8 @@ const ReviewPhase = ({
             [{ text: "OK" }]
           );
         },
+        // Only pass paymentMethod if user is a buyer
+        ...(isBuyerRole(user) ? { paymentMethod: 'card' } : {})
       });
     }
   };
