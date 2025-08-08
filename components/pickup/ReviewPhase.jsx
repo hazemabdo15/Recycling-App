@@ -362,10 +362,8 @@ const ReviewPhase = ({
   };
 
 
-  const totalItems = cartItemsDisplay.reduce(
-    (sum, item) => sum + item.quantity,
-    0
-  );
+  // totalItems: number of unique items in the order (not sum of quantities)
+  const totalItems = cartItemsDisplay.filter(item => item.quantity > 0).length;
   const totalPoints = cartItemsDisplay.reduce(
     (sum, item) => sum + item.totalPoints,
     0
