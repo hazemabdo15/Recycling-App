@@ -42,7 +42,7 @@ export function AuthProvider({ children }) {
   const [deliveryStatus, setDeliveryStatus] = useState(null);
 
   const refreshDeliveryStatus = async () => {
-  if (!user || !user.id) {
+  if (!user || !user._id) {
     console.warn("[AuthContext] Cannot refresh delivery status without a valid user");
     return null;
   }
@@ -51,8 +51,11 @@ export function AuthProvider({ children }) {
     const response = await optimizedApiService.get("/delivery-status");
     console.log("[AuthContext] Refreshed delivery status:", response);
 
-    setDeliveryStatus(response?.status|| null);
-    return response?.status || null;
+    const updatedStatus = response?.deliveryStatus || null;
+    setDeliveryStatus(updatedStatus);
+    user.deliveryStatus = updatedStatus;
+
+    return updatedStatus;
   } catch (error) {
     console.error("[AuthContext] Error refreshing delivery status:", error);
     return null;

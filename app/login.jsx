@@ -9,7 +9,7 @@ import { getLoggedInUser } from "../utils/authUtils";
 export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [checkingUser, setCheckingUser] = useState(true);
-  const { login, isLoggedIn, user, deliveryStatus, setDeliveryStatus } = useAuth();
+  const { login, isLoggedIn, user, deliveryStatus, refreshDeliveryStatus } = useAuth();
 
   useFocusEffect(
     useCallback(() => {
@@ -20,9 +20,24 @@ export default function LoginScreen() {
           console.log("[LoginScreen] AuthContext user:", user);
 
           if (isLoggedIn && user) {
-            console.log(
-              "[LoginScreen] User already logged in, redirecting to home"
-            );
+            if (user.role === "delivery") {
+              console.log("[LoginScreen] User is delivery, checking delivery status", deliveryStatus);
+              const updatedStatus = await refreshDeliveryStatus();
+              console.log("[LoginScreen] Delivery status after refresh:", updatedStatus);
+
+              if (updatedStatus === "approved" && user.isApproved) {
+                router.replace("/delivery/dashboard");
+              } else if (updatedStatus === "pending" || updatedStatus === "declined") {
+                router.replace("/waitingForApproval");
+              } else {
+                router.replace("/deliveryInfoForm");
+              }
+
+            } else {
+              console.log(
+                "[LoginScreen] User already logged in, redirecting to home"
+              );
+            }
             return;
           }
 
