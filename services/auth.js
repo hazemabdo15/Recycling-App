@@ -1,35 +1,77 @@
 ﻿import { Alert } from 'react-native';
-import { clearSession, setAccessToken } from '../utils/authUtils';
+import { clearSession, setAccessToken, setDeliveryStatus } from '../utils/authUtils';
 import apiService from './api/apiService';
 import { API_ENDPOINTS } from './api/config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const loginUser = async ({ email, password }) => {
   try {
     console.log('[Auth] Sending login request for:', email);
-    
+
     const response = await apiService.post(API_ENDPOINTS.AUTH.LOGIN, {
       email,
       password,
     });
 
     console.log('[Auth] Login successful');
-    console.log('[Auth] Login response user data:', response.user);
-    console.log('[Auth] User role from backend:', response.user?.role);
     console.log('[Auth] Full login response:', JSON.stringify(response, null, 2));
+
+    let deliveryStatus = null;
+    let sessionDeliveryData = null;
+
+    if (response.user?.role === 'delivery') {
+      console.log('[Auth] Delivery user detected');
+
+      if (response.message === 'Delivery application declined') {
+        deliveryStatus = 'declined';
+        console.log('[Auth] Delivery application declined');
+
+        sessionDeliveryData = {
+          deliveryStatus: 'declined',
+          reason: response.declineReason,
+          declinedAt: response.declinedAt,
+          canReapply: response.canReapply,
+          user: response.user,
+        };
+
+        await AsyncStorage.setItem('deliveryUserData', JSON.stringify(sessionDeliveryData));
+      } else if (response.message === 'Delivery application pending approval') {
+        deliveryStatus = 'pending';
+        console.log('[Auth] Delivery application pending');
+
+        sessionDeliveryData = {
+          deliveryStatus: 'pending',
+          user: response.user,
+        };
+
+        await AsyncStorage.setItem('deliveryUserData', JSON.stringify(sessionDeliveryData));
+      } else if (response.user?.isApproved) {
+        deliveryStatus = 'approved';
+        console.log('[Auth] Delivery application approved');
+      }
+
+      if (deliveryStatus) {
+        await setDeliveryStatus(deliveryStatus);
+      }
+    }
 
     if (response.accessToken) {
       await setAccessToken(response.accessToken);
-
       await apiService.setAccessToken(response.accessToken);
       console.log('[Auth] Token set in both AsyncStorage and APIService');
     }
 
-    return response;
+    return {
+      user: response.user,
+      accessToken: response.accessToken,
+      deliveryStatus,
+    };
   } catch (error) {
     console.error('[Auth] Login error:', error.message);
     throw error;
   }
 };
+
 
 export const initialSetupForRegister = async (email) => {
   try {
