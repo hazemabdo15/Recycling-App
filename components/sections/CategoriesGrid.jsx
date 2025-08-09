@@ -2,6 +2,7 @@
 import {
   ActivityIndicator,
   FlatList,
+  RefreshControl,
   StyleSheet,
   Text,
   View,
@@ -10,6 +11,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useCategories } from "../../hooks/useAPI";
 import { useCart } from "../../hooks/useCart";
 import { spacing } from "../../styles";
+import { colors } from "../../styles/theme";
 import {
   CartMessageTypes,
   showCartMessage,
@@ -479,9 +481,18 @@ const CategoriesGrid = ({
               />
             );
           }}
-          refreshing={refreshing}
-          onRefresh={handleRefresh}
-          contentContainerStyle={[styles.itemsList, { paddingBottom: flatListBottomPadding }]}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
+            />
+          }
+          contentContainerStyle={[
+            styles.itemsList,
+            { paddingBottom: flatListBottomPadding },
+          ]}
           showsVerticalScrollIndicator={false}
         />
       ) : (
@@ -501,8 +512,14 @@ const CategoriesGrid = ({
           contentContainerStyle={styles.scrollContainer}
           columnWrapperStyle={styles.categoriesGrid}
           showsVerticalScrollIndicator={false}
-          refreshing={refreshing}
-          onRefresh={handleRefresh}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
+            />
+          }
         />
       )}
     </FadeInView>

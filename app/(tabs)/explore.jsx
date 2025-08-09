@@ -9,7 +9,7 @@ import { SearchBar } from "../../components/ui";
 import { useAuth } from "../../context/AuthContext";
 import { colors, spacing } from "../../styles/theme";
 import { getLabel } from "../../utils/roleLabels";
-import { scaleSize } from '../../utils/scale';
+import { scaleSize } from "../../utils/scale";
 
 const Explore = () => {
   const [searchText, setSearchText] = useState("");
@@ -64,26 +64,31 @@ const Explore = () => {
         />
         <View style={styles.heroContent}>
           <Text style={styles.heroTitle}>
-            {getLabel('exploreTitle', user?.role)}
+            {getLabel("exploreTitle", user?.role)}
           </Text>
           <Text style={styles.heroSubtitle}>
             {searchText
               ? `${filteredCount} ${
                   showItemsMode ? "items" : "categories"
                 } found`
-              : getLabel('exploreSubtitle', user?.role)}
+              : getLabel("exploreSubtitle", user?.role)}
           </Text>
         </View>
         <View style={styles.searchBarWrapper}>
           <SearchBar
-            placeholder={getLabel('searchPlaceholder', user?.role)}
+            placeholder={getLabel("searchPlaceholder", user?.role)}
             onSearch={handleSearch}
             onFilter={handleFilter}
           />
         </View>
       </View>
       {/* Remove extra wrappers and let CategoriesGrid fill the rest of the page */}
-      <View style={[styles.contentContainer, { flex: 1, paddingBottom: 0, marginHorizontal: 0 }]}>
+      <View
+        style={[
+          styles.contentContainer,
+          { flex: 1, paddingBottom: 0, marginHorizontal: 0 },
+        ]}
+      >
         <CategoriesGrid
           searchText={searchText}
           onCategoryPress={handleCategoryPress}
@@ -110,7 +115,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: scaleSize(16),
     elevation: 12,
-    backgroundColor: colors.primary + '10',
+    backgroundColor: colors.primary + "10",
   },
   heroSectionBg: {
     borderBottomLeftRadius: scaleSize(32),

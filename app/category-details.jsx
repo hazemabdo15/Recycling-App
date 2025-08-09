@@ -1,6 +1,6 @@
 ﻿import { useLocalSearchParams, useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
-import { FlatList, StatusBar, View } from "react-native";
+import { FlatList, RefreshControl, StatusBar, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CategoryHeader, EmptyState, ItemCard } from "../components/category";
 import { ErrorState, Loader } from "../components/common";
@@ -525,8 +525,14 @@ const CategoryDetails = () => {
             paddingHorizontal: scaleSize(spacing.sm),
           }}
           extraData={cartItems}
-          refreshing={refreshing}
-          onRefresh={handleRefresh}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
+            />
+          }
         />
       )}
     </View>

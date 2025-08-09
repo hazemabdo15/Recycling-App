@@ -19,6 +19,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useUserPoints } from "../../hooks/useUserPoints";
 import apiService from "../../services/api/apiService";
 import { orderService } from "../../services/api/orders";
+import { colors } from "../../styles";
 import { generateOrderReportHTML } from "../../utils/orderReportPDF";
 import { getLabel, isBuyer, isCustomer } from "../../utils/roleLabels";
 import { scaleSize } from "../../utils/scale";
@@ -513,7 +514,12 @@ function ProfileContent() {
           paddingBottom: scaleSize(120),
         }}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
         }
         ListEmptyComponent={
           loading ? (
