@@ -346,50 +346,40 @@ function ProfileContent() {
           totalPoints={userPoints}
           onPointsUpdated={getUserPoints}
         />
-        <FlatList
-          data={[]}
-          ListHeaderComponent={renderListHeader}
-          ListEmptyComponent={
-            loading ? (
-              <View style={{ padding: 32 }}>
-                <Loader />
-              </View>
-            ) : user?.role === "buyer" ? (
-              <View style={styles.buyerMessageContainer}>
-                <Text style={styles.buyerMessageTitle}>
-                  {getLabel("profileLabels.noOrdersMessage", user?.role)}
+        {renderListHeader()}
+        <View style={{ flex: 1 }}>
+          {loading ? (
+            <View style={{ padding: 32 }}>
+              <Loader />
+            </View>
+          ) : user?.role === "buyer" ? (
+            <View style={styles.buyerMessageContainer}>
+              <Text style={styles.buyerMessageTitle}>
+                {getLabel("profileLabels.noOrdersMessage", user?.role)}
+              </Text>
+              <Text style={styles.buyerMessageSubtitle}>
+                Your purchase history will appear here once you start shopping
+              </Text>
+              <TouchableOpacity
+                onPress={() => router.push("/explore")}
+                style={styles.startShoppingButton}
+              >
+                <Text style={styles.startShoppingButtonText}>
+                  Start Shopping
                 </Text>
-                <Text style={styles.buyerMessageSubtitle}>
-                  Your purchase history will appear here once you start shopping
-                </Text>
-                <TouchableOpacity
-                  onPress={() => router.push("/explore")}
-                  style={styles.startShoppingButton}
-                >
-                  <Text style={styles.startShoppingButtonText}>
-                    Start Shopping
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <View style={styles.emptyStateContainer}>
-                <Text style={styles.emptyText}>
-                  {getLabel("profileLabels.noOrdersMessage", user?.role)}
-                </Text>
-                <Text style={styles.emptySubtext}>
-                  {getLabel("profileLabels.startOrderingMessage", user?.role)}
-                </Text>
-              </View>
-            )
-          }
-          contentContainerStyle={{
-            paddingHorizontal: 16,
-            paddingBottom: scaleSize(120),
-          }}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-        />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.emptyStateContainer}>
+              <Text style={styles.emptyText}>
+                {getLabel("profileLabels.noOrdersMessage", user?.role)}
+              </Text>
+              <Text style={styles.emptySubtext}>
+                {getLabel("profileLabels.startOrderingMessage", user?.role)}
+              </Text>
+            </View>
+          )}
+        </View>
       </View>
     );
   }
@@ -416,6 +406,7 @@ function ProfileContent() {
         totalPoints={userPoints}
         onPointsUpdated={getUserPoints}
       />
+      {renderListHeader()}
       <FlatList
         data={filteredOrders}
         keyExtractor={(order) => order._id}
@@ -519,7 +510,6 @@ function ProfileContent() {
               )}
           </View>
         )}
-        ListHeaderComponent={renderListHeader}
         contentContainerStyle={{
           paddingHorizontal: 16,
           paddingBottom: scaleSize(120),

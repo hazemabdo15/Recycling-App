@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderRadius: scaleSize(18),
     padding: scaleSize(18),
-    marginHorizontal: scaleSize(16),
+    marginHorizontal: 16, // Match FlatList contentContainerStyle for order cards
     marginTop: scaleSize(24),
     marginBottom: scaleSize(10),
     shadowColor: '#000',
@@ -92,6 +92,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: scaleSize(10),
+    paddingRight: scaleSize(8), // Add right padding for logout icon spacing
   },
   avatarContainer: {
     flexDirection: 'row',
@@ -147,6 +148,8 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     padding: scaleSize(6),
+    marginLeft: scaleSize(8),
+    marginRight: scaleSize(2), // Add right margin to keep away from card border
   },
   statsRow: {
     flexDirection: 'row',
