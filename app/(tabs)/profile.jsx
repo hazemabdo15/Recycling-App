@@ -180,7 +180,7 @@ function ProfileContent() {
                   : order
               )
             );
-            setActiveTab("cancelled");
+            // Do not navigate to the cancelled tab automatically; remain on the current tab
           } catch {
             Alert.alert("Failed to cancel order");
           }
