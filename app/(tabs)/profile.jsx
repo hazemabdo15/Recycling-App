@@ -322,7 +322,7 @@ function ProfileContent() {
     </View>
   );
 
-  if (loading || avatarLoading) {
+  if (loading) {
     return <Loader style={{ marginTop: 20 }} />;
   }
 
@@ -344,6 +344,7 @@ function ProfileContent() {
           onRedeem={() => setModalVisible(true)}
           showRedeem={isCustomer(user)}
           onEditAvatar={handleEditAvatar}
+          avatarLoading={avatarLoading}
         />
         <RecyclingModal
           visible={modalVisible}
@@ -413,6 +414,7 @@ function ProfileContent() {
         onRedeem={() => setModalVisible(true)}
         showRedeem={isCustomer(user)}
         onEditAvatar={handleEditAvatar}
+        avatarLoading={avatarLoading}
       />
       <RecyclingModal
         visible={modalVisible}

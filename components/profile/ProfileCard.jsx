@@ -1,11 +1,12 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
 import { colors } from '../../styles/theme';
 import { isBuyer, isCustomer } from '../../utils/roleLabels';
 import { scaleSize } from '../../utils/scale';
 
 
-export default function ProfileCard({ user, points = 0, tier = '', onLogout, onRedeem, showRedeem, onEditAvatar, style }) {
+export default function ProfileCard({ user, points = 0, tier = '', onLogout, onRedeem, showRedeem, onEditAvatar, style, avatarLoading }) {
   const avatarUri = user?.avatarUri;
   console.log('ProfileCard points prop:', points);
   return (
@@ -19,6 +20,11 @@ export default function ProfileCard({ user, points = 0, tier = '', onLogout, onR
               ) : (
                 <MaterialCommunityIcons name="account" size={44} color={colors.white} />
               )}
+                          {avatarLoading && (
+                            <View style={styles.avatarLoadingOverlay}>
+                              <ActivityIndicator size="small" color="#059669" />
+                            </View>
+                          )}
             </View>
             <TouchableOpacity style={styles.editAvatarButton} onPress={onEditAvatar} accessibilityLabel="Edit Profile Image">
               <MaterialCommunityIcons name="pencil" size={18} color={colors.primary} />
@@ -102,6 +108,19 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  avatarLoadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'rgba(255,255,255,0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: scaleSize(27),
+    zIndex: 2,
   },
   editAvatarButton: {
     position: 'absolute',
