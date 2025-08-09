@@ -256,14 +256,19 @@ export function AuthProvider({ children }) {
 
   // Persist user to AsyncStorage whenever setUser is called
   const setUser = useCallback(
-    async (newUser) => {
-      setUserState(newUser);
-      console.log('[AuthContext] setUser called. New user:', newUser);
-      try {
-        await setLoggedInUser(newUser, deliveryStatus);
-      } catch (e) {
-        console.error('[AuthContext] Failed to persist user to storage:', e);
-      }
+    async (newUserOrUpdater) => {
+      // Support function updater (like React's setState)
+      setUserState((prevUser) => {
+        const newUser = typeof newUserOrUpdater === 'function' ? newUserOrUpdater(prevUser) : newUserOrUpdater;
+        console.log('[AuthContext] setUser called. New user:', newUser);
+        // Persist only if not undefined/null
+        if (newUser) {
+          setLoggedInUser(newUser, deliveryStatus).catch((e) => {
+            console.error('[AuthContext] Failed to persist user to storage:', e);
+          });
+        }
+        return newUser;
+      });
     },
     [deliveryStatus]
   );

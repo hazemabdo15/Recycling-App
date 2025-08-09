@@ -74,7 +74,16 @@ function ProfileContent() {
               // Authorization header is set automatically by apiService if needed
             },
           });
-          if (setUser) await setUser(updatedUser); // Update user context
+          // Merge updated fields into the existing user object to avoid losing points/id
+          if (setUser) {
+            setUser((prevUser) => ({
+              ...prevUser,
+              ...updatedUser,
+              // Prefer to keep id/_id from prevUser if missing in updatedUser
+              id: updatedUser.id || prevUser.id,
+              _id: updatedUser._id || prevUser._id,
+            }));
+          }
           setAvatarUri(updatedUser.imgUrl); // Immediate UI update
         } catch (_) {
           Alert.alert("Error", "Could not change profile picture.");
