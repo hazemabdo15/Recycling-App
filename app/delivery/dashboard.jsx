@@ -138,7 +138,7 @@ export default function DeliveryDashboard() {
         />
       )}
 
-      {/* Order Details Modal using existing component */}
+      {/* Order Details Modal */}
       <OrderDetailsModal 
         visible={showDetails} 
         onClose={() => setShowDetails(false)} 
