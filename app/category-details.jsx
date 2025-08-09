@@ -1,6 +1,7 @@
 ﻿import { useLocalSearchParams, useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
-import { FlatList, RefreshControl, StatusBar, View } from "react-native";
+import { RefreshControl, StatusBar, View } from "react-native";
+import { KeyboardAwareFlatList } from 'react-native-keyboard-aware-scroll-view';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CategoryHeader, EmptyState, ItemCard } from "../components/category";
 import { ErrorState, Loader } from "../components/common";
@@ -513,7 +514,7 @@ const CategoryDetails = () => {
       {mergedItems.length === 0 ? (
         <EmptyState categoryName={categoryName} onAddItem={handleAddItem} />
       ) : (
-        <FlatList
+        <KeyboardAwareFlatList
           data={mergedItems}
           renderItem={renderItem}
           keyExtractor={(item) => getDisplayKey(item)}
@@ -533,6 +534,10 @@ const CategoryDetails = () => {
               tintColor={colors.primary}
             />
           }
+          enableOnAndroid
+          extraScrollHeight={200}
+          keyboardOpeningTime={0}
+          keyboardShouldPersistTaps="handled"
         />
       )}
     </View>

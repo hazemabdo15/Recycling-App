@@ -7,6 +7,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { KeyboardAwareFlatList } from 'react-native-keyboard-aware-scroll-view';
 import { useAuth } from "../../context/AuthContext";
 import { useCategories } from "../../hooks/useAPI";
 import { useCart } from "../../hooks/useCart";
@@ -344,7 +345,7 @@ const CategoriesGrid = ({
   return (
     <FadeInView delay={0}>
       {showItemsMode ? (
-        <FlatList
+        <KeyboardAwareFlatList
           key={"items"}
           style={styles.itemsScrollContainer}
           data={filteredItems}
@@ -491,9 +492,13 @@ const CategoriesGrid = ({
           }
           contentContainerStyle={[
             styles.itemsList,
-            { paddingBottom: flatListBottomPadding },
+            // Remove extra paddingBottom, rely on ListFooterComponent for spacing
           ]}
+          ListFooterComponent={<View style={{ height: 100 }} />}
           showsVerticalScrollIndicator={false}
+          enableOnAndroid
+          extraScrollHeight={100}
+          keyboardShouldPersistTaps="handled"
         />
       ) : (
         <FlatList
