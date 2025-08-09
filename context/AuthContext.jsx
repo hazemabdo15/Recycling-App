@@ -16,14 +16,7 @@ const checkPublicDeliveryStatus = async (email) => {
 
   try {
     console.log("[AuthContext] Checking public delivery status for:", email);
-    const response = await fetch("http://192.168.0.165:5000/api/auth/check-delivery-status", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email: email }),
-    });
-    const statusData = await response.json();
+    const statusData = await optimizedApiService.post("/auth/check-delivery-status", { email });
     console.log("[AuthContext] Public delivery status check result:", statusData);
     return statusData.deliveryStatus || null;
   } catch (error) {
