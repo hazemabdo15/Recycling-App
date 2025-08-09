@@ -37,6 +37,7 @@ export default function LoginScreen() {
               console.log(
                 "[LoginScreen] User already logged in, redirecting to home"
               );
+              router.replace("/home");
             }
             return;
           }

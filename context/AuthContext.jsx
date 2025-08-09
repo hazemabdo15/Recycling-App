@@ -16,7 +16,7 @@ const checkPublicDeliveryStatus = async (email) => {
 
   try {
     console.log("[AuthContext] Checking public delivery status for:", email);
-    const response = await fetch("http://192.168.1.4:5000/api/auth/check-delivery-status", {
+    const response = await fetch("http://192.168.0.165:5000/api/auth/check-delivery-status", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
