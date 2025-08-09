@@ -316,9 +316,7 @@ function ProfileContent() {
     </View>
   );
 
-  if (loading) {
-    return <Loader style={{ marginTop: 20 }} />;
-  }
+  // Remove full-page Loader. Loader will be shown only in the FlatList/ListEmptyComponent area below.
 
   // Determine avatar source: prefer user.imgUrl, then avatarUri, then fallback
   const avatarSource = user?.imgUrl || avatarUri || undefined;
@@ -408,9 +406,9 @@ function ProfileContent() {
       />
       {renderListHeader()}
       <FlatList
-        data={filteredOrders}
+        data={loading ? [] : filteredOrders}
         keyExtractor={(order) => order._id}
-        renderItem={({ item: order }) => (
+        renderItem={loading ? undefined : ({ item: order }) => (
           <View style={styles.orderCard}>
             <Text style={styles.orderText}>
               Date: {new Date(order.createdAt).toLocaleDateString()}
