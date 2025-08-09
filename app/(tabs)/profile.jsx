@@ -38,10 +38,11 @@ function ProfileContent() {
   const [avatarLoading, setAvatarLoading] = useState(false); // New state for avatar upload
   // Edit avatar with image picker and upload to backend
   const { setUser } = useAuth(); // Assumes setUser is available in context
+  // Only update avatar locally and in user context, do not trigger global loading or re-fetch orders
+  // Only update avatar fields in-place to avoid triggering useEffect on user object change
   const handleEditAvatar = async () => {
     try {
-      const permission =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
         Alert.alert(
           "Permission required",
@@ -65,24 +66,17 @@ function ProfileContent() {
             name: "avatar.jpg",
             type: "image/jpeg",
           });
-          // Optionally add other fields (e.g., name, phoneNumber)
-          // formData.append('name', user.name);
-
-          // Use apiService.put and await the result (it throws on error)
           const updatedUser = await apiService.put("/profile", formData, {
-            headers: {
-              // Authorization header is set automatically by apiService if needed
-            },
+            headers: {},
           });
-          // Merge updated fields into the existing user object to avoid losing points/id
+          // Only update avatar fields in user context, do not change object reference
           if (setUser) {
-            setUser((prevUser) => ({
-              ...prevUser,
-              ...updatedUser,
-              // Prefer to keep id/_id from prevUser if missing in updatedUser
-              id: updatedUser.id || prevUser.id,
-              _id: updatedUser._id || prevUser._id,
-            }));
+            setUser((prevUser) => {
+              if (!prevUser) return prevUser;
+              prevUser.imgUrl = updatedUser.imgUrl;
+              prevUser.avatarUri = updatedUser.imgUrl;
+              return prevUser;
+            });
           }
           setAvatarUri(updatedUser.imgUrl); // Immediate UI update
         } catch (_) {
