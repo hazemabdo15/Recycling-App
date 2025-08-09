@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
         elevation: 6,
     },
     roleText: {
-        fontSize: scaleSize(14),
+        fontSize: scaleSize(13),
         fontWeight: '600',
         color: colors.black,
         marginTop: scaleSize(8),
