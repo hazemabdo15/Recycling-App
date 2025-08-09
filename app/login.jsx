@@ -54,7 +54,7 @@ export default function LoginScreen() {
       };
 
       checkUser();
-    }, [isLoggedIn, user])
+    }, [deliveryStatus, isLoggedIn, refreshDeliveryStatus, user])
   );
 
   if (checkingUser) return null;
@@ -78,7 +78,7 @@ export default function LoginScreen() {
     }
 
     try {
-      const { user, accessToken, deliveryStatus, sessionDeliveryData } = await loginUser({ email, password });
+      const { user, accessToken, deliveryStatus } = await loginUser({ email, password });
       console.log("[Login] Login API call successful");
 
       console.log("[Login] user:", user);
