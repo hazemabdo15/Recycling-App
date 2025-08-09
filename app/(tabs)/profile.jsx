@@ -1,4 +1,5 @@
 ﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as Print from 'expo-print';
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -16,6 +17,7 @@ import RecyclingModal from "../../components/Modals/RecyclingModal";
 import { useAuth } from "../../context/AuthContext";
 import { useUserPoints } from "../../hooks/useUserPoints";
 import { orderService } from "../../services/api/orders";
+import { generateOrderReportHTML } from '../../utils/orderReportPDF';
 import { getLabel, isBuyer, isCustomer } from '../../utils/roleLabels';
 import { scaleSize } from '../../utils/scale';
 
@@ -399,20 +401,61 @@ function ProfileContent() {
             </View>
           ))}
           <Text style={styles.addressText}>
-            {order.address.street}, Bldg {order.address.building}, Floor{" "}
-            {order.address.floor}, {order.address.area},{" "}
-            {order.address.city}
+            {order.address.street}, Bldg {order.address.building}, Floor {order.address.floor}, {order.address.area}, {order.address.city}
           </Text>
-          {activeTab === "incoming" &&
-            order.status?.toLowerCase() !== "accepted" &&
-            !isBuyer(user) && (
-              <TouchableOpacity
-                onPress={() => handleCancelOrder(order._id)}
-                style={styles.cancelButton}
-              >
-                <Text style={styles.cancelButtonText}>Cancel Order</Text>
-              </TouchableOpacity>
-            )}
+          {/* Download PDF button for pending orders - for both customers and buyers */}
+          {activeTab === "incoming" && order.status?.toLowerCase() === "pending" && isLoggedIn && (
+            <TouchableOpacity
+              style={{
+                backgroundColor: '#222',
+                marginTop: 10,
+                marginBottom: 6,
+                borderRadius: 6,
+                padding: 12,
+                alignSelf: 'stretch',
+              }}
+              onPress={async () => {
+                Alert.alert(
+                  'Download PDF',
+                  'Do you want to preview the order report as PDF?',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                      text: 'Preview',
+                      onPress: async () => {
+                        try {
+                          if (!order || !user) {
+                            Alert.alert('Missing data', 'Order or user info is missing.');
+                            return;
+                          }
+                          const html = generateOrderReportHTML({ order, user });
+                          if (!html) {
+                            Alert.alert('Error', 'Could not generate PDF.');
+                            return;
+                          }
+                          await Print.printAsync({ html });
+                        } catch (_err) {
+                          Alert.alert('Error', 'Failed to generate PDF.');
+                        }
+                      },
+                    },
+                  ]
+                );
+              }}
+              accessibilityLabel="Download PDF"
+            >
+              <Text style={{ color: 'white', textAlign: 'center', fontWeight: 'bold', fontSize: 14 }}>Download PDF</Text>
+            </TouchableOpacity>
+          )}
+          {/* Cancel Order button only for customers and only for pending orders */}
+          {activeTab === "incoming" && order.status?.toLowerCase() === "pending" && isCustomer(user) && (
+            <TouchableOpacity
+              onPress={() => handleCancelOrder(order._id)}
+              style={styles.cancelButton}
+            >
+              <Text style={styles.cancelButtonText}>Cancel Order</Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
       ListHeaderComponent={renderListHeader}

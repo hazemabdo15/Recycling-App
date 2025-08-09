@@ -49,7 +49,7 @@ export const ChatProvider = ({ children }) => {
         
         pulse();
         return () => pulseAnim.stopAnimation();
-    }, []);
+    }, [pulseAnim]);
 
     const openChat = () => {
         Animated.sequence([
