@@ -473,9 +473,9 @@ const CategoryDetails = () => {
   const handleAddItem = () => {
     console.log("Add item to", categoryName);
   };
-  if (loading) {
+  if (loading && !refreshing) {
     return (
-      <View style={[layoutStyles.container, { paddingTop: insets.top }]}>
+      <View style={[layoutStyles.container, { paddingTop: insets.top }]}> 
         <StatusBar
           barStyle="dark-content"
           backgroundColor="transparent"

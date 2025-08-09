@@ -530,7 +530,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: scaleSize(3) },
     shadowOpacity: 0.1,
     shadowRadius: scaleSize(30),
-    elevation: 50,
+    elevation: 5,
   },
   loadingContainer: {
     flex: 1,

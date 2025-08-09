@@ -158,80 +158,23 @@ export const AnimatedButton = ({
   );
 };
 
-export const AnimatedListItem = ({ 
-  children, 
-  index = 0, 
+export const AnimatedListItem = ({
+  children,
   style,
   onPress,
-  ...props 
+  ...props
 }) => {
-  const translateY = useSharedValue(ANIMATION_CONFIG.listItem.slide.from);
-  const opacity = useSharedValue(0);
-  const scale = useSharedValue(1);
-
-  useEffect(() => {
-    if (!isReanimatedAvailable) return;
-    
-    const delay = index * ANIMATION_CONFIG.listItem.stagger;
-    
-    const timer = setTimeout(() => {
-      translateY.value = withSpring(
-        ANIMATION_CONFIG.listItem.slide.to, 
-        {
-          damping: ANIMATION_CONFIG.listItem.slide.damping,
-          stiffness: ANIMATION_CONFIG.listItem.slide.stiffness,
-        }
-      );
-      opacity.value = withTiming(1, { 
-        duration: ANIMATION_CONFIG.listItem.fade.duration 
-      });
-    }, delay);
-
-    return () => clearTimeout(timer);
-  }, [index, translateY, opacity]);
-
-  const handlePressIn = () => {
-    if (onPress && isReanimatedAvailable) {
-      scale.value = withSpring(0.97, ANIMATION_CONFIG.button.timing);
-    }
-  };
-
-  const handlePressOut = () => {
-    if (onPress && isReanimatedAvailable) {
-      scale.value = withSpring(1, ANIMATION_CONFIG.button.timing);
-    }
-  };
-
-  const animatedStyle = useAnimatedStyle(() => {
-    if (!isReanimatedAvailable) return {};
-    
-    return {
-      transform: [
-        { translateY: translateY.value },
-        { scale: scale.value }
-      ],
-      opacity: opacity.value,
-    };
-  });
-
   if (onPress) {
     return (
-      <AnimatedPressable
-        style={[animatedStyle, style]}
-        onPress={onPress}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        {...props}
-      >
+      <Pressable style={style} onPress={onPress} {...props}>
         {children}
-      </AnimatedPressable>
+      </Pressable>
     );
   }
-
   return (
-    <Animated.View style={[animatedStyle, style]} {...props}>
+    <View style={style} {...props}>
       {children}
-    </Animated.View>
+    </View>
   );
 };
 
