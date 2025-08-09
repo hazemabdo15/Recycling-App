@@ -1,7 +1,7 @@
 ﻿import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import optimizedApiService from "../services/api/apiService";
 import { isAuthenticated, logoutUser } from "../services/auth";
 import { getAccessToken, getLoggedInUser, setLoggedInUser } from '../utils/authUtils';
-import optimizedApiService from "../services/api/apiService";
 
 const AuthContext = createContext(null);
 
@@ -34,7 +34,7 @@ const checkPublicDeliveryStatus = async (email) => {
 
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+  const [user, setUserState] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [accessToken, setAccessToken] = useState(null);
@@ -69,7 +69,7 @@ export function AuthProvider({ children }) {
     setUser(null);
     setAccessToken(null);
     setIsLoggedIn(false);
-  }, []);
+  }, [setUser]);
 
   useEffect(() => {
     authContextInstance = { handleTokenExpired };
@@ -86,11 +86,18 @@ export function AuthProvider({ children }) {
           getAccessToken(),
         ]);
 
-        console.log('[AuthContext] Loading stored user:', storedUser);
-        console.log('[AuthContext] Stored user role:', storedUser?.role);
+        // Normalize user object: ensure _id exists
+        let normalizedUser = storedUser;
+        if (storedUser && !storedUser._id && storedUser.id) {
+          normalizedUser = { ...storedUser, _id: storedUser.id };
+          console.log('[AuthContext] Normalized user object to add _id:', normalizedUser);
+        }
 
-        if (storedUser && storedToken) {
-          setUser(storedUser);
+        console.log('[AuthContext] Loading stored user:', normalizedUser);
+        console.log('[AuthContext] Stored user role:', normalizedUser?.role);
+        if (normalizedUser && storedToken) {
+          console.log('[AuthContext] About to set user from storage. User:', normalizedUser);
+          setUser(normalizedUser);
           setAccessToken(storedToken);
           setIsLoggedIn(true);
         }
@@ -102,7 +109,7 @@ export function AuthProvider({ children }) {
     };
     
     loadStoredUser();
-  }, []);
+  }, [setUser]);
 
   useEffect(() => {
     if (!isLoggedIn || !accessToken) return;
@@ -246,6 +253,21 @@ export function AuthProvider({ children }) {
     }
   };
 
+
+  // Persist user to AsyncStorage whenever setUser is called
+  const setUser = useCallback(
+    async (newUser) => {
+      setUserState(newUser);
+      console.log('[AuthContext] setUser called. New user:', newUser);
+      try {
+        await setLoggedInUser(newUser, deliveryStatus);
+      } catch (e) {
+        console.error('[AuthContext] Failed to persist user to storage:', e);
+      }
+    },
+    [deliveryStatus]
+  );
+
   const value = {
     user,
     setUser,
@@ -260,7 +282,7 @@ export function AuthProvider({ children }) {
     setDeliveryStatus,
     checkPublicDeliveryStatus,
     refreshDeliveryStatus,
-    };
+  };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

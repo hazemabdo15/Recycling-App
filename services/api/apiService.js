@@ -223,6 +223,14 @@ class OptimizedAPIService {
     const timeout = options.timeout || API_CONFIG.timeout;
     this.createRequestTimeout(requestId, timeout);
 
+    // Support for FormData retry: if options.body is a function, call it to get the body
+    const getBody = () => {
+      if (typeof options.body === 'function') {
+        return options.body();
+      }
+      return options.body;
+    };
+
     try {
       const url = endpoint.startsWith("http")
         ? endpoint
@@ -239,7 +247,8 @@ class OptimizedAPIService {
         console.log(`[API] No access token available for ${endpoint}`);
       }
 
-      if (options.body instanceof FormData) {
+      let body = getBody();
+      if (body instanceof FormData) {
         delete headers["Content-Type"];
       }
 
@@ -248,6 +257,7 @@ class OptimizedAPIService {
         headers,
         credentials: "include",
         signal: controller.signal,
+        body,
       };
 
       let response = await fetch(url, requestOptions);
@@ -266,11 +276,14 @@ class OptimizedAPIService {
             ...headers,
             Authorization: `Bearer ${newToken}`
           };
-          
-          response = await fetch(url, {
+          // Recreate body for retry
+          const retryBody = getBody();
+          let retryOptions = {
             ...requestOptions,
             headers: refreshedHeaders,
-          });
+            body: retryBody,
+          };
+          response = await fetch(url, retryOptions);
           console.log(`[API] Retry response status: ${response.status}`);
         } else {
           console.log(`[API] Refresh failed, logging out user`);
@@ -342,17 +355,39 @@ class OptimizedAPIService {
   }
 
   async post(endpoint, data, options = {}) {
+    // If data is a function (for FormData), pass as is, else wrap as needed
+    const isFormData = data instanceof FormData;
+    const body = isFormData
+      ? () => {
+          // Always return a new FormData instance for retry
+          const fd = new FormData();
+          for (let [key, value] of data.entries()) {
+            fd.append(key, value);
+          }
+          return fd;
+        }
+      : JSON.stringify(data);
     return this.apiCall(endpoint, {
       method: "POST",
-      body: data instanceof FormData ? data : JSON.stringify(data),
+      body,
       ...options,
     });
   }
 
   async put(endpoint, data, options = {}) {
+    const isFormData = data instanceof FormData;
+    const body = isFormData
+      ? () => {
+          const fd = new FormData();
+          for (let [key, value] of data.entries()) {
+            fd.append(key, value);
+          }
+          return fd;
+        }
+      : JSON.stringify(data);
     return this.apiCall(endpoint, {
       method: "PUT",
-      body: JSON.stringify(data),
+      body,
       ...options,
     });
   }

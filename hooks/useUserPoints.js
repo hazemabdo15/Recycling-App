@@ -4,6 +4,7 @@ import apiService from '../services/api/apiService';
 
 export function useUserPoints({ userId, name, email }) {
   const { isLoggedIn } = useAuth();
+  console.log('useUserPoints hook: userId =', userId, 'isLoggedIn =', isLoggedIn);
   const [userPoints, setUserPoints] = useState(null);
   const [pointsLoading, setPointsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -29,6 +30,7 @@ export function useUserPoints({ userId, name, email }) {
     console.log('getUserPoints: Starting fetch for userId:', userId);
     
     try {
+      console.log('getUserPoints: About to fetch points for userId:', userId);
       setPointsLoading(true);
       setError(null);
 
@@ -49,17 +51,26 @@ export function useUserPoints({ userId, name, email }) {
         setPointsLoading(false);
         return;
       }
-      
-      console.log('getUserPoints: API response:', res);
-      
-      if (res) {
-        console.log("res:",res)
-        setUserPoints(res.data.totalPoints);
-        console.log('getUserPoints: Successfully set user points:', res.data.totalPoints);
-      } else {
-        console.log('getUserPoints: API response indicates failure:', res);
-        throw new Error('API response indicates failure');
+
+      // Defensive logging and checks
+      console.log('getUserPoints: Full API response:', res);
+      if (!res) {
+        console.log('getUserPoints: API response is undefined or null:', res);
+        setUserPoints(0);
+        return;
       }
+      if (!res.data) {
+        console.log('getUserPoints: API response missing data property:', res);
+        setUserPoints(0);
+        return;
+      }
+      if (typeof res.data.totalPoints === 'undefined') {
+        console.log('getUserPoints: API response missing totalPoints property:', res.data);
+        setUserPoints(0);
+        return;
+      }
+      setUserPoints(res.data.totalPoints);
+      console.log('getUserPoints: Successfully set user points:', res.data.totalPoints);
     } catch (err) {
       console.error('Error fetching user points:', err);
 

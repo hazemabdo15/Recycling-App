@@ -1,5 +1,5 @@
-﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
-import * as Print from 'expo-print';
+﻿import * as ImagePicker from "expo-image-picker";
+import * as Print from "expo-print";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -12,15 +12,16 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Loader } from '../../components/common';
+import { Loader } from "../../components/common";
 import RecyclingModal from "../../components/Modals/RecyclingModal";
+import ProfileCard from "../../components/profile/ProfileCard";
 import { useAuth } from "../../context/AuthContext";
 import { useUserPoints } from "../../hooks/useUserPoints";
+import apiService from "../../services/api/apiService";
 import { orderService } from "../../services/api/orders";
-import { generateOrderReportHTML } from '../../utils/orderReportPDF';
-import { getLabel, isBuyer, isCustomer } from '../../utils/roleLabels';
-import { scaleSize } from '../../utils/scale';
-
+import { generateOrderReportHTML } from "../../utils/orderReportPDF";
+import { getLabel, isBuyer, isCustomer } from "../../utils/roleLabels";
+import { scaleSize } from "../../utils/scale";
 
 const tabs = ["incoming", "completed", "cancelled"];
 
@@ -29,16 +30,74 @@ export default function Profile() {
 }
 
 function ProfileContent() {
-  const { user, loading: authLoading, logout, isLoggedIn } = useAuth();
+  const { user, logout, isLoggedIn } = useAuth();
   const router = useRouter();
   const [allOrders, setAllOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [avatarUri, setAvatarUri] = useState(null);
+  const [avatarLoading, setAvatarLoading] = useState(false); // New state for avatar upload
+  // Edit avatar with image picker and upload to backend
+  const { setUser } = useAuth(); // Assumes setUser is available in context
+  const handleEditAvatar = async () => {
+    try {
+      const permission =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert(
+          "Permission required",
+          "Please allow access to your photos."
+        );
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.7,
+      });
+      if (!result.canceled && result.assets && result.assets[0]?.uri) {
+        setAvatarLoading(true);
+        try {
+          const uri = result.assets[0].uri;
+          const formData = new FormData();
+          formData.append("image", {
+            uri,
+            name: "avatar.jpg",
+            type: "image/jpeg",
+          });
+          // Optionally add other fields (e.g., name, phoneNumber)
+          // formData.append('name', user.name);
+
+          // Use apiService.put and await the result (it throws on error)
+          const updatedUser = await apiService.put("/profile", formData, {
+            headers: {
+              // Authorization header is set automatically by apiService if needed
+            },
+          });
+          if (setUser) await setUser(updatedUser); // Update user context
+          setAvatarUri(updatedUser.imgUrl); // Immediate UI update
+        } catch (_) {
+          Alert.alert("Error", "Could not change profile picture.");
+        } finally {
+          setAvatarLoading(false);
+        }
+      }
+    } catch (_) {
+      Alert.alert("Error", "Could not change profile picture.");
+    }
+  };
   const [activeTab, setActiveTab] = useState("incoming");
-  const { userPoints, getUserPoints } = useUserPoints({
-    userId: isLoggedIn && user?._id ? user._id : null,
-    name: isLoggedIn && user?.name ? user.name : null,
-    email: isLoggedIn && user?.email ? user.email : null,
-  });
+  const hasUserId = isLoggedIn && user && user._id;
+  const { userPoints, getUserPoints } = useUserPoints(
+    hasUserId
+      ? {
+          userId: user._id,
+          name: user.name,
+          email: user.email,
+        }
+      : { userId: null, name: null, email: null }
+  );
+  console.log('userPoints in ProfileContent:', userPoints);
   const [modalVisible, setModalVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -61,11 +120,9 @@ function ProfileContent() {
     console.log("User role:", user?.role);
 
     if (isLoggedIn && user?.email) {
-
       console.log(`[Profile] ${user?.role} role detected, fetching orders`);
       fetchOrders();
     } else {
-
       console.log("[Profile] User not logged in, clearing orders");
       setAllOrders([]);
       setLoading(false);
@@ -87,7 +144,7 @@ function ProfileContent() {
     try {
       setLoading(true);
       const response = await orderService.getOrders();
-      console.log('[Profile] Orders API response:', response);
+      console.log("[Profile] Orders API response:", response);
       setAllOrders(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error("Failed to fetch orders", error);
@@ -144,23 +201,11 @@ function ProfileContent() {
   };
 
   const confirmLogout = () => {
-    Alert.alert(
-      "Logout",
-      "Are you sure you want to logout?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Yes", style: "destructive", onPress: handleLogout },
-      ]
-    );
+    Alert.alert("Logout", "Are you sure you want to logout?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Yes", style: "destructive", onPress: handleLogout },
+    ]);
   };
-
-  if (authLoading) {
-    return (
-      <View style={[styles.container, styles.centered]}>
-        <Loader />
-      </View>
-    );
-  }
 
   const filteredOrders = allOrders.filter((order) => {
     if (activeTab === "incoming") {
@@ -218,18 +263,14 @@ function ProfileContent() {
           <View style={styles.guestActions}>
             <TouchableOpacity
               onPress={() => {
-                console.log("Login button pressed");
                 router.push("/login");
               }}
               style={styles.loginButton}
             >
-              <Text style={styles.loginButtonText}>
-                Login to Your Account
-              </Text>
+              <Text style={styles.loginButtonText}>Login to Your Account</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => {
-                console.log("Sign up button pressed");
                 router.push("/register");
               }}
               style={styles.signupButton}
@@ -253,86 +294,63 @@ function ProfileContent() {
     );
   }
 
-  // ListHeaderComponent for profile header, stats, redeem, tabs
+  // ListHeaderComponent for tabs only (profile card is fixed above)
   const renderListHeader = () => (
-    <>
-      <View style={styles.profileHeader}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.userName}>{user?.name || "Guest"}</Text>
-          <Text style={styles.userInfo}>
-            {user?.email || "No email available"}
-          </Text>
-          <Text style={styles.userInfo}>
-            {user?.phoneNumber?.padStart(11, "0") || "No phone number"}
-          </Text>
-          <Text style={styles.userInfoSmall}>Cairo, July 2025</Text>
-        </View>
+    <View style={styles.tabsContainer}>
+      {tabs.map((tab) => (
         <TouchableOpacity
-          onPress={confirmLogout}
-          style={styles.menuButton}
-          accessibilityLabel="Logout"
+          key={tab}
+          onPress={() => setActiveTab(tab)}
+          style={activeTab === tab ? styles.activeTab : styles.tab}
         >
-          <MaterialCommunityIcons name="logout" size={28} color="#dc2626" />
+          <Text
+            style={activeTab === tab ? styles.activeTabText : styles.tabText}
+          >
+            {getTabDisplayName(tab)}
+          </Text>
         </TouchableOpacity>
-      </View>
-      <View style={styles.statsContainer}>
-        <StatBox label="Total Recycles" value={stats.totalRecycles} />
-        {!isBuyer(user) && (
-          <StatBox
-            label="Points Collected"
-            value={userPoints ? userPoints : 0}
-          />
-        )}
-        <StatBox label="Membership Tier" value={stats.tier} />
-      </View>
-      {isCustomer(user) && (
-        <>
-          <TouchableOpacity
-            style={styles.redeemButton}
-            onPress={() => setModalVisible(true)}
-          >
-            <Text style={styles.redeemButtonText}>Redeem Your Points</Text>
-          </TouchableOpacity>
-          <RecyclingModal 
-            visible={modalVisible}
-            onClose={() => setModalVisible(false)}
-            totalPoints={userPoints}
-            onPointsUpdated={getUserPoints}
-          />
-        </>
-      )}
-      <View style={styles.tabsContainer}>
-        {tabs.map((tab) => (
-          <TouchableOpacity
-            key={tab}
-            onPress={() => setActiveTab(tab)}
-            style={activeTab === tab ? styles.activeTab : styles.tab}
-          >
-            <Text
-              style={
-                activeTab === tab ? styles.activeTabText : styles.tabText
-              }
-            >
-              {getTabDisplayName(tab)}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </>
+      ))}
+    </View>
   );
 
-  if (loading) {
+  if (loading || avatarLoading) {
     return <Loader style={{ marginTop: 20 }} />;
   }
 
+  // Determine avatar source: prefer user.imgUrl, then avatarUri, then fallback
+  const avatarSource = user?.imgUrl || avatarUri || undefined;
+
   if (filteredOrders.length === 0) {
     return (
-      <>
+      <View style={{ flex: 1, backgroundColor: "#f0fdf4" }}>
+        <ProfileCard
+          user={{
+            ...user,
+            totalRecycles: stats.totalRecycles,
+            avatarUri: avatarSource,
+          }}
+          points={userPoints ?? 100}
+          tier={stats.tier}
+          onLogout={confirmLogout}
+          onRedeem={() => setModalVisible(true)}
+          showRedeem={isCustomer(user)}
+          onEditAvatar={handleEditAvatar}
+        />
+        <RecyclingModal
+          visible={modalVisible}
+          onClose={() => setModalVisible(false)}
+          totalPoints={userPoints}
+          onPointsUpdated={getUserPoints}
+        />
         <FlatList
           data={[]}
           ListHeaderComponent={renderListHeader}
           ListEmptyComponent={
-            user?.role === "buyer" ? (
+            loading ? (
+              <View style={{ padding: 32 }}>
+                <Loader />
+              </View>
+            ) : user?.role === "buyer" ? (
               <View style={styles.buyerMessageContainer}>
                 <Text style={styles.buyerMessageTitle}>
                   {getLabel("profileLabels.noOrdersMessage", user?.role)}
@@ -360,119 +378,159 @@ function ProfileContent() {
               </View>
             )
           }
-          contentContainerStyle={styles.container}
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingBottom: scaleSize(120),
+          }}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         />
-      </>
+      </View>
     );
   }
 
   return (
-    <FlatList
-      data={filteredOrders}
-      keyExtractor={(order) => order._id}
-      renderItem={({ item: order }) => (
-        <View style={styles.orderCard}>
-          <Text style={styles.orderText}>
-            Date: {new Date(order.createdAt).toLocaleDateString()}
-          </Text>
-          <Text style={styles.orderStatus}>Status: {order.status}</Text>
-          {order.items.map((item, i) => (
-            <View key={item._id || i} style={styles.orderItem}>
-              <Image
-                source={{ uri: item.image }}
-                style={styles.itemImage}
-              />
-              <View style={styles.itemDetails}>
-                <Text style={styles.itemName}>{item.itemName}</Text>
-                <Text style={styles.itemInfo}>
-                  Quantity: {item.quantity}{" "}
-                  {item.measurement_unit === 1 ? "kg" : "pcs"}
-                </Text>
-                {!isBuyer(user) && (
-                  <Text style={styles.itemInfo}>Points: {item.points}</Text>
-                )}
-                <Text style={styles.itemInfo}>
-                  Price: {item.price} EGP
-                </Text>
+    <View style={{ flex: 1, backgroundColor: "#f0fdf4" }}>
+      <ProfileCard
+        user={{
+          ...user,
+          totalRecycles: stats.totalRecycles,
+          avatarUri: avatarSource,
+        }}
+        points={userPoints ?? 0}
+        tier={stats.tier}
+        onLogout={confirmLogout}
+        onRedeem={() => setModalVisible(true)}
+        showRedeem={isCustomer(user)}
+        onEditAvatar={handleEditAvatar}
+      />
+      <RecyclingModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        totalPoints={userPoints}
+        onPointsUpdated={getUserPoints}
+      />
+      <FlatList
+        data={filteredOrders}
+        keyExtractor={(order) => order._id}
+        renderItem={({ item: order }) => (
+          <View style={styles.orderCard}>
+            <Text style={styles.orderText}>
+              Date: {new Date(order.createdAt).toLocaleDateString()}
+            </Text>
+            <Text style={styles.orderStatus}>Status: {order.status}</Text>
+            {order.items.map((item, i) => (
+              <View key={item._id || i} style={styles.orderItem}>
+                <Image source={{ uri: item.image }} style={styles.itemImage} />
+                <View style={styles.itemDetails}>
+                  <Text style={styles.itemName}>{item.itemName}</Text>
+                  <Text style={styles.itemInfo}>
+                    Quantity: {item.quantity}{" "}
+                    {item.measurement_unit === 1 ? "kg" : "pcs"}
+                  </Text>
+                  {!isBuyer(user) && (
+                    <Text style={styles.itemInfo}>Points: {item.points}</Text>
+                  )}
+                  <Text style={styles.itemInfo}>Price: {item.price} EGP</Text>
+                </View>
               </View>
+            ))}
+            <Text style={styles.addressText}>
+              {order.address.street}, Bldg {order.address.building}, Floor{" "}
+              {order.address.floor}, {order.address.area}, {order.address.city}
+            </Text>
+            {/* Download PDF button for pending orders - for both customers and buyers */}
+            {activeTab === "incoming" &&
+              order.status?.toLowerCase() === "pending" &&
+              isLoggedIn && (
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: "#222",
+                    marginTop: 10,
+                    marginBottom: 6,
+                    borderRadius: 6,
+                    padding: 12,
+                    alignSelf: "stretch",
+                  }}
+                  onPress={async () => {
+                    Alert.alert(
+                      "Download PDF",
+                      "Do you want to preview the order report as PDF?",
+                      [
+                        { text: "Cancel", style: "cancel" },
+                        {
+                          text: "Preview",
+                          onPress: async () => {
+                            try {
+                              if (!order || !user) {
+                                Alert.alert(
+                                  "Missing data",
+                                  "Order or user info is missing."
+                                );
+                                return;
+                              }
+                              const html = generateOrderReportHTML({
+                                order,
+                                user,
+                              });
+                              if (!html) {
+                                Alert.alert("Error", "Could not generate PDF.");
+                                return;
+                              }
+                              await Print.printAsync({ html });
+                            } catch (_err) {
+                              Alert.alert("Error", "Failed to generate PDF.");
+                            }
+                          },
+                        },
+                      ]
+                    );
+                  }}
+                  accessibilityLabel="Download PDF"
+                >
+                  <Text
+                    style={{
+                      color: "white",
+                      textAlign: "center",
+                      fontWeight: "bold",
+                      fontSize: 14,
+                    }}
+                  >
+                    Download PDF
+                  </Text>
+                </TouchableOpacity>
+              )}
+            {/* Cancel Order button only for customers and only for pending orders */}
+            {activeTab === "incoming" &&
+              order.status?.toLowerCase() === "pending" &&
+              isCustomer(user) && (
+                <TouchableOpacity
+                  onPress={() => handleCancelOrder(order._id)}
+                  style={styles.cancelButton}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel Order</Text>
+                </TouchableOpacity>
+              )}
+          </View>
+        )}
+        ListHeaderComponent={renderListHeader}
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingBottom: scaleSize(120),
+        }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        ListEmptyComponent={
+          loading ? (
+            <View style={{ padding: 32 }}>
+              <Loader />
             </View>
-          ))}
-          <Text style={styles.addressText}>
-            {order.address.street}, Bldg {order.address.building}, Floor {order.address.floor}, {order.address.area}, {order.address.city}
-          </Text>
-          {/* Download PDF button for pending orders - for both customers and buyers */}
-          {activeTab === "incoming" && order.status?.toLowerCase() === "pending" && isLoggedIn && (
-            <TouchableOpacity
-              style={{
-                backgroundColor: '#222',
-                marginTop: 10,
-                marginBottom: 6,
-                borderRadius: 6,
-                padding: 12,
-                alignSelf: 'stretch',
-              }}
-              onPress={async () => {
-                Alert.alert(
-                  'Download PDF',
-                  'Do you want to preview the order report as PDF?',
-                  [
-                    { text: 'Cancel', style: 'cancel' },
-                    {
-                      text: 'Preview',
-                      onPress: async () => {
-                        try {
-                          if (!order || !user) {
-                            Alert.alert('Missing data', 'Order or user info is missing.');
-                            return;
-                          }
-                          const html = generateOrderReportHTML({ order, user });
-                          if (!html) {
-                            Alert.alert('Error', 'Could not generate PDF.');
-                            return;
-                          }
-                          await Print.printAsync({ html });
-                        } catch (_err) {
-                          Alert.alert('Error', 'Failed to generate PDF.');
-                        }
-                      },
-                    },
-                  ]
-                );
-              }}
-              accessibilityLabel="Download PDF"
-            >
-              <Text style={{ color: 'white', textAlign: 'center', fontWeight: 'bold', fontSize: 14 }}>Download PDF</Text>
-            </TouchableOpacity>
-          )}
-          {/* Cancel Order button only for customers and only for pending orders */}
-          {activeTab === "incoming" && order.status?.toLowerCase() === "pending" && isCustomer(user) && (
-            <TouchableOpacity
-              onPress={() => handleCancelOrder(order._id)}
-              style={styles.cancelButton}
-            >
-              <Text style={styles.cancelButtonText}>Cancel Order</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      )}
-      ListHeaderComponent={renderListHeader}
-      contentContainerStyle={[styles.container, { paddingBottom: scaleSize(120) }]}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-      showsVerticalScrollIndicator={false}
-    />
-  );
-}
-
-function StatBox({ label, value }) {
-  return (
-    <View style={styles.statBox}>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
+          ) : null
+        }
+        showsVerticalScrollIndicator={false}
+      />
     </View>
   );
 }
@@ -480,9 +538,9 @@ function StatBox({ label, value }) {
 const styles = StyleSheet.create({
   container: {
     padding: scaleSize(35),
-    backgroundColor: "#f0fdf4", // unify background for all main content
-    paddingBottom: scaleSize(40), // reduce padding to avoid color split at bottom
-    flexGrow: 1, // ensure FlatList fills available space
+    backgroundColor: "#f8fafc", // very light neutral background
+    paddingBottom: scaleSize(40),
+    flexGrow: 1,
   },
   centered: { justifyContent: "center", alignItems: "center" },
   profileHeader: {
@@ -491,54 +549,91 @@ const styles = StyleSheet.create({
     marginBottom: scaleSize(16),
     gap: scaleSize(12),
   },
-  userName: { fontSize: scaleSize(20), fontWeight: "600", color: "#065f46" },
-  userInfo: { fontSize: scaleSize(14), color: "#6b7280" },
-  userInfoSmall: { fontSize: scaleSize(12), color: "#9ca3af" },
+  userName: { fontSize: scaleSize(20), fontWeight: "600", color: "#1e293b" },
+  userInfo: { fontSize: scaleSize(14), color: "#64748b" },
+  userInfoSmall: { fontSize: scaleSize(12), color: "#a7f3d0" },
   statsContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginVertical: scaleSize(16),
   },
   statBox: {
-    backgroundColor: "#dcfce7",
+    backgroundColor: "#f1f5f9", // very light gray
     padding: scaleSize(12),
     borderRadius: scaleSize(12),
     alignItems: "center",
     flex: 1,
     marginHorizontal: scaleSize(4),
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
   },
-  statValue: { fontSize: scaleSize(20), fontWeight: "700", color: "#065f46" },
-  statLabel: { fontSize: scaleSize(12), color: "#065f46" },
+  statValue: { fontSize: scaleSize(20), fontWeight: "700", color: "#059669" },
+  statLabel: { fontSize: scaleSize(12), color: "#64748b" },
   tabsContainer: {
     flexDirection: "row",
-    justifyContent: "space-around",
+    justifyContent: "space-between",
     borderBottomWidth: 1,
-    borderColor: "#d1d5db",
+    borderColor: "#bbf7d0",
     marginBottom: scaleSize(16),
-  },
-  tab: { 
-    paddingVertical: scaleSize(8),
+    backgroundColor: "#f0fdf4",
+    borderRadius: scaleSize(12),
+    marginHorizontal: scaleSize(4),
     paddingHorizontal: scaleSize(4),
-    minWidth: scaleSize(100),
-    maxWidth: scaleSize(120),
-    alignItems: 'center',
-    justifyContent: 'center',
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: scaleSize(10),
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: scaleSize(8),
+    marginHorizontal: scaleSize(2),
+    backgroundColor: "transparent",
+    minWidth: 0,
   },
   activeTab: {
-    paddingVertical: scaleSize(8),
-    borderBottomWidth: 2,
-    paddingHorizontal: scaleSize(4),
-    minWidth: scaleSize(100),
-    maxWidth: scaleSize(120),
+    flex: 1,
+    paddingVertical: scaleSize(10),
+    borderBottomWidth: 3,
     borderColor: "#059669",
+    backgroundColor: "#bbf7d0",
+    borderRadius: scaleSize(8),
+    alignItems: "center",
+    justifyContent: "center",
+    marginHorizontal: scaleSize(2),
+    minWidth: 0,
   },
-  tabText: { color: "#6b7280", fontWeight: "500", },
-  activeTabText: { color: "#065f46", fontWeight: "600" },
-  emptyText: { textAlign: "center", color: "#9ca3af", marginTop: scaleSize(20) },
+  tabText: {
+    color: "#059669",
+    fontWeight: "500",
+    fontSize: scaleSize(15),
+    textAlign: "center",
+    width: "100%",
+    minWidth: scaleSize(90),
+    maxWidth: scaleSize(120),
+    lineHeight: scaleSize(18),
+    flexWrap: "wrap",
+  },
+  activeTabText: {
+    color: "#065f46",
+    fontWeight: "700",
+    fontSize: scaleSize(15),
+    textAlign: "center",
+    width: "100%",
+    minWidth: scaleSize(90),
+    maxWidth: scaleSize(120),
+    lineHeight: scaleSize(18),
+    flexWrap: "wrap",
+  },
+  emptyText: {
+    textAlign: "center",
+    color: "#64748b",
+    marginTop: scaleSize(20),
+    fontWeight: "600",
+  },
   emptyStateContainer: { alignItems: "center", marginTop: scaleSize(20) },
   emptySubtext: {
     textAlign: "center",
-    color: "#6b7280",
+    color: "#94a3b8",
     marginTop: scaleSize(8),
     fontSize: scaleSize(14),
   },
@@ -546,71 +641,96 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: scaleSize(30),
     paddingHorizontal: scaleSize(20),
-    backgroundColor: "#f0f9ff",
+    backgroundColor: "#f1f5f9",
     borderRadius: scaleSize(12),
     padding: scaleSize(20),
     marginBottom: scaleSize(20),
+    borderWidth: 1,
+    borderColor: "#e0e7ef",
   },
   buyerMessageTitle: {
     textAlign: "center",
-    color: "#0369a1",
+    color: "#334155",
     fontSize: scaleSize(16),
     fontWeight: "600",
     marginBottom: scaleSize(8),
   },
   buyerMessageSubtitle: {
     textAlign: "center",
-    color: "#075985",
+    color: "#64748b",
     fontSize: scaleSize(14),
     marginBottom: scaleSize(16),
   },
   startShoppingButton: {
-    backgroundColor: "#0ea5e9",
+    backgroundColor: "#a7f3d0",
     paddingHorizontal: scaleSize(20),
     paddingVertical: scaleSize(10),
     borderRadius: scaleSize(8),
     marginTop: scaleSize(8),
   },
   startShoppingButtonText: {
-    color: "white",
+    color: "#059669",
     fontSize: scaleSize(14),
     fontWeight: "600",
   },
   orderCard: {
-    backgroundColor: "#e6f4ea",
+    backgroundColor: "#fff",
     padding: scaleSize(12),
     borderRadius: scaleSize(12),
     marginBottom: scaleSize(12),
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    shadowColor: "#64748b",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
   },
-  orderText: { fontSize: scaleSize(12), color: "#6b7280" },
-  orderStatus: { fontSize: scaleSize(14), fontWeight: "600", color: "#047857" },
+  orderText: { fontSize: scaleSize(12), color: "#64748b" },
+  orderStatus: { fontSize: scaleSize(14), fontWeight: "600", color: "#059669" },
   orderItem: {
     flexDirection: "row",
     gap: scaleSize(10),
-    backgroundColor: "white",
+    backgroundColor: "#f8fafc",
     padding: scaleSize(8),
     borderRadius: scaleSize(8),
     marginVertical: scaleSize(4),
   },
-  itemImage: { width: scaleSize(64), height: scaleSize(64), borderRadius: scaleSize(6) },
+  itemImage: {
+    width: scaleSize(64),
+    height: scaleSize(64),
+    borderRadius: scaleSize(6),
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+  },
   itemDetails: { flex: 1 },
-  itemName: { fontWeight: "600", color: "#065f46" },
-  itemInfo: { fontSize: scaleSize(12), color: "#4b5563" },
-  addressText: { fontSize: scaleSize(12), color: "#6b7280", marginTop: scaleSize(6) },
+  itemName: { fontWeight: "600", color: "#334155" },
+  itemInfo: { fontSize: scaleSize(12), color: "#64748b" },
+  addressText: {
+    fontSize: scaleSize(12),
+    color: "#64748b",
+    marginTop: scaleSize(6),
+  },
   cancelButton: {
     marginTop: scaleSize(12),
     marginBottom: scaleSize(8),
-    backgroundColor: "#dc2626",
+    backgroundColor: "#fee2e2",
     padding: scaleSize(12),
     borderRadius: scaleSize(6),
     alignSelf: "stretch",
+    borderWidth: 1,
+    borderColor: "#fecaca",
   },
-  cancelButtonText: { color: "white", textAlign: "center", fontSize: scaleSize(12) },
+  cancelButtonText: {
+    color: "#dc2626",
+    textAlign: "center",
+    fontSize: scaleSize(12),
+    fontWeight: "700",
+  },
   guestContainer: {
-    backgroundColor: "#f0fdf4", // match main container
+    backgroundColor: "#f8fafc", // match main container
     paddingHorizontal: scaleSize(24),
     paddingVertical: scaleSize(10),
-    paddingBottom: scaleSize(40), // match container
+    paddingBottom: scaleSize(40),
     flexGrow: 1,
   },
   guestContent: {
@@ -622,12 +742,12 @@ const styles = StyleSheet.create({
     width: scaleSize(80),
     height: scaleSize(80),
     borderRadius: scaleSize(40),
-    backgroundColor: "#dcfce7",
+    backgroundColor: "#e0f2fe",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: scaleSize(24),
     borderWidth: 2,
-    borderColor: "#bbf7d0",
+    borderColor: "#bae6fd",
   },
   guestIconText: {
     fontSize: scaleSize(40),
@@ -635,32 +755,34 @@ const styles = StyleSheet.create({
   guestTitle: {
     fontSize: scaleSize(28),
     fontWeight: "700",
-    color: "#065f46",
+    color: "#334155",
     marginBottom: scaleSize(8),
     textAlign: "center",
   },
   guestSubtitle: {
     fontSize: scaleSize(16),
-    color: "#6b7280",
+    color: "#64748b",
     marginBottom: scaleSize(32),
     textAlign: "center",
   },
   benefitsContainer: {
     width: "100%",
-    backgroundColor: "white",
+    backgroundColor: "#f1f5f9",
     borderRadius: scaleSize(16),
     padding: scaleSize(24),
     marginBottom: scaleSize(32),
     elevation: 2,
-    shadowColor: "#000",
+    shadowColor: "#64748b",
     shadowOffset: { width: 0, height: scaleSize(2) },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.06,
     shadowRadius: scaleSize(4),
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
   },
   benefitsTitle: {
     fontSize: scaleSize(18),
     fontWeight: "600",
-    color: "#065f46",
+    color: "#334155",
     marginBottom: scaleSize(16),
     textAlign: "center",
   },
@@ -677,7 +799,7 @@ const styles = StyleSheet.create({
   },
   benefitText: {
     fontSize: scaleSize(15),
-    color: "#374151",
+    color: "#64748b",
     flex: 1,
   },
   guestActions: {
@@ -686,32 +808,32 @@ const styles = StyleSheet.create({
     marginBottom: scaleSize(24),
   },
   loginButton: {
-    backgroundColor: "#059669",
+    backgroundColor: "#34d399",
     paddingVertical: scaleSize(16),
     paddingHorizontal: scaleSize(32),
     borderRadius: scaleSize(12),
     elevation: 2,
-    shadowColor: "#000",
+    shadowColor: "#a7f3d0",
     shadowOffset: { width: 0, height: scaleSize(2) },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: scaleSize(4),
   },
   loginButtonText: {
-    color: "white",
+    color: "#065f46",
     fontSize: scaleSize(16),
     fontWeight: "600",
     textAlign: "center",
   },
   signupButton: {
-    backgroundColor: "white",
+    backgroundColor: "#e0f2fe",
     paddingVertical: scaleSize(16),
     paddingHorizontal: scaleSize(32),
     borderRadius: scaleSize(12),
     borderWidth: 2,
-    borderColor: "#059669",
+    borderColor: "#bae6fd",
   },
   signupButtonText: {
-    color: "#059669",
+    color: "#0284c7",
     fontSize: scaleSize(16),
     fontWeight: "600",
     textAlign: "center",
@@ -725,7 +847,7 @@ const styles = StyleSheet.create({
   },
   guestBrowseText: {
     fontSize: scaleSize(14),
-    color: "#9ca3af",
+    color: "#64748b",
     marginBottom: scaleSize(12),
     textAlign: "center",
   },
@@ -734,9 +856,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: scaleSize(16),
   },
   browseButtonText: {
-    color: "#6b7280",
+    color: "#059669",
     fontSize: scaleSize(14),
-    fontWeight: "500",
+    fontWeight: "600",
     textDecorationLine: "underline",
   },
   menuButton: {
@@ -745,23 +867,25 @@ const styles = StyleSheet.create({
   },
   menuIcon: {
     fontSize: scaleSize(20),
-    color: "#065f46",
+    color: "#64748b",
   },
   menuDropdown: {
     position: "absolute",
     top: scaleSize(35),
     right: 0,
-    backgroundColor: "white",
+    backgroundColor: "#fff",
     borderRadius: scaleSize(6),
     elevation: 4,
-    shadowColor: "#000",
+    shadowColor: "#64748b",
     shadowOffset: { width: 0, height: scaleSize(2) },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.08,
     shadowRadius: scaleSize(4),
     paddingVertical: scaleSize(4),
     paddingHorizontal: scaleSize(12),
     zIndex: 1000,
     minWidth: scaleSize(80),
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
   },
   menuItemButton: {
     paddingVertical: scaleSize(8),
@@ -769,22 +893,23 @@ const styles = StyleSheet.create({
   menuItem: {
     fontSize: scaleSize(14),
     color: "#dc2626",
+    fontWeight: "700",
   },
   redeemButton: {
-    backgroundColor: "#059669",
+    backgroundColor: "#a7f3d0",
     padding: scaleSize(16),
     borderRadius: scaleSize(12),
     marginVertical: scaleSize(16),
     alignItems: "center",
     elevation: 2,
-    shadowColor: "#000",
+    shadowColor: "#a7f3d0",
     shadowOffset: { width: 0, height: scaleSize(2) },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.08,
     shadowRadius: scaleSize(4),
   },
   redeemButtonText: {
-    color: "white",
+    color: "#059669",
     fontSize: scaleSize(16),
-    fontWeight: "600",
+    fontWeight: "700",
   },
 });
