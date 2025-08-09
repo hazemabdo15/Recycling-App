@@ -35,20 +35,21 @@ const ItemCard = ({
       index={index}
       style={{
         ...itemCardStyles.itemCard,
-        opacity: outOfStock ? 0.6 : 1,
       }}
     >
-      {/* Unified badge: top right, only one shown at a time - only for buyers */}
-      {showStockLogic && (
-        <View
-          style={outOfStock ? styles.outOfStockBadge : styles.stockRightBadge}
-        >
-          <Text
-            style={outOfStock ? styles.outOfStockText : styles.stockRightText}
-          >
-            {outOfStock
-              ? "Out of Stock"
-              : typeof item.quantity === "number"
+      {/* Diagonal Out of Stock Banner Overlay */}
+      {outOfStock && (
+        <View style={styles.cornerBannerWrapper} pointerEvents="none">
+          <View style={styles.cornerBanner}>
+            <Text style={styles.cornerBannerText}>OUT OF STOCK</Text>
+          </View>
+        </View>
+      )}
+      {/* Show badge with stock quantity only if in stock, hide if out of stock */}
+      {showStockLogic && !outOfStock && (
+        <View style={styles.stockRightBadge}>
+          <Text style={styles.stockRightText}>
+            {typeof item.quantity === "number"
               ? `Stock: ${item.quantity} ${unitDisplay}`
               : "Stock: N/A"}
           </Text>
@@ -90,6 +91,43 @@ const ItemCard = ({
 };
 
 const styles = StyleSheet.create({
+  cornerBannerWrapper: {
+    position: 'absolute',
+    top: 14,
+    right: -80,
+    width: 260,
+    height: 40,
+    zIndex: 30,
+    pointerEvents: 'none',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cornerBanner: {
+    width: 260,
+    height: 40,
+    backgroundColor: 'rgba(239,68,68,0.92)', // red-500
+    justifyContent: 'center',
+    alignItems: 'center',
+    transform: [{ rotate: '45deg' }],
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 2,
+    overflow: 'hidden',
+  },
+  cornerBannerText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 10,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    opacity: 0.97,
+    textAlign: 'center',
+    width: 280,
+    alignSelf: 'left',
+  },
   stockRightBadge: {
     position: "absolute",
     top: 10,
