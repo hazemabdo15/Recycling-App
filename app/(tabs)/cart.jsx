@@ -3,31 +3,35 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
-    FlatList,
-    Image,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Image,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import { KeyboardAwareFlatList } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
-    AnimatedButton,
-    AnimatedListItem,
-    Loader,
+  AnimatedButton,
+  AnimatedListItem,
+  Loader,
 } from "../../components/common";
 import { useAuth } from "../../context/AuthContext";
 import { useAllItems } from "../../hooks/useAPI";
 import { useCart } from "../../hooks/useCart";
 import { borderRadius, spacing, typography } from "../../styles";
 import { colors } from "../../styles/theme";
-import { CartMessageTypes, showCartMessage, showMaxStockMessage } from "../../utils/cartMessages";
 import {
-    getCartKey,
-    getDisplayKey,
-    normalizeItemData,
+  CartMessageTypes,
+  showCartMessage,
+  showMaxStockMessage,
+} from "../../utils/cartMessages";
+import {
+  getCartKey,
+  getDisplayKey,
+  normalizeItemData,
 } from "../../utils/cartUtils";
 import { getLabel, isBuyer } from "../../utils/roleLabels";
 import { scaleSize } from "../../utils/scale";
@@ -83,7 +87,12 @@ const Cart = () => {
   // Cart is already synced via CartContext, no need for manual refresh on focus
 
   useEffect(() => {
-    console.log('[Cart] Items loading state changed:', itemsLoading, 'current loading:', loading);
+    console.log(
+      "[Cart] Items loading state changed:",
+      itemsLoading,
+      "current loading:",
+      loading
+    );
     if (!itemsLoading) {
       setLoading(false);
     }
@@ -91,12 +100,12 @@ const Cart = () => {
 
   // Debug logging for cart items
   useEffect(() => {
-    console.log('[Cart] Cart state changed:', {
+    console.log("[Cart] Cart state changed:", {
       cartItemsCount: Object.keys(cartItems).length,
       cartItemsDetailsCount: Object.keys(cartItemDetails).length,
       cartItems: cartItems,
       cartItemDetails: cartItemDetails,
-      isLoggedIn: isLoggedIn
+      isLoggedIn: isLoggedIn,
     });
   }, [cartItems, cartItemDetails, isLoggedIn]);
 
@@ -105,35 +114,38 @@ const Cart = () => {
   }, [allItems]);
 
   const cartArray = useMemo(() => {
-    console.log('[Cart] Recalculating cartArray...');
-    console.log('[Cart] cartItems keys:', Object.keys(cartItems));
-    console.log('[Cart] cartItemDetails keys:', Object.keys(cartItemDetails));
-    
+    console.log("[Cart] Recalculating cartArray...");
+    console.log("[Cart] cartItems keys:", Object.keys(cartItems));
+    console.log("[Cart] cartItemDetails keys:", Object.keys(cartItemDetails));
+
     if (Object.keys(cartItems).length === 0) {
-      console.log('[Cart] No cartItems, returning empty array');
+      console.log("[Cart] No cartItems, returning empty array");
       return [];
     }
 
     const result = Object.entries(cartItems)
       .map(([itemId, quantity]) => {
-        console.log('[Cart] Processing item:', itemId, 'quantity:', quantity);
+        console.log("[Cart] Processing item:", itemId, "quantity:", quantity);
         const itemFromDetails = cartItemDetails[itemId];
 
         if (itemFromDetails) {
-          console.log('[Cart] Found item in details:', itemFromDetails.name);
+          console.log("[Cart] Found item in details:", itemFromDetails.name);
           return {
             ...itemFromDetails,
             quantity: quantity,
           };
         }
 
-        console.log('[Cart] Item not in details, searching in allItems for:', itemId);
+        console.log(
+          "[Cart] Item not in details, searching in allItems for:",
+          itemId
+        );
         const item = safeAllItems.find(
           (item) => item._id === itemId || item.categoryId === itemId
         );
 
         if (!item) {
-          console.log('[Cart] Item not found in allItems, creating basic item');
+          console.log("[Cart] Item not found in allItems, creating basic item");
         }
 
         const combinedItem = {
@@ -153,21 +165,33 @@ const Cart = () => {
           !combinedItem.categoryId ||
           !combinedItem.image ||
           combinedItem.measurement_unit === undefined;
-        
+
         const result = needsNormalization
           ? normalizeItemData(combinedItem)
           : combinedItem;
-        
-        console.log('[Cart] Final processed item:', result.name, 'quantity:', result.quantity);
+
+        console.log(
+          "[Cart] Final processed item:",
+          result.name,
+          "quantity:",
+          result.quantity
+        );
         return result;
       })
       .filter((item) => {
         const hasQuantity = item && item.quantity > 0;
-        console.log('[Cart] Filter check for:', item?.name, 'quantity:', item?.quantity, 'passes:', hasQuantity);
+        console.log(
+          "[Cart] Filter check for:",
+          item?.name,
+          "quantity:",
+          item?.quantity,
+          "passes:",
+          hasQuantity
+        );
         return hasQuantity;
       });
 
-    console.log('[Cart] Final cartArray length:', result.length);
+    console.log("[Cart] Final cartArray length:", result.length);
     return result;
   }, [cartItems, cartItemDetails, safeAllItems]);
 
@@ -190,7 +214,8 @@ const Cart = () => {
 
   const handleIncrease = async (item) => {
     try {
-      const measurementUnit = item.measurement_unit || (item.unit === "KG" ? 1 : 2);
+      const measurementUnit =
+        item.measurement_unit || (item.unit === "KG" ? 1 : 2);
       const incrementStep = measurementUnit === 1 ? 0.25 : 1;
       const newQuantity = item.quantity + incrementStep;
 
@@ -198,15 +223,28 @@ const Cart = () => {
       if (isBuyer(user)) {
         // Get the actual stock quantity from the original item data
         const originalItem = safeAllItems.find(
-          (originalItem) => originalItem._id === item._id || originalItem.categoryId === item.categoryId
+          (originalItem) =>
+            originalItem._id === item._id ||
+            originalItem.categoryId === item.categoryId
         );
-        
-        const actualStockQuantity = originalItem?.quantity || originalItem?.available_quantity || originalItem?.stock_quantity || originalItem?.quantity_available;
-        
+
+        const actualStockQuantity =
+          originalItem?.quantity ||
+          originalItem?.available_quantity ||
+          originalItem?.stock_quantity ||
+          originalItem?.quantity_available;
+
         // Stock validation - check against actual stock quantity
-        if (actualStockQuantity !== undefined && newQuantity > actualStockQuantity) {
+        if (
+          actualStockQuantity !== undefined &&
+          newQuantity > actualStockQuantity
+        ) {
           const normalizedItem = normalizeItemData(item);
-          showMaxStockMessage(normalizedItem.name, item.quantity, normalizedItem.measurement_unit);
+          showMaxStockMessage(
+            normalizedItem.name,
+            item.quantity,
+            normalizedItem.measurement_unit
+          );
           return;
         }
       }
@@ -216,20 +254,19 @@ const Cart = () => {
         _id: getCartKey(item),
       };
       await handleIncreaseQuantity(itemWithCorrectId);
-      
+
       // No toast for add in cart page
-      
+
       // Clear input value to sync with new cart quantity
       const itemKey = getCartKey(item);
       setInputValue(itemKey, "");
-      
     } catch (err) {
       console.error("[Cart] Error increasing quantity:", err);
       const normalizedItem = normalizeItemData(item);
       showCartMessage(CartMessageTypes.OPERATION_FAILED, {
         itemName: normalizedItem.name,
         measurementUnit: normalizedItem.measurement_unit,
-        isBuyer: user?.role === 'buyer'
+        isBuyer: user?.role === "buyer",
       });
     }
   };
@@ -241,20 +278,19 @@ const Cart = () => {
         _id: getCartKey(item),
       };
       await handleDecreaseQuantity(itemWithCorrectId);
-      
+
       // No toast for decrease in cart page
-      
+
       // Clear input value to sync with new cart quantity
       const itemKey = getCartKey(item);
       setInputValue(itemKey, "");
-      
     } catch (err) {
       console.error("[Cart] Error decreasing quantity:", err);
       const normalizedItem = normalizeItemData(item);
       showCartMessage(CartMessageTypes.OPERATION_FAILED, {
         itemName: normalizedItem.name,
         measurementUnit: item.measurement_unit || (item.unit === "KG" ? 1 : 2),
-        isBuyer: user?.role === 'buyer'
+        isBuyer: user?.role === "buyer",
       });
     }
   };
@@ -263,13 +299,13 @@ const Cart = () => {
     try {
       const itemId = getCartKey(item);
       await handleRemoveFromCart(itemId);
-      
+
       // Show toast only for removal
       const normalizedItem = normalizeItemData(item);
       showCartMessage(CartMessageTypes.REMOVE_ALL, {
         itemName: normalizedItem.name,
         measurementUnit: normalizedItem.measurement_unit,
-        isBuyer: user?.role === 'buyer'
+        isBuyer: user?.role === "buyer",
       });
     } catch (err) {
       console.error("[Cart] Error removing item:", err);
@@ -277,7 +313,7 @@ const Cart = () => {
       showCartMessage(CartMessageTypes.OPERATION_FAILED, {
         itemName: normalizedItem.name,
         measurementUnit: item.measurement_unit || (item.unit === "KG" ? 1 : 2),
-        isBuyer: user?.role === 'buyer'
+        isBuyer: user?.role === "buyer",
       });
     }
   };
@@ -287,9 +323,9 @@ const Cart = () => {
       await handleClearCart();
       // Show toast for clear cart
       showCartMessage(CartMessageTypes.REMOVE_ALL, {
-        itemName: 'All items',
+        itemName: "All items",
         measurementUnit: 2,
-        isBuyer: user?.role === 'buyer'
+        isBuyer: user?.role === "buyer",
       });
     } catch (err) {
       console.error("[Cart] Error clearing cart:", err);
@@ -297,14 +333,15 @@ const Cart = () => {
       showCartMessage(CartMessageTypes.OPERATION_FAILED, {
         itemName: "cart",
         measurementUnit: 2,
-        isBuyer: user?.role === 'buyer'
+        isBuyer: user?.role === "buyer",
       });
     }
   };
 
   const handleManualInput = async (item, inputValue) => {
     try {
-      const measurementUnit = item.measurement_unit || (item.unit === "KG" ? 1 : 2);
+      const measurementUnit =
+        item.measurement_unit || (item.unit === "KG" ? 1 : 2);
       let parsedValue = parseFloat(inputValue);
 
       // Handle zero quantity - remove item from cart
@@ -316,7 +353,7 @@ const Cart = () => {
         showCartMessage(CartMessageTypes.REMOVE_ALL, {
           itemName: normalizedItem.name,
           measurementUnit: normalizedItem.measurement_unit,
-          isBuyer: user?.role === 'buyer'
+          isBuyer: user?.role === "buyer",
         });
         return true;
       }
@@ -329,18 +366,18 @@ const Cart = () => {
           showCartMessage(CartMessageTypes.INVALID_QUANTITY, {
             itemName: normalizedItem.name,
             measurementUnit: measurementUnit,
-            isBuyer: user?.role === 'buyer'
+            isBuyer: user?.role === "buyer",
           });
           return false;
         }
-        
+
         // Smart rounding logic for KG
         const originalValue = parsedValue;
         parsedValue = Math.floor(parsedValue / 0.25) * 0.25;
         const diff = parsedValue + 0.25 - originalValue;
         if (diff <= 0.125) parsedValue += 0.25;
         parsedValue = Math.round(parsedValue * 100) / 100;
-        
+
         // Minimum quantity check after rounding
         if (parsedValue < 0.25) {
           parsedValue = 0.25;
@@ -352,14 +389,14 @@ const Cart = () => {
           showCartMessage(CartMessageTypes.INVALID_QUANTITY, {
             itemName: normalizedItem.name,
             measurementUnit: measurementUnit,
-            isBuyer: user?.role === 'buyer'
+            isBuyer: user?.role === "buyer",
           });
           return false;
         }
-        
+
         // Smart rounding for pieces
         parsedValue = Math.round(parsedValue);
-        
+
         // Minimum quantity check after rounding
         if (parsedValue < 1) {
           parsedValue = 1;
@@ -370,15 +407,28 @@ const Cart = () => {
       if (isBuyer(user)) {
         // Get the actual stock quantity from the original item data (not cart quantity)
         const originalItem = safeAllItems.find(
-          (originalItem) => originalItem._id === item._id || originalItem.categoryId === item.categoryId
+          (originalItem) =>
+            originalItem._id === item._id ||
+            originalItem.categoryId === item.categoryId
         );
-        
-        const actualStockQuantity = originalItem?.quantity || originalItem?.available_quantity || originalItem?.stock_quantity || originalItem?.quantity_available;
-        
+
+        const actualStockQuantity =
+          originalItem?.quantity ||
+          originalItem?.available_quantity ||
+          originalItem?.stock_quantity ||
+          originalItem?.quantity_available;
+
         // Stock validation - check against actual stock quantity
-        if (actualStockQuantity !== undefined && parsedValue > actualStockQuantity) {
+        if (
+          actualStockQuantity !== undefined &&
+          parsedValue > actualStockQuantity
+        ) {
           const normalizedItem = normalizeItemData(item);
-          showMaxStockMessage(normalizedItem.name, item.quantity, normalizedItem.measurement_unit);
+          showMaxStockMessage(
+            normalizedItem.name,
+            item.quantity,
+            normalizedItem.measurement_unit
+          );
           return false;
         }
       }
@@ -389,7 +439,7 @@ const Cart = () => {
       };
 
       await handleSetQuantity(itemWithCorrectId, parsedValue);
-      
+
       // Only show toast if item is removed (handled above)
       return true;
     } catch (err) {
@@ -398,7 +448,7 @@ const Cart = () => {
       showCartMessage(CartMessageTypes.OPERATION_FAILED, {
         itemName: normalizedItem.name,
         measurementUnit: normalizedItem.measurement_unit,
-        isBuyer: user?.role === 'buyer'
+        isBuyer: user?.role === "buyer",
       });
       return false;
     }
@@ -406,15 +456,15 @@ const Cart = () => {
 
   const getInputValue = (itemKey, defaultValue) => {
     // Always show the actual cart quantity unless user is actively editing
-    return inputValues[itemKey] !== undefined && inputValues[itemKey] !== "" 
-      ? inputValues[itemKey] 
+    return inputValues[itemKey] !== undefined && inputValues[itemKey] !== ""
+      ? inputValues[itemKey]
       : String(defaultValue);
   };
 
   const setInputValue = (itemKey, value) => {
-    setInputValues(prev => ({
+    setInputValues((prev) => ({
       ...prev,
-      [itemKey]: value
+      [itemKey]: value,
     }));
   };
 
@@ -523,17 +573,22 @@ const Cart = () => {
                   <TextInput
                     style={styles.cartQtyText}
                     value={getInputValue(getCartKey(item), quantity)}
-                    onChangeText={(text) => setInputValue(getCartKey(item), text)}
+                    onChangeText={(text) =>
+                      setInputValue(getCartKey(item), text)
+                    }
                     onEndEditing={(e) => {
                       const inputValue = e.nativeEvent.text.trim();
                       const itemKey = getCartKey(item);
-                      
-                      if (inputValue === "" || inputValue === String(quantity)) {
+
+                      if (
+                        inputValue === "" ||
+                        inputValue === String(quantity)
+                      ) {
                         // Clear input value to show actual cart quantity
                         setInputValue(itemKey, "");
                         return;
                       }
-                      
+
                       // Use requestAnimationFrame to avoid render cycle conflicts
                       requestAnimationFrame(() => {
                         handleManualInput(item, inputValue).then((success) => {
@@ -812,16 +867,17 @@ const Cart = () => {
       <View
         style={[styles.contentContainer, { backgroundColor: colors.base100 }]}
       >
-        <FlatList
+        <KeyboardAwareFlatList
           data={cartArray}
           renderItem={renderCartItem}
           keyExtractor={(item) => getDisplayKey(item)}
-          contentContainerStyle={[
-            styles.listContainerModern,
-            { paddingBottom: spacing.xxl * 2 + 64 },
-          ]}
+          contentContainerStyle={[styles.listContainerModern]}
           showsVerticalScrollIndicator={false}
           extraData={cartItems}
+          enableOnAndroid
+          extraScrollHeight={100}
+          keyboardShouldPersistTaps="handled"
+          ListFooterComponent={<View style={{ height: 100 }} />}
         />
       </View>
     </View>
