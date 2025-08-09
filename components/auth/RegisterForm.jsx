@@ -2,7 +2,8 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Dimensions, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Dimensions, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../styles/theme';
 
@@ -40,10 +41,14 @@ const RegisterForm = ({ onSubmit, loading }) => {
             </View>
 
             {/* Form Card */}
-            <ScrollView
+            <KeyboardAwareScrollView
                 style={styles.formCard}
+                contentContainerStyle={{ flexGrow: 1 }}
                 showsVerticalScrollIndicator={false}
                 bounces={false}
+                enableOnAndroid
+                extraScrollHeight={20}
+                keyboardShouldPersistTaps="handled"
             >
                 <View style={styles.formContent}>
                     {/* Name Input */}
@@ -209,7 +214,7 @@ const RegisterForm = ({ onSubmit, loading }) => {
                         </Text>
                     </Pressable>
                 </View>
-            </ScrollView>
+            </KeyboardAwareScrollView>
         </View>
     );
 }
