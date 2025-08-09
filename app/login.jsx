@@ -9,7 +9,7 @@ import { getLoggedInUser } from "../utils/authUtils";
 export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [checkingUser, setCheckingUser] = useState(true);
-  const { login, isLoggedIn, user, deliveryStatus, refreshDeliveryStatus } = useAuth();
+  const { login, isLoggedIn, user, deliveryStatus, refreshDeliveryStatus, logout } = useAuth();
 
   useFocusEffect(
     useCallback(() => {
@@ -30,7 +30,12 @@ export default function LoginScreen() {
               } else if (updatedStatus === "pending" || updatedStatus === "declined") {
                 router.replace("/waitingForApproval");
               } else {
-                router.replace("/deliveryInfoForm");
+                await logout();
+                router.replace("/login");
+                Alert.alert(
+                  "Access Denied",
+                  "Please contact support for assistance."
+                );
               }
 
             } else {
@@ -43,9 +48,7 @@ export default function LoginScreen() {
           }
 
           const savedUser = await getLoggedInUser();
-          console.log("[LoginScreen] Saved user result:", savedUser);
-
-
+          console.log("[LoginScreen] Saved user result:", savedUser)
           setCheckingUser(false);
         } catch (err) {
           console.error("[LoginScreen] Error checking user:", err);
@@ -97,7 +100,12 @@ export default function LoginScreen() {
         else if (user.isApproved && deliveryStatus === 'approved') {
           router.replace("/delivery/dashboard");
         } else {
-          router.replace("/deliveryInfoForm");
+          await logout();
+          Alert.alert(
+            "Access Denied",
+            "Please contact support for assistance."
+          );
+          router.replace("/login");
         }
       } else {
         router.replace("/home");
