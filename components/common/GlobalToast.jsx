@@ -3,11 +3,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, Dimensions, PanResponder, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { colors } from "../../styles";
 
-// Toast queue system
+// Toast singleton system
 let addToastFn;
+let dismissToastFn;
 
 // type: 'success' | 'error' | 'info' | 'warning'
-export const showGlobalToast = (message, duration = 2000, type = 'success') => {
+export const showGlobalToast = (message, duration = 1200, type = 'success') => {
+  if (dismissToastFn) dismissToastFn(); // Dismiss current toast immediately
   if (addToastFn) addToastFn({ message, duration, type });
 };
 
@@ -48,12 +50,11 @@ const getToastStyle = (type) => {
 
 
 const TOAST_HEIGHT = 56;
-const TOAST_OVERLAP = 24; // more overlap, less vertical gap
-const MAX_TOASTS = 3;
 
 
 
-const Toast = ({ toast, onDismiss, index }) => {
+
+const Toast = ({ toast, onDismiss }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.85)).current;
   const translateY = useRef(new Animated.Value(40)).current;
@@ -62,8 +63,7 @@ const Toast = ({ toast, onDismiss, index }) => {
   const mounted = useRef(true);
   const timerRef = useRef(null);
   const animRef = useRef(null);
-  // Remember initial stacking offset at mount
-  const initialStackOffset = useRef(index * (TOAST_HEIGHT - TOAST_OVERLAP)).current;
+  // No stacking offset needed
 
   useEffect(() => {
     mounted.current = true;
@@ -72,7 +72,7 @@ const Toast = ({ toast, onDismiss, index }) => {
     animRef.current = Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 90,
+        duration: 120, // Fast entry
         useNativeDriver: true,
       }),
       Animated.spring(scaleAnim, {
@@ -83,7 +83,7 @@ const Toast = ({ toast, onDismiss, index }) => {
       }),
       Animated.timing(translateY, {
         toValue: 0,
-        duration: 120,
+        duration: 120, // Fast entry
         useNativeDriver: true,
       }),
     ]);
@@ -107,17 +107,17 @@ const Toast = ({ toast, onDismiss, index }) => {
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 0,
-          duration: 120,
+          duration: 120, // Fast exit
           useNativeDriver: true,
         }),
         Animated.timing(scaleAnim, {
           toValue: 0.92,
-          duration: 120,
+          duration: 120, // Fast exit
           useNativeDriver: true,
         }),
         Animated.timing(translateY, {
           toValue: 30,
-          duration: 120,
+          duration: 120, // Fast exit
           useNativeDriver: true,
         }),
       ]).start(() => {
@@ -150,9 +150,7 @@ const Toast = ({ toast, onDismiss, index }) => {
 
   const { backgroundColor, icon, label } = getToastStyle(toast.type);
 
-  // Calculate stacking offset: overlap toasts for a modern look
-  // Use initialStackOffset so toast doesn't jump when stack changes
-  const stackOffset = initialStackOffset;
+  // No stacking offset needed
   // Friendly, modern message wording
   let message = toast.message;
   // Only fallback if the message is empty or whitespace
@@ -179,7 +177,7 @@ const Toast = ({ toast, onDismiss, index }) => {
           backgroundColor,
           opacity: fadeAnim,
           transform: [
-            { translateY: Animated.add(translateY, new Animated.Value(stackOffset)) },
+            { translateY: translateY },
             { scale: scaleAnim },
             { translateX: pan },
           ],
@@ -201,38 +199,49 @@ const Toast = ({ toast, onDismiss, index }) => {
 };
 
 const GlobalToast = () => {
-  const [toasts, setToasts] = useState([]);
+  const [toast, setToast] = useState(null);
   const toastId = useRef(0);
+  const dismissRef = useRef(null);
 
-  const addToast = useCallback((toast) => {
-    setToasts((prev) => {
-      const id = ++toastId.current;
-      const newToast = { ...toast, id };
-      // Only keep max N toasts
-      const next = [...prev, newToast].slice(-MAX_TOASTS);
-      return next;
-    });
+  // Dismiss current toast immediately
+  const dismissToast = useCallback(() => {
+    if (dismissRef.current) {
+      dismissRef.current();
+    }
+  }, []);
+
+  // Add new toast, replacing any current one
+  const addToast = useCallback((toastData) => {
+    const id = ++toastId.current;
+    setToast({ ...toastData, id });
   }, []);
 
   const removeToast = useCallback((id) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
+    setToast((prev) => (prev && prev.id === id ? null : prev));
   }, []);
 
   useEffect(() => {
     addToastFn = addToast;
+    dismissToastFn = dismissToast;
     return () => {
       addToastFn = null;
+      dismissToastFn = null;
     };
-  }, [addToast]);
+  }, [addToast, dismissToast]);
 
-  if (!toasts.length) return null;
+  if (!toast) return null;
 
-  // Stack from bottom, above tab bar
   return (
     <View pointerEvents="box-none" style={styles.container}>
-      {toasts.map((toast, idx) => (
-        <Toast key={toast.id} toast={toast} onDismiss={removeToast} index={idx} />
-      ))}
+      <Toast
+        key={toast.id}
+        toast={toast}
+        onDismiss={removeToast}
+        ref={(ref) => {
+          // Expose dismiss method for immediate removal
+          if (ref) dismissRef.current = ref.handleDismiss;
+        }}
+      />
     </View>
   );
 };

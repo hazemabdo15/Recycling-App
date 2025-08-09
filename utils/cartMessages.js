@@ -64,7 +64,7 @@ export const showCartMessage = (type, options = {}) => {
     case CartMessageTypes.ADD_SINGLE:
       message = `Added ${quantityText} ${unit} of ${itemName}`;
       toastType = 'success';
-      defaultDuration = 1200;
+
       break;
 
     case CartMessageTypes.ADD_FAST:
@@ -191,7 +191,7 @@ export const showStockWarning = (itemName, currentStock, measurementUnit = 2) =>
     message = `Only ${stockText} ${unit} of ${itemName} in stock`;
   }
   
-  showGlobalToast(message, 2000, 'warning');
+  showGlobalToast(message, 1200, 'warning');
 };
 
 /**
@@ -201,5 +201,5 @@ export const showMaxStockMessage = (itemName, maxStock, measurementUnit = 2) => 
   const unit = getUnitText(measurementUnit);
   const maxStockText = measurementUnit === 1 ? maxStock.toFixed(2) : maxStock.toString();
   const message = `Cannot add more. Only ${maxStockText} ${unit} available`;
-  showGlobalToast(message, 1000, 'error');
+  showGlobalToast(message, 1200, 'error');
 };

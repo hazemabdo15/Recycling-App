@@ -3,23 +3,24 @@ import { showGlobalToast } from '../components/common/GlobalToast';
 
 // Unified toast hook using the new global toast system
 export const useToast = () => {
-  const showToast = useCallback((message, type = 'success', duration = 2000) => {
+  const DEFAULT_DURATION = 1200;
+  const showToast = useCallback((message, type = 'success', duration = DEFAULT_DURATION) => {
     showGlobalToast(message, duration, type);
   }, []);
 
-  const showSuccess = useCallback((message, duration) => {
+  const showSuccess = useCallback((message, duration = DEFAULT_DURATION) => {
     showToast(message, 'success', duration);
   }, [showToast]);
 
-  const showError = useCallback((message, duration) => {
+  const showError = useCallback((message, duration = DEFAULT_DURATION) => {
     showToast(message, 'error', duration);
   }, [showToast]);
 
-  const showWarning = useCallback((message, duration) => {
+  const showWarning = useCallback((message, duration = DEFAULT_DURATION) => {
     showToast(message, 'warning', duration);
   }, [showToast]);
 
-  const showInfo = useCallback((message, duration) => {
+  const showInfo = useCallback((message, duration = DEFAULT_DURATION) => {
     showToast(message, 'info', duration);
   }, [showToast]);
 

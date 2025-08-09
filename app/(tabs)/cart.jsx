@@ -3,20 +3,20 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
-  FlatList,
-  Image,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    FlatList,
+    Image,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
-  AnimatedButton,
-  AnimatedListItem,
-  Loader,
+    AnimatedButton,
+    AnimatedListItem,
+    Loader,
 } from "../../components/common";
 import { useAuth } from "../../context/AuthContext";
 import { useAllItems } from "../../hooks/useAPI";
@@ -25,9 +25,9 @@ import { borderRadius, spacing, typography } from "../../styles";
 import { colors } from "../../styles/theme";
 import { CartMessageTypes, showCartMessage, showMaxStockMessage } from "../../utils/cartMessages";
 import {
-  getCartKey,
-  getDisplayKey,
-  normalizeItemData,
+    getCartKey,
+    getDisplayKey,
+    normalizeItemData,
 } from "../../utils/cartUtils";
 import { getLabel, isBuyer } from "../../utils/roleLabels";
 import { scaleSize } from "../../utils/scale";
@@ -217,14 +217,7 @@ const Cart = () => {
       };
       await handleIncreaseQuantity(itemWithCorrectId);
       
-      // Show unified success message
-      const normalizedItem = normalizeItemData(item);
-      showCartMessage(CartMessageTypes.ADD_SINGLE, {
-        itemName: normalizedItem.name,
-        quantity: incrementStep,
-        measurementUnit: normalizedItem.measurement_unit,
-        isBuyer: user?.role === 'buyer'
-      });
+      // No toast for add in cart page
       
       // Clear input value to sync with new cart quantity
       const itemKey = getCartKey(item);
@@ -249,19 +242,7 @@ const Cart = () => {
       };
       await handleDecreaseQuantity(itemWithCorrectId);
       
-      // Show unified message
-      const normalizedItem = normalizeItemData(item);
-      const measurementUnit = item.measurement_unit || (item.unit === "KG" ? 1 : 2);
-      const decrementStep = measurementUnit === 1 ? 0.25 : 1;
-      const remainingQuantity = Math.max(0, item.quantity - decrementStep);
-      
-      showCartMessage(CartMessageTypes.REMOVE_SINGLE, {
-        itemName: normalizedItem.name,
-        quantity: decrementStep,
-        measurementUnit: measurementUnit,
-        remainingQuantity: remainingQuantity,
-        isBuyer: user?.role === 'buyer'
-      });
+      // No toast for decrease in cart page
       
       // Clear input value to sync with new cart quantity
       const itemKey = getCartKey(item);
@@ -283,7 +264,7 @@ const Cart = () => {
       const itemId = getCartKey(item);
       await handleRemoveFromCart(itemId);
       
-      // Show unified message for removal
+      // Show toast only for removal
       const normalizedItem = normalizeItemData(item);
       showCartMessage(CartMessageTypes.REMOVE_ALL, {
         itemName: normalizedItem.name,
@@ -304,7 +285,12 @@ const Cart = () => {
   const handleClearAll = async () => {
     try {
       await handleClearCart();
-      // No toast for clear cart action - it's a bulk operation
+      // Show toast for clear cart
+      showCartMessage(CartMessageTypes.REMOVE_ALL, {
+        itemName: 'All items',
+        measurementUnit: 2,
+        isBuyer: user?.role === 'buyer'
+      });
     } catch (err) {
       console.error("[Cart] Error clearing cart:", err);
       // For clear cart failures, we can still use a generic error
@@ -404,25 +390,7 @@ const Cart = () => {
 
       await handleSetQuantity(itemWithCorrectId, parsedValue);
       
-      // Show unified success message based on the operation
-      const normalizedItem = normalizeItemData(item);
-      if (parsedValue > item.quantity) {
-        // Always show the final quantity for manual set, not the added amount
-        showCartMessage(CartMessageTypes.MANUAL_SET, {
-          itemName: normalizedItem.name,
-          quantity: parsedValue,
-          measurementUnit: normalizedItem.measurement_unit,
-          isBuyer: user?.role === 'buyer'
-        });
-      } else if (parsedValue < item.quantity) {
-        // Show the final quantity when decreasing, not removal
-        showCartMessage(CartMessageTypes.MANUAL_SET, {
-          itemName: normalizedItem.name,
-          quantity: parsedValue,
-          measurementUnit: normalizedItem.measurement_unit,
-          isBuyer: user?.role === 'buyer'
-        });
-      }
+      // Only show toast if item is removed (handled above)
       return true;
     } catch (err) {
       console.error("[Cart] Error setting manual quantity:", err);
@@ -485,7 +453,7 @@ const Cart = () => {
             <Image
               source={{ uri: item.image }}
               style={styles.cartImage}
-              resizeMode="cover"
+              resizeMode="contain"
             />
           ) : (
             <View style={styles.cartImagePlaceholder}>

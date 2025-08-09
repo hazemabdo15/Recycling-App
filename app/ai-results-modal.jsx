@@ -2,13 +2,13 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
-  Dimensions,
-  FlatList,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Dimensions,
+    FlatList,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -344,14 +344,14 @@ export default function AIResultsModal() {
           if (warning.reason === 'out_of_stock') {
             showGlobalToast(
               `${warning.name} is out of stock and was not added to cart.`,
-              4000,
+              1200,
               'error'
             );
           } else {
             const availableToAdd = warning.availableStock - warning.currentInCart;
             showGlobalToast(
               `${warning.name}: Only ${availableToAdd} ${warning.unit} available. ${warning.discarded} ${warning.unit} discarded.`,
-              4000,
+              1200,
               'warning'
             );
           }
@@ -368,23 +368,23 @@ export default function AIResultsModal() {
             message += ` ${limitWarnings.length} item${limitWarnings.length > 1 ? 's had' : ' had'} quantities reduced due to stock limits.`;
           }
           
-          showGlobalToast(message, 4000, 'warning');
+          showGlobalToast(message, 1200, 'warning');
         }
       } else {
         // No stock issues or customer user, show regular success message
         const addedCount = processedItems.length;
         showGlobalToast(
           `${addedCount} item${addedCount > 1 ? 's' : ''} added to cart`,
-          2500,
+          1200,
           'success'
         );
       }
     } else if (stockWarnings.length > 0) {
       // No items added but we have warnings (all items were out of stock or limited)
-      showGlobalToast('No items could be added due to stock limitations', 3000, 'error');
+      showGlobalToast('No items could be added due to stock limitations', 1200, 'error');
     } else {
       // No items and no warnings - shouldn't happen but just in case
-      showGlobalToast('No items could be added', 3000, 'error');
+      showGlobalToast('No items could be added', 1200, 'error');
     }
 
     router.dismissAll();

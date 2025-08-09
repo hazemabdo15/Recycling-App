@@ -2,7 +2,6 @@
 import {
   ActivityIndicator,
   FlatList,
-  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -102,27 +101,30 @@ const CategoriesGrid = ({
       // Show unified message based on the operation
       if (value === 0) {
         // Only show removal message when quantity is set to 0
-        showCartMessage(CartMessageTypes.MANUAL_REMOVED, {
-          itemName: normalizedItem.name,
-          measurementUnit: normalizedItem.measurement_unit,
-          isBuyer: user?.role === "buyer",
-        });
+        // No toast for manual removed
+        // showCartMessage(CartMessageTypes.MANUAL_REMOVED, {
+        //   itemName: normalizedItem.name,
+        //   measurementUnit: normalizedItem.measurement_unit,
+        //   isBuyer: user?.role === 'buyer',
+        // });
       } else if (value > currentQuantity) {
         // Always show the final quantity for manual set, not the added amount
-        showCartMessage(CartMessageTypes.MANUAL_SET, {
-          itemName: normalizedItem.name,
-          quantity: value,
-          measurementUnit: normalizedItem.measurement_unit,
-          isBuyer: user?.role === "buyer",
-        });
+        // No toast for manual set
+        // showCartMessage(CartMessageTypes.MANUAL_SET, {
+        //   itemName: normalizedItem.name,
+        //   quantity: value,
+        //   measurementUnit: normalizedItem.measurement_unit,
+        //   isBuyer: user?.role === 'buyer',
+        // });
       } else if (value < currentQuantity) {
         // Show quantity change, not removal
-        showCartMessage(CartMessageTypes.MANUAL_SET, {
-          itemName: normalizedItem.name,
-          quantity: value,
-          measurementUnit: normalizedItem.measurement_unit,
-          isBuyer: user?.role === "buyer",
-        });
+        // No toast for manual set
+        // showCartMessage(CartMessageTypes.MANUAL_SET, {
+        //   itemName: normalizedItem.name,
+        //   quantity: value,
+        //   measurementUnit: normalizedItem.measurement_unit,
+        //   isBuyer: user?.role === 'buyer',
+        // });
       }
     } catch (_err) {
       showCartMessage(CartMessageTypes.OPERATION_FAILED, {
@@ -341,6 +343,7 @@ const CategoriesGrid = ({
     <FadeInView delay={0}>
       {showItemsMode ? (
         <FlatList
+          key={"items"}
           style={styles.itemsScrollContainer}
           data={filteredItems}
           keyExtractor={(item) => getCartKey(item) || `${item.name}`}
@@ -375,7 +378,7 @@ const CategoriesGrid = ({
                     if (outOfStock) {
                       showGlobalToast(
                         "This item is out of stock.",
-                        1000,
+                        1200,
                         "error"
                       );
                     }
@@ -393,7 +396,7 @@ const CategoriesGrid = ({
                     ) {
                       showGlobalToast(
                         "Not enough quantity in stock to add this item.",
-                        1000,
+                        1200,
                         "error"
                       );
                       return;
@@ -420,7 +423,7 @@ const CategoriesGrid = ({
                         "[CategoriesGrid] Showing maxStock toast:",
                         maxMsg
                       );
-                      showGlobalToast(maxMsg, 1000, "error");
+                      showGlobalToast(maxMsg, 1200, "error");
                       return;
                     }
                   }
@@ -439,7 +442,7 @@ const CategoriesGrid = ({
                     ) {
                       showGlobalToast(
                         "Not enough quantity in stock to add this item.",
-                        1000,
+                        1200,
                         "error"
                       );
                       return;
@@ -466,7 +469,7 @@ const CategoriesGrid = ({
                         "[CategoriesGrid] Showing fast maxStock toast:",
                         maxMsg
                       );
-                      showGlobalToast(maxMsg, 1000, "error");
+                      showGlobalToast(maxMsg, 1200, "error");
                       return;
                     }
                   }
@@ -482,21 +485,25 @@ const CategoriesGrid = ({
           showsVerticalScrollIndicator={false}
         />
       ) : (
-        <ScrollView
-          showsVerticalScrollIndicator={false}
+        <FlatList
+          key={"categories"}
+          data={filteredCategories}
+          keyExtractor={(category) => category._id}
+          numColumns={2}
+          renderItem={({ item: category }) => (
+            <CategoryCard
+              key={category._id}
+              category={category}
+              onPress={() => handleCategoryPress(category)}
+              style={styles.categoryCard}
+            />
+          )}
           contentContainerStyle={styles.scrollContainer}
-        >
-          <View style={styles.categoriesGrid}>
-            {filteredCategories.map((category, index) => (
-              <CategoryCard
-                key={category._id}
-                category={category}
-                onPress={() => handleCategoryPress(category)}
-                style={styles.categoryCard}
-              />
-            ))}
-          </View>
-        </ScrollView>
+          columnWrapperStyle={styles.categoriesGrid}
+          showsVerticalScrollIndicator={false}
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+        />
       )}
     </FadeInView>
   );

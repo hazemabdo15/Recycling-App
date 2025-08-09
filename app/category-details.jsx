@@ -173,19 +173,10 @@ const CategoryDetails = () => {
       const result = await handleSetQuantity(item, value);
       console.log("handleSetQuantity result:", result);
 
-      // Show success message for manual input
+      // Only show removal message when quantity is set to 0
       if (value === 0) {
-        // Only show removal message when quantity is set to 0
         showCartMessage(CartMessageTypes.MANUAL_REMOVED, {
           itemName: item.name,
-          measurementUnit: item.measurement_unit,
-          isBuyer: user?.role === "buyer",
-        });
-      } else {
-        // Always show the final quantity for manual set
-        showCartMessage(CartMessageTypes.MANUAL_SET, {
-          itemName: item.name,
-          quantity: value,
           measurementUnit: item.measurement_unit,
           isBuyer: user?.role === "buyer",
         });

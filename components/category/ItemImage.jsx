@@ -14,7 +14,7 @@ const ItemImage = ({ imageUri, points, placeholder = "recycle" }) => {
                 <Image
                     source={{ uri: imageUri }}
                     style={itemImageStyles.itemImage}
-                    resizeMode="cover"
+                    resizeMode="contain"
                 />
             ) : (
                 <View style={itemImageStyles.placeholderImage}>

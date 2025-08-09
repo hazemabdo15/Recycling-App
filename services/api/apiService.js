@@ -288,7 +288,7 @@ class OptimizedAPIService {
         } else {
           console.log(`[API] Refresh failed, logging out user`);
           // Show toast and redirect to login
-          showGlobalToast("Session expired, please log in again.");
+          showGlobalToast("Session expired, please log in again.", 1200);
           if (getNotifyTokenExpired()) getNotifyTokenExpired()();
           // Use expo-router to redirect
           setTimeout(() => {
@@ -334,7 +334,7 @@ class OptimizedAPIService {
 
       if (error.message === "Session expired" || error.status === 401) {
         await this.clearTokens();
-        showGlobalToast("Session expired, please log in again.");
+        showGlobalToast("Session expired, please log in again.", 1200);
         if (getNotifyTokenExpired()) getNotifyTokenExpired()();
         setTimeout(() => {
           try {
