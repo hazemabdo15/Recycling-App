@@ -3,6 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Dimensions, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../styles/theme';
 
@@ -27,97 +28,104 @@ export default function LoginForm({ onSubmit, loading }) {
   };
 
   return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={[colors.primary, colors.secondary]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-      
-      {/* Top decorative section */}
-      <View style={[styles.topSection, { paddingTop: insets.top + scaleSize(40) }]}>
-        <View style={styles.logoContainer}>
-          <MaterialCommunityIcons name="recycle" size={scaleSize(60)} color={colors.white} />
-        </View>
-        <Text style={styles.title}>Welcome Back!</Text>
-        <Text style={styles.subtitle}>Sign in to continue your eco journey</Text>
-      </View>
+    <KeyboardAwareScrollView
+      contentContainerStyle={{ flexGrow: 1 }}
+      enableOnAndroid
+      extraScrollHeight={20}
+      keyboardShouldPersistTaps="handled"
+    >
+      <View style={styles.container}>
+        <LinearGradient
+          colors={[colors.primary, colors.secondary]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
 
-      {/* Main form card */}
-      <View style={styles.formCard}>
-        <View style={styles.formContent}>
-          <View style={styles.inputContainer}>
-            <View style={styles.inputWrapper}>
-              <Ionicons name="mail-outline" size={scaleSize(20)} color={colors.neutral} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Email address"
-                placeholderTextColor={colors.neutral}
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
-              />
+        {/* Top decorative section */}
+        <View style={[styles.topSection, { paddingTop: insets.top + scaleSize(40) }]}> 
+          <View style={styles.logoContainer}>
+            <MaterialCommunityIcons name="recycle" size={scaleSize(60)} color={colors.white} />
+          </View>
+          <Text style={styles.title}>Welcome Back!</Text>
+          <Text style={styles.subtitle}>Sign in to continue your eco journey</Text>
+        </View>
+
+        {/* Main form card */}
+        <View style={styles.formCard}>
+          <View style={styles.formContent}>
+            <View style={styles.inputContainer}>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="mail-outline" size={scaleSize(20)} color={colors.neutral} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Email address"
+                  placeholderTextColor={colors.neutral}
+                  value={email}
+                  onChangeText={setEmail}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                />
+              </View>
+
+              <View style={styles.inputWrapper}>
+                <Ionicons name="lock-closed-outline" size={scaleSize(20)} color={colors.neutral} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Password"
+                  placeholderTextColor={colors.neutral}
+                  secureTextEntry={!showPassword}
+                  value={password}
+                  onChangeText={setPassword}
+                />
+                <Pressable
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.eyeIcon}
+                  accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={scaleSize(20)} color={colors.neutral} />
+                </Pressable>
+              </View>
             </View>
 
-            <View style={styles.inputWrapper}>
-              <Ionicons name="lock-closed-outline" size={scaleSize(20)} color={colors.neutral} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Password"
-                placeholderTextColor={colors.neutral}
-                secureTextEntry={!showPassword}
-                value={password}
-                onChangeText={setPassword}
-              />
-              <Pressable
-                onPress={() => setShowPassword(!showPassword)}
-                style={styles.eyeIcon}
-                accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+            <Pressable
+              style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+              onPress={handleLogin}
+              disabled={loading}
+              android_ripple={{ color: 'rgba(255,255,255,0.2)' }}
+            >
+              <LinearGradient
+                colors={loading ? [colors.neutral, colors.neutral] : [colors.primary, colors.secondary]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.loginButtonGradient}
               >
-                <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={scaleSize(20)} color={colors.neutral} />
+                {loading && <View style={styles.loadingSpinner} />}
+                <Text style={styles.loginText}>{loading ? 'Signing in...' : 'Sign In'}</Text>
+              </LinearGradient>
+            </Pressable>
+
+            <View style={styles.linksContainer}>
+              <Pressable onPress={() => router.push('/register')}>
+                <Text style={styles.linkText}>
+                  Don&apos;t have an account? <Text style={styles.linkTextBold}>Sign Up</Text>
+                </Text>
+              </Pressable>
+
+              <View style={styles.dividerContainer}>
+                <View style={styles.divider} />
+                <Text style={styles.dividerText}>or</Text>
+                <View style={styles.divider} />
+              </View>
+
+              <Pressable onPress={handleSkip} style={styles.skipButton}>
+                <Text style={styles.skipText}>Continue as Guest</Text>
               </Pressable>
             </View>
           </View>
-
-          <Pressable
-            style={[styles.loginButton, loading && styles.loginButtonDisabled]}
-            onPress={handleLogin}
-            disabled={loading}
-            android_ripple={{ color: 'rgba(255,255,255,0.2)' }}
-          >
-            <LinearGradient
-              colors={loading ? [colors.neutral, colors.neutral] : [colors.primary, colors.secondary]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.loginButtonGradient}
-            >
-              {loading && <View style={styles.loadingSpinner} />}
-              <Text style={styles.loginText}>{loading ? 'Signing in...' : 'Sign In'}</Text>
-            </LinearGradient>
-          </Pressable>
-
-          <View style={styles.linksContainer}>
-            <Pressable onPress={() => router.push('/register')}>
-              <Text style={styles.linkText}>
-                Don&apos;t have an account? <Text style={styles.linkTextBold}>Sign Up</Text>
-              </Text>
-            </Pressable>
-
-            <View style={styles.dividerContainer}>
-              <View style={styles.divider} />
-              <Text style={styles.dividerText}>or</Text>
-              <View style={styles.divider} />
-            </View>
-
-            <Pressable onPress={handleSkip} style={styles.skipButton}>
-              <Text style={styles.skipText}>Continue as Guest</Text>
-            </Pressable>
-          </View>
         </View>
       </View>
-    </View>
+    </KeyboardAwareScrollView>
   );
 }
 
