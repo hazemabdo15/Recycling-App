@@ -1,15 +1,24 @@
 ﻿import { router, useFocusEffect } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
 import LoginForm from "../components/auth/LoginForm";
 import { useAuth } from "../context/AuthContext";
 import { loginUser } from "../services/auth";
+import { useGoogleAuth } from "../services/googleAuth";
 import { getLoggedInUser } from "../utils/authUtils";
 
 export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [checkingUser, setCheckingUser] = useState(true);
   const { login, isLoggedIn, user, deliveryStatus, refreshDeliveryStatus, logout } = useAuth();
+  const { 
+    response, 
+    handleGoogleLogin, 
+    processGoogleResponse, 
+    recoverFromDismiss, 
+    getAuthState, 
+    extractTokensFromUrl 
+  } = useGoogleAuth();
 
   useFocusEffect(
     useCallback(() => {
@@ -57,10 +66,122 @@ export default function LoginScreen() {
       };
 
       checkUser();
-    }, [deliveryStatus, isLoggedIn, refreshDeliveryStatus, user])
+    }, [deliveryStatus, isLoggedIn, refreshDeliveryStatus, user, logout])
   );
 
-  if (checkingUser) return null;
+  // Enhanced Google OAuth response handling
+  const processGoogleAuthResponse = useCallback(async (authResponse) => {
+    console.log('🔍 [LoginScreen] Processing auth response:', authResponse);
+    
+    // Enhanced handling for success responses (including extracted token responses)
+    if (authResponse?.type === 'success' || authResponse?.userData) {
+      console.log('✅ [LoginScreen] Got successful Google response!');
+      setLoading(true);
+      try {
+        console.log('[LoginScreen] Processing Google response...');
+        const backendResponse = await processGoogleResponse(authResponse);
+        
+        if (backendResponse?.exists) {
+          // User exists, log them in
+          const { user, accessToken } = backendResponse;
+          await login(user, accessToken);
+          
+          if (user.role === "delivery") {
+            const updatedStatus = await refreshDeliveryStatus();
+            if (updatedStatus === "approved" && user.isApproved) {
+              router.replace("/delivery/dashboard");
+            } else if (updatedStatus === "pending" || updatedStatus === "declined") {
+              router.replace("/waitingForApproval");
+            } else {
+              await logout();
+              Alert.alert("Access Denied", "Please contact support for assistance.");
+            }
+          } else {
+            router.replace("/home");
+          }
+        } else {
+          // New user, redirect to registration with Google data
+          console.log('[LoginScreen] New Google user, redirecting to registration...');
+          const idToken = authResponse.params?.id_token || authResponse.params?.access_token;
+          router.push({
+            pathname: '/register',
+            params: {
+              provider: 'google',
+              email: backendResponse.user.email,
+              name: backendResponse.user.name,
+              image: backendResponse.user.image,
+              idToken: idToken,
+            },
+          });
+        }
+      } catch (error) {
+        console.error('[LoginScreen] Google login error:', error);
+        Alert.alert(
+          'Google Login Failed', 
+          'Authentication encountered an issue. Please try again.'
+        );
+      } finally {
+        setLoading(false);
+      }
+    } else if (authResponse?.type === 'error') {
+      console.error('[LoginScreen] Google auth error:', authResponse.error);
+      Alert.alert('Google Login Error', 'Authentication failed. Please try again.');
+    } else if (authResponse?.type === 'cancel') {
+      console.log('⚠️ [LoginScreen] User cancelled Google login');
+    } else if (authResponse?.type === 'dismiss') {
+      console.log('⚠️ [LoginScreen] Google login was dismissed - attempting recovery...');
+      
+      // Check if this is the special Metro disconnect case
+      if (authResponse?.message === 'Metro disconnect detected') {
+  console.log('[LoginScreen] Metro disconnect case detected');
+  // No alert shown for Metro disconnect interruption
+  return;
+      }
+      
+      // Enhanced dismiss handling with automatic recovery for cases with URL
+      if (authResponse?.url) {
+        console.log('[LoginScreen] Attempting to recover from dismissed auth...');
+        try {
+          const recoveredResponse = recoverFromDismiss(authResponse);
+          if (recoveredResponse) {
+            console.log('[LoginScreen] Successfully recovered from dismissed auth!');
+            // Process the recovered response
+            return await processGoogleAuthResponse(recoveredResponse);
+          } else {
+            console.log('[LoginScreen] Could not recover from dismissed auth');
+            // No alert shown for interrupted auth
+          }
+        } catch (recoveryError) {
+          console.error('[LoginScreen] Error during dismiss recovery:', recoveryError);
+        }
+      } else {
+  console.log('[LoginScreen] Dismiss without URL - development guidance (no alert)');
+      }
+    } else if (authResponse) {
+      console.log('🤔 [LoginScreen] Unexpected response type:', authResponse.type);
+      
+      // Log additional debug information
+      console.log('🔍 [LoginScreen] Debug - Auth state:', getAuthState());
+      
+      if (authResponse.url) {
+        console.log('🔍 [LoginScreen] Response contains URL, checking for tokens...');
+        const extracted = extractTokensFromUrl(authResponse.url);
+        if (extracted) {
+          console.log('[LoginScreen] Found tokens in unexpected response, processing...');
+          // Process the extracted tokens
+          return await processGoogleAuthResponse(extracted);
+        }
+      }
+    } else {
+      console.log('🔍 [LoginScreen] Response is null/undefined');
+    }
+  }, [processGoogleResponse, login, refreshDeliveryStatus, logout, recoverFromDismiss, getAuthState, extractTokensFromUrl]);
+  
+  useEffect(() => {
+    if (response) {
+      processGoogleAuthResponse(response);
+    }
+  }, [response, processGoogleAuthResponse]);
 
   const handleLogin = async ({ email, password }) => {
     email = email.trim().toLowerCase();
@@ -121,9 +242,30 @@ export default function LoginScreen() {
     }
   };
 
+  const handleGoogleLoginPress = async () => {
+    if (loading) return;
+    
+    try {
+      console.log('[LoginScreen] Starting Google login...');
+      await handleGoogleLogin();
+    } catch (error) {
+      console.error('[LoginScreen] Google login initiation error:', error);
+      Alert.alert('Google Login Error', 'Failed to start Google authentication.');
+    }
+  };
+
+  // Don't render anything while checking user state
+  if (checkingUser) {
+    return null;
+  }
+
   return (
     <View style={styles.screen}>
-      <LoginForm onSubmit={handleLogin} loading={loading} />
+      <LoginForm 
+        onSubmit={handleLogin} 
+        loading={loading} 
+        onGoogleLogin={handleGoogleLoginPress}
+      />
     </View>
   );
 }

@@ -1,4 +1,4 @@
-﻿{
+{
   "expo": {
     "name": "EcoRecycle",
     "slug": "EcoRecycle",
@@ -9,9 +9,11 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.recyclecrew.ecorecycle"
     },
     "android": {
+      "package": "com.recyclecrew.ecorecycle",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -25,7 +27,19 @@
             "cleartextTrafficPermitted": false
           }
         ]
-      }
+      },
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "recyclingapp"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -41,7 +55,8 @@
           "resizeMode": "cover",
           "backgroundColor": "#0E9F6E"
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true

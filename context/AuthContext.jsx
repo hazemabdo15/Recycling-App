@@ -34,6 +34,25 @@ export function AuthProvider({ children }) {
   const [periodicCheckRunning, setPeriodicCheckRunning] = useState(false);
   const [deliveryStatus, setDeliveryStatus] = useState(null);
 
+  // Persist user to AsyncStorage whenever setUser is called
+  const setUser = useCallback(
+    async (newUserOrUpdater) => {
+      // Support function updater (like React's setState)
+      setUserState((prevUser) => {
+        const newUser = typeof newUserOrUpdater === 'function' ? newUserOrUpdater(prevUser) : newUserOrUpdater;
+        console.log('[AuthContext] setUser called. New user:', newUser);
+        // Persist only if not undefined/null
+        if (newUser) {
+          setLoggedInUser(newUser, deliveryStatus).catch((e) => {
+            console.error('[AuthContext] Failed to persist user to storage:', e);
+          });
+        }
+        return newUser;
+      });
+    },
+    [deliveryStatus]
+  );
+
   const refreshDeliveryStatus = async () => {
   if (!user || !user._id) {
     console.warn("[AuthContext] Cannot refresh delivery status without a valid user");
@@ -214,9 +233,12 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const updateToken = (newToken) => {
-    setAccessToken(newToken);
-  };
+  const updateToken = useCallback((newToken) => {
+    if (newToken !== accessToken) {
+      console.log('[AuthContext] Updating token:', newToken ? `${newToken.substring(0, 20)}...` : 'null');
+      setAccessToken(newToken);
+    }
+  }, [accessToken]);
 
   const getSessionInfo = () => {
     if (!accessToken) return null;
@@ -246,25 +268,6 @@ export function AuthProvider({ children }) {
     }
   };
 
-
-  // Persist user to AsyncStorage whenever setUser is called
-  const setUser = useCallback(
-    async (newUserOrUpdater) => {
-      // Support function updater (like React's setState)
-      setUserState((prevUser) => {
-        const newUser = typeof newUserOrUpdater === 'function' ? newUserOrUpdater(prevUser) : newUserOrUpdater;
-        console.log('[AuthContext] setUser called. New user:', newUser);
-        // Persist only if not undefined/null
-        if (newUser) {
-          setLoggedInUser(newUser, deliveryStatus).catch((e) => {
-            console.error('[AuthContext] Failed to persist user to storage:', e);
-          });
-        }
-        return newUser;
-      });
-    },
-    [deliveryStatus]
-  );
 
   const value = {
     user,

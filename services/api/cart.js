@@ -1,5 +1,6 @@
-﻿import AsyncStorage from "@react-native-async-storage/async-storage";
+﻿import AsyncStorage from '@react-native-async-storage/async-storage';
 import { isDevelopment, isProduction } from '../../config/env';
+import { clearSession, getAccessToken as getStoredAccessToken } from "../../utils/authUtils";
 import { validateQuantity } from "../../utils/cartUtils.js";
 import logger from '../../utils/logger';
 import { measureApiCall } from '../../utils/performanceMonitor';
@@ -13,8 +14,7 @@ const TOKEN_CACHE_DURATION = isProduction ? 60000 : 30000;
 
 export async function clearAuthData() {
   try {
-    await AsyncStorage.removeItem("accessToken");
-    await AsyncStorage.removeItem("sessionId");
+    await clearSession();
     cachedToken = null;
     tokenCacheTime = 0;
     
@@ -55,7 +55,7 @@ async function getAccessToken() {
       }
     }
 
-    const token = await AsyncStorage.getItem("accessToken");
+    const token = await getStoredAccessToken();
     if (token && !isTokenExpired(token)) {
       cachedToken = token;
       tokenCacheTime = now;
@@ -308,7 +308,7 @@ export async function addItemToCart(item, isLoggedIn) {
           
           if (response.status === 401) {
             logger.auth('Authentication failed - token expired', null, 'ERROR');
-            await AsyncStorage.removeItem("accessToken");
+            await clearSession();
             cachedToken = null;
             tokenCacheTime = 0;
             throw new Error("Authentication failed - please login again");

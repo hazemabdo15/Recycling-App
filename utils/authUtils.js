@@ -1,8 +1,8 @@
-﻿import AsyncStorage from '@react-native-async-storage/async-storage';
+﻿import * as SecureStore from 'expo-secure-store';
 
 export async function getAccessToken() {
   try {
-    return await AsyncStorage.getItem('accessToken');
+    return await SecureStore.getItemAsync('accessToken');
   } catch {
     return null;
   }
@@ -10,12 +10,12 @@ export async function getAccessToken() {
 
 export async function setAccessToken(token) {
   try {
-    await AsyncStorage.setItem('accessToken', token);
+    await SecureStore.setItemAsync('accessToken', token);
 
     try {
       const { default: apiService } = await import('../services/api/apiService');
       await apiService.setAccessToken(token);
-      console.log('[authUtils] Token set in both AsyncStorage and APIService');
+      console.log('[authUtils] Token set in both SecureStore and APIService');
     } catch (error) {
       console.warn('[authUtils] Could not update APIService token:', error.message);
     }
@@ -24,14 +24,14 @@ export async function setAccessToken(token) {
 
 export async function getLoggedInUser() {
   try {
-    const userString = await AsyncStorage.getItem('user');
+    const userString = await SecureStore.getItemAsync('user');
     if (userString) {
       const user = JSON.parse(userString);
-      console.log('[authUtils] Retrieved user from AsyncStorage:', user);
+      console.log('[authUtils] Retrieved user from SecureStore:', user);
       console.log('[authUtils] Retrieved user role:', user?.role);
       return user;
     }
-    console.log('[authUtils] No user found in AsyncStorage');
+    console.log('[authUtils] No user found in SecureStore');
     return null;
   } catch (error) {
     console.error('[authUtils] Error retrieving user:', error);
@@ -41,13 +41,13 @@ export async function getLoggedInUser() {
 
 export async function setLoggedInUser(user) {
   try {
-    console.log('[authUtils] Storing user in AsyncStorage:', user);
+    console.log('[authUtils] Storing user in SecureStore:', user);
     console.log('[authUtils] User role being stored:', user?.role);
     if (user?.role === 'delivery') {
       const userWithStatus = { ...user, deliveryStatus: 'pending' };
-      await AsyncStorage.setItem('user', JSON.stringify(userWithStatus));
+      await SecureStore.setItemAsync('user', JSON.stringify(userWithStatus));
     } else {
-      await AsyncStorage.setItem('user', JSON.stringify(user));
+      await SecureStore.setItemAsync('user', JSON.stringify(user));
     }
   } catch (error) {
     console.error('[authUtils] Error storing user:', error);
@@ -71,6 +71,8 @@ export async function setDeliveryStatus(status) {
 
 export async function clearSession() {
   try {
-    await AsyncStorage.multiRemove(['user', 'accessToken', 'sessionId']);
+    await SecureStore.deleteItemAsync('user');
+    await SecureStore.deleteItemAsync('accessToken');
+    await SecureStore.deleteItemAsync('sessionId');
   } catch {}
 }

@@ -1,13 +1,13 @@
 ﻿import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import {
-  addItemToCart,
-  clearCart as apiClearCart,
-  clearAuthData,
-  getCart,
-  removeItemFromCart,
-  testBackendConnectivity,
-  testMinimalPost,
-  updateCartItem,
+    addItemToCart,
+    clearCart as apiClearCart,
+    clearAuthData,
+    getCart,
+    removeItemFromCart,
+    testBackendConnectivity,
+    testMinimalPost,
+    updateCartItem,
 } from "../services/api/cart.js";
 import { createCartItem, getCartKey, normalizeItemData, validateQuantity } from "../utils/cartUtils";
 import { useAuth } from "./AuthContext";
@@ -484,23 +484,6 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  // Debug function to force cart refresh
-  const forceRefreshCart = useCallback(async () => {
-    console.log('[CartContext] Force refreshing cart...');
-    setLoading(true);
-    try {
-      await refreshCart();
-      console.log('[CartContext] Force refresh completed');
-      
-      // Force UI update by incrementing a counter
-      setUpdateTrigger(prev => prev + 1);
-    } catch (error) {
-      console.error('[CartContext] Force refresh failed:', error.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [refreshCart]);
-
   const refreshCart = useCallback(async () => {
     try {
       console.log('[CartContext] Refreshing cart, isLoggedIn:', isLoggedIn);
@@ -553,6 +536,23 @@ export const CartProvider = ({ children }) => {
       throw err;
     }
   }, [isLoggedIn]);
+
+  // Debug function to force cart refresh
+  const forceRefreshCart = useCallback(async () => {
+    console.log('[CartContext] Force refreshing cart...');
+    setLoading(true);
+    try {
+      await refreshCart();
+      console.log('[CartContext] Force refresh completed');
+      
+      // Force UI update by incrementing a counter
+      setUpdateTrigger(prev => prev + 1);
+    } catch (error) {
+      console.error('[CartContext] Force refresh failed:', error.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [refreshCart]);
 
   const getItemQuantity = (identifier) => {
 

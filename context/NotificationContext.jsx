@@ -88,7 +88,7 @@ export const NotificationProvider = ({ children }) => {
       }
       isConnecting.current = false;
     };
-  }, [isLoggedIn, user, accessToken, doFetch, doConnect]);
+  }, [isLoggedIn, user, accessToken]);
 
   const doFetch = useCallback(async () => {
     try {

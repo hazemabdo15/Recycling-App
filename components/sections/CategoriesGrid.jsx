@@ -1,11 +1,11 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  FlatList,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  View,
+    ActivityIndicator,
+    FlatList,
+    RefreshControl,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
 import { KeyboardAwareFlatList } from 'react-native-keyboard-aware-scroll-view';
 import { useAuth } from "../../context/AuthContext";
@@ -14,14 +14,14 @@ import { useCart } from "../../hooks/useCart";
 import { spacing } from "../../styles";
 import { colors } from "../../styles/theme";
 import {
-  CartMessageTypes,
-  showCartMessage,
-  showMaxStockMessage,
+    CartMessageTypes,
+    showCartMessage,
+    showMaxStockMessage,
 } from "../../utils/cartMessages";
 import {
-  getCartKey,
-  getIncrementStep,
-  normalizeItemData,
+    getCartKey,
+    getIncrementStep,
+    normalizeItemData,
 } from "../../utils/cartUtils";
 import { isBuyer } from "../../utils/roleLabels";
 import { scaleSize } from "../../utils/scale";
@@ -70,14 +70,14 @@ const CategoriesGrid = ({
     if (value > 0) {
       if (normalizedItem.measurement_unit === 1 && value < 0.25) {
         showCartMessage(CartMessageTypes.INVALID_QUANTITY, {
-          itemName: normalizedItem.name,
+          itemName: normalizedItem?.name || 'Item',
           measurementUnit: normalizedItem.measurement_unit,
           isBuyer: user?.role === "buyer",
         });
         return;
       } else if (normalizedItem.measurement_unit === 2 && value < 1) {
         showCartMessage(CartMessageTypes.INVALID_QUANTITY, {
-          itemName: normalizedItem.name,
+          itemName: normalizedItem?.name || 'Item',
           measurementUnit: normalizedItem.measurement_unit,
           isBuyer: user?.role === "buyer",
         });
@@ -88,7 +88,7 @@ const CategoriesGrid = ({
     // Only check stock for buyer users
     if (isBuyer(user) && value > item.quantity) {
       showMaxStockMessage(
-        normalizedItem.name,
+        normalizedItem?.name || 'Item',
         item.quantity,
         normalizedItem.measurement_unit
       );
@@ -131,7 +131,7 @@ const CategoriesGrid = ({
       }
     } catch (_err) {
       showCartMessage(CartMessageTypes.OPERATION_FAILED, {
-        itemName: normalizedItem.name,
+        itemName: normalizedItem?.name || 'Item',
         measurementUnit: normalizedItem.measurement_unit,
         isBuyer: user?.role === "buyer",
       });
@@ -168,12 +168,12 @@ const CategoriesGrid = ({
               };
             }) || []
         )
-        .filter((item) => item.name.toLowerCase().includes(searchLower));
+        .filter((item) => item && item.name && item.name.toLowerCase().includes(searchLower));
 
       return { filteredCategories: [], filteredItems: items };
     } else {
       const cats = categories.filter((category) =>
-        category.name.toLowerCase().includes(searchLower)
+        category && category.name && category.name.toLowerCase().includes(searchLower)
       );
       return { filteredCategories: cats, filteredItems: [] };
     }
@@ -207,14 +207,14 @@ const CategoriesGrid = ({
         // Show toast instantly before async operation
         if (operation === "increase") {
           showCartMessage(CartMessageTypes.ADD_SINGLE, {
-            itemName: normalizedItem.name,
+            itemName: normalizedItem?.name || 'Item',
             quantity: step,
             measurementUnit: normalizedItem.measurement_unit,
             isBuyer: user?.role === "buyer",
           });
         } else if (operation === "decrease") {
           showCartMessage(CartMessageTypes.REMOVE_SINGLE, {
-            itemName: normalizedItem.name,
+            itemName: normalizedItem?.name || 'Item',
             quantity: step,
             measurementUnit: normalizedItem.measurement_unit,
             remainingQuantity: Math.max(0, (item.cartQuantity || 0) - step),
@@ -222,14 +222,14 @@ const CategoriesGrid = ({
           });
         } else if (operation === "fastIncrease") {
           showCartMessage(CartMessageTypes.ADD_FAST, {
-            itemName: normalizedItem.name,
+            itemName: normalizedItem?.name || 'Item',
             quantity: step,
             measurementUnit: normalizedItem.measurement_unit,
             isBuyer: user?.role === "buyer",
           });
         } else if (operation === "fastDecrease") {
           showCartMessage(CartMessageTypes.REMOVE_FAST, {
-            itemName: normalizedItem.name,
+            itemName: normalizedItem?.name || 'Item',
             quantity: step,
             measurementUnit: normalizedItem.measurement_unit,
             remainingQuantity: Math.max(0, (item.cartQuantity || 0) - step),
@@ -266,7 +266,7 @@ const CategoriesGrid = ({
             if (increaseResult === false) {
               // Show unified stock error message
               showMaxStockMessage(
-                normalizedItem.name,
+                normalizedItem?.name || 'Item',
                 item.quantity || 0,
                 normalizedItem.measurement_unit
               );
@@ -276,7 +276,7 @@ const CategoriesGrid = ({
       } catch (err) {
         console.error(`[CategoriesGrid] Error ${operation} quantity:`, err);
         showCartMessage(CartMessageTypes.OPERATION_FAILED, {
-          itemName: normalizedItem.name,
+          itemName: normalizedItem?.name || 'Item',
           measurementUnit: normalizedItem.measurement_unit,
           isBuyer: user?.role === "buyer",
         });
@@ -349,7 +349,7 @@ const CategoriesGrid = ({
           key={"items"}
           style={styles.itemsScrollContainer}
           data={filteredItems}
-          keyExtractor={(item) => getCartKey(item) || `${item.name}`}
+          keyExtractor={(item) => getCartKey(item) || `${item?.name || 'unknown'}`}
           renderItem={({ item, index }) => {
             const itemKey = getCartKey(item);
             const itemPendingAction = pendingOperations[itemKey];
@@ -408,7 +408,7 @@ const CategoriesGrid = ({
                     const step = getIncrementStep(item.measurement_unit);
                     const remainingStock = item.quantity - cartQuantity;
                     console.log("[CategoriesGrid] Stock check:", {
-                      itemName: item.name,
+                      itemName: item?.name || 'Item',
                       totalStock: item.quantity,
                       cartQuantity,
                       remainingStock,

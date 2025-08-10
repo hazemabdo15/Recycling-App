@@ -10,10 +10,10 @@ import { colors } from '../../styles/theme';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const scaleSize = (size) => (SCREEN_WIDTH / 375) * size;
 
-const RegisterForm = ({ onSubmit, loading }) => {
-    const [name, setName] = useState('');
-    const [number, setNumber] = useState('');
-    const [email, setEmail] = useState('');
+const RegisterForm = ({ onSubmit, loading, initialData = {} }) => {
+    const [name, setName] = useState(initialData?.name || '');
+    const [number, setNumber] = useState(initialData?.number || '');
+    const [email, setEmail] = useState(initialData?.email || '');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -21,6 +21,8 @@ const RegisterForm = ({ onSubmit, loading }) => {
     const [role, setRole] = useState('customer');
     const router = useRouter();
     const insets = useSafeAreaInsets();
+
+    const isGoogleRegistration = initialData?.provider === 'google';
 
     return (
         <View style={styles.container}>
@@ -55,12 +57,18 @@ const RegisterForm = ({ onSubmit, loading }) => {
                     <View style={styles.inputWrapper}>
                         <Ionicons name="person-outline" size={scaleSize(20)} color={colors.neutral} style={styles.inputIcon} />
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, isGoogleRegistration && styles.inputReadonly]}
                             placeholder="Full Name"
                             placeholderTextColor={colors.neutral}
                             value={name}
                             onChangeText={setName}
+                            editable={!isGoogleRegistration}
                         />
+                        {isGoogleRegistration && (
+                            <View style={styles.googleBadge}>
+                                <MaterialCommunityIcons name="google" size={scaleSize(16)} color="#DB4437" />
+                            </View>
+                        )}
                     </View>
 
                     {/* Phone Input */}
@@ -80,17 +88,24 @@ const RegisterForm = ({ onSubmit, loading }) => {
                     <View style={styles.inputWrapper}>
                         <Ionicons name="mail-outline" size={scaleSize(20)} color={colors.neutral} style={styles.inputIcon} />
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, isGoogleRegistration && styles.inputReadonly]}
                             placeholder="Email address"
                             placeholderTextColor={colors.neutral}
                             value={email}
                             autoCapitalize="none"
                             keyboardType="email-address"
                             onChangeText={setEmail}
+                            editable={!isGoogleRegistration}
                         />
+                        {isGoogleRegistration && (
+                            <View style={styles.googleBadge}>
+                                <MaterialCommunityIcons name="google" size={scaleSize(16)} color="#DB4437" />
+                            </View>
+                        )}
                     </View>
 
-                    {/* Password Input */}
+                    {/* Password Input - Hidden for Google registration */}
+                    {!isGoogleRegistration && (
                     <View style={styles.inputWrapper}>
                         <Ionicons name="lock-closed-outline" size={scaleSize(20)} color={colors.neutral} style={styles.inputIcon} />
                         <TextInput
@@ -109,8 +124,10 @@ const RegisterForm = ({ onSubmit, loading }) => {
                             <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={scaleSize(20)} color={colors.neutral} />
                         </Pressable>
                     </View>
+                    )}
 
-                    {/* Confirm Password Input */}
+                    {/* Confirm Password Input - Hidden for Google registration */}
+                    {!isGoogleRegistration && (
                     <View style={styles.inputWrapper}>
                         <Ionicons name="lock-closed-outline" size={scaleSize(20)} color={colors.neutral} style={styles.inputIcon} />
                         <TextInput
@@ -129,6 +146,7 @@ const RegisterForm = ({ onSubmit, loading }) => {
                             <Ionicons name={confirmShowPassword ? 'eye-off' : 'eye'} size={scaleSize(20)} color={colors.neutral} />
                         </Pressable>
                     </View>
+                    )}
 
                     {/* Role Selection */}
                     <View style={styles.roleSection}>
@@ -407,6 +425,19 @@ const styles = StyleSheet.create({
     loginLinkBold: {
         fontWeight: 'bold',
         color: colors.primary,
+    },
+    inputReadonly: {
+        backgroundColor: colors.base50,
+        color: colors.neutral,
+    },
+    googleBadge: {
+        position: 'absolute',
+        right: scaleSize(12),
+        top: '50%',
+        transform: [{ translateY: -scaleSize(8) }],
+        backgroundColor: colors.white,
+        borderRadius: scaleSize(8),
+        padding: scaleSize(2),
     },
 })
 

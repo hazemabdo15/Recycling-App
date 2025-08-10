@@ -10,7 +10,7 @@ import { colors } from '../../styles/theme';
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const scaleSize = (size) => (SCREEN_WIDTH / 375) * size;
 
-export default function LoginForm({ onSubmit, loading }) {
+export default function LoginForm({ onSubmit, loading, onGoogleLogin }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
@@ -117,6 +117,17 @@ export default function LoginForm({ onSubmit, loading }) {
                 <Text style={styles.dividerText}>or</Text>
                 <View style={styles.divider} />
               </View>
+
+              {/* Google Login Button */}
+              <Pressable
+                style={styles.googleButton}
+                onPress={onGoogleLogin}
+                disabled={loading}
+                android_ripple={{ color: 'rgba(0,0,0,0.1)' }}
+              >
+                <MaterialCommunityIcons name="google" size={scaleSize(20)} color="#DB4437" />
+                <Text style={styles.googleButtonText}>Continue with Google</Text>
+              </Pressable>
 
               <Pressable onPress={handleSkip} style={styles.skipButton}>
                 <Text style={styles.skipText}>Continue as Guest</Text>
@@ -295,5 +306,24 @@ const styles = StyleSheet.create({
     color: colors.neutral,
     fontSize: scaleSize(14),
     fontWeight: '500',
+  },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.base200,
+    borderRadius: scaleSize(12),
+    paddingVertical: scaleSize(12),
+    paddingHorizontal: scaleSize(24),
+    marginVertical: scaleSize(8),
+    width: '100%',
+  },
+  googleButtonText: {
+    color: colors.dark,
+    fontSize: scaleSize(16),
+    fontWeight: '500',
+    marginLeft: scaleSize(8),
   },
 });

@@ -1,16 +1,37 @@
-﻿import { useRouter } from 'expo-router';
-import { useState } from 'react';
+﻿import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Alert, View } from 'react-native';
 import RegisterForm from '../components/auth/RegisterForm';
-import DeliveryInfoForm from './deliveryInfoForm';
+import { useAuth } from '../context/AuthContext';
 import { initialSetupForRegister } from '../services/auth';
+import { useGoogleAuth } from '../services/googleAuth';
 import deliveryDataStorage from '../utils/deliveryDataStorage';
+import DeliveryInfoForm from './deliveryInfoForm';
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams();
+  const { login } = useAuth();
+  const { registerWithGoogle } = useGoogleAuth();
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [registrationData, setRegistrationData] = useState(null);
+
+  // Check if this is a Google registration flow
+  const isGoogleRegistration = params?.provider === 'google';
+
+  useEffect(() => {
+    if (isGoogleRegistration && params) {
+      // Pre-fill registration data from Google
+      setRegistrationData({
+        name: params.name || '',
+        email: params.email || '',
+        image: params.image || '',
+        provider: 'google',
+        idToken: params.idToken,
+      });
+    }
+  }, [isGoogleRegistration, params]);
 
   const validateEmail = (email) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
@@ -91,10 +112,58 @@ export default function RegisterScreen() {
   };
 
   const proceedToOTP = async (userData) => {
+    if (!userData) {
+      console.error('[Register] userData is null or undefined');
+      Alert.alert("Error", "Registration data is missing. Please try again.");
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     
     try {
       console.log('Registering:', userData);
+      
+      // Handle Google registration
+      if (userData.provider === 'google') {
+        if (!userData.name || !userData.email) {
+          Alert.alert("Error", "Google registration data is incomplete. Please try again.");
+          setLoading(false);
+          return;
+        }
+
+        const response = await registerWithGoogle(userData.idToken, {
+          name: userData.name,
+          email: userData.email,
+          phoneNumber: userData.number,
+          role: userData.role,
+          imgUrl: userData.image,
+          ...(userData.licenseNumber && {
+            attachments: {
+              licenseNumber: userData.licenseNumber,
+              vehicleType: userData.vehicleType,
+              nationalId: userData.nationalId,
+              emergencyNumber: userData.emergencyNumber,
+              hasDeliveryImages: true,
+            }
+          })
+        });
+
+        // Login the user after successful registration
+        const { user, accessToken } = response;
+        await login(user, accessToken);
+        
+        if (user.role === "delivery") {
+          router.replace("/waitingForApproval");
+        } else {
+          router.replace("/home");
+        }
+        
+        Alert.alert("Success", "Registration successful! Welcome!");
+        return;
+      }
+
+      // Regular registration flow
       await initialSetupForRegister(userData.email);
 
       const params = {
@@ -140,7 +209,11 @@ export default function RegisterScreen() {
   return (
     <View style={{ flex: 1 }}>
       {currentStep === 1 ? (
-        <RegisterForm onSubmit={handleInitialRegister} loading={loading} />
+        <RegisterForm 
+          onSubmit={handleInitialRegister} 
+          loading={loading} 
+          initialData={registrationData}
+        />
       ) : (
         <DeliveryInfoForm 
           registrationData={registrationData}

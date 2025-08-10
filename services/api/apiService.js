@@ -1,6 +1,7 @@
-﻿import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router } from "expo-router";
+﻿import { router } from "expo-router";
+import * as SecureStore from 'expo-secure-store';
 import { showGlobalToast } from "../../components/common/GlobalToast";
+import { clearSession, getAccessToken } from "../../utils/authUtils";
 import { API_CONFIG, BASE_URLS } from "./config";
 let notifyTokenExpired = null;
 
@@ -35,7 +36,7 @@ class OptimizedAPIService {
     if (this.isInitialized) return;
 
     try {
-      this.accessToken = await AsyncStorage.getItem("accessToken");
+      this.accessToken = await getAccessToken();
       this.isInitialized = true;
     } catch (_error) {
       // console.error('API Service initialization failed:', _error);
@@ -46,14 +47,23 @@ class OptimizedAPIService {
     console.log(`[API] Setting access token: ${token ? `${token.substring(0, 20)}...` : 'null'}`);
     this.accessToken = token;
     if (token) {
-      await AsyncStorage.setItem("accessToken", token);
-      console.log(`[API] Access token saved to AsyncStorage`);
+      // Only set to SecureStore directly to avoid circular calls
+      try {
+        await SecureStore.setItemAsync('accessToken', token);
+        console.log(`[API] Access token saved to SecureStore`);
+      } catch (error) {
+        console.error('[API] Failed to save token to SecureStore:', error);
+      }
 
       this.tokenCache.clear();
       this.lastTokenCheck = 0;
     } else {
-      await AsyncStorage.removeItem("accessToken");
-      console.log(`[API] Access token removed from AsyncStorage`);
+      try {
+        await SecureStore.deleteItemAsync('accessToken');
+        console.log(`[API] Access token removed from SecureStore`);
+      } catch (error) {
+        console.error('[API] Failed to remove token from SecureStore:', error);
+      }
     }
   }
 
@@ -61,7 +71,7 @@ class OptimizedAPIService {
     this.accessToken = null;
     this.tokenCache.clear();
     this.lastTokenCheck = 0;
-    await AsyncStorage.multiRemove(["accessToken", "user"]);
+    await clearSession();
 
     const notify = getNotifyTokenExpired();
     if (notify) notify();
@@ -79,7 +89,7 @@ class OptimizedAPIService {
     this.abortController = new AbortController();
     this.clearAllTimeouts();
 
-    await AsyncStorage.multiRemove(["accessToken", "user"]);
+    await clearSession();
   }
 
   isTokenExpired(token) {

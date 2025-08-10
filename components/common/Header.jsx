@@ -1,10 +1,9 @@
 ﻿import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Dimensions, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { colors, typography } from '../../styles/theme';
-import { getLoggedInUser } from '../../utils/authUtils';
+import { clearSession, getLoggedInUser } from '../../utils/authUtils';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -28,7 +27,7 @@ const Header = () => {
 
     const handleLogoutPress = async () => {
         try {
-            await AsyncStorage.multiRemove(['accessToken', 'user']);
+            await clearSession();
             router.replace('/login');
         } catch (error) {
             console.error('Logout failed', error);
