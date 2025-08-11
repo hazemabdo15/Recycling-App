@@ -1,7 +1,4 @@
-﻿
-
-
-import Constants from 'expo-constants';
+﻿import Constants from 'expo-constants';
 import logger from '../utils/logger';
 
 export const ENV = {
