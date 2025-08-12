@@ -19,7 +19,6 @@ const HelpSupportScreen = () => {
       >
         <Text style={styles.title}>Help & Support</Text>
         <Text style={styles.subtitle}>How can we help you today?</Text>
-        {/* Optionally add an icon here */}
       </LinearGradient>
       <FAQList />
       <ContactOptions />
@@ -38,8 +37,6 @@ const styles = StyleSheet.create({
     paddingTop: 48,
     paddingBottom: 24,
     paddingHorizontal: 20,
-    // TODO: Add gradient background style from Home
-  // backgroundColor: '#4CAF50', // replaced by LinearGradient
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
     alignItems: 'center',
