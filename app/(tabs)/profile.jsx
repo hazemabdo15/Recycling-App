@@ -11,6 +11,8 @@ import { useUserPoints } from "../../hooks/useUserPoints";
 import apiService from "../../services/api/apiService";
 import { isCustomer } from "../../utils/roleLabels";
 import { scaleSize } from "../../utils/scale";
+import { StatusBar } from 'expo-status-bar';
+
 
 export default function Profile() {
   return <ProfileContent />;
@@ -228,7 +230,8 @@ function ProfileContent() {
   const handleRedeemHistory = () => router.push("/redeem-history");
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#f0fdf4" }}>
+    <View style={{ flex: 1, backgroundColor: "#f0fdf4"}}>
+      <StatusBar style="dark" backgroundColor="#ffffff" />
       <ProfileCard
         user={{
           ...user,
@@ -462,7 +465,7 @@ const styles = StyleSheet.create({
   },
   guestContainer: {
     backgroundColor: "#f8fafc", // match main container
-    paddingHorizontal: scaleSize(24),
+    paddingHorizontal: scaleSize(30),
     paddingVertical: scaleSize(10),
     paddingBottom: scaleSize(40),
     flexGrow: 1,
