@@ -8,6 +8,7 @@ export default function ProfileMenu({
   onRecyclingHistory,
   onEWallet,
   onHelpSupport,
+  onRedeemHistory,
   onLogout,
   style,
 }) {
@@ -26,7 +27,7 @@ export default function ProfileMenu({
         onHelpSupport ? onHelpSupport() : Alert.alert("Coming soon");
         break;
       case "redeemHistory":
-        Alert.alert("Coming soon");
+        onRedeemHistory ? onRedeemHistory() : Alert.alert("Coming soon");
         break;
       case "settings":
         Alert.alert("Coming soon");
@@ -48,40 +49,45 @@ export default function ProfileMenu({
       ? menuItems.filter(item => item.key !== 'eWallet' && item.key !== 'redeemHistory')
       : menuItems;
 
+
   return (
-    <View style={[styles.menuCard, style]}>
-      {filteredMenuItems.map((item, idx) => (
-        <TouchableOpacity
-          key={item.key}
-          style={[
-            styles.menuItem,
-            idx === 0 && {
-              borderTopLeftRadius: scaleSize(18),
-              borderTopRightRadius: scaleSize(18),
-            },
-            idx === menuItems.length - 1 && {
-              borderBottomLeftRadius: scaleSize(18),
-              borderBottomRightRadius: scaleSize(18),
-              borderBottomWidth: 0,
-            },
-          ]}
-          onPress={() => handlePress(item.key)}
-          activeOpacity={0.8}
-        >
-          {item.icon}
-          <View style={styles.textContainer}>
-            <Text style={styles.label}>{item.label}</Text>
-            <Text style={styles.subtitle}>{item.subtitle}</Text>
-          </View>
-          <Ionicons
-            name="chevron-forward"
-            size={scaleSize(24)}
-            color={colors.gray}
-            style={{ marginLeft: scaleSize(8) }}
-          />
-        </TouchableOpacity>
-      ))}
-    </View>
+    <>
+      <View style={[styles.menuCard, style]}>
+        <View>
+          {filteredMenuItems.map((item, idx) => (
+            <TouchableOpacity
+              key={item.key}
+              style={[
+                styles.menuItem,
+                idx === 0 && {
+                  borderTopLeftRadius: scaleSize(18),
+                  borderTopRightRadius: scaleSize(18),
+                },
+                idx === filteredMenuItems.length - 1 && {
+                  borderBottomLeftRadius: scaleSize(18),
+                  borderBottomRightRadius: scaleSize(18),
+                  borderBottomWidth: 0,
+                },
+              ]}
+              onPress={() => handlePress(item.key)}
+              activeOpacity={0.8}
+            >
+              {item.icon}
+              <View style={styles.textContainer}>
+                <Text style={styles.label}>{item.label}</Text>
+                <Text style={styles.subtitle}>{item.subtitle}</Text>
+              </View>
+              <Ionicons
+                name="chevron-forward"
+                size={scaleSize(24)}
+                color={colors.gray}
+                style={{ marginLeft: scaleSize(8) }}
+              />
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+    </>
   );
 }
 
@@ -98,6 +104,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 4,
+    // Do NOT add flex: 1 or height: '100%'. Let it wrap content only.
   },
   menuItem: {
     flexDirection: "row",

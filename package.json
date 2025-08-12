@@ -34,6 +34,7 @@
     "@react-navigation/elements": "^2.3.8",
     "@react-navigation/native": "^7.1.6",
     "axios": "^1.11.0",
+    "date-fns": "^4.1.0",
     "expo": "53.0.20",
     "expo-auth-session": "~6.2.1",
     "expo-av": "^15.1.7",

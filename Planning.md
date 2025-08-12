@@ -1,79 +1,66 @@
-## Help & Support Feature Implementation Plan
+# Redeem History Feature Implementation Plan
 
-### 1. Objectives
-- Provide users with easy access to FAQs, contact options, and support resources.
-- Maintain a modern, user-friendly design consistent with the app's style.
-- Include the same hero section as other main screens for visual consistency.
+## 1. Objective
+Implement a functional "Redeem History" button in the profile menu that navigates to a new page displaying all the user's redeem history in a modern, sleek UI, maintaining the hero section style from the recycling-history page.
 
 ---
 
-
-
-### 2. UI/UX Design
-
-- **Access Point**
-  - The Help & Support page should be opened when the user presses the Help & Support button in the profile menu on the profile page.
-
-- **Hero Section Style**
-  - Do **not** create a new component for the hero section.
-  - At the top of the Help & Support screen, apply the **same gradient background style** as used at the top of the Home page (see `home.jsx`).
-  - Overlay the title "Help & Support" and a relevant subtitle or icon on this gradient area for visual consistency.
-
-- **Main Content**
-  - **FAQs Section:** List of common questions and answers, collapsible/expandable.
-  - **Contact Support:** Options for email, phone, or in-app chat (if available).
-  - **Quick Links:** Links to guides, tutorials, or troubleshooting.
-  - **Feedback Form:** Simple form for users to submit issues or suggestions.
-
-- **Modern Look**
-  - Use card layouts, rounded corners, and subtle shadows.
-  - Incorporate icons and illustrations for clarity.
-  - Ensure accessibility (contrast, font size, etc.).
+## 2. Data Source
+- Use the `pointsHistory` array from the user object.
+- Filter for entries where:
+  - `type` is `"deducted"`
+  - `reason` includes `"Voucher redeemed"` or `"Cashback"` or `"Points deducted"`
 
 ---
 
+## 3. UI/UX Requirements
+ Create a new screen: **RedeemHistoryScreen**
+ Hero section at the top using a linear gradient background, styled similarly to the recycling-history page (do not use a HeroSection component).
+ List of redeem history items below the hero section.
+ Each item should display:
+  - Reason (e.g., "Voucher redeemed: Talabat Mart")
+  - Points deducted (e.g., "-500")
+  - Date (formatted nicely)
+ Modern, clean, and consistent with app theme.
 
-
-  - Ensure navigation to the Help & Support screen is triggered from the Help & Support button in the profile menu on the profile page.
-
-- **Component Structure**
-  - `HelpSupportScreen` (main screen)
-    - **Gradient header area** (use the same gradient style as Home, not a new component)
-    - `FAQList`
-    - `ContactOptions`
-    - `QuickLinks`
-    - `FeedbackForm`
-
-- **State Management**
-  - Use React state/hooks for toggling FAQ items and handling form input.
-  - Optionally, use context or Redux if global state is needed.
-
-- **Navigation**
-  - Add "Help & Support" to the main navigation menu/drawer.
-
-- **API Integration**
-  - If FAQs or support options are dynamic, fetch from backend.
-  - Submit feedback form data to backend endpoint.
+ `screens/RedeemHistoryScreen.js` (new)
+ `navigation/ProfileMenu.js` or wherever the profile menu is handled
+ `styles/redeemHistory.js` (new or extend existing styles)
 
 ---
 
-### 4. Steps to Implement
+## 5. Implementation Steps
 
-1. **Design UI mockups** for the Help & Support screen.
-2. **Create/reuse HeroSection** component with updated props.
-3. **Develop FAQList** with collapsible items.
-4. **Implement ContactOptions** (email, phone, chat).
-5. **Add QuickLinks** to resources.
-6. **Build FeedbackForm** with validation and submission logic.
-7. **Integrate with backend** for dynamic content and feedback submission.
-8. **Test UI/UX** for responsiveness and accessibility.
-9. **Update navigation** to include the new screen.
-10. **Review and deploy** the feature.
+1. **Create RedeemHistoryScreen component**
+   - Scaffold the screen with hero section and list.
+   - Import user data (from context, redux, or props).
+
+2. **Filter and map redeem history**
+   - Extract relevant entries from `pointsHistory`.
+
+3. **Design UI**
+   - Reuse/recreate hero section from recycling-history.
+   - Design redeem history list items.
+
+4. **Connect navigation**
+   - Update profile menu to navigate to the new screen.
+
+5. **Testing**
+   - Test with various user data (empty, few, many entries).
+   - Ensure responsiveness and performance.
 
 ---
 
-### 5. Future Enhancements
+## 6. Optional Enhancements
+- Add search/filter by date or type.
+- Add icons for different redeem types (voucher, cashback, etc).
+- Show running total of points after each redeem.
 
-- Add in-app chat or chatbot support.
-- Localize FAQs and support content.
-- Analytics for most viewed FAQs and
+---
+
+## 7. Files to Update/Create
+- `screens/RedeemHistoryScreen.js` (new)
+- `navigation/ProfileMenu.js` or wherever the profile menu is handled
+- `styles/redeemHistory.js` (new or extend existing styles)
+
+---

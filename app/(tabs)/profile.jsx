@@ -1,7 +1,8 @@
 ﻿import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import RecyclingModal from "../../components/Modals/RecyclingModal";
 import ProfileCard from "../../components/profile/ProfileCard";
 import ProfileMenu from "../../components/profile/ProfileMenu";
@@ -16,6 +17,10 @@ export default function Profile() {
 }
 
 function ProfileContent() {
+  const windowHeight = Dimensions.get('window').height;
+  // Estimate ProfileCard height (adjust as needed)
+  const PROFILE_CARD_HEIGHT = 220;
+  const insets = useSafeAreaInsets();
   const { user, logout, isLoggedIn } = useAuth();
   const router = useRouter();
   const [allOrders, setAllOrders] = useState([]);
@@ -220,6 +225,7 @@ function ProfileContent() {
   const handleRecyclingHistory = () => router.push("/recycling-history");
   const handleEWallet = () => Alert.alert("Coming soon");
   const handleHelpSupport = () => router.push("/help-support");
+  const handleRedeemHistory = () => router.push("/redeem-history");
 
   return (
     <View style={{ flex: 1, backgroundColor: "#f0fdf4" }}>
@@ -236,13 +242,23 @@ function ProfileContent() {
         onEditAvatar={handleEditAvatar}
         avatarLoading={avatarLoading}
       />
-      <ProfileMenu
-        user={user}
-        onRecyclingHistory={handleRecyclingHistory}
-        onEWallet={handleEWallet}
-        onHelpSupport={handleHelpSupport}
-        onLogout={confirmLogout}
-      />
+      <ScrollView
+        contentContainerStyle={{
+          minHeight: windowHeight - PROFILE_CARD_HEIGHT,
+          paddingBottom: insets.bottom + scaleSize(16),
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        <ProfileMenu
+          user={user}
+          onRecyclingHistory={handleRecyclingHistory}
+          onEWallet={handleEWallet}
+          onHelpSupport={handleHelpSupport}
+          onRedeemHistory={handleRedeemHistory}
+          onLogout={confirmLogout}
+        />
+      </ScrollView>
+     
       <RecyclingModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
