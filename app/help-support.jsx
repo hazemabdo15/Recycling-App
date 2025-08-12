@@ -1,5 +1,7 @@
 
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { ScrollView, StyleSheet, Text } from 'react-native';
+import { colors } from '../styles';
 import ContactOptions from './ContactOptions';
 import FAQList from './FAQList';
 import FeedbackForm from './FeedbackForm';
@@ -9,11 +11,16 @@ const HelpSupportScreen = () => {
   return (
     <ScrollView style={styles.container}>
       {/* Gradient Header Area */}
-      <View style={styles.header}>
+      <LinearGradient
+        colors={[colors.primary, colors.neutral]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.header}
+      >
         <Text style={styles.title}>Help & Support</Text>
         <Text style={styles.subtitle}>How can we help you today?</Text>
         {/* Optionally add an icon here */}
-      </View>
+      </LinearGradient>
       <FAQList />
       <ContactOptions />
       <QuickLinks />
@@ -32,7 +39,7 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
     paddingHorizontal: 20,
     // TODO: Add gradient background style from Home
-    backgroundColor: '#4CAF50', // placeholder
+  // backgroundColor: '#4CAF50', // replaced by LinearGradient
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
     alignItems: 'center',
