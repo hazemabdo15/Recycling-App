@@ -1,4 +1,4 @@
-import { Feather, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { colors } from '../../styles';
 import { scaleSize } from '../../utils/scale';
@@ -58,7 +58,7 @@ export default function ProfileMenu({
             <Text style={styles.label}>{item.label}</Text>
             <Text style={styles.subtitle}>{item.subtitle}</Text>
           </View>
-          <MaterialIcons name="keyboard-arrow-right" size={scaleSize(24)} color={colors.gray} style={{ marginLeft: scaleSize(8) }} />
+          <Ionicons name="chevron-forward" size={scaleSize(24)} color={colors.gray} style={{ marginLeft: scaleSize(8) }} />
         </TouchableOpacity>
       ))}
     </View>
@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     paddingVertical: scaleSize(18),
     paddingHorizontal: scaleSize(18),
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6', // lighter, less contrast
+    borderBottomColor: '#f3f4f6',
     backgroundColor: 'transparent',
   },
   iconBg: {
@@ -101,16 +101,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   label: {
-    fontSize: scaleSize(16),
-    fontWeight: '700',
+    fontSize: scaleSize(17),
+    fontWeight: '800',
     color: colors.primary,
-    marginBottom: scaleSize(2),
+    marginBottom: scaleSize(1),
+    letterSpacing: 0.1,
   },
   subtitle: {
-    fontSize: scaleSize(12),
-    color: colors.gray,
+    fontSize: scaleSize(13),
+    color: '#7B8794',
     marginTop: 0,
     fontWeight: '400',
+    letterSpacing: 0.05,
   },
 });
 
@@ -119,27 +121,27 @@ const menuItems = [
     key: 'recyclingHistory',
     icon: (
       <View style={[styles.iconBg, { backgroundColor: '#e8f7e5' }]}> 
-        <MaterialIcons name="history" size={scaleSize(24)} color={colors.primary} />
+        <MaterialCommunityIcons name="recycle-variant" size={scaleSize(26)} color="#34A853" />
       </View>
     ),
     label: 'Recycling History',
     subtitle: 'View your past recycling activities',
   },
-    {
-      key: 'eWallet',
-      icon: (
-        <View style={[styles.iconBg, { backgroundColor: '#fffbe6' }]}> 
-          <FontAwesome5 name="wallet" size={scaleSize(22)} color={colors.yellow} />
-        </View>
-      ),
-      label: 'E-Wallet',
-      subtitle: 'Coming soon',
-    },
+  {
+    key: 'eWallet',
+    icon: (
+      <View style={[styles.iconBg, { backgroundColor: '#fffbe6' }]}> 
+        <Ionicons name="wallet" size={scaleSize(24)} color="#F59E42" />
+      </View>
+    ),
+    label: 'E-Wallet',
+    subtitle: 'Coming soon',
+  },
   {
     key: 'achievements',  
     icon: (
       <View style={[styles.iconBg, { backgroundColor: '#fff7e6' }]}> 
-        <FontAwesome5 name="trophy" size={scaleSize(22)} color={colors.yellow} />
+        <MaterialCommunityIcons name="medal" size={scaleSize(24)} color="#F59E42" />
       </View>
     ),
     label: 'Achievements',
@@ -149,7 +151,7 @@ const menuItems = [
     key: 'helpSupport',
     icon: (
       <View style={[styles.iconBg, { backgroundColor: '#f3e8ff' }]}> 
-        <Feather name="help-circle" size={scaleSize(24)} color={colors.purple} />
+        <Ionicons name="help-circle" size={scaleSize(24)} color="#8B5CF6" />
       </View>
     ),
     label: 'Help & Support',
@@ -159,7 +161,7 @@ const menuItems = [
     key: 'logout',
     icon: (
       <View style={[styles.iconBg, { backgroundColor: '#fff1f2' }]}> 
-        <MaterialIcons name="logout" size={scaleSize(24)} color={colors.red} />
+        <MaterialCommunityIcons name="logout-variant" size={scaleSize(24)} color="#EF4444" />
       </View>
     ),
     label: 'Log Out',
