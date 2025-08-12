@@ -30,7 +30,7 @@ export const orderService = {
     try {
       console.log('[Order Service] Fetching user orders');
       
-      const response = await apiService.get('/orders');
+      const response = await apiService.get('/orders?skip=0&limit=100');
       
       console.log(`[Order Service] Retrieved ${response.count || response.data?.length || 0} orders`);
       return response;

@@ -96,7 +96,7 @@ function ProfileContent() {
 
     if (isLoggedIn && user?.email) {
       console.log(`[Profile] ${user?.role} role detected, fetching orders`);
-      fetchOrders();
+      // fetchOrders();
     } else {
       console.log("[Profile] User not logged in, clearing orders");
       setAllOrders([]);
@@ -114,18 +114,18 @@ function ProfileContent() {
     }
   }, [isLoggedIn, user?._id, getUserPoints]);
 
-  const fetchOrders = async () => {
-    try {
-      const response = await orderService.getOrders();
-      console.log("[Profile] Orders API response:", response);
-      setAllOrders(Array.isArray(response.data) ? response.data : []);
-    } catch (error) {
-      console.error("Failed to fetch orders", error);
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        setAllOrders([]);
-      }
-    }
-  };
+  // const fetchOrders = async () => {
+  //   try {
+  //     const response = await orderService.getOrders();
+  //     console.log("[Profile] Orders API response:", response);
+  //     setAllOrders(Array.isArray(response.data) ? response.data : []);
+  //   } catch (error) {
+  //     console.error("Failed to fetch orders", error);
+  //     if (error.response?.status === 401 || error.response?.status === 403) {
+  //       setAllOrders([]);
+  //     }
+  //   }
+  // };
   const handleLogout = async () => {
     try {
       console.log("Logging out user...");
@@ -233,7 +233,7 @@ function ProfileContent() {
   // Menu handlers
   const handleRecyclingHistory = () => router.push("/recycling-history");
   const handleEWallet = () => Alert.alert("Coming soon");
-  const handleHelpSupport = () => Alert.alert("Coming soon");
+  const handleHelpSupport = () => router.push("/help-support");
 
   return (
     <View style={{ flex: 1, backgroundColor: "#f0fdf4" }}>

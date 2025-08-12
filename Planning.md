@@ -1,100 +1,79 @@
-# Refactoring Plan: Recycling History Page Modernization
+## Help & Support Feature Implementation Plan
 
-## Objective
-
-Redesign the `recycling-history.jsx` page to be more visually appealing and modern, improving user experience and aligning with the updated profile/menu styles.
-
----
-
-## 1. **Analysis of Current State**
-
-- The page uses basic FlatList rendering for orders with tabs (incoming, completed, cancelled).
-- Order cards are simple, with minimal styling and visual hierarchy.
-- Buttons (Download PDF, Cancel Order) are basic and not visually distinct.
-- The background and spacing are plain, lacking depth and modern UI cues.
+### 1. Objectives
+- Provide users with easy access to FAQs, contact options, and support resources.
+- Maintain a modern, user-friendly design consistent with the app's style.
+- Include the same hero section as other main screens for visual consistency.
 
 ---
 
-## 2. **Modern UI/UX Goals**
 
-- Use card-based layouts with rounded corners and subtle shadows.
-- Add a visually distinct header for the page and tabs.
-- Improve tab styling for better clarity and touch feedback.
-- Redesign order cards: more padding, rounded corners, shadow, and clear separation.
-- Use modern button styles: rounded, colored, with icons if possible.
-- Enhance typography: font weights, sizes, and color contrast.
-- Add subtle background color to the page for depth.
-- Ensure responsive design and accessibility.
 
----
+### 2. UI/UX Design
 
-## 3. **Implementation Steps**
+- **Access Point**
+  - The Help & Support page should be opened when the user presses the Help & Support button in the profile menu on the profile page.
 
-### A. **Page Container & Background**
-- Add a light background color to the page (e.g., `#F7F8FA`).
-- Use a `SafeAreaView` or `View` with padding for the main container.
+- **Hero Section Style**
+  - Do **not** create a new component for the hero section.
+  - At the top of the Help & Support screen, apply the **same gradient background style** as used at the top of the Home page (see `home.jsx`).
+  - Overlay the title "Help & Support" and a relevant subtitle or icon on this gradient area for visual consistency.
 
-### B. **Header & Tabs**
-- Create a card-like header with the page title ("Recycling History").
-- Style tabs with pill-shaped buttons, clear active/inactive states, and spacing.
+- **Main Content**
+  - **FAQs Section:** List of common questions and answers, collapsible/expandable.
+  - **Contact Support:** Options for email, phone, or in-app chat (if available).
+  - **Quick Links:** Links to guides, tutorials, or troubleshooting.
+  - **Feedback Form:** Simple form for users to submit issues or suggestions.
 
-### C. **Order Card Redesign**
-- Each order is displayed in a card with:
-  - Rounded corners (`borderRadius`)
-  - Soft shadow (`elevation`/`shadow*`)
-  - White background
-  - Spacing between cards
-- Use a clear layout for order info: status, date, items, etc.
-- Use icons for order status if possible.
-
-### D. **Order Item List**
-- Display order items in a visually grouped section within the card.
-- Use light backgrounds and rounded corners for item lists.
-
-### E. **Buttons**
-- Style "Download PDF" and "Cancel Order" buttons:
-  - Rounded, filled backgrounds (primary/secondary colors)
-  - Icons (if available)
-  - Proper spacing and alignment
-
-### F. **Typography**
-- Use larger, bolder fonts for headings and key info.
-- Use muted colors for secondary text.
-- Ensure good contrast for readability.
-
-### G. **Empty State**
-- Add a friendly illustration or icon and message when there are no orders in a tab.
-
-### H. **Responsiveness**
-- Use scaling utilities (`scaleSize`) for padding, font sizes, etc.
-- Test on different device sizes.
+- **Modern Look**
+  - Use card layouts, rounded corners, and subtle shadows.
+  - Incorporate icons and illustrations for clarity.
+  - Ensure accessibility (contrast, font size, etc.).
 
 ---
 
-## 4. **Dependencies & File Changes**
 
-- **File:** `app/recycling-history.jsx` (main refactor)
-- **Styles:** Inline or move to a dedicated StyleSheet section.
-- **Icons:** Use `@expo/vector-icons` or similar for status/buttons.
-- **Utilities:** Use existing `scaleSize`, color palette, and button components if available.
+
+  - Ensure navigation to the Help & Support screen is triggered from the Help & Support button in the profile menu on the profile page.
+
+- **Component Structure**
+  - `HelpSupportScreen` (main screen)
+    - **Gradient header area** (use the same gradient style as Home, not a new component)
+    - `FAQList`
+    - `ContactOptions`
+    - `QuickLinks`
+    - `FeedbackForm`
+
+- **State Management**
+  - Use React state/hooks for toggling FAQ items and handling form input.
+  - Optionally, use context or Redux if global state is needed.
+
+- **Navigation**
+  - Add "Help & Support" to the main navigation menu/drawer.
+
+- **API Integration**
+  - If FAQs or support options are dynamic, fetch from backend.
+  - Submit feedback form data to backend endpoint.
 
 ---
 
-## 5. **Testing & Review**
+### 4. Steps to Implement
 
-- Test all tabs (incoming, completed, cancelled) for visual consistency.
-- Test button actions (PDF, Cancel) for usability.
-- Check for overflow, alignment, and responsiveness.
-- Review accessibility (touch targets, contrast).
-
----
-
-## 6. **Future Enhancements**
-
-- Add animations for tab transitions or card appearance.
-- Allow filtering/sorting of orders.
-- Add order detail modal or page.
+1. **Design UI mockups** for the Help & Support screen.
+2. **Create/reuse HeroSection** component with updated props.
+3. **Develop FAQList** with collapsible items.
+4. **Implement ContactOptions** (email, phone, chat).
+5. **Add QuickLinks** to resources.
+6. **Build FeedbackForm** with validation and submission logic.
+7. **Integrate with backend** for dynamic content and feedback submission.
+8. **Test UI/UX** for responsiveness and accessibility.
+9. **Update navigation** to include the new screen.
+10. **Review and deploy** the feature.
 
 ---
 
-**Ready to proceed with the refactor following
+### 5. Future Enhancements
+
+- Add in-app chat or chatbot support.
+- Localize FAQs and support content.
+- Analytics for most viewed FAQs and

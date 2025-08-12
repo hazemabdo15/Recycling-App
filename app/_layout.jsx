@@ -1,4 +1,5 @@
-﻿import { Stack } from "expo-router";
+﻿// ...existing code...
+import { Stack } from "expo-router";
 import GlobalToast from '../components/common/GlobalToast';
 import SplashController from '../components/common/SplashController';
 import { AuthProvider } from '../context/AuthContext';
@@ -50,6 +51,15 @@ export default function RootLayout() {
                 headerShown: false,
                 animation: 'fade',
               }} 
+            />
+            <Stack.Screen
+              name="help-support"
+              options={{
+                headerShown: false,
+                animation: 'slide_from_right',
+                gestureEnabled: true,
+                gestureDirection: 'horizontal',
+              }}
             />
             <Stack.Screen
               name="category-details"
