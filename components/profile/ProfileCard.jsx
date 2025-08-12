@@ -6,6 +6,7 @@ import { isBuyer, isCustomer } from '../../utils/roleLabels';
 import { scaleSize } from '../../utils/scale';
 
 
+
 export default function ProfileCard({ user, points = 0, tier = '', onLogout, onRedeem, showRedeem, onEditAvatar, style, avatarLoading }) {
   const avatarUri = user?.avatarUri;
   console.log('ProfileCard points prop:', points);
@@ -76,7 +77,7 @@ const styles = StyleSheet.create({
     borderRadius: scaleSize(18),
     padding: scaleSize(18),
     marginHorizontal: 16, // Match FlatList contentContainerStyle for order cards
-    marginTop: scaleSize(24),
+    marginTop: scaleSize(35),
     marginBottom: scaleSize(10),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
