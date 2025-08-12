@@ -1,129 +1,100 @@
-# Profile Page Refactor & Menu Implementation Plan
+# Refactoring Plan: Recycling History Page Modernization
 
-## Goal
+## Objective
 
-- Add a new menu section below the ProfileCard, styled as in the provided screenshots.
-- Menu options: **Recycling History**, **E-Wallet** (placeholder), **Help & Support** (placeholder), **Logout**.
-- Move the logout button from ProfileCard to the new menu.
-- When "Recycling History" is pressed, navigate to a new page that shows the current orders FlatList with tabs (upcoming, completed, cancelled).
-- Menu should be easily expandable for future options.
+Redesign the `recycling-history.jsx` page to be more visually appealing and modern, improving user experience and aligning with the updated profile/menu styles.
 
 ---
 
-## 1. **Component & File Structure Analysis**
+## 1. **Analysis of Current State**
 
-### Key Files Involved
-
-- `app/(tabs)/profile.jsx`  
-  Main profile page, renders ProfileCard, FlatList, and handles logic.
-- `components/profile/ProfileCard.jsx`  
-  Renders the user info card and currently includes the logout button.
-- `components/common/Loader.jsx`  
-  Loader for async states.
-- `components/Modals/RecyclingModal.jsx`  
-  Modal for redeeming points.
-- `context/AuthContext.js`  
-  Provides user, logout, setUser, etc.
-- `hooks/useUserPoints.js`  
-  Fetches user points.
-- `services/api/orders.js`  
-  Fetches/cancels orders.
-- `utils/roleLabels.js`  
-  Role helpers.
-- `utils/scale.js`  
-  Scaling utility for styles.
+- The page uses basic FlatList rendering for orders with tabs (incoming, completed, cancelled).
+- Order cards are simple, with minimal styling and visual hierarchy.
+- Buttons (Download PDF, Cancel Order) are basic and not visually distinct.
+- The background and spacing are plain, lacking depth and modern UI cues.
 
 ---
 
-## 2. **Implementation Steps**
+## 2. **Modern UI/UX Goals**
 
-### A. **Create the Menu Component**
-
-- **New file:** `components/profile/ProfileMenu.jsx`
-- Props: `onRecyclingHistory`, `onEWallet`, `onHelpSupport`, `onLogout`
-- Style to match the screenshot (icon, label, subtitle, right arrow).
-- Use TouchableOpacity for each menu item.
-- Export for reuse.
-
-### B. **Refactor Profile Page**
-
-- **Remove** the logout button from `ProfileCard`.
-- **Insert** the new `ProfileMenu` below `ProfileCard` in `profile.jsx`.
-- Pass the correct handlers for each menu item.
-- For now, `onEWallet` and `onHelpSupport` can show an Alert ("Coming soon").
-
-### C. **Recycling History Navigation**
-
-- **Create new page:** `app/recycling-history.jsx`
-  - Copy the FlatList/tabs logic from `profile.jsx`.
-  - Accept user/orders as props or fetch them again if needed.
-  - Ensure the UI matches the current FlatList/tabs.
-- In `ProfileMenu`, pressing "Recycling History" should navigate to `/recycling-history`.
-
-### D. **Logout Functionality**
-
-- Move the logout logic from `ProfileCard` to the menu.
-- Ensure `onLogout` in the menu triggers the same confirm/logout flow as before.
-
-### E. **Dependency Management**
-
-- **ProfileCard**: Remove logout button/logic, keep only user info and avatar edit.
-- **ProfileMenu**: New, stateless, only triggers callbacks.
-- **Profile.jsx**:  
-  - Imports and renders both ProfileCard and ProfileMenu.
-  - Handles navigation and logic for menu actions.
-- **RecyclingHistory.jsx**:  
-  - Can reuse order fetching logic or accept props.
-  - Should be independent for future expansion.
+- Use card-based layouts with rounded corners and subtle shadows.
+- Add a visually distinct header for the page and tabs.
+- Improve tab styling for better clarity and touch feedback.
+- Redesign order cards: more padding, rounded corners, shadow, and clear separation.
+- Use modern button styles: rounded, colored, with icons if possible.
+- Enhance typography: font weights, sizes, and color contrast.
+- Add subtle background color to the page for depth.
+- Ensure responsive design and accessibility.
 
 ---
 
-## 3. **File/Component Dependencies**
+## 3. **Implementation Steps**
 
-- `ProfileMenu` is used by `profile.jsx` only.
-- `ProfileCard` is used by `profile.jsx` only.
-- `profile.jsx` manages state, passes handlers to both.
-- `RecyclingHistory.jsx` can be navigated to from `profile.jsx` (using Expo Router).
+### A. **Page Container & Background**
+- Add a light background color to the page (e.g., `#F7F8FA`).
+- Use a `SafeAreaView` or `View` with padding for the main container.
 
----
+### B. **Header & Tabs**
+- Create a card-like header with the page title ("Recycling History").
+- Style tabs with pill-shaped buttons, clear active/inactive states, and spacing.
 
-## 4. **Steps to Avoid Dependency Issues**
+### C. **Order Card Redesign**
+- Each order is displayed in a card with:
+  - Rounded corners (`borderRadius`)
+  - Soft shadow (`elevation`/`shadow*`)
+  - White background
+  - Spacing between cards
+- Use a clear layout for order info: status, date, items, etc.
+- Use icons for order status if possible.
 
-- **Step 1:** Build `ProfileMenu` as a new, isolated component.
-- **Step 2:** Refactor `ProfileCard` to remove logout, test independently.
-- **Step 3:** Update `profile.jsx` to use both components, wire up handlers.
-- **Step 4:** Create `RecyclingHistory.jsx` and test navigation.
-- **Step 5:** Remove FlatList/tabs from main profile page.
-- **Step 6:** Test all flows (avatar edit, logout, navigation, menu expansion).
+### D. **Order Item List**
+- Display order items in a visually grouped section within the card.
+- Use light backgrounds and rounded corners for item lists.
 
----
+### E. **Buttons**
+- Style "Download PDF" and "Cancel Order" buttons:
+  - Rounded, filled backgrounds (primary/secondary colors)
+  - Icons (if available)
+  - Proper spacing and alignment
 
-## 5. **Future Expansion**
+### F. **Typography**
+- Use larger, bolder fonts for headings and key info.
+- Use muted colors for secondary text.
+- Ensure good contrast for readability.
 
-- `ProfileMenu` should accept a list of menu items (icon, label, subtitle, onPress) for easy addition.
-- Can add more options (Settings, Achievements, etc.) by updating the menu config.
+### G. **Empty State**
+- Add a friendly illustration or icon and message when there are no orders in a tab.
 
----
-
-## 6. **Summary Table**
-
-| File/Component                | Change Needed                                  | Depends On                |
-|-------------------------------|------------------------------------------------|---------------------------|
-| `ProfileCard.jsx`             | Remove logout button/logic                     | None                      |
-| `ProfileMenu.jsx` (new)       | Create menu UI, trigger callbacks              | None                      |
-| `profile.jsx`                 | Use ProfileMenu, handle menu actions, refactor | ProfileCard, ProfileMenu  |
-| `recycling-history.jsx` (new) | Show orders FlatList/tabs                      | orderService, user        |
-
----
-
-## 7. **Next Steps**
-
-1. Scaffold `ProfileMenu.jsx` with placeholder handlers.
-2. Refactor `ProfileCard.jsx` to remove logout.
-3. Update `profile.jsx` to use new menu and handlers.
-4. Scaffold `recycling-history.jsx` and implement navigation.
-5. Test and polish styles to match the screenshots.
+### H. **Responsiveness**
+- Use scaling utilities (`scaleSize`) for padding, font sizes, etc.
+- Test on different device sizes.
 
 ---
 
-**Ready to proceed with code scaffolding and implementation.**
+## 4. **Dependencies & File Changes**
+
+- **File:** `app/recycling-history.jsx` (main refactor)
+- **Styles:** Inline or move to a dedicated StyleSheet section.
+- **Icons:** Use `@expo/vector-icons` or similar for status/buttons.
+- **Utilities:** Use existing `scaleSize`, color palette, and button components if available.
+
+---
+
+## 5. **Testing & Review**
+
+- Test all tabs (incoming, completed, cancelled) for visual consistency.
+- Test button actions (PDF, Cancel) for usability.
+- Check for overflow, alignment, and responsiveness.
+- Review accessibility (touch targets, contrast).
+
+---
+
+## 6. **Future Enhancements**
+
+- Add animations for tab transitions or card appearance.
+- Allow filtering/sorting of orders.
+- Add order detail modal or page.
+
+---
+
+**Ready to proceed with the refactor following

@@ -1,7 +1,18 @@
+import { Feather, MaterialIcons } from "@expo/vector-icons";
 import * as Print from "expo-print";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, FlatList, Image, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+    Alert,
+    FlatList,
+    Image,
+    RefreshControl,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
 import { Loader } from "../components/common";
 import { useAuth } from "../context/AuthContext";
 import { orderService } from "../services/api/orders";
@@ -10,9 +21,7 @@ import { generateOrderReportHTML } from "../utils/orderReportPDF";
 import { getLabel, isBuyer, isCustomer } from "../utils/roleLabels";
 import { scaleSize } from "../utils/scale";
 
-
 const tabs = ["incoming", "completed", "cancelled"];
-
 
 export default function RecyclingHistory() {
   const { user, isLoggedIn } = useAuth();
@@ -97,21 +106,39 @@ export default function RecyclingHistory() {
   });
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#f0fdf4" }}>
-      <View style={styles.headerRow}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Text style={styles.backButtonText}>{"<"}</Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#F7F8FA" }}>
+      {/* Modern Card Header */}
+      <View style={styles.headerCard}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
+          <MaterialIcons
+            name="arrow-back-ios"
+            size={scaleSize(22)}
+            color={colors.primary}
+          />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Recycling History</Text>
+        <Text style={styles.headerTitleModern}>Recycling History</Text>
       </View>
-      <View style={styles.tabsContainer}>
+      {/* Modern Tabs */}
+      <View style={styles.tabsContainerModern}>
         {tabs.map((tab) => (
           <TouchableOpacity
             key={tab}
             onPress={() => setActiveTab(tab)}
-            style={activeTab === tab ? styles.activeTab : styles.tab}
+            style={
+              activeTab === tab ? styles.activeTabModern : styles.tabModern
+            }
+            activeOpacity={0.85}
           >
-            <Text style={activeTab === tab ? styles.activeTabText : styles.tabText}>
+            <Text
+              style={
+                activeTab === tab
+                  ? styles.activeTabTextModern
+                  : styles.tabTextModern
+              }
+            >
               {getTabDisplayName(tab)}
             </Text>
           </TouchableOpacity>
@@ -120,110 +147,168 @@ export default function RecyclingHistory() {
       <FlatList
         data={loading ? [] : filteredOrders}
         keyExtractor={(order) => order._id}
-        renderItem={loading ? undefined : ({ item: order }) => (
-          <View style={styles.orderCard}>
-            <Text style={styles.orderText}>
-              Date: {new Date(order.createdAt).toLocaleDateString()}
-            </Text>
-            <Text style={styles.orderStatus}>Status: {order.status}</Text>
-            {order.items.map((item, i) => (
-              <View key={item._id || i} style={styles.orderItem}>
-                <Image source={{ uri: item.image }} style={styles.itemImage} />
-                <View style={styles.itemDetails}>
-                  <Text style={styles.itemName}>{item.itemName}</Text>
-                  <Text style={styles.itemInfo}>
-                    Quantity: {item.quantity} {item.measurement_unit === 1 ? "kg" : "pcs"}
-                  </Text>
-                  {!isBuyer(user) && (
-                    <Text style={styles.itemInfo}>Points: {item.points}</Text>
-                  )}
-                  <Text style={styles.itemInfo}>Price: {item.price} EGP</Text>
-                </View>
-              </View>
-            ))}
-            <Text style={styles.addressText}>
-              {order.address.street}, Bldg {order.address.building}, Floor {order.address.floor}, {order.address.area}, {order.address.city}
-            </Text>
-            {/* Download PDF button for pending orders - for both customers and buyers */}
-            {activeTab === "incoming" &&
-              order.status?.toLowerCase() === "pending" &&
-              isLoggedIn && (
-                <TouchableOpacity
-                  style={{
-                    backgroundColor: "#222",
-                    marginTop: 10,
-                    marginBottom: 6,
-                    borderRadius: 6,
-                    padding: 12,
-                    alignSelf: "stretch",
-                  }}
-                  onPress={async () => {
-                    Alert.alert(
-                      "Download PDF",
-                      "Do you want to preview the order report as PDF?",
-                      [
-                        { text: "Cancel", style: "cancel" },
-                        {
-                          text: "Preview",
-                          onPress: async () => {
-                            try {
-                              if (!order || !user) {
-                                Alert.alert(
-                                  "Missing data",
-                                  "Order or user info is missing."
-                                );
-                                return;
-                              }
-                              const html = generateOrderReportHTML({ order, user });
-                              await Print.printAsync({ html });
-                            } catch (_err) {
-                              Alert.alert("Error", "Failed to generate PDF.");
-                            }
+        renderItem={
+          loading
+            ? undefined
+            : ({ item: order }) => (
+                <View style={styles.orderCardModern}>
+                  <View style={styles.orderCardHeader}>
+                    <Text style={styles.orderDate}>
+                      {new Date(order.createdAt).toLocaleDateString()}
+                    </Text>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 4,
+                      }}
+                    >
+                      <Feather
+                        name={
+                          order.status === "completed"
+                            ? "check-circle"
+                            : order.status === "cancelled"
+                            ? "x-circle"
+                            : "clock"
+                        }
+                        size={scaleSize(16)}
+                        color={
+                          order.status === "completed"
+                            ? colors.primary
+                            : order.status === "cancelled"
+                            ? "#dc2626"
+                            : "#f59e42"
+                        }
+                      />
+                      <Text
+                        style={[
+                          styles.orderStatusModern,
+                          {
+                            color:
+                              order.status === "completed"
+                                ? colors.primary
+                                : order.status === "cancelled"
+                                ? "#dc2626"
+                                : "#f59e42",
                           },
-                        },
-                      ]
-                    );
-                  }}
-                  accessibilityLabel="Download PDF"
-                >
-                  <Text
-                    style={{
-                      color: "white",
-                      textAlign: "center",
-                      fontWeight: "bold",
-                      fontSize: 14,
-                    }}
-                  >
-                    Download PDF
+                        ]}
+                      >
+                        Status: {order.status}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.orderItemsList}>
+                    {order.items.map((item, i) => (
+                      <View key={item._id || i} style={styles.orderItemModern}>
+                        <Image
+                          source={{ uri: item.image }}
+                          style={styles.itemImageModern}
+                        />
+                        <View style={styles.itemDetailsModern}>
+                          <Text style={styles.itemNameModern}>
+                            {item.itemName}
+                          </Text>
+                          <Text style={styles.itemInfoModern}>
+                            Qty: {item.quantity}{" "}
+                            {item.measurement_unit === 1 ? "kg" : "pcs"}
+                          </Text>
+                          {!isBuyer(user) && (
+                            <Text style={styles.itemInfoModern}>
+                              Points: {item.points}
+                            </Text>
+                          )}
+                          <Text style={styles.itemInfoModern}>
+                            Price: {item.price} EGP
+                          </Text>
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                  <Text style={styles.addressTextModern}>
+                    {order.address.street}, Bldg {order.address.building}, Floor{" "}
+                    {order.address.floor}, {order.address.area},{" "}
+                    {order.address.city}
                   </Text>
-                </TouchableOpacity>
-              )}
-            {/* Cancel Order button only for customers and only for pending orders */}
-            {activeTab === "incoming" &&
-              order.status?.toLowerCase() === "pending" &&
-              isCustomer(user) && (
-                <TouchableOpacity
-                  onPress={() => handleCancelOrder(order._id)}
-                  style={{
-                    marginTop: scaleSize(12),
-                    marginBottom: scaleSize(8),
-                    backgroundColor: "#fee2e2",
-                    padding: scaleSize(12),
-                    borderRadius: scaleSize(6),
-                    alignSelf: "stretch",
-                    borderWidth: 1,
-                    borderColor: "#fecaca",
-                  }}
-                >
-                  <Text style={{ color: "#dc2626", textAlign: "center", fontSize: scaleSize(12), fontWeight: "700" }}>
-                    Cancel Order
-                  </Text>
-                </TouchableOpacity>
-              )}
-          </View>
-        )}
+                  {/* Download PDF button for pending orders - for both customers and buyers */}
+                  {activeTab === "incoming" &&
+                    order.status?.toLowerCase() === "pending" &&
+                    isLoggedIn && (
+                      <TouchableOpacity
+                        style={styles.downloadPdfButton}
+                        onPress={async () => {
+                          Alert.alert(
+                            "Download PDF",
+                            "Do you want to preview the order report as PDF?",
+                            [
+                              { text: "Cancel", style: "cancel" },
+                              {
+                                text: "Preview",
+                                onPress: async () => {
+                                  try {
+                                    if (!order || !user) {
+                                      Alert.alert(
+                                        "Missing data",
+                                        "Order or user info is missing."
+                                      );
+                                      return;
+                                    }
+                                    const html = generateOrderReportHTML({
+                                      order,
+                                      user,
+                                    });
+                                    await Print.printAsync({ html });
+                                  } catch (_err) {
+                                    Alert.alert(
+                                      "Error",
+                                      "Failed to generate PDF."
+                                    );
+                                  }
+                                },
+                              },
+                            ]
+                          );
+                        }}
+                        accessibilityLabel="Download PDF"
+                      >
+                        <View style={styles.buttonContentRow}>
+                          <Feather
+                            name="download"
+                            size={scaleSize(16)}
+                            color="#fff"
+                            style={{ marginRight: 6 }}
+                          />
+                          <Text style={styles.downloadPdfButtonText}>
+                            Download PDF
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
+                    )}
+                  {/* Cancel Order button only for customers and only for pending orders */}
+                  {activeTab === "incoming" &&
+                    order.status?.toLowerCase() === "pending" &&
+                    isCustomer(user) && (
+                      <TouchableOpacity
+                        onPress={() => handleCancelOrder(order._id)}
+                        style={styles.cancelOrderButton}
+                      >
+                        <View style={styles.buttonContentRow}>
+                          <Feather
+                            name="x-circle"
+                            size={scaleSize(16)}
+                            color="#dc2626"
+                            style={{ marginRight: 6 }}
+                          />
+                          <Text style={styles.cancelOrderButtonText}>
+                            Cancel Order
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
+                    )}
+                </View>
+              )
+        }
         contentContainerStyle={{
-          paddingHorizontal: 16,
+          paddingHorizontal: 10,
           paddingBottom: scaleSize(120),
         }}
         refreshControl={
@@ -240,25 +325,206 @@ export default function RecyclingHistory() {
               <Loader />
             </View>
           ) : (
-            <View style={styles.emptyStateContainer}>
-              <Text style={styles.emptyText}>No orders found.</Text>
+            <View style={styles.emptyStateContainerModern}>
+              <Feather
+                name="inbox"
+                size={scaleSize(48)}
+                color={colors.gray}
+                style={{ marginBottom: 10 }}
+              />
+              <Text style={styles.emptyTextModern}>No orders found.</Text>
             </View>
           )
         }
         showsVerticalScrollIndicator={false}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerRow: {
+  headerCard: {
     flexDirection: "row",
     alignItems: "center",
-    paddingTop: scaleSize(24),
-    paddingBottom: scaleSize(8),
-    paddingHorizontal: scaleSize(12),
-    backgroundColor: "#f0fdf4",
+    paddingTop: scaleSize(28),
+    paddingBottom: scaleSize(16),
+    paddingHorizontal: scaleSize(18),
+    backgroundColor: colors.white,
+    borderBottomLeftRadius: scaleSize(24),
+    borderBottomRightRadius: scaleSize(24),
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+    marginBottom: scaleSize(8),
+  },
+  headerTitleModern: {
+    fontSize: scaleSize(20),
+    fontWeight: "800",
+    color: colors.primary,
+    marginLeft: scaleSize(2),
+  },
+  tabsContainerModern: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: scaleSize(18),
+    backgroundColor: "transparent",
+    paddingHorizontal: 0,
+    gap: scaleSize(6),
+  },
+  tabModern: {
+    flex: 0,
+    width: scaleSize(110),
+    paddingVertical: scaleSize(10),
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: scaleSize(20),
+    marginHorizontal: scaleSize(2),
+    backgroundColor: "#f1f5f9",
+    minWidth: 0,
+  },
+  activeTabModern: {
+    flex: 0,
+    width: scaleSize(110),
+    paddingVertical: scaleSize(10),
+    backgroundColor: colors.primary,
+    borderRadius: scaleSize(20),
+    alignItems: "center",
+    justifyContent: "center",
+    minWidth: 0,
+  },
+  tabTextModern: {
+    color: colors.primary,
+    fontWeight: "600",
+    fontSize: scaleSize(14),
+    textAlign: "center",
+  },
+  activeTabTextModern: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: scaleSize(14),
+    textAlign: "center",
+  },
+  orderCardModern: {
+    backgroundColor: colors.white,
+    borderRadius: scaleSize(18),
+    padding: scaleSize(16),
+    marginBottom: scaleSize(14),
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: "#f1f5f9",
+  },
+  orderCardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: scaleSize(8),
+  },
+  orderDate: {
+    fontSize: scaleSize(13),
+    color: colors.primary,
+    fontWeight: "700",
+  },
+  orderStatusModern: {
+    fontSize: scaleSize(12),
+    fontWeight: "700",
+    textTransform: "capitalize",
+  },
+  orderItemsList: {
+    marginBottom: scaleSize(8),
+  },
+  orderItemModern: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 6,
+    backgroundColor: "#f8fafc",
+    borderRadius: scaleSize(10),
+    padding: scaleSize(8),
+  },
+  itemImageModern: {
+    width: scaleSize(40),
+    height: scaleSize(40),
+    borderRadius: scaleSize(10),
+    marginRight: scaleSize(10),
+    backgroundColor: "#e5e7eb",
+  },
+  itemDetailsModern: {
+    flex: 1,
+  },
+  itemNameModern: {
+    fontWeight: "700",
+    color: colors.primary,
+    fontSize: scaleSize(13),
+    marginBottom: 2,
+  },
+  itemInfoModern: {
+    fontSize: scaleSize(11),
+    color: colors.gray,
+    marginBottom: 1,
+  },
+  addressTextModern: {
+    fontSize: scaleSize(11),
+    color: colors.gray,
+    marginTop: 6,
+    marginBottom: 2,
+  },
+  downloadPdfButton: {
+    backgroundColor: colors.primary,
+    marginTop: 10,
+    marginBottom: 6,
+    borderRadius: 8,
+    padding: 13,
+    alignSelf: "stretch",
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  downloadPdfButtonText: {
+    color: "white",
+    textAlign: "center",
+    fontWeight: "700",
+    fontSize: 14,
+    letterSpacing: 0.2,
+  },
+  cancelOrderButton: {
+    marginTop: scaleSize(10),
+    marginBottom: scaleSize(6),
+    backgroundColor: "#fee2e2",
+    padding: scaleSize(12),
+    borderRadius: scaleSize(8),
+    alignSelf: "stretch",
+    borderWidth: 1,
+    borderColor: "#fecaca",
+  },
+  cancelOrderButtonText: {
+    color: "#dc2626",
+    textAlign: "center",
+    fontSize: scaleSize(12),
+    fontWeight: "700",
+  },
+  buttonContentRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyStateContainerModern: {
+    alignItems: "center",
+    marginTop: scaleSize(40),
+    opacity: 0.7,
+  },
+  emptyTextModern: {
+    color: colors.gray,
+    fontSize: scaleSize(15),
+    fontWeight: "600",
+    marginTop: 2,
   },
   backButton: {
     marginRight: scaleSize(8),
