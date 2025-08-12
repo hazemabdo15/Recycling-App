@@ -1,14 +1,18 @@
+import * as Print from "expo-print";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { FlatList, Image, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, FlatList, Image, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Loader } from "../components/common";
 import { useAuth } from "../context/AuthContext";
 import { orderService } from "../services/api/orders";
 import { colors } from "../styles";
-import { getLabel, isBuyer } from "../utils/roleLabels";
+import { generateOrderReportHTML } from "../utils/orderReportPDF";
+import { getLabel, isBuyer, isCustomer } from "../utils/roleLabels";
 import { scaleSize } from "../utils/scale";
 
+
 const tabs = ["incoming", "completed", "cancelled"];
+
 
 export default function RecyclingHistory() {
   const { user, isLoggedIn } = useAuth();
@@ -17,6 +21,29 @@ export default function RecyclingHistory() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("incoming");
   const [refreshing, setRefreshing] = useState(false);
+
+  function handleCancelOrder(orderId) {
+    Alert.alert("Cancel Order", "Are you sure you want to cancel this order?", [
+      { text: "No", style: "cancel" },
+      {
+        text: "Yes",
+        onPress: async () => {
+          try {
+            await orderService.cancelOrder(orderId);
+            setAllOrders((prev) =>
+              prev.map((order) =>
+                order._id === orderId
+                  ? { ...order, status: "cancelled" }
+                  : order
+              )
+            );
+          } catch {
+            Alert.alert("Failed to cancel order");
+          }
+        },
+      },
+    ]);
+  }
 
   useEffect(() => {
     if (isLoggedIn && user?.email) {
@@ -32,7 +59,7 @@ export default function RecyclingHistory() {
       setLoading(true);
       const response = await orderService.getOrders();
       setAllOrders(Array.isArray(response.data) ? response.data : []);
-    } catch (error) {
+    } catch (_error) {
       setAllOrders([]);
     } finally {
       setLoading(false);
@@ -117,6 +144,82 @@ export default function RecyclingHistory() {
             <Text style={styles.addressText}>
               {order.address.street}, Bldg {order.address.building}, Floor {order.address.floor}, {order.address.area}, {order.address.city}
             </Text>
+            {/* Download PDF button for pending orders - for both customers and buyers */}
+            {activeTab === "incoming" &&
+              order.status?.toLowerCase() === "pending" &&
+              isLoggedIn && (
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: "#222",
+                    marginTop: 10,
+                    marginBottom: 6,
+                    borderRadius: 6,
+                    padding: 12,
+                    alignSelf: "stretch",
+                  }}
+                  onPress={async () => {
+                    Alert.alert(
+                      "Download PDF",
+                      "Do you want to preview the order report as PDF?",
+                      [
+                        { text: "Cancel", style: "cancel" },
+                        {
+                          text: "Preview",
+                          onPress: async () => {
+                            try {
+                              if (!order || !user) {
+                                Alert.alert(
+                                  "Missing data",
+                                  "Order or user info is missing."
+                                );
+                                return;
+                              }
+                              const html = generateOrderReportHTML({ order, user });
+                              await Print.printAsync({ html });
+                            } catch (_err) {
+                              Alert.alert("Error", "Failed to generate PDF.");
+                            }
+                          },
+                        },
+                      ]
+                    );
+                  }}
+                  accessibilityLabel="Download PDF"
+                >
+                  <Text
+                    style={{
+                      color: "white",
+                      textAlign: "center",
+                      fontWeight: "bold",
+                      fontSize: 14,
+                    }}
+                  >
+                    Download PDF
+                  </Text>
+                </TouchableOpacity>
+              )}
+            {/* Cancel Order button only for customers and only for pending orders */}
+            {activeTab === "incoming" &&
+              order.status?.toLowerCase() === "pending" &&
+              isCustomer(user) && (
+                <TouchableOpacity
+                  onPress={() => handleCancelOrder(order._id)}
+                  style={{
+                    marginTop: scaleSize(12),
+                    marginBottom: scaleSize(8),
+                    backgroundColor: "#fee2e2",
+                    padding: scaleSize(12),
+                    borderRadius: scaleSize(6),
+                    alignSelf: "stretch",
+                    borderWidth: 1,
+                    borderColor: "#fecaca",
+                  }}
+                >
+                  <Text style={{ color: "#dc2626", textAlign: "center", fontSize: scaleSize(12), fontWeight: "700" }}>
+                    Cancel Order
+                  </Text>
+                </TouchableOpacity>
+              )}
           </View>
         )}
         contentContainerStyle={{
