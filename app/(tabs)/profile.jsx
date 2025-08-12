@@ -1,13 +1,7 @@
 ﻿import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import {
-  Alert,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
-} from "react-native";
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import RecyclingModal from "../../components/Modals/RecyclingModal";
 import ProfileCard from "../../components/profile/ProfileCard";
 import ProfileMenu from "../../components/profile/ProfileMenu";
@@ -15,10 +9,8 @@ import { useAuth } from "../../context/AuthContext";
 import { useUserPoints } from "../../hooks/useUserPoints";
 import apiService from "../../services/api/apiService";
 import { orderService } from "../../services/api/orders";
-import { getLabel, isCustomer } from "../../utils/roleLabels";
+import { isCustomer } from "../../utils/roleLabels";
 import { scaleSize } from "../../utils/scale";
-
-const tabs = ["incoming", "completed", "cancelled"];
 
 export default function Profile() {
   return <ProfileContent />;
@@ -28,7 +20,6 @@ function ProfileContent() {
   const { user, logout, isLoggedIn } = useAuth();
   const router = useRouter();
   const [allOrders, setAllOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [avatarUri, setAvatarUri] = useState(null);
   const [avatarLoading, setAvatarLoading] = useState(false); // New state for avatar upload
   // Edit avatar with image picker and upload to backend
@@ -37,7 +28,8 @@ function ProfileContent() {
   // Only update avatar fields in-place to avoid triggering useEffect on user object change
   const handleEditAvatar = async () => {
     try {
-      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const permission =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
         Alert.alert(
           "Permission required",
@@ -84,7 +76,6 @@ function ProfileContent() {
       Alert.alert("Error", "Could not change profile picture.");
     }
   };
-  const [activeTab, setActiveTab] = useState("incoming");
   const hasUserId = isLoggedIn && user && user._id;
   const { userPoints, getUserPoints } = useUserPoints(
     hasUserId
@@ -95,22 +86,8 @@ function ProfileContent() {
         }
       : { userId: null, name: null, email: null }
   );
-  console.log('userPoints in ProfileContent:', userPoints);
+  console.log("userPoints in ProfileContent:", userPoints);
   const [modalVisible, setModalVisible] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-
-  const getTabDisplayName = (tab) => {
-    switch (tab) {
-      case "incoming":
-        return getLabel("profileLabels.incomingTab", user?.role);
-      case "completed":
-        return getLabel("profileLabels.completedTab", user?.role);
-      case "cancelled":
-        return getLabel("profileLabels.cancelledTab", user?.role);
-      default:
-        return tab;
-    }
-  };
 
   useEffect(() => {
     console.log("AuthContext user:", user);
@@ -123,7 +100,6 @@ function ProfileContent() {
     } else {
       console.log("[Profile] User not logged in, clearing orders");
       setAllOrders([]);
-      setLoading(false);
     }
   }, [user, isLoggedIn]);
 
@@ -140,7 +116,6 @@ function ProfileContent() {
 
   const fetchOrders = async () => {
     try {
-      setLoading(true);
       const response = await orderService.getOrders();
       console.log("[Profile] Orders API response:", response);
       setAllOrders(Array.isArray(response.data) ? response.data : []);
@@ -149,41 +124,8 @@ function ProfileContent() {
       if (error.response?.status === 401 || error.response?.status === 403) {
         setAllOrders([]);
       }
-    } finally {
-      setLoading(false);
     }
   };
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await fetchOrders();
-    setRefreshing(false);
-  };
-
-  const handleCancelOrder = (orderId) => {
-    Alert.alert("Cancel Order", "Are you sure you want to cancel this order?", [
-      { text: "No", style: "cancel" },
-      {
-        text: "Yes",
-        onPress: async () => {
-          try {
-            await orderService.cancelOrder(orderId);
-            setAllOrders((prev) =>
-              prev.map((order) =>
-                order._id === orderId
-                  ? { ...order, status: "cancelled" }
-                  : order
-              )
-            );
-            // Do not navigate to the cancelled tab automatically; remain on the current tab
-          } catch {
-            Alert.alert("Failed to cancel order");
-          }
-        },
-      },
-    ]);
-  };
-
   const handleLogout = async () => {
     try {
       console.log("Logging out user...");
@@ -204,17 +146,6 @@ function ProfileContent() {
       { text: "Yes", style: "destructive", onPress: handleLogout },
     ]);
   };
-
-  const filteredOrders = allOrders.filter((order) => {
-    if (activeTab === "incoming") {
-      return ["pending", "accepted"].includes(order.status?.toLowerCase());
-    } else if (activeTab === "completed") {
-      return order.status === "completed";
-    } else if (activeTab === "cancelled") {
-      return order.status === "cancelled";
-    }
-    return true;
-  });
 
   const stats = {
     totalRecycles: allOrders.filter((o) => o.status === "completed").length,
@@ -293,29 +224,11 @@ function ProfileContent() {
   }
 
   // ListHeaderComponent for tabs only (profile card is fixed above)
-  const renderListHeader = () => (
-    <View style={styles.tabsContainer}>
-      {tabs.map((tab) => (
-        <TouchableOpacity
-          key={tab}
-          onPress={() => setActiveTab(tab)}
-          style={activeTab === tab ? styles.activeTab : styles.tab}
-        >
-          <Text
-            style={activeTab === tab ? styles.activeTabText : styles.tabText}
-          >
-            {getTabDisplayName(tab)}
-          </Text>
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
 
   // Remove full-page Loader. Loader will be shown only in the FlatList/ListEmptyComponent area below.
 
   // Determine avatar source: prefer user.imgUrl, then avatarUri, then fallback
   const avatarSource = user?.imgUrl || avatarUri || undefined;
-
 
   // Menu handlers
   const handleRecyclingHistory = () => router.push("/recycling-history");
