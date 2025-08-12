@@ -1,6 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const LINKS = [
   { label: 'How to Recycle Guide', url: 'https://recyclingapp.com/guide', icon: 'book-open-page-variant' },

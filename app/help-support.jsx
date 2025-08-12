@@ -1,10 +1,9 @@
 
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import FAQList from './FAQList';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import ContactOptions from './ContactOptions';
-import QuickLinks from './QuickLinks';
+import FAQList from './FAQList';
 import FeedbackForm from './FeedbackForm';
+import QuickLinks from './QuickLinks';
 
 const HelpSupportScreen = () => {
   return (

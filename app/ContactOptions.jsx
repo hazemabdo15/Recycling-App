@@ -1,6 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
-import { MaterialIcons, FontAwesome } from '@expo/vector-icons';
+import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
+import { Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const EMAIL = 'support@recyclingapp.com';
 const PHONE = '+1234567890';

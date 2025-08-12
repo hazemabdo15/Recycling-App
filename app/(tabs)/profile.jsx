@@ -8,7 +8,6 @@ import ProfileMenu from "../../components/profile/ProfileMenu";
 import { useAuth } from "../../context/AuthContext";
 import { useUserPoints } from "../../hooks/useUserPoints";
 import apiService from "../../services/api/apiService";
-import { orderService } from "../../services/api/orders";
 import { isCustomer } from "../../utils/roleLabels";
 import { scaleSize } from "../../utils/scale";
 
@@ -113,19 +112,6 @@ function ProfileContent() {
       );
     }
   }, [isLoggedIn, user?._id, getUserPoints]);
-
-  // const fetchOrders = async () => {
-  //   try {
-  //     const response = await orderService.getOrders();
-  //     console.log("[Profile] Orders API response:", response);
-  //     setAllOrders(Array.isArray(response.data) ? response.data : []);
-  //   } catch (error) {
-  //     console.error("Failed to fetch orders", error);
-  //     if (error.response?.status === 401 || error.response?.status === 403) {
-  //       setAllOrders([]);
-  //     }
-  //   }
-  // };
   const handleLogout = async () => {
     try {
       console.log("Logging out user...");
@@ -251,6 +237,7 @@ function ProfileContent() {
         avatarLoading={avatarLoading}
       />
       <ProfileMenu
+        user={user}
         onRecyclingHistory={handleRecyclingHistory}
         onEWallet={handleEWallet}
         onHelpSupport={handleHelpSupport}

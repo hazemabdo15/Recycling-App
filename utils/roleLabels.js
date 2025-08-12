@@ -133,16 +133,16 @@
       buyer: "My Orders",
     },
     incomingTab: {
-      customer: "Upcoming Pickups",
-      buyer: "Pending Orders",
+      customer: "Upcoming\nPickups",
+  buyer: "Pending\nOrders",
     },
     completedTab: {
-      customer: "Completed Pickups",
-      buyer: "Completed Orders",
+      customer: "Completed\nPickups",
+      buyer: "Completed\nOrders",
     },
     cancelledTab: {
-      customer: "Cancelled Pickups",
-      buyer: "Cancelled Orders",
+      customer: "Cancelled\nPickups",
+      buyer: "Cancelled\nOrders",
     },
     noOrdersMessage: {
       customer: "No pickups yet",

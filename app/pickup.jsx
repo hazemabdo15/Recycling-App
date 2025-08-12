@@ -25,106 +25,6 @@ import { getProgressStepLabel } from "../utils/roleLabels";
 import { isBuyer } from "../utils/roleUtils";
 import { scaleSize } from "../utils/scale";
 
-// const prepareOrderItems = async (cartItems, cartItemDetails, accessToken) => {
-//   let orderItems = [];
-
-//   try {
-//     if (cartItemDetails && Object.keys(cartItemDetails).length > 0) {
-//       console.log(
-//         "INFO",
-//         "Using cart item details directly, no API call needed"
-//       );
-
-//       orderItems = Object.entries(cartItems).map(([itemId, quantity]) => {
-//         const itemDetails = cartItemDetails[itemId];
-//         console.log(
-//           `[Pickup] Preparing order item for ID ${itemId} with quantity ${quantity}`,
-//           itemDetails
-//         );
-//         if (itemDetails) {
-//           return {
-//             _id: itemDetails._id,
-//             categoryId: itemDetails.categoryId,
-//             quantity: Number(quantity),
-//             name: itemDetails.name || itemDetails.itemName || "Unknown Item",
-//             categoryName: itemDetails.categoryName || "Unknown Category",
-//             measurement_unit: Number(itemDetails.measurement_unit),
-//             points: Number(itemDetails.points) || 10,
-//             price: Number(itemDetails.price) || 5.0,
-//             image: itemDetails.image || "placeholder.png",
-//           };
-//         } else {
-//           console.log(
-//             "WARN",
-//             `Missing details for item ${itemId}, using basic data`
-//           );
-//           return {
-//             _id: itemId,
-//             categoryId: itemId,
-//             quantity: Number(quantity),
-//             name: "Unknown Item",
-//             categoryName: "Unknown Category",
-//             measurement_unit: 1,
-//             points: 10,
-//             price: 5.0,
-//             image: "placeholder.png",
-//           };
-//         }
-//       });
-
-//       console.log(
-//         "INFO",
-//         "Prepared order items from cart context:",
-//         orderItems.length
-//       );
-//     } else {
-//       console.log(
-//         "WARN",
-//         "Cart item details not available, fetching from backend cart"
-//       );
-//       const backendCartResponse = await fetch(`${API_BASE_URL}/api/cart`, {
-//         headers: {
-//           Authorization: `Bearer ${accessToken}`,
-//           "Content-Type": "application/json",
-//         },
-//       });
-
-//       if (backendCartResponse.ok) {
-//         const backendCartData = await backendCartResponse.json();
-//         const backendItems = backendCartData.items || [];
-
-//         orderItems = backendItems.map((item) => ({
-//           _id: item._id,
-//           categoryId: item.categoryId,
-//           quantity: Number(item.quantity),
-//           name: item.name || item.itemName || "Unknown Item",
-//           categoryName: item.categoryName || "Unknown Category",
-//           measurement_unit: Number(item.measurement_unit),
-//           points: Number(item.points) || 10,
-//           price: Number(item.price) || 5.0,
-//           image: item.image || "placeholder.png",
-//         }));
-
-//         console.log(
-//           "INFO",
-//           "Using backend cart items for order:",
-//           orderItems.length
-//         );
-//       }
-//     }
-//   } catch (error) {
-//     console.log("ERROR", "Failed to prepare order items:", error.message);
-//     throw new Error("Failed to prepare order data");
-//   }
-
-//   if (orderItems.length === 0) {
-//     throw new Error("No items found for order creation");
-//   }
-
-//   console.log("INFO", "Final order items:", JSON.stringify(orderItems));
-//   return orderItems;
-// };
-
 export default function Pickup() {
   const insets = useSafeAreaInsets();
   const {
@@ -311,7 +211,7 @@ export default function Pickup() {
         }
       }
     },
-    [createOrder, setCurrentPhase, selectedAddress]
+    [selectedAddress, user, createOrder, setCurrentPhase]
   );
 
   useEffect(() => {
