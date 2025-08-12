@@ -101,14 +101,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   label: {
-    fontSize: scaleSize(17),
+    fontSize: scaleSize(15),
     fontWeight: '800',
     color: colors.primary,
     marginBottom: scaleSize(1),
     letterSpacing: 0.1,
   },
   subtitle: {
-    fontSize: scaleSize(13),
+    fontSize: scaleSize(12),
     color: '#7B8794',
     marginTop: 0,
     fontWeight: '400',
