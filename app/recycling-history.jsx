@@ -1,4 +1,5 @@
 import { Feather, MaterialIcons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import * as Print from "expo-print";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -13,6 +14,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Loader } from "../components/common";
 import { useAuth } from "../context/AuthContext";
 import { orderService } from "../services/api/orders";
@@ -108,20 +110,31 @@ export default function RecyclingHistory() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#F7F8FA" }}>
       {/* Modern Card Header */}
-      <View style={styles.headerCard}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
-          <MaterialIcons
-            name="arrow-back-ios"
-            size={scaleSize(22)}
-            color={colors.primary}
-          />
-        </TouchableOpacity>
-        <Text style={styles.headerTitleModern}>Recycling History</Text>
-      </View>
+      <LinearGradient
+        colors={[colors.primary, colors.neutral]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[
+          styles.heroSection,
+          { paddingTop: useSafeAreaInsets.top + scaleSize(28) }
+        ]}
+      >
+        <View style={styles.heroHeaderRow}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.heroBackButton}
+          >
+            <MaterialIcons
+              name="arrow-back-ios"
+              size={scaleSize(22)}
+              color={"#fff"}
+            />
+          </TouchableOpacity>
+          <Text style={styles.heroTitleText}>Recycling History</Text>
+        </View>
+      </LinearGradient>
       {/* Modern Tabs */}
+      <View style={{ height: scaleSize(18) }} />
       <View style={styles.tabsContainerModern}>
         {tabs.map((tab) => (
           <TouchableOpacity
@@ -343,27 +356,35 @@ export default function RecyclingHistory() {
 }
 
 const styles = StyleSheet.create({
-  headerCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingTop: scaleSize(28),
-    paddingBottom: scaleSize(16),
+  heroSection: {
+    borderBottomLeftRadius: scaleSize(32),
+    borderBottomRightRadius: scaleSize(32),
     paddingHorizontal: scaleSize(18),
-    backgroundColor: colors.white,
-    borderBottomLeftRadius: scaleSize(24),
-    borderBottomRightRadius: scaleSize(24),
+    paddingBottom: scaleSize(32),
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 8,
     elevation: 2,
-    marginBottom: scaleSize(8),
   },
-  headerTitleModern: {
-    fontSize: scaleSize(20),
+  heroHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    marginBottom: scaleSize(8),
+    gap: scaleSize(8),
+    paddingTop: scaleSize(35), // Add extra space below the status bar
+  },
+  heroBackButton: {
+    marginRight: scaleSize(8),
+    padding: scaleSize(6),
+  },
+  heroTitleText: {
+    fontSize: scaleSize(22),
     fontWeight: "800",
-    color: colors.primary,
+    color: "#fff",
     marginLeft: scaleSize(2),
+    letterSpacing: 0.2,
   },
   tabsContainerModern: {
     flexDirection: "row",
