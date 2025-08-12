@@ -1,27 +1,21 @@
 ﻿import * as ImagePicker from "expo-image-picker";
-import * as Print from "expo-print";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   Alert,
-  FlatList,
-  Image,
-  RefreshControl,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
-import { Loader } from "../../components/common";
 import RecyclingModal from "../../components/Modals/RecyclingModal";
 import ProfileCard from "../../components/profile/ProfileCard";
+import ProfileMenu from "../../components/profile/ProfileMenu";
 import { useAuth } from "../../context/AuthContext";
 import { useUserPoints } from "../../hooks/useUserPoints";
 import apiService from "../../services/api/apiService";
 import { orderService } from "../../services/api/orders";
-import { colors } from "../../styles";
-import { generateOrderReportHTML } from "../../utils/orderReportPDF";
-import { getLabel, isBuyer, isCustomer } from "../../utils/roleLabels";
+import { getLabel, isCustomer } from "../../utils/roleLabels";
 import { scaleSize } from "../../utils/scale";
 
 const tabs = ["incoming", "completed", "cancelled"];
@@ -322,66 +316,11 @@ function ProfileContent() {
   // Determine avatar source: prefer user.imgUrl, then avatarUri, then fallback
   const avatarSource = user?.imgUrl || avatarUri || undefined;
 
-  if (filteredOrders.length === 0) {
-    return (
-      <View style={{ flex: 1, backgroundColor: "#f0fdf4" }}>
-        <ProfileCard
-          user={{
-            ...user,
-            totalRecycles: stats.totalRecycles,
-            avatarUri: avatarSource,
-          }}
-          points={userPoints ?? 100}
-          tier={stats.tier}
-          onLogout={confirmLogout}
-          onRedeem={() => setModalVisible(true)}
-          showRedeem={isCustomer(user)}
-          onEditAvatar={handleEditAvatar}
-          avatarLoading={avatarLoading}
-        />
-        <RecyclingModal
-          visible={modalVisible}
-          onClose={() => setModalVisible(false)}
-          totalPoints={userPoints}
-          onPointsUpdated={getUserPoints}
-        />
-        {renderListHeader()}
-        <View style={{ flex: 1 }}>
-          {loading ? (
-            <View style={{ padding: 32 }}>
-              <Loader />
-            </View>
-          ) : user?.role === "buyer" ? (
-            <View style={styles.buyerMessageContainer}>
-              <Text style={styles.buyerMessageTitle}>
-                {getLabel("profileLabels.noOrdersMessage", user?.role)}
-              </Text>
-              <Text style={styles.buyerMessageSubtitle}>
-                Your purchase history will appear here once you start shopping
-              </Text>
-              <TouchableOpacity
-                onPress={() => router.push("/explore")}
-                style={styles.startShoppingButton}
-              >
-                <Text style={styles.startShoppingButtonText}>
-                  Start Shopping
-                </Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={styles.emptyStateContainer}>
-              <Text style={styles.emptyText}>
-                {getLabel("profileLabels.noOrdersMessage", user?.role)}
-              </Text>
-              <Text style={styles.emptySubtext}>
-                {getLabel("profileLabels.startOrderingMessage", user?.role)}
-              </Text>
-            </View>
-          )}
-        </View>
-      </View>
-    );
-  }
+
+  // Menu handlers
+  const handleRecyclingHistory = () => router.push("/recycling-history");
+  const handleEWallet = () => Alert.alert("Coming soon");
+  const handleHelpSupport = () => Alert.alert("Coming soon");
 
   return (
     <View style={{ flex: 1, backgroundColor: "#f0fdf4" }}>
@@ -393,142 +332,22 @@ function ProfileContent() {
         }}
         points={userPoints ?? 0}
         tier={stats.tier}
-        onLogout={confirmLogout}
         onRedeem={() => setModalVisible(true)}
         showRedeem={isCustomer(user)}
         onEditAvatar={handleEditAvatar}
         avatarLoading={avatarLoading}
+      />
+      <ProfileMenu
+        onRecyclingHistory={handleRecyclingHistory}
+        onEWallet={handleEWallet}
+        onHelpSupport={handleHelpSupport}
+        onLogout={confirmLogout}
       />
       <RecyclingModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         totalPoints={userPoints}
         onPointsUpdated={getUserPoints}
-      />
-      {renderListHeader()}
-      <FlatList
-        data={loading ? [] : filteredOrders}
-        keyExtractor={(order) => order._id}
-        renderItem={loading ? undefined : ({ item: order }) => (
-          <View style={styles.orderCard}>
-            <Text style={styles.orderText}>
-              Date: {new Date(order.createdAt).toLocaleDateString()}
-            </Text>
-            <Text style={styles.orderStatus}>Status: {order.status}</Text>
-            {order.items.map((item, i) => (
-              <View key={item._id || i} style={styles.orderItem}>
-                <Image source={{ uri: item.image }} style={styles.itemImage} />
-                <View style={styles.itemDetails}>
-                  <Text style={styles.itemName}>{item.itemName}</Text>
-                  <Text style={styles.itemInfo}>
-                    Quantity: {item.quantity}{" "}
-                    {item.measurement_unit === 1 ? "kg" : "pcs"}
-                  </Text>
-                  {!isBuyer(user) && (
-                    <Text style={styles.itemInfo}>Points: {item.points}</Text>
-                  )}
-                  <Text style={styles.itemInfo}>Price: {item.price} EGP</Text>
-                </View>
-              </View>
-            ))}
-            <Text style={styles.addressText}>
-              {order.address.street}, Bldg {order.address.building}, Floor{" "}
-              {order.address.floor}, {order.address.area}, {order.address.city}
-            </Text>
-            {/* Download PDF button for pending orders - for both customers and buyers */}
-            {activeTab === "incoming" &&
-              order.status?.toLowerCase() === "pending" &&
-              isLoggedIn && (
-                <TouchableOpacity
-                  style={{
-                    backgroundColor: "#222",
-                    marginTop: 10,
-                    marginBottom: 6,
-                    borderRadius: 6,
-                    padding: 12,
-                    alignSelf: "stretch",
-                  }}
-                  onPress={async () => {
-                    Alert.alert(
-                      "Download PDF",
-                      "Do you want to preview the order report as PDF?",
-                      [
-                        { text: "Cancel", style: "cancel" },
-                        {
-                          text: "Preview",
-                          onPress: async () => {
-                            try {
-                              if (!order || !user) {
-                                Alert.alert(
-                                  "Missing data",
-                                  "Order or user info is missing."
-                                );
-                                return;
-                              }
-                              const html = generateOrderReportHTML({
-                                order,
-                                user,
-                              });
-                              if (!html) {
-                                Alert.alert("Error", "Could not generate PDF.");
-                                return;
-                              }
-                              await Print.printAsync({ html });
-                            } catch (_err) {
-                              Alert.alert("Error", "Failed to generate PDF.");
-                            }
-                          },
-                        },
-                      ]
-                    );
-                  }}
-                  accessibilityLabel="Download PDF"
-                >
-                  <Text
-                    style={{
-                      color: "white",
-                      textAlign: "center",
-                      fontWeight: "bold",
-                      fontSize: 14,
-                    }}
-                  >
-                    Download PDF
-                  </Text>
-                </TouchableOpacity>
-              )}
-            {/* Cancel Order button only for customers and only for pending orders */}
-            {activeTab === "incoming" &&
-              order.status?.toLowerCase() === "pending" &&
-              isCustomer(user) && (
-                <TouchableOpacity
-                  onPress={() => handleCancelOrder(order._id)}
-                  style={styles.cancelButton}
-                >
-                  <Text style={styles.cancelButtonText}>Cancel Order</Text>
-                </TouchableOpacity>
-              )}
-          </View>
-        )}
-        contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingBottom: scaleSize(120),
-        }}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={[colors.primary]}
-            tintColor={colors.primary}
-          />
-        }
-        ListEmptyComponent={
-          loading ? (
-            <View style={{ padding: 32 }}>
-              <Loader />
-            </View>
-          ) : null
-        }
-        showsVerticalScrollIndicator={false}
       />
     </View>
   );

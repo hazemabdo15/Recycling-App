@@ -20,11 +20,11 @@ export default function ProfileCard({ user, points = 0, tier = '', onLogout, onR
               ) : (
                 <MaterialCommunityIcons name="account" size={44} color={colors.white} />
               )}
-                          {avatarLoading && (
-                            <View style={styles.avatarLoadingOverlay}>
-                              <ActivityIndicator size="small" color="#059669" />
-                            </View>
-                          )}
+              {avatarLoading && (
+                <View style={styles.avatarLoadingOverlay}>
+                  <ActivityIndicator size="small" color="#059669" />
+                </View>
+              )}
             </View>
             <TouchableOpacity style={styles.editAvatarButton} onPress={onEditAvatar} accessibilityLabel="Edit Profile Image">
               <MaterialCommunityIcons name="pencil" size={18} color={colors.primary} />
@@ -35,9 +35,6 @@ export default function ProfileCard({ user, points = 0, tier = '', onLogout, onR
             <Text style={styles.email}>{user?.email || 'No email available'}</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.logoutButton} onPress={onLogout} accessibilityLabel="Logout">
-          <MaterialCommunityIcons name="logout" size={28} color={colors.danger || '#dc2626'} />
-        </TouchableOpacity>
       </View>
       <View style={styles.statsRow}>
         <View style={styles.statBox}>
