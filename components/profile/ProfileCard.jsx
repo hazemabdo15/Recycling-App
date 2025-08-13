@@ -1,6 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useState } from 'react';
+import { ActivityIndicator, Image, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { colors } from '../../styles/theme';
 import { isBuyer, isCustomer } from '../../utils/roleLabels';
@@ -9,6 +10,7 @@ import { calculateUserTier, getTierColors } from '../../utils/tiers';
 import TierBadge from '../achievements/TierBadge';
 
 export default function ProfileCard({ user, points = 0, tier = '', onLogout, onRedeem, showRedeem, onEditAvatar, style, avatarLoading }) {
+  const [showImagePreview, setShowImagePreview] = useState(false);
   const avatarUri = user?.avatarUri;
   const totalRecycles = user?.totalRecycles ?? 0;
   const userTier = calculateUserTier(totalRecycles);
@@ -39,7 +41,11 @@ export default function ProfileCard({ user, points = 0, tier = '', onLogout, onR
               colors={tierColors.gradient}
               style={styles.avatarGradientBorder}
             >
-              <View style={styles.avatar}>
+              <TouchableOpacity 
+                style={styles.avatar} 
+                onPress={() => avatarUri && setShowImagePreview(true)}
+                disabled={!avatarUri}
+              >
                 {avatarUri ? (
                   <Image source={{ uri: avatarUri }} style={styles.avatarImage} />
                 ) : (
@@ -55,7 +61,7 @@ export default function ProfileCard({ user, points = 0, tier = '', onLogout, onR
                     <ActivityIndicator size="small" color={colors.primary} />
                   </View>
                 )}
-              </View>
+              </TouchableOpacity>
             </LinearGradient>
             
             <TouchableOpacity style={styles.editAvatarButton} onPress={onEditAvatar} accessibilityLabel="Edit Profile Image">
@@ -137,6 +143,44 @@ export default function ProfileCard({ user, points = 0, tier = '', onLogout, onR
           </TouchableOpacity>
         )}
       </View>
+
+      {/* Image Preview Modal */}
+      <Modal
+        visible={showImagePreview}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowImagePreview(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity 
+            style={styles.modalCloseArea} 
+            activeOpacity={1} 
+            onPress={() => setShowImagePreview(false)}
+          >
+            <View style={styles.imagePreviewContainer}>
+              <TouchableOpacity 
+                style={styles.closeButton}
+                onPress={() => setShowImagePreview(false)}
+              >
+                <MaterialCommunityIcons name="close" size={scaleSize(24)} color="white" />
+              </TouchableOpacity>
+              
+              {avatarUri && (
+                <Image 
+                  source={{ uri: avatarUri }} 
+                  style={styles.previewImage}
+                  resizeMode="contain"
+                />
+              )}
+              
+              <View style={styles.previewInfo}>
+                <Text style={styles.previewTitle}>{user?.name || 'Profile Image'}</Text>
+                <Text style={styles.previewSubtitle}>Tap anywhere to close</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </LinearGradient>
   );
 }
@@ -344,5 +388,56 @@ const styles = StyleSheet.create({
     fontSize: scaleSize(15),
     fontWeight: '600',
     marginHorizontal: scaleSize(8),
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCloseArea: {
+    flex: 1,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imagePreviewContainer: {
+    width: '90%',
+    maxWidth: scaleSize(350),
+    alignItems: 'center',
+    position: 'relative',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: -scaleSize(50),
+    right: scaleSize(10),
+    zIndex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: scaleSize(20),
+    width: scaleSize(40),
+    height: scaleSize(40),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  previewImage: {
+    width: scaleSize(300),
+    height: scaleSize(300),
+    borderRadius: scaleSize(20),
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  previewInfo: {
+    marginTop: scaleSize(20),
+    alignItems: 'center',
+  },
+  previewTitle: {
+    color: 'white',
+    fontSize: scaleSize(18),
+    fontWeight: '600',
+    marginBottom: scaleSize(4),
+  },
+  previewSubtitle: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: scaleSize(14),
+    textAlign: 'center',
   },
 });
