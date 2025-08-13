@@ -230,7 +230,7 @@ function ProfileContent() {
 
   // Menu handlers
   const handleRecyclingHistory = () => router.push("/recycling-history");
-  const handleEWallet = () => Alert.alert("Coming soon");
+  const handleEWallet = () => router.push("/e-wallet");
   const handleHelpSupport = () => router.push("/help-support");
   const handleRedeemHistory = () => router.push("/redeem-history");
 

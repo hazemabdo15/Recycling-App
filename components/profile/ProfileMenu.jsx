@@ -164,7 +164,7 @@ const menuItems = [
       </View>
     ),
     label: "E-Wallet",
-    subtitle: "Coming soon",
+    subtitle: "Check your balance and transactions",
   },
   {
     key: "redeemHistory",
@@ -174,7 +174,7 @@ const menuItems = [
       </View>
     ),
     label: "Redeem History",
-    subtitle: "View your redeemed rewards",
+    subtitle: "Track all your redeemed rewards",
   },
   {
     key: "recyclingHistory",
