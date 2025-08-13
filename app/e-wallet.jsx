@@ -1,4 +1,5 @@
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useState } from "react";
@@ -222,19 +223,32 @@ export default function EWallet() {
 
   return (
     <View style={styles.container}>
-      <StatusBar style="dark" backgroundColor="#ffffff" />
+      <StatusBar style="light" backgroundColor="transparent" />
       
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top }]}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={24} color={colors.white} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>E-Wallet</Text>
-        <View style={styles.placeholder} />
-      </View>
+      <LinearGradient
+        colors={[colors.primary, colors.neutral]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.header, { paddingTop: insets.top + 25 }]}
+      >
+        <View style={styles.headerRow}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.heroBackButton}
+          >
+            <MaterialIcons
+              name="arrow-back-ios"
+              size={scaleSize(22)}
+              color="#fff"
+            />
+          </TouchableOpacity>
+          <View style={styles.headerTextFlex}>
+            <Text style={styles.title}>E-Wallet</Text>
+            <Text style={styles.subtitle}>Manage your digital wallet</Text>
+          </View>
+        </View>
+      </LinearGradient>
 
       {/* Balance Card */}
       <View style={styles.balanceCard}>
@@ -374,26 +388,45 @@ const styles = StyleSheet.create({
     fontSize: scaleSize(16),
   },
   header: {
-    backgroundColor: colors.primary,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
+    paddingTop: 32,
+    paddingBottom: 16,
+    paddingHorizontal: 20,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    marginBottom: 10,
   },
-  backButton: {
-    padding: spacing.xs,
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  headerTitle: {
-    fontSize: scaleSize(20),
-    fontWeight: "600",
-    color: colors.white,
+  heroBackButton: {
+    marginRight: scaleSize(12),
+    padding: scaleSize(6),
+    alignSelf: 'center',
   },
-  placeholder: {
-    width: 32,
+  headerTextFlex: {
+    flex: 1,
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: -scaleSize(36), // adjust for centering
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: scaleSize(2),
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#e0f2f1',
+    marginTop: 0,
+    textAlign: 'center',
   },
   balanceCard: {
     backgroundColor: colors.white,
+    marginTop: spacing.xs,
     margin: spacing.lg,
     padding: spacing.xl,
     borderRadius: 16,
