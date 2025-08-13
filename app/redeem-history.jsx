@@ -98,23 +98,39 @@ export default function RedeemHistoryScreen() {
         colors={[colors?.primary || "#4CAF50", colors?.neutral || "#2196F3"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={[styles.heroSection, { paddingBottom: 40, paddingTop: 40 }]}
+        style={[
+          styles.heroSection,
+          {
+            paddingBottom: 24,
+            paddingTop: 40, // Reduced top and bottom padding
+            minHeight: 90,
+            justifyContent: "flex-end",
+          },
+        ]}
       >
-        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 0, paddingTop: 0 }}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "100%",
+            marginTop: 8,
+          }}
+        >
           <TouchableOpacity
             onPress={() => router.back()}
-            style={{ padding: 4 }}
+            style={{ padding: 4, position: "absolute", left: 0 }}
             accessibilityLabel="Back"
           >
             <MaterialIcons name="arrow-back-ios" size={22} color="#fff" />
           </TouchableOpacity>
-          <View style={{ flex: 1, alignItems: "center", marginRight: 28 }}>
+          <View style={{ alignItems: "center", flex: 1, marginLeft: 36 }}>
             <Text style={styles.heroTitle}>Redeem History</Text>
+            <Text style={[styles.heroSubtitle, { fontSize: 14, color: "#fff", fontWeight: "400", marginTop: 4 }]}>All your redeemed points in one place</Text>
           </View>
+          {/* Spacer to balance layout */}
+          <View style={{ width: 32 }} />
         </View>
-        <Text style={styles.heroSubtitle}>
-          All your redeemed points in one place
-        </Text>
       </LinearGradient>
       <FlatList
         data={redeemHistory}

@@ -361,25 +361,21 @@ export default function RecyclingHistory() {
               { paddingTop: useSafeAreaInsets.top + scaleSize(80), paddingBottom: scaleSize(40) }
             ]}
           >
-            <View style={{ marginTop: scaleSize(32) }}>
-              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 0 }}>
-                <TouchableOpacity
-                  onPress={() => router.back()}
-                  style={styles.heroBackButton}
-                >
-                  <MaterialIcons
-                    name="arrow-back-ios"
-                    size={scaleSize(22)}
-                    color={"#fff"}
-                  />
-                </TouchableOpacity>
-                <View style={{ flex: 1, alignItems: "center", marginRight: scaleSize(28) }}>
-                  <Text style={styles.heroTitleText}>Recycling History</Text>
-                </View>
+            <View style={styles.headerRow}>
+              <TouchableOpacity
+                onPress={() => router.back()}
+                style={styles.heroBackButton}
+              >
+                <MaterialIcons
+                  name="arrow-back-ios"
+                  size={scaleSize(22)}
+                  color={"#fff"}
+                />
+              </TouchableOpacity>
+              <View style={styles.headerTextFlex}>
+                <Text style={styles.heroTitleText}>Recycling History</Text>
+                <Text style={styles.heroSubtitleText}>All your recycling orders in one place</Text>
               </View>
-              <Text style={{ color: "#fff", textAlign: "center", fontSize: scaleSize(14), marginTop: 2, fontWeight: "400", opacity: 0.95 }}>
-                All your recycling orders in one place
-              </Text>
             </View>
           </LinearGradient>
 
@@ -473,25 +469,38 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
-  heroHeaderRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "flex-start",
-    marginBottom: scaleSize(8),
-    gap: scaleSize(8),
-    paddingTop: scaleSize(35),
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: scaleSize(56), // increased from 32 to lower the content
   },
   heroBackButton: {
-    marginRight: scaleSize(8),
+    marginRight: scaleSize(12),
     padding: scaleSize(6),
-    marginTop: scaleSize(18),
+    alignSelf: 'center',
   },
   heroTitleText: {
     fontSize: scaleSize(22),
     fontWeight: "800",
     color: "#fff",
-    marginLeft: scaleSize(2),
     letterSpacing: 0.2,
+    marginBottom: scaleSize(2),
+    textAlign: 'center',
+  },
+  heroSubtitleText: {
+    fontSize: scaleSize(14),
+    color: '#e0f2f1',
+    marginTop: 0,
+    textAlign: 'center',
+    fontWeight: '400',
+    opacity: 0.95,
+  },
+  headerTextFlex: {
+    flex: 1,
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: -scaleSize(36),
   },
   tabsContainerModern: {
     flexDirection: "row",

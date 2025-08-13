@@ -1,13 +1,18 @@
 
 import { LinearGradient } from 'expo-linear-gradient';
-import { ScrollView, StyleSheet, Text } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { colors } from '../styles';
 import ContactOptions from './ContactOptions';
 import FAQList from './FAQList';
 import FeedbackForm from './FeedbackForm';
 import QuickLinks from './QuickLinks';
 
+import { MaterialIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { scaleSize } from '../utils/scale';
+
 const HelpSupportScreen = () => {
+  const router = useRouter();
   return (
     <ScrollView style={styles.container}>
       {/* Gradient Header Area */}
@@ -17,8 +22,22 @@ const HelpSupportScreen = () => {
         end={{ x: 1, y: 1 }}
         style={styles.header}
       >
-        <Text style={styles.title}>Help & Support</Text>
-        <Text style={styles.subtitle}>How can we help you today?</Text>
+        <View style={styles.headerRow}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.heroBackButton}
+          >
+            <MaterialIcons
+              name="arrow-back-ios"
+              size={scaleSize(22)}
+              color={"#fff"}
+            />
+          </TouchableOpacity>
+          <View style={styles.headerTextFlex}>
+            <Text style={styles.title}>Help & Support</Text>
+            <Text style={styles.subtitle}>How can we help you today?</Text>
+          </View>
+        </View>
       </LinearGradient>
       <FAQList />
       <ContactOptions />
@@ -39,18 +58,37 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
-    alignItems: 'center',
     marginBottom: 16,
   },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  heroBackButton: {
+    marginRight: scaleSize(12),
+    padding: scaleSize(6),
+    // marginTop removed for alignment in row
+    alignSelf: 'center',
+  },
+  headerTextFlex: {
+    flex: 1,
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+  marginLeft: -scaleSize(36), // shift further left to visually center
+  },
   title: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#fff',
+    marginBottom: scaleSize(2),
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#e0f2f1',
-    marginTop: 8,
+    marginTop: 0,
+    textAlign: 'center',
   },
 });
 
