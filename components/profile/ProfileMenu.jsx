@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: scaleSize(15),
     fontWeight: "800",
-    color: colors.primary,
+    color: "#1F2937",
     marginBottom: scaleSize(1),
     letterSpacing: 0.1,
   },
