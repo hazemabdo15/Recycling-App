@@ -11,7 +11,6 @@ export default function ReviewManager({ children }) {
   const [existingReviewForOrder, setExistingReviewForOrder] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Fetch reviews from your API
   const fetchReviews = async () => {
     try {
       setIsReviewsLoading(true);

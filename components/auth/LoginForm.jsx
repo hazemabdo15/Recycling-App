@@ -2,7 +2,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Dimensions, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Dimensions, Pressable, StyleSheet, Text, TextInput, View, TouchableOpacity } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../styles/theme';
@@ -10,7 +10,7 @@ import { colors } from '../../styles/theme';
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const scaleSize = (size) => (SCREEN_WIDTH / 375) * size;
 
-export default function LoginForm({ onSubmit, loading, onGoogleLogin }) {
+export default function LoginForm({ onSubmit, loading, onGoogleLogin, handleForgotPassword }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
@@ -68,7 +68,7 @@ export default function LoginForm({ onSubmit, loading, onGoogleLogin }) {
                 />
               </View>
 
-              <View style={styles.inputWrapper}>
+              <View style={[styles.inputWrapper, { marginBottom: 0 }]}>
                 <Ionicons name="lock-closed-outline" size={scaleSize(20)} color={colors.neutral} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
@@ -87,6 +87,14 @@ export default function LoginForm({ onSubmit, loading, onGoogleLogin }) {
                 </Pressable>
               </View>
             </View>
+
+            <TouchableOpacity
+              style={styles.forgotPasswordButton}
+              onPress={handleForgotPassword}
+            >
+              <Text style={styles.forgotPasswordText}>Forgot your password?</Text>
+            </TouchableOpacity>
+
 
             <Pressable
               style={[styles.loginButton, loading && styles.loginButtonDisabled]}
@@ -199,7 +207,7 @@ const styles = StyleSheet.create({
     paddingBottom: scaleSize(20),
   },
   inputContainer: {
-    marginBottom: scaleSize(24),
+    marginBottom: scaleSize(8),
   },
   inputWrapper: {
     flexDirection: 'row',
@@ -207,7 +215,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.base50,
     borderRadius: scaleSize(16),
     marginBottom: scaleSize(16),
-    paddingHorizontal: scaleSize(16),
+    paddingHorizontal: scaleSize(12),
     paddingVertical: scaleSize(4),
     borderWidth: 1,
     borderColor: colors.base200,
@@ -325,5 +333,16 @@ const styles = StyleSheet.create({
     fontSize: scaleSize(16),
     fontWeight: '500',
     marginLeft: scaleSize(8),
+  },
+  forgotPasswordButton: {
+    alignSelf: 'flex-end',
+    marginBottom: scaleSize(16),
+    paddingHorizontal: scaleSize(8),
+  },
+  forgotPasswordText: {
+    color: colors.primary,
+    fontSize: scaleSize(14),
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
 });
