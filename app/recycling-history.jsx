@@ -2,17 +2,18 @@ import { Feather, MaterialIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Print from "expo-print";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Alert,
   FlatList,
   Image,
+  PanResponder,
   RefreshControl,
   SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Loader } from "../components/common";
@@ -34,6 +35,33 @@ export default function RecyclingHistory() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("incoming");
   const [refreshing, setRefreshing] = useState(false);
+
+  // For swipe gesture
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (evt, gestureState) => {
+        // Only respond to horizontal swipes
+        return Math.abs(gestureState.dx) > 20 && Math.abs(gestureState.dy) < 20;
+      },
+      onPanResponderRelease: (evt, gestureState) => {
+        if (gestureState.dx < -40) {
+          // Swipe left: go to next tab
+          setActiveTab((prev) => {
+            const idx = tabs.indexOf(prev);
+            if (idx < tabs.length - 1) return tabs[idx + 1];
+            return prev;
+          });
+        } else if (gestureState.dx > 40) {
+          // Swipe right: go to previous tab
+          setActiveTab((prev) => {
+            const idx = tabs.indexOf(prev);
+            if (idx > 0) return tabs[idx - 1];
+            return prev;
+          });
+        }
+      },
+    })
+  ).current;
 
   function handleCancelOrder(orderId) {
     Alert.alert("Cancel Order", "Are you sure you want to cancel this order?", [
@@ -350,7 +378,7 @@ export default function RecyclingHistory() {
   return (
     <ReviewManager>
       {({ openReviewModal, userReviews, isReviewsLoading, deleteReview, isDeleting }) => (
-        <SafeAreaView style={{ flex: 1, backgroundColor: "#F7F8FA" }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: "#F7F8FA" }} {...panResponder.panHandlers}>
           {/* Modern Card Header */}
           <LinearGradient
             colors={[colors.primary, colors.neutral]}
