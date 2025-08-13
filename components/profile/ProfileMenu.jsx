@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
   menuCard: {
     backgroundColor: colors.white,
     borderRadius: scaleSize(22),
-    marginHorizontal: scaleSize(10),
+    marginHorizontal: scaleSize(18),
     marginTop: scaleSize(10),
     marginBottom: scaleSize(18),
     paddingVertical: scaleSize(2),
