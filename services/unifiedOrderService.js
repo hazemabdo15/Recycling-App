@@ -93,7 +93,7 @@ export const unifiedOrderService = {
       let getDeliveryFeeForCity;
       try {
         getDeliveryFeeForCity = require('../utils/deliveryFees').getDeliveryFeeForCity;
-      } catch (e) {
+      } catch (_e) {
         getDeliveryFeeForCity = () => 0;
       }
       if (address?.city) {

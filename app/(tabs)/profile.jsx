@@ -1,7 +1,8 @@
 ﻿import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
+import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from "react";
-import { Alert, Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Dimensions, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import RecyclingModal from "../../components/Modals/RecyclingModal";
 import ProfileCard from "../../components/profile/ProfileCard";
@@ -9,9 +10,9 @@ import ProfileMenu from "../../components/profile/ProfileMenu";
 import { useAuth } from "../../context/AuthContext";
 import { useUserPoints } from "../../hooks/useUserPoints";
 import apiService from "../../services/api/apiService";
+import { colors } from "../../styles";
 import { isCustomer } from "../../utils/roleLabels";
 import { scaleSize } from "../../utils/scale";
-import { StatusBar } from 'expo-status-bar';
 
 
 export default function Profile() {
@@ -25,7 +26,7 @@ function ProfileContent() {
   const insets = useSafeAreaInsets();
   const { user, logout, isLoggedIn } = useAuth();
   const router = useRouter();
-  const [allOrders, setAllOrders] = useState([]);
+  // const [allOrders, setAllOrders] = useState([]); // No longer used
   const [avatarUri, setAvatarUri] = useState(null);
   const [avatarLoading, setAvatarLoading] = useState(false); // New state for avatar upload
   // Edit avatar with image picker and upload to backend
@@ -83,7 +84,7 @@ function ProfileContent() {
     }
   };
   const hasUserId = isLoggedIn && user && user._id;
-  const { userPoints, getUserPoints } = useUserPoints(
+  const { userPoints, totalRecycled, getUserPoints, pointsLoading } = useUserPoints(
     hasUserId
       ? {
           userId: user._id,
@@ -92,7 +93,7 @@ function ProfileContent() {
         }
       : { userId: null, name: null, email: null }
   );
-  console.log("userPoints in ProfileContent:", userPoints);
+  console.log("userPoints in ProfileContent:", userPoints, "totalRecycled:", totalRecycled);
   const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
@@ -103,10 +104,7 @@ function ProfileContent() {
     if (isLoggedIn && user?.email) {
       console.log(`[Profile] ${user?.role} role detected, fetching orders`);
       // fetchOrders();
-    } else {
-      console.log("[Profile] User not logged in, clearing orders");
-      setAllOrders([]);
-    }
+  }
   }, [user, isLoggedIn]);
 
   useEffect(() => {
@@ -141,9 +139,16 @@ function ProfileContent() {
   };
 
   const stats = {
-    totalRecycles: allOrders.filter((o) => o.status === "completed").length,
-    points: userPoints?.totalPoints,
+    totalRecycles: totalRecycled,
+    points: userPoints?.totalPoints ?? userPoints ?? 0,
     tier: 50,
+  };
+  // Pull to refresh state
+  const [refreshing, setRefreshing] = useState(false);
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await getUserPoints();
+    setRefreshing(false);
   };
 
   const isGuest = !isLoggedIn || !user?.email;
@@ -230,7 +235,7 @@ function ProfileContent() {
   const handleRedeemHistory = () => router.push("/redeem-history");
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#f0fdf4"}}>
+  <View style={{ flex: 1, backgroundColor: "#f0fdf4"}}>
       <StatusBar style="dark" backgroundColor="#ffffff" />
       <ProfileCard
         user={{
@@ -251,6 +256,14 @@ function ProfileContent() {
           paddingBottom: insets.bottom + scaleSize(16),
         }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing || pointsLoading}
+            onRefresh={handleRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
       >
         <ProfileMenu
           user={user}

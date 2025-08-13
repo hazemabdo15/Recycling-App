@@ -24,10 +24,18 @@ export default function ProfileMenu({
         Alert.alert("Coming soon");
         break;
       case "helpSupport":
-        onHelpSupport ? onHelpSupport() : Alert.alert("Coming soon");
+        if (onHelpSupport) {
+          onHelpSupport();
+        } else {
+          Alert.alert("Coming soon");
+        }
         break;
       case "redeemHistory":
-        onRedeemHistory ? onRedeemHistory() : Alert.alert("Coming soon");
+        if (onRedeemHistory) {
+          onRedeemHistory();
+        } else {
+          Alert.alert("Coming soon");
+        }
         break;
       case "settings":
         Alert.alert("Coming soon");
@@ -36,7 +44,11 @@ export default function ProfileMenu({
         onLogout && onLogout();
         break;
       case "eWallet":
-        onEWallet ? onEWallet() : Alert.alert("Coming soon");
+        if (onEWallet) {
+          onEWallet();
+        } else {
+          Alert.alert("Coming soon");
+        }
         break;
       default:
         break;

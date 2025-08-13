@@ -52,7 +52,7 @@ export default function ProfileCard({ user, points = 0, tier = '', onLogout, onR
         )}
         <View style={styles.statBox}>
           <MaterialCommunityIcons name="leaf" size={20} color={colors.primary} />
-          <Text style={styles.statValue}>{tier || '—'}</Text>
+          <Text style={styles.statValue}>{tier || ''}</Text>
           <Text style={styles.statLabel}>Tier</Text>
         </View>
       </View>

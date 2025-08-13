@@ -6,6 +6,7 @@ export function useUserPoints({ userId, name, email }) {
   const { isLoggedIn } = useAuth();
   console.log('useUserPoints hook: userId =', userId, 'isLoggedIn =', isLoggedIn);
   const [userPoints, setUserPoints] = useState(null);
+  const [totalRecycled, setTotalRecycled] = useState(0);
   const [pointsLoading, setPointsLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -44,7 +45,7 @@ export function useUserPoints({ userId, name, email }) {
       console.log(`Making API call to: /users/${userId}/points`);
       
       const res = await apiService.get(`/users/${userId}/points`);
-
+      console.log('getUserPoints: API response received:', res);
       if (!isLoggedIn) {
         console.log('getUserPoints: User logged out after API call, ignoring response');
         setUserPoints(null);
@@ -67,10 +68,12 @@ export function useUserPoints({ userId, name, email }) {
       if (typeof res.data.totalPoints === 'undefined') {
         console.log('getUserPoints: API response missing totalPoints property:', res.data);
         setUserPoints(0);
+        setTotalRecycled(0);
         return;
       }
       setUserPoints(res.data.totalPoints);
-      console.log('getUserPoints: Successfully set user points:', res.data.totalPoints);
+      setTotalRecycled(res.data.totalRecycled ?? 0);
+      console.log('getUserPoints: Successfully set user points:', res.data.totalPoints, 'totalRecycled:', res.data.totalRecycled);
     } catch (err) {
       console.error('Error fetching user points:', err);
 
@@ -93,27 +96,13 @@ export function useUserPoints({ userId, name, email }) {
       
       setError(err);
 
-      const fallbackData = {
-        userId: userId || '',
-        name: name || '',
-        email: email || '',
-        totalPoints: 0,
-        pointsHistory: [],
-        pagination: {
-          currentPage: 1,
-          totalItems: 0,
-          totalPages: 0,
-          hasMore: false,
-        },
-      };
-      
-      console.log('getUserPoints: Setting fallback data:', fallbackData);
-      setUserPoints(fallbackData);
+  setUserPoints(0);
+  setTotalRecycled(0);
     } finally {
       setPointsLoading(false);
       console.log('getUserPoints: Finished loading');
     }
-  }, [userId, name, email, isLoggedIn]);
+  }, [userId, isLoggedIn]);
 
   useEffect(() => {
     if (isLoggedIn && userId) {
@@ -127,11 +116,11 @@ export function useUserPoints({ userId, name, email }) {
   }, [userId, isLoggedIn, getUserPoints]);
 
   return {
-    userPoints,
-    pointsLoading,
-    error,
-    getUserPoints,
-
-    hasValidPoints: userPoints !== null && !pointsLoading,
+  userPoints,
+  totalRecycled,
+  pointsLoading,
+  error,
+  getUserPoints,
+  hasValidPoints: userPoints !== null && !pointsLoading,
   };
 }
