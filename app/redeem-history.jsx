@@ -1,7 +1,16 @@
+import { MaterialIcons } from "@expo/vector-icons";
 import { format } from "date-fns";
 import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
-import { Alert, FlatList, RefreshControl, Text, View } from "react-native";
+import {
+    Alert,
+    FlatList,
+    RefreshControl,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
 import { useAuth } from "../context/AuthContext";
 import apiService from "../services/api/apiService";
 import { colors } from "../styles";
@@ -21,6 +30,7 @@ const filterRedeemHistory = (pointsHistory = []) => {
 export default function RedeemHistoryScreen() {
   const { user, setUser } = useAuth();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const router = useRouter();
 
   // Use local pointsHistory for immediate UI update after refresh
   const [localPointsHistory, setLocalPointsHistory] = useState(
@@ -88,9 +98,20 @@ export default function RedeemHistoryScreen() {
         colors={[colors?.primary || "#4CAF50", colors?.neutral || "#2196F3"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={styles.heroSection}
+        style={[styles.heroSection, { paddingBottom: 40, paddingTop: 40 }]}
       >
-        <Text style={styles.heroTitle}>Redeem History</Text>
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 0, paddingTop: 0 }}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={{ padding: 4 }}
+            accessibilityLabel="Back"
+          >
+            <MaterialIcons name="arrow-back-ios" size={22} color="#fff" />
+          </TouchableOpacity>
+          <View style={{ flex: 1, alignItems: "center", marginRight: 28 }}>
+            <Text style={styles.heroTitle}>Redeem History</Text>
+          </View>
+        </View>
         <Text style={styles.heroSubtitle}>
           All your redeemed points in one place
         </Text>
