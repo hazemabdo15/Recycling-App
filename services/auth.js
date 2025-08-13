@@ -151,13 +151,15 @@ export const forgotPassword = async (email) => {
   }
 };
 
-export const resetPassword = async (email, otpCode, newPassword) => {
+export const resetPassword = async ({ email, otpCode, newPassword }) => {
   try {
     console.log('[Auth] Resetting password for:', email);
-    
+    console.log("email: ", email)
+    console.log("otp: ", otpCode)
+    console.log("newPassword: ", newPassword)
     const response = await apiService.post(API_ENDPOINTS.AUTH.RESET_PASSWORD, {
       email,
-      otpCode,
+      otpCode: otpCode,
       newPassword
     });
     

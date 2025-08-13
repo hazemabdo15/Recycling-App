@@ -259,12 +259,17 @@ export default function LoginScreen() {
     return null;
   }
 
+  const handleForgotPassword = () => {
+    router.push("/forgotPassword");
+  };
+
   return (
     <View style={styles.screen}>
       <LoginForm 
         onSubmit={handleLogin} 
         loading={loading} 
         onGoogleLogin={handleGoogleLoginPress}
+        handleForgotPassword={handleForgotPassword}
       />
     </View>
   );
