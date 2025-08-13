@@ -1,9 +1,11 @@
-﻿import { useLocalSearchParams, useNavigation } from "expo-router";
+﻿import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { useLocalSearchParams, useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
-import { RefreshControl, StatusBar, View } from "react-native";
+import { RefreshControl, StatusBar, Text, TouchableOpacity, View } from "react-native";
 import { KeyboardAwareFlatList } from 'react-native-keyboard-aware-scroll-view';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { CategoryHeader, EmptyState, ItemCard } from "../components/category";
+import { EmptyState, ItemCard } from "../components/category";
 import { ErrorState, Loader } from "../components/common";
 import { useAuth } from "../context/AuthContext";
 import { useCategoryItems } from "../hooks/useAPI";
@@ -22,23 +24,8 @@ import {
   getIncrementStep,
   normalizeItemData,
 } from "../utils/cartUtils";
-import { isBuyer } from "../utils/roleLabels";
+import { getLabel, isBuyer } from "../utils/roleLabels";
 import { scaleSize } from "../utils/scale";
-
-let useAnimatedStyle, useSharedValue, withSpring, withTiming;
-
-try {
-  const reanimated = require("react-native-reanimated");
-  useAnimatedStyle = reanimated.useAnimatedStyle;
-  useSharedValue = reanimated.useSharedValue;
-  withSpring = reanimated.withSpring;
-  withTiming = reanimated.withTiming;
-} catch (_error) {
-  useAnimatedStyle = () => ({});
-  useSharedValue = (value) => ({ value });
-  withSpring = (value) => value;
-  withTiming = (value) => value;
-}
 
 const CategoryDetails = () => {
   const { categoryName } = useLocalSearchParams();
@@ -85,21 +72,6 @@ const CategoryDetails = () => {
       cartQuantity, // this is the quantity in the cart
     };
   });
-
-  const headerOpacity = useSharedValue(0);
-  const contentTranslateY = useSharedValue(50);
-
-  useEffect(() => {
-    headerOpacity.value = withTiming(1, { duration: 600 });
-    contentTranslateY.value = withSpring(0, {
-      damping: 15,
-      stiffness: 100,
-    });
-  }, [headerOpacity, contentTranslateY]);
-
-  const headerAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: headerOpacity.value,
-  }));
 
   const { totalItems, totalPoints, totalValue } = calculateCartStats(
     mergedItems,
@@ -465,11 +437,74 @@ const CategoryDetails = () => {
   const handleAddItem = () => {
     console.log("Add item to", categoryName);
   };
+
+  // Hero Header Component
+  const HeroHeader = () => (
+    <LinearGradient
+      colors={[colors.primary, colors.neutral]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={[heroStyles.heroSection, { paddingTop: insets.top + 20 }]}
+    >
+      <View style={heroStyles.headerRow}>
+        <TouchableOpacity 
+          style={heroStyles.backButton}
+          onPress={() => navigation && navigation.goBack && navigation.goBack()}
+        >
+          <MaterialCommunityIcons name="arrow-left" size={24} color={colors.white} />
+        </TouchableOpacity>
+        
+        <Text style={heroStyles.heroTitle}>{categoryName}</Text>
+        
+        <View style={heroStyles.spacer} />
+      </View>
+
+      <View style={heroStyles.heroContent}>
+        <Text style={heroStyles.heroSubtitle}>
+          Explore and manage your {categoryName.toLowerCase()} items
+        </Text>
+        
+        <View style={heroStyles.statsContainer}>
+          <View style={heroStyles.statItem}>
+            <MaterialCommunityIcons
+              name="package-variant"
+              size={20}
+              color={colors.white}
+            />
+            <Text style={heroStyles.statValue}>{totalItems}</Text>
+            <Text style={heroStyles.statLabel}>Items</Text>
+          </View>
+          
+          {!isBuyer(user) && (
+            <View style={heroStyles.statItem}>
+              <MaterialCommunityIcons
+                name="star"
+                size={20}
+                color={colors.white}
+              />
+              <Text style={heroStyles.statValue}>{totalPoints}</Text>
+              <Text style={heroStyles.statLabel}>Eco Points</Text>
+            </View>
+          )}
+          
+          <View style={heroStyles.statItem}>
+            <MaterialCommunityIcons
+              name="cash"
+              size={20}
+              color={colors.white}
+            />
+            <Text style={heroStyles.statValue}>{totalValue} EGP</Text>
+            <Text style={heroStyles.statLabel}>{getLabel("money", user?.role)}</Text>
+          </View>
+        </View>
+      </View>
+    </LinearGradient>
+  );
   if (loading && !refreshing) {
     return (
       <View style={[layoutStyles.container, { paddingTop: insets.top }]}> 
         <StatusBar
-          barStyle="dark-content"
+          barStyle="light-content"
           backgroundColor="transparent"
           translucent
         />
@@ -481,7 +516,7 @@ const CategoryDetails = () => {
     return (
       <View style={[layoutStyles.container, { paddingTop: insets.top }]}>
         <StatusBar
-          barStyle="dark-content"
+          barStyle="light-content"
           backgroundColor="transparent"
           translucent
         />
@@ -493,24 +528,17 @@ const CategoryDetails = () => {
     <View
       style={[
         layoutStyles.container,
-        { paddingTop: insets.top, backgroundColor: colors.base100 },
+        { paddingTop: 0, backgroundColor: colors.background },
       ]}
     >
       <StatusBar
-        barStyle="dark-content"
+        barStyle="light-content"
         backgroundColor="transparent"
         translucent
       />
 
-      <CategoryHeader
-        categoryName={categoryName}
-        totalItems={totalItems}
-        totalPoints={totalPoints}
-        totalValue={totalValue}
-        animatedStyle={headerAnimatedStyle}
-        headerOpacity={headerOpacity}
-        onGoBack={() => navigation && navigation.goBack && navigation.goBack()}
-      />
+      <HeroHeader />
+
       {mergedItems.length === 0 ? (
         <EmptyState categoryName={categoryName} onAddItem={handleAddItem} />
       ) : (
@@ -524,6 +552,7 @@ const CategoryDetails = () => {
             backgroundColor: "transparent",
             paddingBottom: 40,
             paddingHorizontal: scaleSize(spacing.sm),
+            paddingTop: scaleSize(spacing.md),
           }}
           extraData={cartItems}
           refreshControl={
@@ -542,6 +571,81 @@ const CategoryDetails = () => {
       )}
     </View>
   );
+};
+
+const heroStyles = {
+  heroSection: {
+    paddingHorizontal: scaleSize(spacing.lg),
+    paddingBottom: scaleSize(spacing.lg),
+    borderBottomLeftRadius: scaleSize(32),
+    borderBottomRightRadius: scaleSize(32),
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: scaleSize(8) },
+    shadowOpacity: 0.3,
+    shadowRadius: scaleSize(12),
+    elevation: 8,
+  },
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: scaleSize(spacing.md),
+  },
+  backButton: {
+    padding: scaleSize(spacing.sm),
+    borderRadius: scaleSize(20),
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+  },
+  heroTitle: {
+    fontSize: scaleSize(24),
+    fontWeight: "bold",
+    color: colors.white,
+    textAlign: "center",
+    letterSpacing: -0.5,
+    flex: 1,
+  },
+  spacer: {
+    width: 40,
+  },
+  heroContent: {
+    alignItems: "center",
+    paddingTop: scaleSize(spacing.sm),
+  },
+  heroSubtitle: {
+    fontSize: scaleSize(14),
+    color: colors.white,
+    textAlign: "center",
+    opacity: 0.85,
+    lineHeight: scaleSize(22),
+    maxWidth: scaleSize(280),
+    marginBottom: scaleSize(spacing.md),
+  },
+  statsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    width: "100%",
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderRadius: scaleSize(16),
+    paddingVertical: scaleSize(spacing.md),
+    paddingHorizontal: scaleSize(spacing.sm),
+  },
+  statItem: {
+    alignItems: "center",
+    flex: 1,
+  },
+  statValue: {
+    fontSize: scaleSize(18),
+    fontWeight: "bold",
+    color: colors.white,
+    marginTop: scaleSize(4),
+    marginBottom: scaleSize(2),
+  },
+  statLabel: {
+    fontSize: scaleSize(12),
+    color: colors.white,
+    opacity: 0.8,
+    textAlign: "center",
+  },
 };
 
 export default CategoryDetails;
