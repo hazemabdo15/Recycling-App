@@ -1,119 +1,227 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { colors } from '../../styles/theme';
 import { isBuyer, isCustomer } from '../../utils/roleLabels';
 import { scaleSize } from '../../utils/scale';
-import { calculateUserTier } from '../../utils/tiers';
+import { calculateUserTier, getTierColors } from '../../utils/tiers';
 import TierBadge from '../achievements/TierBadge';
 
 export default function ProfileCard({ user, points = 0, tier = '', onLogout, onRedeem, showRedeem, onEditAvatar, style, avatarLoading }) {
   const avatarUri = user?.avatarUri;
   const totalRecycles = user?.totalRecycles ?? 0;
   const userTier = calculateUserTier(totalRecycles);
+  const tierColors = getTierColors(userTier.name);
   
   console.log('ProfileCard points prop:', points);
+  
   return (
-    <View style={[styles.card, style]}>
-      <View style={styles.headerRow}>
-        <View style={styles.avatarContainer}>
-          <View style={styles.avatarWrapper}>
-            <View style={styles.avatar}>
-              {avatarUri ? (
-                <Image source={{ uri: avatarUri }} style={styles.avatarImage} />
-              ) : (
-                <MaterialCommunityIcons name="account" size={44} color={colors.white} />
-              )}
-              {avatarLoading && (
-                <View style={styles.avatarLoadingOverlay}>
-                  <ActivityIndicator size="small" color="#059669" />
-                </View>
-              )}
-            </View>
+    <LinearGradient
+      colors={['#ffffff', '#f8fafc']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={[styles.card, style]}
+    >
+      {/* Background decorative elements */}
+      <View style={styles.backgroundPattern}>
+        <View style={[styles.circle, styles.circle1]} />
+        <View style={[styles.circle, styles.circle2]} />
+        <View style={[styles.circle, styles.circle3]} />
+      </View>
+
+      {/* Main Content */}
+      <View style={styles.content}>
+        {/* Header Section */}
+        <View style={styles.headerSection}>
+          <View style={styles.avatarContainer}>
+            <LinearGradient
+              colors={tierColors.gradient}
+              style={styles.avatarGradientBorder}
+            >
+              <View style={styles.avatar}>
+                {avatarUri ? (
+                  <Image source={{ uri: avatarUri }} style={styles.avatarImage} />
+                ) : (
+                  <LinearGradient
+                    colors={['#e3f2fd', '#bbdefb']}
+                    style={styles.defaultAvatarGradient}
+                  >
+                    <MaterialCommunityIcons name="account" size={scaleSize(40)} color={colors.primary} />
+                  </LinearGradient>
+                )}
+                {avatarLoading && (
+                  <View style={styles.avatarLoadingOverlay}>
+                    <ActivityIndicator size="small" color={colors.primary} />
+                  </View>
+                )}
+              </View>
+            </LinearGradient>
+            
             <TouchableOpacity style={styles.editAvatarButton} onPress={onEditAvatar} accessibilityLabel="Edit Profile Image">
-              <MaterialCommunityIcons name="pencil" size={18} color={colors.primary} />
+              <LinearGradient
+                colors={['#ffffff', '#f8fafc']}
+                style={styles.editButtonGradient}
+              >
+                <MaterialCommunityIcons name="camera-plus" size={scaleSize(16)} color={colors.primary} />
+              </LinearGradient>
             </TouchableOpacity>
           </View>
-          <View style={styles.infoContainer}>
-            <View style={styles.nameRow}>
-              <Text style={styles.name}>{user?.name || 'Guest'}</Text>
+
+          <View style={styles.userInfo}>
+            <View style={styles.nameSection}>
+              <Text style={styles.userName}>{user?.name || 'Guest'}</Text>
               <TierBadge tierName={userTier.name} size="small" showName={false} />
             </View>
-            <Text style={styles.email}>{user?.email || 'No email available'}</Text>
+            <Text style={styles.userEmail}>{user?.email || 'No email available'}</Text>
+            <View style={styles.tierInfo}>
+              <MaterialCommunityIcons name="star-circle" size={scaleSize(14)} color={tierColors.primary} />
+              <Text style={[styles.tierText, { color: tierColors.primary }]}>{userTier.name} Member</Text>
+            </View>
           </View>
         </View>
-      </View>
-      <View style={styles.statsRow}>
-        <View style={styles.statBox}>
-          <MaterialCommunityIcons name="recycle" size={20} color={colors.primary} />
-          <Text style={styles.statValue}>{user?.totalRecycles ?? 0}</Text>
-          <Text style={styles.statLabel}>Total Recycled</Text>
-        </View>
-        {!isBuyer(user) && (
-          <View style={styles.statBox}>
-            <MaterialCommunityIcons name="star-circle" size={20} color={colors.accent} />
-            <Text style={styles.statValue}>{(points || 0).toLocaleString()}</Text>
-            <Text style={styles.statLabel}>Points</Text>
+
+        {/* Stats Section */}
+        <View style={styles.statsSection}>
+          <View style={styles.statsGrid}>
+            <View style={styles.statCard}>
+              <LinearGradient
+                colors={['#e8f5e8', '#f1f8e9']}
+                style={styles.statIconContainer}
+              >
+                <MaterialCommunityIcons name="recycle" size={scaleSize(20)} color="#2e7d32" />
+              </LinearGradient>
+              <Text style={styles.statNumber}>{user?.totalRecycles ?? 0}</Text>
+              <Text style={styles.statLabel}>Recycled</Text>
+            </View>
+
+            {!isBuyer(user) && (
+              <View style={styles.statCard}>
+                <LinearGradient
+                  colors={['#fff3e0', '#fce4ec']}
+                  style={styles.statIconContainer}
+                >
+                  <MaterialCommunityIcons name="diamond-stone" size={scaleSize(20)} color="#f57c00" />
+                </LinearGradient>
+                <Text style={styles.statNumber}>{(points || 0).toLocaleString()}</Text>
+                <Text style={styles.statLabel}>Points</Text>
+              </View>
+            )}
+
+            <View style={styles.statCard}>
+              <LinearGradient
+                colors={tierColors.lightGradient || ['#e3f2fd', '#f3e5f5']}
+                style={styles.statIconContainer}
+              >
+                <MaterialCommunityIcons name="trophy" size={scaleSize(20)} color={tierColors.primary} />
+              </LinearGradient>
+              <Text style={styles.statNumber}>#{userTier.id}</Text>
+              <Text style={styles.statLabel}>Tier Level</Text>
+            </View>
           </View>
+        </View>
+
+        {/* Action Button */}
+        {showRedeem && isCustomer(user) && (
+          <TouchableOpacity style={styles.actionButton} onPress={onRedeem}>
+            <LinearGradient
+              colors={['#1976d2', '#2196f3']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.actionButtonGradient}
+            >
+              <MaterialCommunityIcons name="gift" size={scaleSize(18)} color="white" />
+              <Text style={styles.actionButtonText}>Redeem Points</Text>
+              <MaterialCommunityIcons name="arrow-right" size={scaleSize(16)} color="white" />
+            </LinearGradient>
+          </TouchableOpacity>
         )}
-        <View style={styles.statBox}>
-          <TierBadge tierName={userTier.name} size="small" showName={false} />
-          <Text style={styles.statValue}>{userTier.name}</Text>
-          <Text style={styles.statLabel}>Tier</Text>
-        </View>
       </View>
-      {showRedeem && isCustomer(user) && (
-        <TouchableOpacity style={styles.redeemButton} onPress={onRedeem}>
-          <Text style={styles.redeemButtonText}>Redeem Your Points</Text>
-        </TouchableOpacity>
-      )}
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  card: {
+    borderRadius: scaleSize(24),
+    marginHorizontal: scaleSize(16),
+    marginTop: scaleSize(20),
+    marginBottom: scaleSize(16),
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  backgroundPattern: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  circle: {
+    position: 'absolute',
+    borderRadius: 100,
+    opacity: 0.06,
+  },
+  circle1: {
+    width: scaleSize(120),
+    height: scaleSize(120),
+    backgroundColor: colors.primary,
+    top: -scaleSize(60),
+    right: -scaleSize(40),
+  },
+  circle2: {
+    width: scaleSize(80),
+    height: scaleSize(80),
+    backgroundColor: colors.accent,
+    bottom: -scaleSize(40),
+    left: -scaleSize(20),
+  },
+  circle3: {
+    width: scaleSize(60),
+    height: scaleSize(60),
+    backgroundColor: '#f59e0b',
+    top: scaleSize(80),
+    right: scaleSize(20),
+  },
+  content: {
+    padding: scaleSize(20),
+    position: 'relative',
+    zIndex: 1,
+  },
+  headerSection: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: scaleSize(20),
+  },
+  avatarContainer: {
+    position: 'relative',
+    marginRight: scaleSize(16),
+  },
+  avatarGradientBorder: {
+    padding: scaleSize(3),
+    borderRadius: scaleSize(32),
+  },
+  avatar: {
+    width: scaleSize(58),
+    height: scaleSize(58),
+    borderRadius: scaleSize(29),
+    overflow: 'hidden',
+    backgroundColor: '#ffffff',
+  },
+  defaultAvatarGradient: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   avatarImage: {
     width: '100%',
     height: '100%',
-    borderRadius: scaleSize(27),
     resizeMode: 'cover',
-  },
-  card: {
-    backgroundColor: colors.white,
-    borderRadius: scaleSize(18),
-    padding: scaleSize(18),
-    marginHorizontal: 16, // Match FlatList contentContainerStyle for order cards
-    marginTop: scaleSize(35),
-    marginBottom: scaleSize(10),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: scaleSize(10),
-    paddingRight: scaleSize(8), // Add right padding for logout icon spacing
-  },
-  avatarContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  avatarWrapper: {
-    position: 'relative',
-    marginRight: scaleSize(12),
-  },
-  avatar: {
-    width: scaleSize(54),
-    height: scaleSize(54),
-    borderRadius: scaleSize(27),
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
   },
   avatarLoadingOverlay: {
     position: 'absolute',
@@ -121,78 +229,120 @@ const styles = StyleSheet.create({
     left: 0,
     width: '100%',
     height: '100%',
-    backgroundColor: 'rgba(255,255,255,0.6)',
+    backgroundColor: 'rgba(255,255,255,0.7)',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: scaleSize(27),
-    zIndex: 2,
+    borderRadius: scaleSize(29),
   },
   editAvatarButton: {
     position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: colors.white,
-    borderRadius: scaleSize(12),
-    padding: scaleSize(2),
-    borderWidth: 1,
-    borderColor: colors.primary,
-    elevation: 2,
+    bottom: -scaleSize(2),
+    right: -scaleSize(2),
+    borderRadius: scaleSize(14),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  infoContainer: {
+  editButtonGradient: {
+    width: scaleSize(28),
+    height: scaleSize(28),
+    borderRadius: scaleSize(14),
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.8)',
+  },
+  userInfo: {
+    flex: 1,
     justifyContent: 'center',
   },
-  nameRow: {
+  nameSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    marginBottom: scaleSize(4),
   },
-  name: {
-    fontSize: scaleSize(18),
+  userName: {
+    fontSize: scaleSize(20),
     fontWeight: '700',
-    color: colors.primary,
+    color: '#1a1a1a',
+    marginRight: scaleSize(8),
   },
-  email: {
-    fontSize: scaleSize(13),
-    color: colors.gray,
-  },
-  logoutButton: {
-    padding: scaleSize(6),
-    marginLeft: scaleSize(8),
-    marginRight: scaleSize(2), // Add right margin to keep away from card border
-  },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: scaleSize(8),
+  userEmail: {
+    fontSize: scaleSize(14),
+    color: '#6b7280',
     marginBottom: scaleSize(6),
   },
-  statBox: {
+  tierInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  tierText: {
+    fontSize: scaleSize(12),
+    fontWeight: '600',
+    marginLeft: scaleSize(4),
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  statsSection: {
+    marginBottom: scaleSize(20),
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  statCard: {
     flex: 1,
     alignItems: 'center',
-    padding: scaleSize(6),
+    backgroundColor: 'rgba(255,255,255,0.7)',
+    marginHorizontal: scaleSize(4),
+    paddingVertical: scaleSize(12),
+    paddingHorizontal: scaleSize(8),
+    borderRadius: scaleSize(16),
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.5)',
   },
-  statValue: {
+  statIconContainer: {
+    width: scaleSize(36),
+    height: scaleSize(36),
+    borderRadius: scaleSize(18),
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: scaleSize(6),
+  },
+  statNumber: {
     fontSize: scaleSize(16),
-    fontWeight: '600',
-    color: colors.primary,
-    marginTop: scaleSize(2),
+    fontWeight: '700',
+    color: '#1a1a1a',
+    marginBottom: scaleSize(2),
   },
   statLabel: {
-    fontSize: scaleSize(11),
-    color: colors.gray,
-    marginTop: scaleSize(1),
+    fontSize: scaleSize(10),
+    color: '#6b7280',
+    fontWeight: '500',
+    textAlign: 'center',
   },
-  redeemButton: {
-    backgroundColor: colors.primary,
-    borderRadius: scaleSize(10),
-    paddingVertical: scaleSize(10),
-    paddingHorizontal: scaleSize(20),
-    marginTop: scaleSize(8),
+  actionButton: {
+    borderRadius: scaleSize(14),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  actionButtonGradient: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: scaleSize(14),
+    paddingHorizontal: scaleSize(20),
+    borderRadius: scaleSize(14),
   },
-  redeemButtonText: {
-    color: colors.white,
-    fontSize: scaleSize(14),
+  actionButtonText: {
+    color: 'white',
+    fontSize: scaleSize(15),
     fontWeight: '600',
+    marginHorizontal: scaleSize(8),
   },
 });

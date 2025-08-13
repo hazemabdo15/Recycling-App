@@ -63,37 +63,44 @@ export const tierColors = {
   "Eco Beginner": { 
     primary: "#10B981", 
     secondary: "#34D399", 
-    gradient: ["#10B981", "#34D399"] 
+    gradient: ["#10B981", "#34D399"],
+    lightGradient: ["#e8f5e8", "#f1f8e9"]
   },
   "Eco Starter": { 
     primary: "#3B82F6", 
     secondary: "#60A5FA", 
-    gradient: ["#3B82F6", "#60A5FA"] 
+    gradient: ["#3B82F6", "#60A5FA"],
+    lightGradient: ["#e3f2fd", "#f3e5f5"]
   },
   "Green Helper": { 
     primary: "#8B5CF6", 
     secondary: "#A78BFA", 
-    gradient: ["#8B5CF6", "#A78BFA"] 
+    gradient: ["#8B5CF6", "#A78BFA"],
+    lightGradient: ["#f3e8ff", "#faf5ff"]
   },
   "Silver Recycler": { 
     primary: "#6B7280", 
     secondary: "#9CA3AF", 
-    gradient: ["#6B7280", "#9CA3AF"] 
+    gradient: ["#6B7280", "#9CA3AF"],
+    lightGradient: ["#f1f5f9", "#f8fafc"]
   },
   "Gold Guardian": { 
     primary: "#F59E0B", 
     secondary: "#FBBF24", 
-    gradient: ["#F59E0B", "#FBBF24"] 
+    gradient: ["#F59E0B", "#FBBF24"],
+    lightGradient: ["#fff3e0", "#fce4ec"]
   },
   "Platinum Pioneer": { 
     primary: "#8B5CF6", 
     secondary: "#C084FC", 
-    gradient: ["#8B5CF6", "#C084FC"] 
+    gradient: ["#8B5CF6", "#C084FC"],
+    lightGradient: ["#f3e8ff", "#fdf4ff"]
   },
   "Diamond Elite": { 
     primary: "#EC4899", 
     secondary: "#F472B6", 
-    gradient: ["#EC4899", "#F472B6"] 
+    gradient: ["#EC4899", "#F472B6"],
+    lightGradient: ["#fdf2f8", "#fef7ff"]
   }
 };
 
