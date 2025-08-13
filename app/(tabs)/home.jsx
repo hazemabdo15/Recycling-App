@@ -94,6 +94,8 @@ const Index = () => {
               </Text>
             </View>
             <TopRecycledSection />
+            {/* Spacer to ensure margin between the list and the tab bar */}
+            <View style={{ height: scaleSize(40) + insets.bottom }} />
           </View>
         </View>
       </ErrorBoundary>
