@@ -128,7 +128,7 @@ export default function RecyclingHistory() {
 
   const filteredOrders = allOrders.filter((order) => {
     if (activeTab === "incoming") {
-      return ["pending", "accepted"].includes(order.status?.toLowerCase());
+      return ["pending", "accepted", "collected"].includes(order.status?.toLowerCase());
     } else if (activeTab === "completed") {
       return order.status === "completed";
     } else if (activeTab === "cancelled") {
@@ -162,6 +162,8 @@ export default function RecyclingHistory() {
                 ? "check-circle"
                 : order.status === "cancelled"
                 ? "x-circle"
+                : order.status === "collected"
+                ? "package"
                 : "clock"
             }
             size={scaleSize(16)}
@@ -170,6 +172,8 @@ export default function RecyclingHistory() {
                 ? colors.primary
                 : order.status === "cancelled"
                 ? "#dc2626"
+                : order.status === "collected"
+                ? "#10b981"
                 : "#f59e42"
             }
           />
@@ -182,6 +186,8 @@ export default function RecyclingHistory() {
                     ? colors.primary
                     : order.status === "cancelled"
                     ? "#dc2626"
+                    : order.status === "collected"
+                    ? "#10b981"
                     : "#f59e42",
               },
             ]}
@@ -190,6 +196,16 @@ export default function RecyclingHistory() {
           </Text>
         </View>
       </View>
+
+      {/* Collected Badge */}
+      {order.status?.toLowerCase() === "collected" && (
+        <View style={styles.collectedBadgeContainer}>
+          <View style={styles.collectedBadge}>
+            <Feather name="truck" size={scaleSize(12)} color="#fff" />
+            <Text style={styles.collectedBadgeText}>Collected</Text>
+          </View>
+        </View>
+      )}
       
       <View style={styles.orderItemsList}>
         {order.items.map((item, i) => (
@@ -735,5 +751,23 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: scaleSize(12),
     fontWeight: "700",
+  },
+  collectedBadgeContainer: {
+    marginBottom: scaleSize(8),
+    alignItems: "flex-start",
+  },
+  collectedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#10b981",
+    paddingHorizontal: scaleSize(8),
+    paddingVertical: scaleSize(4),
+    borderRadius: scaleSize(12),
+    gap: scaleSize(4),
+  },
+  collectedBadgeText: {
+    color: "#fff",
+    fontSize: scaleSize(11),
+    fontWeight: "600",
   },
 });
