@@ -1,5 +1,5 @@
 ﻿import { memo, useCallback } from 'react';
-import { Dimensions, StyleSheet, Text, View } from 'react-native';
+import { Dimensions, Pressable, StyleSheet, Text, View } from 'react-native';
 import { getCategoryImageProps } from '../../utils/categoryUtils';
 import { CategoryImage } from '../ui';
 
@@ -42,36 +42,27 @@ const CategoryCard = memo(({ category, onPress }) => {
         transform: [{ scale: scale.value }],
     }));
 
-    const handleResponderRelease = useCallback(() => {
-        handlePressOut();
-        onPress && onPress();
-    }, [handlePressOut, onPress]);
-
     return (
         <Animated.View style={[styles.categoryCard, {
             borderRadius: scaleSize(18),
             marginBottom: scaleSize(15),
             borderWidth: scaleSize(1),
         }, animatedStyle]}>
-            <Animated.View
-                style={[
+            <Pressable
+                style={({ pressed }) => [
                     styles.touchableArea,
-                    { borderRadius: scaleSize(18) },
+                    { borderRadius: scaleSize(18), opacity: pressed ? 0.85 : 1 },
                 ]}
-                onTouchStart={handlePressIn}
-                onTouchEnd={handlePressOut}
-                onTouchCancel={handlePressOut}
+                onPress={onPress}
+                onPressIn={handlePressIn}
+                onPressOut={handlePressOut}
+                android_ripple={{ color: '#e0e0e0', borderless: false }}
                 accessible={true}
                 accessibilityRole="button"
                 accessibilityLabel={`${category.name} category`}
                 accessibilityHint={`Navigate to ${category.name} recycling items`}
             >
-                <Animated.View
-                    style={[styles.cardContent, { padding: scaleSize(20) }]}
-                    onStartShouldSetResponder={() => true}
-                    onResponderGrant={handlePressIn}
-                    onResponderRelease={handleResponderRelease}
-                    onResponderTerminate={handlePressOut}
+                <Animated.View style={[styles.cardContent, { padding: scaleSize(20) }]}
                 >
                     <CategoryImage
                         {...imageProps}
@@ -80,7 +71,7 @@ const CategoryCard = memo(({ category, onPress }) => {
                     />
                     <Text style={[styles.categoryText, { fontSize: scaleSize(16) }]}>{category.name}</Text>
                 </Animated.View>
-            </Animated.View>
+            </Pressable>
         </Animated.View>
     );
 });
