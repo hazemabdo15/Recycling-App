@@ -1,6 +1,7 @@
 ﻿import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { memo, useEffect, useState } from "react";
-import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { orderService } from "../../services/api/orders";
 import { scaleSize } from '../../utils/scale';
 const colors = {
@@ -31,6 +32,7 @@ const ICON_MAP = {
 };
 
 const TopRecycledSection = memo(() => {
+  const router = useRouter();
   const [topItems, setTopItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -41,6 +43,7 @@ const TopRecycledSection = memo(() => {
     setError(null);
     orderService.getTopMaterials()
       .then((res) => {
+        console.log('Top Recycled Items Response:', res);
         if (mounted && res?.success) {
           setTopItems(res.data || []);
         } else if (mounted) {
@@ -56,9 +59,27 @@ const TopRecycledSection = memo(() => {
     return () => { mounted = false; };
   }, []);
 
-  const handleItemPress = (item) => {
+  // Helper to select the best category route
+  function getBestCategoryRoute(categoryNames) {
+    if (!Array.isArray(categoryNames) || categoryNames.length === 0) return null;
+    // Prefer kebab-case (contains '-')
+    const kebab = categoryNames.find(name => name.includes('-'));
+    if (kebab) return kebab;
+    // Fallback: prefer lowercase
+    const lower = categoryNames.find(name => name === name.toLowerCase());
+    if (lower) return lower;
+    // Fallback: use the first
+    return categoryNames[0];
+  }
 
-    console.log(`${item._id?.itemName || item.itemName} pressed`);
+  const handleItemPress = (item) => {
+    const categoryName = getBestCategoryRoute(item.categoryNames);
+    if (categoryName) {
+      router.push({
+        pathname: '/category-details',
+        params: { categoryName },
+      });
+    }
   };
 
   return (
@@ -79,7 +100,7 @@ const TopRecycledSection = memo(() => {
           {topItems.map((item, index) => {
             const iconInfo = ICON_MAP[item.categoryName] || { name: "recycle", color: colors.primary };
             return (
-              <View
+              <TouchableOpacity
                 key={item._id?.itemName || item._id || index}
                 style={[
                   styles.itemCard,
@@ -115,8 +136,8 @@ const TopRecycledSection = memo(() => {
                     />
                     <Text style={styles.recycleCount}>{item.totalQuantity}</Text>
                   </View>
-                  </View>
-              </View>
+                </View>
+              </TouchableOpacity>
             );
           })}
         </ScrollView>
@@ -156,18 +177,18 @@ const styles = StyleSheet.create({
   itemCard: {
     backgroundColor: "#FFFFFF",
     borderRadius: scaleSize(borderRadius.lg),
-    padding: scaleSize(16),
-    marginRight: scaleSize(15),
-    width: scaleSize(150),
-    minHeight: scaleSize(160),
+    padding: scaleSize(10),
+    marginRight: scaleSize(12),
+    width: scaleSize(120),
+    minHeight: scaleSize(120),
     shadowColor: colors.black,
     shadowOffset: {
       width: 0,
-      height: scaleSize(3),
+      height: scaleSize(2),
     },
-    shadowOpacity: 0.1,
-    shadowRadius: scaleSize(8),
-    elevation: 4,
+    shadowOpacity: 0.08,
+    shadowRadius: scaleSize(6),
+    elevation: 3,
     borderWidth: 1,
     borderColor: "#f0f0f0",
   },

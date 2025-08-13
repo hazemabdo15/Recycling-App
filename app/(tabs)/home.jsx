@@ -2,7 +2,7 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useRef } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { EarnPointsCard } from "../../components/cards";
 import { ErrorBoundary } from "../../components/common";
@@ -81,12 +81,16 @@ const Index = () => {
           </View>
         </LinearGradient>
 
-        <View style={styles.contentSection}>
+        <ScrollView
+          style={styles.contentSection}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.statsSection}>
             <EarnPointsCard />
           </View>
 
-          <View style={[styles.section, { marginBottom: scaleSize(160) + insets.bottom }]}> 
+          <View style={styles.section}>
             <View style={[styles.sectionHeader, styles.centeredHeader]}>
               <Text style={styles.sectionTitle}>🔥 Trending This Week</Text>
               <Text style={styles.sectionSubtitle}>
@@ -94,10 +98,10 @@ const Index = () => {
               </Text>
             </View>
             <TopRecycledSection />
-            {/* Spacer to ensure margin between the list and the tab bar */}
-            <View style={{ height: scaleSize(40) + insets.bottom }} />
           </View>
-        </View>
+          {/* Spacer to ensure margin between the list and the tab bar, always at the bottom */}
+          <View style={{ height: scaleSize(40) + insets.bottom }} />
+        </ScrollView>
       </ErrorBoundary>
     </View>
   );
