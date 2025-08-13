@@ -501,6 +501,11 @@ const styles = StyleSheet.create({
     margin: 20,
     maxWidth: 350,
     width: '90%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    elevation: 16,
   },
   modalHeader: {
     alignItems: 'center',
