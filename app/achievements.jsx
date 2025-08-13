@@ -15,6 +15,7 @@ import {
 import ProgressBar from '../components/achievements/ProgressBar';
 import TierBadge from '../components/achievements/TierBadge';
 import TierCard from '../components/achievements/TierCard';
+import Loader from '../components/common/Loader';
 import { useAuth } from '../context/AuthContext';
 import { useUserPoints } from '../hooks/useUserPoints';
 import {
@@ -74,7 +75,7 @@ const AchievementsScreen = () => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <Text>Loading achievements...</Text>
+          <Loader />
         </View>
       </SafeAreaView>
     );
