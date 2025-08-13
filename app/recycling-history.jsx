@@ -242,7 +242,7 @@ export default function RecyclingHistory() {
 
       {/* Download PDF button for pending orders - for both customers and buyers */}
       {activeTab === "incoming" &&
-        order.status?.toLowerCase() === "pending" &&
+        ["pending", "collected"].includes(order.status?.toLowerCase()) &&
         isLoggedIn && (
           <TouchableOpacity
             style={styles.downloadPdfButton}
