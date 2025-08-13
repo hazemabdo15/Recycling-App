@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useState } from 'react';
@@ -169,7 +169,7 @@ const AchievementsScreen = () => {
             style={styles.backButton}
             onPress={() => router.back()}
           >
-            <MaterialCommunityIcons name="arrow-left" size={24} color="white" />
+            <MaterialIcons name="arrow-back-ios" size={24} color="white" />
           </TouchableOpacity>
           
           <Text style={styles.headerTitle}>Achievements</Text>
@@ -345,6 +345,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     alignSelf: 'flex-start',
+    marginTop: 28,
     marginBottom: 20,
   },
   headerTitle: {
