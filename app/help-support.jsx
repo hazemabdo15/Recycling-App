@@ -1,6 +1,7 @@
 
 import { LinearGradient } from 'expo-linear-gradient';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { KeyboardAwareFlatList } from 'react-native-keyboard-aware-scroll-view';
 import { colors } from '../styles';
 import ContactOptions from './ContactOptions';
 import FAQList from './FAQList';
@@ -13,9 +14,8 @@ import { scaleSize } from '../utils/scale';
 
 const HelpSupportScreen = () => {
   const router = useRouter();
-  return (
-    <ScrollView style={styles.container}>
-      {/* Gradient Header Area */}
+  const sections = [
+    { key: 'header', render: () => (
       <LinearGradient
         colors={[colors.primary, colors.neutral]}
         start={{ x: 0, y: 0 }}
@@ -39,11 +39,24 @@ const HelpSupportScreen = () => {
           </View>
         </View>
       </LinearGradient>
-      <FAQList />
-      <ContactOptions />
-      <QuickLinks />
-      <FeedbackForm />
-    </ScrollView>
+    ) },
+    { key: 'faq', render: () => <FAQList /> },
+    { key: 'contact', render: () => <ContactOptions /> },
+    { key: 'quicklinks', render: () => <QuickLinks /> },
+    { key: 'feedback', render: () => <FeedbackForm /> },
+  ];
+
+  return (
+    <KeyboardAwareFlatList
+      style={styles.container}
+      data={sections}
+      keyExtractor={item => item.key}
+      renderItem={({ item }) => item.render()}
+      enableOnAndroid
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
+      extraScrollHeight={200}
+    />
   );
 };
 
