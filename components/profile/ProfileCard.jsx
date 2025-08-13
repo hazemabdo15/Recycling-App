@@ -182,14 +182,15 @@ export default function ProfileCard({ user, points = 0, tier = '', onLogout, onR
         </View>
       </Modal>
     </LinearGradient>
-  );
+
+);
 }
 
 const styles = StyleSheet.create({
   card: {
     borderRadius: scaleSize(24),
     marginHorizontal: scaleSize(16),
-    marginTop: scaleSize(20),
+    marginTop: scaleSize(44),
     marginBottom: scaleSize(16),
     overflow: 'hidden',
     shadowColor: '#000',
