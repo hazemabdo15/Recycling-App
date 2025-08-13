@@ -16,7 +16,7 @@ export default StyleSheet.create({
     alignItems: 'center',
   },
   heroTitle: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#fff',
     marginBottom: 8,

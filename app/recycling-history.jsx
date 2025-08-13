@@ -295,7 +295,7 @@ export default function RecyclingHistory() {
                         try {
                           await deleteReview(order._id);
                           showGlobalToast("Review deleted successfully", 1500)
-                        } catch (error) {
+                        } catch (_error) {
                           Alert.alert("Failed to delete review");
                         }
                       }
@@ -358,21 +358,28 @@ export default function RecyclingHistory() {
             end={{ x: 1, y: 1 }}
             style={[
               styles.heroSection,
-              { paddingTop: useSafeAreaInsets.top + scaleSize(28) }
+              { paddingTop: useSafeAreaInsets.top + scaleSize(80), paddingBottom: scaleSize(40) }
             ]}
           >
-            <View style={styles.heroHeaderRow}>
-              <TouchableOpacity
-                onPress={() => router.back()}
-                style={styles.heroBackButton}
-              >
-                <MaterialIcons
-                  name="arrow-back-ios"
-                  size={scaleSize(22)}
-                  color={"#fff"}
-                />
-              </TouchableOpacity>
-              <Text style={styles.heroTitleText}>Recycling History</Text>
+            <View style={{ marginTop: scaleSize(32) }}>
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 0 }}>
+                <TouchableOpacity
+                  onPress={() => router.back()}
+                  style={styles.heroBackButton}
+                >
+                  <MaterialIcons
+                    name="arrow-back-ios"
+                    size={scaleSize(22)}
+                    color={"#fff"}
+                  />
+                </TouchableOpacity>
+                <View style={{ flex: 1, alignItems: "center", marginRight: scaleSize(28) }}>
+                  <Text style={styles.heroTitleText}>Recycling History</Text>
+                </View>
+              </View>
+              <Text style={{ color: "#fff", textAlign: "center", fontSize: scaleSize(14), marginTop: 2, fontWeight: "400", opacity: 0.95 }}>
+                All your recycling orders in one place
+              </Text>
             </View>
           </LinearGradient>
 
@@ -477,6 +484,7 @@ const styles = StyleSheet.create({
   heroBackButton: {
     marginRight: scaleSize(8),
     padding: scaleSize(6),
+    marginTop: scaleSize(18),
   },
   heroTitleText: {
     fontSize: scaleSize(22),
