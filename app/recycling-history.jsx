@@ -4,26 +4,26 @@ import * as Print from "expo-print";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    Alert,
-    FlatList,
-    Image,
-    RefreshControl,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  FlatList,
+  Image,
+  RefreshControl,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Loader } from "../components/common";
+import { showGlobalToast } from "../components/common/GlobalToast";
+import ReviewManager from "../components/profile/ReviewManager";
 import { useAuth } from "../context/AuthContext";
 import { orderService } from "../services/api/orders";
 import { colors } from "../styles";
 import { generateOrderReportHTML } from "../utils/orderReportPDF";
 import { getLabel, isBuyer, isCustomer } from "../utils/roleLabels";
 import { scaleSize } from "../utils/scale";
-import ReviewManager from "../components/profile/ReviewManager";
-import { showGlobalToast } from "../components/common/GlobalToast";
 
 const tabs = ["incoming", "completed", "cancelled"];
 
@@ -191,11 +191,65 @@ export default function RecyclingHistory() {
         ))}
       </View>
       
+
       <Text style={styles.addressTextModern}>
-        {order.address.street}, Bldg {order.address.building}, Floor{" "}
-        {order.address.floor}, {order.address.area},{" "}
-        {order.address.city}
+        {order.address.street}, Bldg {order.address.building}, Floor {order.address.floor}, {order.address.area}, {order.address.city}
       </Text>
+
+      {/* Download PDF button for pending orders - for both customers and buyers */}
+      {activeTab === "incoming" &&
+        order.status?.toLowerCase() === "pending" &&
+        isLoggedIn && (
+          <TouchableOpacity
+            style={styles.downloadPdfButton}
+            onPress={async () => {
+              Alert.alert(
+                "Download PDF",
+                "Do you want to preview the order report as PDF?",
+                [
+                  { text: "Cancel", style: "cancel" },
+                  {
+                    text: "Preview",
+                    onPress: async () => {
+                      try {
+                        if (!order || !user) {
+                          Alert.alert(
+                            "Missing data",
+                            "Order or user info is missing."
+                          );
+                          return;
+                        }
+                        const html = generateOrderReportHTML({
+                          order,
+                          user,
+                        });
+                        await Print.printAsync({ html });
+                      } catch (_err) {
+                        Alert.alert(
+                          "Error",
+                          "Failed to generate PDF."
+                        );
+                      }
+                    },
+                  },
+                ]
+              );
+            }}
+            accessibilityLabel="Download PDF"
+          >
+            <View style={styles.buttonContentRow}>
+              <Feather
+                name="download"
+                size={scaleSize(16)}
+                color="#fff"
+                style={{ marginRight: 6 }}
+              />
+              <Text style={styles.downloadPdfButtonText}>
+                Download PDF
+              </Text>
+            </View>
+          </TouchableOpacity>
+        )}
 
       {/* Review Button for Completed Orders */}
       {activeTab === "completed" && order.status === "completed" && (
