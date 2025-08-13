@@ -1,4 +1,5 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { colors } from "../../styles";
 import { scaleSize } from "../../utils/scale";
@@ -18,7 +19,7 @@ export default function ProfileMenu({
         onRecyclingHistory && onRecyclingHistory();
         break;
       case "achievements":
-        Alert.alert("Coming soon");
+        router.push('/achievements');
         break;
       case "notifications":
         Alert.alert("Coming soon");

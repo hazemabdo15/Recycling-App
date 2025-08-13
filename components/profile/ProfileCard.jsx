@@ -4,11 +4,14 @@ import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } fr
 import { colors } from '../../styles/theme';
 import { isBuyer, isCustomer } from '../../utils/roleLabels';
 import { scaleSize } from '../../utils/scale';
-
-
+import { calculateUserTier } from '../../utils/tiers';
+import TierBadge from '../achievements/TierBadge';
 
 export default function ProfileCard({ user, points = 0, tier = '', onLogout, onRedeem, showRedeem, onEditAvatar, style, avatarLoading }) {
   const avatarUri = user?.avatarUri;
+  const totalRecycles = user?.totalRecycles ?? 0;
+  const userTier = calculateUserTier(totalRecycles);
+  
   console.log('ProfileCard points prop:', points);
   return (
     <View style={[styles.card, style]}>
@@ -32,7 +35,10 @@ export default function ProfileCard({ user, points = 0, tier = '', onLogout, onR
             </TouchableOpacity>
           </View>
           <View style={styles.infoContainer}>
-            <Text style={styles.name}>{user?.name || 'Guest'}</Text>
+            <View style={styles.nameRow}>
+              <Text style={styles.name}>{user?.name || 'Guest'}</Text>
+              <TierBadge tierName={userTier.name} size="small" showName={false} />
+            </View>
             <Text style={styles.email}>{user?.email || 'No email available'}</Text>
           </View>
         </View>
@@ -51,8 +57,8 @@ export default function ProfileCard({ user, points = 0, tier = '', onLogout, onR
           </View>
         )}
         <View style={styles.statBox}>
-          <MaterialCommunityIcons name="leaf" size={20} color={colors.primary} />
-          <Text style={styles.statValue}>{tier || ''}</Text>
+          <TierBadge tierName={userTier.name} size="small" showName={false} />
+          <Text style={styles.statValue}>{userTier.name}</Text>
           <Text style={styles.statLabel}>Tier</Text>
         </View>
       </View>
@@ -135,6 +141,11 @@ const styles = StyleSheet.create({
   infoContainer: {
     justifyContent: 'center',
   },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   name: {
     fontSize: scaleSize(18),
     fontWeight: '700',
@@ -175,12 +186,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     borderRadius: scaleSize(10),
     paddingVertical: scaleSize(10),
-    marginTop: scaleSize(10),
+    paddingHorizontal: scaleSize(20),
+    marginTop: scaleSize(8),
     alignItems: 'center',
   },
   redeemButtonText: {
     color: colors.white,
-    fontWeight: '600',
     fontSize: scaleSize(14),
+    fontWeight: '600',
   },
 });
