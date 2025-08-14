@@ -22,7 +22,7 @@ export const isStaging = () => getCurrentEnv() === ENV.STAGING;
 
 const API_CONFIGS = {
   [ENV.DEVELOPMENT]: {
-    baseUrl: 'http://192.168.1.7:5000',
+    baseUrl: 'http://192.168.0.165:5000',
     timeout: 15000,
     retries: 2,
     debug: true
