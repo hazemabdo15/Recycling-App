@@ -1,22 +1,24 @@
-﻿// ...existing code...
-import { Stack } from "expo-router";
+﻿import { Stack } from "expo-router";
 import GlobalToast from '../components/common/GlobalToast';
 import SplashController from '../components/common/SplashController';
 import { AuthProvider } from '../context/AuthContext';
 import { CartProvider } from '../context/CartContext';
 import { ChatProvider } from "../context/ChatContext";
+import { LocalizationProvider } from '../context/LocalizationContext';
 import { NotificationProvider } from '../context/NotificationContext';
+import '../localization/i18n'; // MUST BE THE FIRST IMPORT
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <CartProvider>
-        <NotificationProvider>
-          <ChatProvider>
-            <SplashController>
-              <GlobalToast />
-              <Stack
-                screenOptions={{
+    <LocalizationProvider>
+      <AuthProvider>
+        <CartProvider>
+          <NotificationProvider>
+            <ChatProvider>
+              <SplashController>
+                <GlobalToast />
+                <Stack
+                  screenOptions={{
                   headerShown: false,
                   animation: 'slide_from_right',
                   animationDuration: 300,
@@ -115,5 +117,6 @@ export default function RootLayout() {
         </NotificationProvider>
         </CartProvider>
     </AuthProvider>
+    </LocalizationProvider>
   );
 }

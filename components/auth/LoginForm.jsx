@@ -2,9 +2,10 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Dimensions, Pressable, StyleSheet, Text, TextInput, View, TouchableOpacity } from 'react-native';
+import { Dimensions, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLocalization } from '../../context/LocalizationContext';
 import { colors } from '../../styles/theme';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -13,6 +14,7 @@ const scaleSize = (size) => (SCREEN_WIDTH / 375) * size;
 export default function LoginForm({ onSubmit, loading, onGoogleLogin, handleForgotPassword }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { t } = useLocalization();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -47,8 +49,8 @@ export default function LoginForm({ onSubmit, loading, onGoogleLogin, handleForg
           <View style={styles.logoContainer}>
             <MaterialCommunityIcons name="recycle" size={scaleSize(60)} color={colors.white} />
           </View>
-          <Text style={styles.title}>Welcome Back!</Text>
-          <Text style={styles.subtitle}>Sign in to continue your eco journey</Text>
+          <Text style={styles.title}>{t('home.welcomeTitle')}!</Text>
+          <Text style={styles.subtitle}>{t('auth.login')} {t('home.welcomeMessage')}</Text>
         </View>
 
         {/* Main form card */}
@@ -59,7 +61,7 @@ export default function LoginForm({ onSubmit, loading, onGoogleLogin, handleForg
                 <Ionicons name="mail-outline" size={scaleSize(20)} color={colors.neutral} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="Email address"
+                  placeholder={t('auth.enterEmail')}
                   placeholderTextColor={colors.neutral}
                   value={email}
                   onChangeText={setEmail}
@@ -72,7 +74,7 @@ export default function LoginForm({ onSubmit, loading, onGoogleLogin, handleForg
                 <Ionicons name="lock-closed-outline" size={scaleSize(20)} color={colors.neutral} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="Password"
+                  placeholder={t('auth.enterPassword')}
                   placeholderTextColor={colors.neutral}
                   secureTextEntry={!showPassword}
                   value={password}
@@ -92,7 +94,7 @@ export default function LoginForm({ onSubmit, loading, onGoogleLogin, handleForg
               style={styles.forgotPasswordButton}
               onPress={handleForgotPassword}
             >
-              <Text style={styles.forgotPasswordText}>Forgot your password?</Text>
+              <Text style={styles.forgotPasswordText}>{t('auth.forgotPassword')}</Text>
             </TouchableOpacity>
 
 
@@ -109,14 +111,14 @@ export default function LoginForm({ onSubmit, loading, onGoogleLogin, handleForg
                 style={styles.loginButtonGradient}
               >
                 {loading && <View style={styles.loadingSpinner} />}
-                <Text style={styles.loginText}>{loading ? 'Signing in...' : 'Sign In'}</Text>
+                <Text style={styles.loginText}>{loading ? t('common.loading') : t('auth.signIn')}</Text>
               </LinearGradient>
             </Pressable>
 
             <View style={styles.linksContainer}>
               <Pressable onPress={() => router.push('/register')}>
                 <Text style={styles.linkText}>
-                  Don&apos;t have an account? <Text style={styles.linkTextBold}>Sign Up</Text>
+                  {t('auth.noAccount')} <Text style={styles.linkTextBold}>{t('auth.signUp')}</Text>
                 </Text>
               </Pressable>
 

@@ -8,6 +8,7 @@ import { EarnPointsCard } from "../../components/cards";
 import { ErrorBoundary } from "../../components/common";
 import { TopRecycledSection } from "../../components/sections";
 import { useAuth } from "../../context/AuthContext";
+import { useLocalization } from "../../context/LocalizationContext";
 import { useNotifications } from "../../context/NotificationContext";
 import { colors, spacing } from "../../styles/theme";
 import { getLabel } from "../../utils/roleLabels";
@@ -17,6 +18,7 @@ const Index = () => {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, isLoggedIn, loading: authLoading } = useAuth();
+  const { t } = useLocalization();
   const { unreadCount, refreshNotifications, isConnected } = useNotifications();
   const refreshNotificationsRef = useRef(refreshNotifications);
 
@@ -40,7 +42,7 @@ const Index = () => {
         >
           <View style={styles.headerRow}>
             <Text style={styles.appName}>
-              {getLabel("appName", user?.role)}
+              {t('app.name')}
             </Text>
             {isLoggedIn && user && !user.isGuest && !authLoading && (
               <TouchableOpacity
@@ -73,8 +75,8 @@ const Index = () => {
           </View>
 
           <View style={styles.heroContent}>
-            <Text style={styles.welcomeText}>Welcome Back!</Text>
-            <Text style={styles.heroTitle}>Make Every Item Count</Text>
+            <Text style={styles.welcomeText}>{t('home.welcomeTitle')}</Text>
+            <Text style={styles.heroTitle}>{t('home.welcomeMessage')}</Text>
             <Text style={styles.heroSubtitle}>
               {getLabel("welcomeMessage", user?.role)}
             </Text>
@@ -92,9 +94,9 @@ const Index = () => {
 
           <View style={styles.section}>
             <View style={[styles.sectionHeader, styles.centeredHeader]}>
-              <Text style={styles.sectionTitle}>🔥 Trending This Week</Text>
+              <Text style={styles.sectionTitle}>🔥 {t('home.trendingTitle')}</Text>
               <Text style={styles.sectionSubtitle}>
-                Most recycled items in your area
+                {t('home.trendingSubtitle')}
               </Text>
             </View>
             <TopRecycledSection />
