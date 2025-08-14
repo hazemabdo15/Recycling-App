@@ -1,9 +1,10 @@
 ﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Dimensions, Text, View } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
+import { useLocalization } from '../../context/LocalizationContext';
 import { categoryHeaderStyles } from '../../styles/components/categoryStyles';
 import { colors, spacing } from '../../styles/theme';
-import { getLabel, isBuyer } from '../../utils/roleLabels';
+import { isBuyer } from '../../utils/roleUtils';
 import { scaleSize } from '../../utils/scale';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -19,6 +20,7 @@ const CategoryHeader = ({
     onGoBack
 }) => {
     const { user } = useAuth();
+    const { tRole } = useLocalization();
     return (
         <View
             style={[
@@ -99,7 +101,7 @@ const CategoryHeader = ({
                         <Text style={[
                             categoryHeaderStyles.statLabel,
                             { fontSize: scale(12) },
-                        ]}>{getLabel("money", user?.role)}</Text>
+                        ]}>{tRole("money", user?.role)}</Text>
                     </View>
                 </View>
             </View>

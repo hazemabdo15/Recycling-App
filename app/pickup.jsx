@@ -17,16 +17,17 @@ import AddressPhase from "../components/pickup/AddressPhase";
 import ConfirmationPhase from "../components/pickup/ConfirmationPhase";
 import ReviewPhase from "../components/pickup/ReviewPhase";
 import { useAuth } from "../context/AuthContext";
+import { useLocalization } from "../context/LocalizationContext";
 import { useCart } from "../hooks/useCart";
 import { usePickupWorkflow } from "../hooks/usePickupWorkflow";
 import { isAuthenticated } from "../services/auth";
 import { colors, spacing, typography } from "../styles/theme";
-import { getProgressStepLabel } from "../utils/roleLabels";
 import { isBuyer } from "../utils/roleUtils";
 import { scaleSize } from "../utils/scale";
 
 export default function Pickup() {
   const insets = useSafeAreaInsets();
+  const { tRole } = useLocalization();
   const {
     user,
     isLoggedIn,
@@ -419,11 +420,11 @@ export default function Pickup() {
   const getPhaseTitle = () => {
     switch (currentPhase) {
       case 1:
-        return getProgressStepLabel(1, user?.role);
+        return tRole("progressSteps.0", user?.role) || "Address";
       case 2:
-        return getProgressStepLabel(2, user?.role);
+        return tRole("progressSteps.1", user?.role) || "Review";
       case 3:
-        return getProgressStepLabel(3, user?.role);
+        return tRole("progressSteps.2", user?.role) || "Confirmation";
       default:
         return "Schedule Pickup";
     }

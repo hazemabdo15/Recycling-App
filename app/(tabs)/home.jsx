@@ -11,14 +11,13 @@ import { useAuth } from "../../context/AuthContext";
 import { useLocalization } from "../../context/LocalizationContext";
 import { useNotifications } from "../../context/NotificationContext";
 import { colors, spacing } from "../../styles/theme";
-import { getLabel } from "../../utils/roleLabels";
 import { scaleSize } from "../../utils/scale";
 
 const Index = () => {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, isLoggedIn, loading: authLoading } = useAuth();
-  const { t } = useLocalization();
+  const { t, tRole } = useLocalization();
   const { unreadCount, refreshNotifications, isConnected } = useNotifications();
   const refreshNotificationsRef = useRef(refreshNotifications);
 
@@ -42,7 +41,7 @@ const Index = () => {
         >
           <View style={styles.headerRow}>
             <Text style={styles.appName}>
-              {t('app.name')}
+              {tRole('app.name', user?.role)}
             </Text>
             {isLoggedIn && user && !user.isGuest && !authLoading && (
               <TouchableOpacity
@@ -78,7 +77,7 @@ const Index = () => {
             <Text style={styles.welcomeText}>{t('home.welcomeTitle')}</Text>
             <Text style={styles.heroTitle}>{t('home.welcomeMessage')}</Text>
             <Text style={styles.heroSubtitle}>
-              {getLabel("welcomeMessage", user?.role)}
+              {tRole("home.callToAction", user?.role)}
             </Text>
           </View>
         </LinearGradient>
@@ -134,7 +133,6 @@ const styles = StyleSheet.create({
     fontSize: scaleSize(24),
     fontWeight: "bold",
     color: colors.white,
-    letterSpacing: -0.5,
   },
   notificationButton: {
     position: "relative",

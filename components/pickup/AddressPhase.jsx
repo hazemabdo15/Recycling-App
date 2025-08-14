@@ -2,22 +2,22 @@
 import { Picker } from '@react-native-picker/picker';
 import { useEffect, useRef, useState } from 'react';
 import {
-  Alert,
-  FlatList,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Alert,
+    FlatList,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 
 import { useAuth } from '../../context/AuthContext';
+import { useLocalization } from '../../context/LocalizationContext';
 import { borderRadius, spacing, typography } from '../../styles';
 import { colors } from '../../styles/theme';
 
 import { CITIES } from '../../utils/deliveryFees';
-import { getLabel } from '../../utils/roleLabels';
 import { AnimatedButton } from '../common';
 
 const AREAS = {
@@ -28,6 +28,7 @@ const AREAS = {
 
 const AddressPhase = ({ onNext, onAddressSelect, onBack, pickupWorkflow }) => {
   const { isLoggedIn, user } = useAuth();
+  const { tRole } = useLocalization();
   const hasFetchedAddresses = useRef(false);
   const [showForm, setShowForm] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
@@ -334,7 +335,7 @@ const AddressPhase = ({ onNext, onAddressSelect, onBack, pickupWorkflow }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>{getLabel('selectAddress', user?.role)}</Text>
+        <Text style={styles.title}>{tRole('address.select', user?.role)}</Text>
         <TouchableOpacity
           style={styles.addButton}
           onPress={() => setShowForm(true)}

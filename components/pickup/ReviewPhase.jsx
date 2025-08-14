@@ -1,13 +1,13 @@
 ﻿import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import {
-  Alert,
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Alert,
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../hooks/useCart";
@@ -17,8 +17,8 @@ import { usePayment } from "../../hooks/usePayment";
 import { borderRadius, spacing, typography } from "../../styles";
 import { colors } from "../../styles/theme";
 import { normalizeItemData } from "../../utils/cartUtils";
-import { isBuyer } from "../../utils/roleLabels";
-import { isBuyer as isBuyerRole, shouldShowDeliveryFee, shouldShowTotalValue } from '../../utils/roleUtils';
+import { isBuyer, isBuyer as isBuyerRole, shouldShowDeliveryFee, shouldShowTotalValue } from "../../utils/roleUtils";
+
 
 import { getDeliveryFeeForCity } from '../../utils/deliveryFees';
 import { AnimatedButton } from "../common";

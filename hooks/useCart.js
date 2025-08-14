@@ -1,6 +1,6 @@
 ﻿import { useCartContext } from '../context/CartContext';
 import { calculateQuantity, createCartItem, getIncrementStep, normalizeItemData } from '../utils/cartUtils';
-import { isBuyer } from '../utils/roleLabels';
+import { isBuyer } from '../utils/roleUtils';
 
 export const useCart = (user = null) => {
   const {

@@ -1,0 +1,750 @@
+{
+  "common": {
+    "back": "Back",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "next": "Next",
+    "submit": "Submit",
+    "loading": "Loading...",
+    "retry": "Retry",
+    "error": "An error occurred",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "close": "Close",
+    "ok": "OK",
+    "yes": "Yes",
+    "no": "No",
+    "and": "and",
+    "or": "or",
+    "skip": "Skip",
+    "done": "Done",
+    "continue": "Continue",
+    "finish": "Finish",
+    "send": "Send",
+    "refresh": "Refresh",
+    "update": "Update",
+    "remove": "Remove",
+    "add": "Add",
+    "view": "View",
+    "select": "Select",
+    "choose": "Choose",
+    "upload": "Upload",
+    "download": "Download",
+    "share": "Share",
+    "copy": "Copy",
+    "paste": "Paste",
+    "clear": "Clear",
+    "reset": "Reset",
+    "enable": "Enable",
+    "disable": "Disable",
+    "show": "Show",
+    "hide": "Hide",
+    "open": "Open",
+    "minimize": "Minimize",
+    "maximize": "Maximize",
+    "required": "Required",
+    "optional": "Optional",
+    "unavailable": "Unavailable",
+    "available": "Available",
+    "online": "Online",
+    "offline": "Offline",
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "success": "Success",
+    "warning": "Warning",
+    "info": "Info",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "tomorrow": "Tomorrow",
+    "now": "Now",
+    "later": "Later",
+    "never": "Never",
+    "always": "Always",
+    "all": "All",
+    "none": "None",
+    "empty": "Empty",
+    "full": "Full",
+    "new": "New",
+    "old": "Old",
+    "recent": "Recent",
+    "popular": "Popular",
+    "featured": "Featured",
+    "recommended": "Recommended",
+    "comingSoon": "Coming Soon"
+  },
+  "app": {
+    "name": {
+      "customer": "EcoPickup",
+      "buyer": "EcoStore"
+    },
+    "buyer": "Recycling App",
+    "seller": "EcoPickup Seller",
+    "delivery": "EcoPickup Delivery"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "forgotPassword": "Forgot Password?",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "signUp": "Sign Up",
+    "signIn": "Sign In",
+    "createAccount": "Create Account",
+    "enterEmail": "Enter your email",
+    "enterPassword": "Enter your password",
+    "enterName": "Enter your name",
+    "fullName": "Full Name",
+    "phoneNumber": "Phone Number",
+    "enterPhone": "Enter your phone number",
+    "verifyOTP": "Verify OTP",
+    "otpSent": "OTP sent to your phone",
+    "resendOTP": "Resend OTP",
+    "resetPassword": "Reset Password",
+    "newPassword": "New Password",
+    "waitingApproval": "Waiting for Approval",
+    "accountPending": "Your account is pending admin approval",
+    "loginToContinue": "Login to Continue"
+  },
+  "home": {
+    "welcomeMessage": "Make every item count with recycling",
+    "welcomeTitle": "Welcome to EcoPickup",
+    "trendingTitle": "Trending This Week",
+    "trendingSubtitle": "Most recycled items in your area",
+    "quickActions": "Quick Actions",
+    "schedulePickup": "Schedule Pickup",
+    "browseItems": "Browse Items",
+    "viewHistory": "View History",
+    "earnPoints": "Earn Points",
+    "recentActivity": "Recent Activity",
+    "noActivity": "No recent activity",
+    "callToAction": {
+      "customer": "Turn your recyclables into rewards and help save our planet",
+      "buyer": "Shop eco-friendly products and support sustainability"
+    }
+  },
+  "tabs": {
+    "home": "Home",
+    "explore": {
+      "customer": "Explore",
+      "buyer": "Shop"
+    },
+    "cart": {
+      "customer": "Pickup",
+      "buyer": "Cart"
+    },
+    "profile": "Profile"
+  },
+  "profile": {
+    "title": "Profile",
+    "editProfile": "Edit Profile",
+    "settings": "Settings",
+    "help": "Help & Support",
+    "about": "About",
+    "logout": "Logout",
+    "myOrders": "My Orders",
+    "wallet": "E-Wallet",
+    "achievements": "Achievements",
+    "notifications": "Notifications",
+    "language": "Language",
+    "privacy": "Privacy Policy",
+    "terms": "Terms & Conditions",
+    "contact": "Contact Us",
+    "feedback": "Feedback",
+    "version": "Version",
+    "permissionRequired": "Permission required",
+    "allowPhotoAccess": "Please allow access to your photos.",
+    "uploadError": "Failed to upload image",
+    "profileUpdated": "Profile updated successfully",
+    "editAvatar": "Edit Avatar",
+    "changePassword": "Change Password",
+    "darkMode": "Dark Mode",
+    "deleteAccount": "Delete Account",
+    "confirmDelete": "Are you sure you want to delete your account?",
+    "cannotUndo": "This action cannot be undone."
+  },
+  "cart": {
+    "title": {
+      "customer": "🛒 Your Pickup Cart",
+      "buyer": "🛒 Your Shopping Cart"
+    },
+    "subtitle": {
+      "customer": "items ready for pickup",
+      "buyer": "items in your cart"
+    },
+    "empty": {
+      "customer": "Add recyclable items to get started",
+      "buyer": "Add items to your cart"
+    },
+    "emptySubtitle": {
+      "customer": "Schedule your pickup and earn rewards!",
+      "buyer": "Browse items and place your order!"
+    },
+    "addTo": {
+      "customer": "to pickup",
+      "buyer": "to cart"
+    },
+    "findItemsButton": {
+      "customer": "Find Recyclables",
+      "buyer": "Browse Products"
+    },
+    "items": "items",
+    "total": "Total",
+    "checkout": {
+      "customer": "Request Pickup",
+      "buyer": "Checkout"
+    },
+    "removeItem": "Remove Item",
+    "updateQuantity": "Update Quantity",
+    "quantity": "Quantity",
+    "subtotal": "Subtotal",
+    "tax": "Tax",
+    "delivery": "Delivery",
+    "grandTotal": "Grand Total"
+  },
+  "explore": {
+    "title": {
+      "customer": "🔍 What Can You Recycle?",
+      "buyer": "🛒 Browse Products"
+    },
+    "subtitle": {
+      "customer": "Browse materials and find what you can recycle at home",
+      "buyer": "Discover eco-friendly products for sustainable living"
+    },
+    "searchPlaceholder": {
+      "customer": "Search recyclable materials...",
+      "buyer": "Search products..."
+    },
+    "categories": "Categories",
+    "popular": "Popular",
+    "recent": "Recent",
+    "noResults": "No results found",
+    "filterBy": "Filter by",
+    "sortBy": "Sort by",
+    "priceRange": "Price Range",
+    "location": "Location",
+    "condition": "Condition",
+    "items": "items",
+    "found": "found"
+  },
+  "pickup": {
+    "title": "Schedule Pickup",
+    "selectDate": "Select Date",
+    "selectTime": "Select Time",
+    "address": "Pickup Address",
+    "notes": "Additional Notes",
+    "confirmPickup": "Confirm Pickup",
+    "pickupScheduled": "Pickup Scheduled",
+    "pickupHistory": "Pickup History",
+    "cancelPickup": "Cancel Pickup",
+    "reschedulePickup": "Reschedule Pickup",
+    "label": {
+      "customer": "Pickup",
+      "buyer": "Cart"
+    },
+    "request": {
+      "customer": "Request Pickup",
+      "buyer": "Place Order"
+    },
+    "schedule": {
+      "customer": "Schedule Pickup",
+      "buyer": "Place Order"
+    }
+  },
+  "settings": {
+    "language": "Language",
+    "english": "English",
+    "arabic": "العربية",
+    "changeLanguage": "Change Language",
+    "appearance": "Appearance",
+    "notifications": "Notifications",
+    "privacy": "Privacy",
+    "security": "Security",
+    "account": "Account",
+    "general": "General",
+    "theme": "Theme",
+    "lightMode": "Light Mode",
+    "darkMode": "Dark Mode",
+    "systemDefault": "System Default"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark All as Read",
+    "markAll": "Mark All",
+    "markAllConfirm": "Mark {{count}} notifications as read?",
+    "deleteTitle": "Delete Notification",
+    "deleteConfirm": "Are you sure you want to delete this notification?",
+    "noUnread": "No unread notifications",
+    "noNotifications": "No notifications",
+    "newOrder": "New Order",
+    "orderUpdate": "Order Update",
+    "pickup": "Pickup",
+    "payment": "Payment",
+    "general": "General",
+    "settings": "Notification Settings",
+    "push": "Push Notifications",
+    "email": "Email Notifications",
+    "sms": "SMS Notifications"
+  },
+  "orders": {
+    "title": "Orders",
+    "history": "Order History",
+    "pending": "Pending",
+    "confirmed": "Confirmed",
+    "inProgress": "In Progress",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "orderDetails": "Order Details",
+    "trackOrder": "Track Order",
+    "reorder": "Reorder",
+    "cancelOrder": "Cancel Order",
+    "orderNumber": "Order Number",
+    "orderDate": "Order Date",
+    "deliveryDate": "Delivery Date",
+    "status": "Status",
+    "confirmation": {
+      "customer": "Pickup Request Confirmed!",
+      "buyer": "Order Confirmed!"
+    },
+    "statusMessage": {
+      "customer": "Your request has been sent. We will contact you soon for pickup scheduling.",
+      "buyer": "Your order has been placed successfully. We will process it soon."
+    },
+    "trackingInfo": {
+      "customer": "Tracking Information",
+      "buyer": "Order Information"
+    },
+    "estimatedTime": {
+      "customer": "Estimated Pickup",
+      "buyer": "Estimated Delivery"
+    }
+  },
+  "wallet": {
+    "title": "E-Wallet",
+    "balance": "Balance",
+    "points": "Points",
+    "transactions": "Transactions",
+    "addFunds": "Add Funds",
+    "withdraw": "Withdraw",
+    "transfer": "Transfer",
+    "history": "Transaction History",
+    "earnMore": "Earn More Points",
+    "redeem": "Redeem Points",
+    "pointsEarned": "Points Earned",
+    "pointsSpent": "Points Spent"
+  },
+  "help": {
+    "title": "Help & Support",
+    "subtitle": "How can we help you today?",
+    "faq": "Frequently Asked Questions",
+    "contact": "Contact Support",
+    "chat": "Live Chat",
+    "email": "Email Support",
+    "phone": "Phone Support",
+    "feedback": "Send Feedback",
+    "reportIssue": "Report an Issue",
+    "howItWorks": "How it Works",
+    "guidelines": "Guidelines",
+    "searchHelp": "Search help topics...",
+    "popular": "Popular Topics",
+    "recent": "Recent Updates"
+  },
+  "achievements": {
+    "title": "Achievements",
+    "unlocked": "Unlocked",
+    "locked": "Locked",
+    "progress": "Progress",
+    "reward": "Reward",
+    "level": "Level",
+    "experience": "Experience",
+    "badges": "Badges",
+    "milestones": "Milestones"
+  },
+  "errors": {
+    "networkError": "Network connection error",
+    "serverError": "Server error occurred",
+    "invalidCredentials": "Invalid email or password",
+    "emailRequired": "Email is required",
+    "passwordRequired": "Password is required",
+    "passwordTooShort": "Password must be at least 6 characters",
+    "emailInvalid": "Please enter a valid email",
+    "phoneRequired": "Phone number is required",
+    "nameRequired": "Name is required",
+    "addressRequired": "Address is required",
+    "tryAgain": "Please try again",
+    "somethingWrong": "Something went wrong"
+  },
+  "success": {
+    "loginSuccess": "Login successful",
+    "registerSuccess": "Registration successful",
+    "profileUpdated": "Profile updated successfully",
+    "orderPlaced": "Order placed successfully",
+    "pickupScheduled": "Pickup scheduled successfully",
+    "paymentSuccess": "Payment completed successfully",
+    "feedbackSent": "Feedback sent successfully",
+    "passwordReset": "Password reset successfully"
+  },
+  "categories": {
+    "all": "All Categories",
+    "plastic": "Plastic",
+    "paper": "Paper",
+    "metal": "Metal",
+    "glass": "Glass",
+    "electronics": "Electronics",
+    "textiles": "Textiles",
+    "organic": "Organic",
+    "batteries": "Batteries",
+    "other": "Other",
+    "bottles": "Bottles",
+    "cans": "Cans",
+    "cardboard": "Cardboard",
+    "newspapers": "Newspapers",
+    "magazines": "Magazines",
+    "aluminum": "Aluminum",
+    "steel": "Steel",
+    "computers": "Computers",
+    "phones": "Phones",
+    "appliances": "Appliances",
+    "clothing": "Clothing",
+    "shoes": "Shoes",
+    "food": "Food Waste",
+    "garden": "Garden Waste"
+  },
+  "delivery": {
+    "title": "Delivery",
+    "address": "Delivery Address",
+    "time": "Delivery Time",
+    "instructions": "Delivery Instructions",
+    "fee": "Delivery Fee",
+    "free": "Free Delivery",
+    "express": "Express Delivery",
+    "standard": "Standard Delivery",
+    "scheduled": "Scheduled Delivery"
+  },
+  "voice": {
+    "title": "Voice Assistant",
+    "listening": "Listening...",
+    "processing": "Processing...",
+    "speak": "Speak now",
+    "tryAgain": "Try speaking again",
+    "notUnderstood": "Sorry, I didn't understand that",
+    "voiceDisabled": "Voice feature is disabled",
+    "enableVoice": "Enable Voice",
+    "aiResults": "AI Results",
+    "suggestion": "Suggestion",
+    "recommendations": "Recommendations"
+  },
+  "chat": {
+    "title": "Chat",
+    "message": "Message",
+    "sendMessage": "Send Message",
+    "typing": "Typing...",
+    "online": "Online",
+    "offline": "Offline",
+    "lastSeen": "Last seen",
+    "newMessage": "New Message",
+    "noMessages": "No messages yet",
+    "startConversation": "Start a conversation",
+    "support": "Support Chat",
+    "customerService": "Customer Service"
+  },
+  "forms": {
+    "required": "This field is required",
+    "invalid": "Invalid format",
+    "tooShort": "Too short",
+    "tooLong": "Too long",
+    "passwordMismatch": "Passwords don't match",
+    "invalidEmail": "Please enter a valid email",
+    "invalidPhone": "Please enter a valid phone number",
+    "selectOption": "Please select an option",
+    "fillAllFields": "Please fill all required fields",
+    "termsAccept": "Please accept the terms and conditions",
+    "privacyAccept": "Please accept the privacy policy",
+    "ageConfirm": "You must be 18 or older"
+  },
+  "status": {
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "processing": "Processing",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "expired": "Expired",
+    "active": "Active",
+    "inactive": "Inactive",
+    "draft": "Draft",
+    "published": "Published",
+    "archived": "Archived",
+    "scheduled": "Scheduled",
+    "inProgress": "In Progress",
+    "onHold": "On Hold",
+    "review": "Under Review",
+    "confirmed": "Confirmed",
+    "delivered": "Delivered",
+    "shipped": "Shipped",
+    "returned": "Returned",
+    "refunded": "Refunded"
+  },
+  "time": {
+    "minute": "minute",
+    "minutes": "minutes",
+    "hour": "hour",
+    "hours": "hours",
+    "day": "day",
+    "days": "days",
+    "week": "week",
+    "weeks": "weeks",
+    "month": "month",
+    "months": "months",
+    "year": "year",
+    "years": "years",
+    "ago": "ago",
+    "from": "from",
+    "to": "to",
+    "at": "at",
+    "on": "on",
+    "in": "in",
+    "morning": "Morning",
+    "afternoon": "Afternoon",
+    "evening": "Evening",
+    "night": "Night",
+    "dawn": "Dawn",
+    "dusk": "Dusk",
+    "midnight": "Midnight",
+    "noon": "Noon"
+  },
+  "quickActions": {
+    "title": "Quick Actions",
+    "schedulePickup": "Schedule Pickup",
+    "findItems": "Find Items",
+    "scanBarcode": "Scan Barcode",
+    "takePhoto": "Take Photo",
+    "viewMap": "View Map",
+    "callSupport": "Call Support",
+    "checkRewards": "Check Rewards",
+    "trackOrder": "Track Order",
+    "makePayment": "Make Payment",
+    "rateService": "Rate Service",
+    "shareApp": "Share App",
+    "inviteFriend": "Invite Friend"
+  },
+  "modals": {
+    "confirmation": "Confirmation",
+    "information": "Information",
+    "warning": "Warning",
+    "error": "Error",
+    "success": "Success",
+    "pleaseWait": "Please wait...",
+    "areYouSure": "Are you sure?",
+    "thisAction": "This action",
+    "cannotBeUndone": "cannot be undone",
+    "proceedAnyway": "Proceed anyway?",
+    "unsavedChanges": "You have unsaved changes",
+    "discardChanges": "Discard changes?",
+    "saveChanges": "Save changes?",
+    "exitWithoutSaving": "Exit without saving?"
+  },
+  "contact": {
+    "title": "Contact Us",
+    "address": "Address",
+    "phone": "Phone",
+    "email": "Email",
+    "website": "Website",
+    "socialMedia": "Social Media",
+    "businessHours": "Business Hours",
+    "location": "Location",
+    "directions": "Get Directions",
+    "callNow": "Call Now",
+    "sendEmail": "Send Email",
+    "visitWebsite": "Visit Website",
+    "followUs": "Follow Us"
+  },
+  "about": {
+    "title": "About Us",
+    "version": "Version",
+    "buildNumber": "Build Number",
+    "developer": "Developer",
+    "company": "Company",
+    "description": "Description",
+    "mission": "Mission",
+    "vision": "Vision",
+    "values": "Values",
+    "team": "Team",
+    "history": "History",
+    "news": "News",
+    "updates": "Updates",
+    "changelog": "Changelog",
+    "legal": "Legal",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "licenses": "Licenses",
+    "acknowledgments": "Acknowledgments"
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "question": "Question",
+    "answer": "Answer",
+    "category": "Category",
+    "helpful": "Was this helpful?",
+    "yes": "Yes",
+    "no": "No",
+    "searchFAQ": "Search FAQ",
+    "noResults": "No results found",
+    "generalQuestions": "General Questions",
+    "accountQuestions": "Account Questions",
+    "orderQuestions": "Order Questions",
+    "paymentQuestions": "Payment Questions",
+    "technicalQuestions": "Technical Questions",
+    "otherQuestions": "Other Questions"
+  },
+  "feedback": {
+    "title": "Feedback",
+    "rating": "Rating",
+    "comment": "Comment",
+    "optional": "Optional",
+    "tellUs": "Tell us about your experience",
+    "excellent": "Excellent",
+    "good": "Good",
+    "average": "Average",
+    "poor": "Poor",
+    "terrible": "Terrible",
+    "wouldRecommend": "Would you recommend this app?",
+    "improvements": "What can we improve?",
+    "thankYou": "Thank you for your feedback!",
+    "submitting": "Submitting feedback...",
+    "submitted": "Feedback submitted successfully",
+    "failed": "Failed to submit feedback"
+  },
+  "earnPointsCard": {
+    "title": "Did You Know?",
+    "fact_0": "Recycling one aluminum can saves enough energy to run a TV for 3 hours!",
+    "fact_1": "Plastic bottles can take up to 450 years to decompose in a landfill.",
+    "fact_2": "Turning off the tap while brushing your teeth can save up to 8 gallons of water a day.",
+    "fact_3": "Every ton of recycled paper saves 17 trees.",
+    "fact_4": "Composting food scraps reduces landfill waste and creates nutrient-rich soil.",
+    "fact_5": "LED bulbs use at least 75% less energy than traditional incandescent lighting.",
+    "fact_6": "One mature tree can absorb carbon dioxide at a rate of 48 pounds per year.",
+    "fact_7": "Glass can be recycled endlessly without loss in quality or purity.",
+    "fact_8": "Producing new plastic from recycled material uses two-thirds less energy than making it from raw materials.",
+    "fact_9": "Earthworms improve soil health and help plants grow!",
+    "fact_10": "Recycling one ton of plastic saves the equivalent of 1,000–2,000 gallons of gasoline.",
+    "fact_11": "A single drip per second from a leaky faucet wastes over 3,000 gallons of water per year.",
+    "fact_12": "The average person generates over 4 pounds of trash every day.",
+    "fact_13": "Recycling a stack of newspapers just 3 feet high saves one tree.",
+    "fact_14": "Bamboo is one of the fastest-growing plants and is a sustainable alternative to wood.",
+    "fact_15": "Up to 80% of what Americans throw away is recyclable, yet the recycling rate is only about 30%.",
+    "fact_16": "If every American recycled just one-tenth of their newspapers, we could save about 25 million trees each year.",
+    "fact_17": "It takes 500,000 trees to produce the Sunday newspapers each week in the U.S.",
+    "fact_18": "Recycling one glass bottle saves enough energy to power a computer for 30 minutes.",
+    "fact_19": "Aluminum is 100% recyclable and can be recycled indefinitely without losing quality.",
+    "fact_20": "The energy saved from recycling one glass bottle will power a 100-watt light bulb for 4 hours.",
+    "fact_21": "Recycling cardboard only takes 75% of the energy needed to make new cardboard.",
+    "fact_22": "More than 60% of the trash that ends up in the dustbin could be recycled.",
+    "fact_23": "Recycling one ton of paper saves 7,000 gallons of water.",
+    "fact_24": "Americans use 2,500,000 plastic bottles every hour, most of which are thrown away.",
+    "fact_25": "A single recycled tin can saves enough energy to power a television for 3 hours.",
+    "fact_26": "The world’s largest landfill is actually in the Pacific Ocean, known as the Great Pacific Garbage Patch.",
+    "fact_27": "Recycling helps reduce greenhouse gas emissions that contribute to climate change.",
+    "fact_28": "The average glass bottle takes 4,000 years to decompose if not recycled.",
+    "fact_29": "Recycling one ton of aluminum saves 14,000 kWh of energy.",
+    "fact_30": "Recycled paper produces 73% less air pollution than if it was made from raw materials."
+  },
+  "money": {
+    "customer": "You'll Earn",
+    "buyer": "You'll Pay"
+  },
+  "address": {
+    "select": {
+      "customer": "Select Delivery Address",
+      "buyer": "Select Delivery Address"
+    },
+    "deliveryTo": {
+      "customer": "Pickup from",
+      "buyer": "Delivery to"
+    }
+  },
+  "progressSteps": {
+    "customer": {
+      "1": "Select Address",
+      "2": "Review Order", 
+      "3": "Pickup Confirmed"
+    },
+    "buyer": {
+      "1": "Select Address",
+      "2": "Review Order",
+      "3": "Order Confirmed"
+    }
+  },
+  "categoryToastMessages": {
+    "itemAdded": {
+      "customer": "Added {quantity}{unit} {itemName} to pickup",
+      "buyer": "Added {quantity}{unit} {itemName} to cart"
+    },
+    "itemRemoved": {
+      "customer": "Removed {itemName} from pickup",
+      "buyer": "Removed {itemName} from cart"
+    },
+    "itemReduced": {
+      "customer": "Reduced {itemName} by {quantity}{unit}",
+      "buyer": "Reduced {itemName} by {quantity}{unit}"
+    },
+    "addFailed": {
+      "customer": "Failed to add item to pickup",
+      "buyer": "Failed to add item to cart"
+    },
+    "updateFailed": {
+      "customer": "Failed to update item quantity",
+      "buyer": "Failed to update item quantity"
+    }
+  },
+  "profileLabels": {
+    "ordersTab": {
+      "customer": "My Pickups",
+      "buyer": "My Orders"
+    },
+    "incomingTab": {
+      "customer": "Upcoming\nPickups",
+      "buyer": "Pending\nOrders"
+    },
+    "completedTab": {
+      "customer": "Completed\nPickups",
+      "buyer": "Completed\nOrders"
+    },
+    "cancelledTab": {
+      "customer": "Cancelled\nPickups",
+      "buyer": "Cancelled\nOrders"
+    },
+    "noOrdersMessage": {
+      "customer": "No pickups yet",
+      "buyer": "No orders yet"
+    },
+    "startOrderingMessage": {
+      "customer": "Start recycling to see your pickups here",
+      "buyer": "Start shopping to see your orders here"
+    }
+  },
+  "earnPoints": {
+    "customer": "Earn points by recycling",
+    "buyer": "Recycle and help the planet"
+  },
+  "itemsReadyFor": {
+    "customer": "items ready for pickup",
+    "buyer": "items ready for delivery"
+  },
+  "minimumOrder": {
+    "message": {
+      "customer": "Add {amount} EGP more to schedule pickup",
+      "buyer": "Add {amount} EGP more to place order"
+    },
+    "button": {
+      "customer": "Minimum 100 EGP Required",
+      "buyer": "Minimum 100 EGP Required"
+    }
+  }
+}

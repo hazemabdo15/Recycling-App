@@ -3,8 +3,8 @@ import * as Localization from 'expo-localization';
 import i18next from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { I18nManager } from 'react-native';
-import ar from './languages/ar';
-import en from './languages/en';
+import ar from './languages/ar.json';
+import en from './languages/en.json';
 
 const resources = {
   en: { translation: en },

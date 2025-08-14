@@ -63,15 +63,15 @@ export function TabBar({ state, descriptors, navigation }) {
   const insets = useSafeAreaInsets();
   const { openVoiceModal } = useVoiceModal();
   const { user } = useAuth();
-  const { t } = useLocalization();
+  const { t, tRole } = useLocalization();
   const { cartItems } = useCart(user);
 
   const getTabLabel = (routeName) => {
     // Map route names to translation keys
     const tabTranslationMap = {
       home: t('tabs.home'),
-      explore: t('tabs.explore'),
-      cart: t('tabs.cart'),
+      explore: tRole('tabs.explore', user?.role),
+      cart: tRole('tabs.cart', user?.role),
       profile: t('tabs.profile'),
     };
     return tabTranslationMap[routeName] || routeName;

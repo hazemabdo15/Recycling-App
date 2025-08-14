@@ -2,7 +2,7 @@
 import { itemCardStyles } from "../../styles/components/categoryStyles";
 import { colors } from "../../styles/theme";
 import { getUnitDisplay } from "../../utils/cartUtils";
-import { isBuyer } from "../../utils/roleLabels";
+import { isBuyer } from "../../utils/roleUtils";
 import { isMaxStockReached, isOutOfStock } from "../../utils/stockUtils";
 import { AnimatedListItem } from "../common";
 import ItemImage from "./ItemImage";

@@ -8,29 +8,31 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { EmptyState, ItemCard } from "../components/category";
 import { ErrorState, Loader } from "../components/common";
 import { useAuth } from "../context/AuthContext";
+import { useLocalization } from "../context/LocalizationContext";
 import { useCategoryItems } from "../hooks/useAPI";
 import { useCart } from "../hooks/useCart";
 import { layoutStyles } from "../styles/components/commonStyles";
 import { colors, spacing } from "../styles/theme";
 import {
-  CartMessageTypes,
-  showCartMessage,
-  showMaxStockMessage,
+    CartMessageTypes,
+    showCartMessage,
+    showMaxStockMessage,
 } from "../utils/cartMessages";
 import {
-  calculateCartStats,
-  getCartKey,
-  getDisplayKey,
-  getIncrementStep,
-  normalizeItemData,
+    calculateCartStats,
+    getCartKey,
+    getDisplayKey,
+    getIncrementStep,
+    normalizeItemData,
 } from "../utils/cartUtils";
-import { getLabel, isBuyer } from "../utils/roleLabels";
+import { isBuyer } from "../utils/roleUtils";
 import { scaleSize } from "../utils/scale";
 
 const CategoryDetails = () => {
   const { categoryName } = useLocalSearchParams();
   const navigation = useNavigation();
   const { user } = useAuth();
+  const { tRole } = useLocalization();
 
   const [pendingOperations, setPendingOperations] = useState({});
 
@@ -494,7 +496,7 @@ const CategoryDetails = () => {
               color={colors.white}
             />
             <Text style={heroStyles.statValue}>{totalValue} EGP</Text>
-            <Text style={heroStyles.statLabel}>{getLabel("money", user?.role)}</Text>
+            <Text style={heroStyles.statLabel}>{tRole("money", user?.role)}</Text>
           </View>
         </View>
       </View>

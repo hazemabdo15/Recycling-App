@@ -12,7 +12,7 @@ import { useLocalization } from "../../context/LocalizationContext";
 import { useUserPoints } from "../../hooks/useUserPoints";
 import apiService from "../../services/api/apiService";
 import { colors } from "../../styles";
-import { isCustomer } from "../../utils/roleLabels";
+import { isCustomer } from "../../utils/roleUtils";
 import { scaleSize } from "../../utils/scale";
 
 

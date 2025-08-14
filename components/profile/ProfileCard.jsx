@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { ActivityIndicator, Image, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { colors } from '../../styles/theme';
-import { isBuyer, isCustomer } from '../../utils/roleLabels';
+import { isBuyer, isCustomer } from '../../utils/roleUtils';
 import { scaleSize } from '../../utils/scale';
 import { calculateUserTier, getTierColors } from '../../utils/tiers';
 import TierBadge from '../achievements/TierBadge';

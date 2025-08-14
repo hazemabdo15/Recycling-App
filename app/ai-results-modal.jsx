@@ -17,7 +17,7 @@ import { useAuth } from '../context/AuthContext';
 import { useAllItems } from '../hooks/useAPI';
 import { useCart } from '../hooks/useCart';
 import { borderRadius, colors, spacing, typography } from '../styles/theme';
-import { isBuyer } from '../utils/roleLabels';
+import { isBuyer } from '../utils/roleUtils';
 
 let Reanimated, interpolate, runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming;
 

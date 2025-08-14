@@ -34,7 +34,7 @@ import {
     getDisplayKey,
     normalizeItemData,
 } from "../../utils/cartUtils";
-import { getLabel, isBuyer } from "../../utils/roleLabels";
+import { isBuyer } from "../../utils/roleUtils";
 import { scaleSize } from "../../utils/scale";
 
 const getRoleBasedIcon = (iconType, userRole = "customer") => {
@@ -70,7 +70,7 @@ const getRoleBasedIcon = (iconType, userRole = "customer") => {
 const Cart = () => {
   const insets = useSafeAreaInsets();
   const { user, isLoggedIn } = useAuth();
-  const { t } = useLocalization();
+  const { t, tRole } = useLocalization();
   const {
     cartItems,
     cartItemDetails,
@@ -672,7 +672,7 @@ const Cart = () => {
         >
           <View style={styles.heroContent}>
             <Text style={styles.heroTitle}>
-              {getLabel("cartTitle", user?.role)}
+              {tRole("cart.title", user?.role)}
             </Text>
             <Text style={styles.heroSubtitle}>No items yet</Text>
             <AnimatedButton
@@ -685,7 +685,7 @@ const Cart = () => {
                 color={colors.white}
               />
               <Text style={styles.heroFindBtnText}>
-                {getLabel("cartPage.findItemsButton", user?.role)}
+                {tRole("cart.findItemsButton", user?.role)}
               </Text>
             </AnimatedButton>
           </View>
@@ -699,10 +699,10 @@ const Cart = () => {
             />
           </View>
           <Text style={styles.emptyCartTitle}>
-            {getLabel("emptyCartTitle", user?.role)}
+            {tRole("cart.empty", user?.role)}
           </Text>
           <Text style={styles.emptyCartSubtitle}>
-            {getLabel("emptyCartSubtitle", user?.role)}
+            {tRole("cart.emptySubtitle", user?.role)}
           </Text>
         </View>
       </View>
@@ -761,10 +761,10 @@ const Cart = () => {
         <View style={styles.heroRowHeader}>
           <View style={styles.heroContent}>
             <Text style={styles.heroTitle}>
-              {getLabel("cartTitle", user?.role)}
+              {tRole("cart.title", user?.role)}
             </Text>
             <Text style={styles.heroSubtitle}>
-              {cartArray.length} {getLabel("itemsReadyFor", user?.role)}
+              {cartArray.length} {tRole("itemsReadyFor", user?.role)}
             </Text>
             <View style={styles.checkoutSummaryRowHero}>
               {!isBuyer(user) && (
@@ -789,7 +789,7 @@ const Cart = () => {
                   color={colors.secondary}
                 />
                 <Text style={styles.checkoutSummaryLabelHero}>
-                  {getLabel("money", user?.role)}
+                  {tRole("money", user?.role)}
                 </Text>
                 <Text style={styles.checkoutSummaryValueHero}>
                   {totalValue.toFixed(2)} EGP
@@ -804,7 +804,7 @@ const Cart = () => {
                   color={colors.warning}
                 />
                 <Text style={styles.minimumOrderText}>
-                  {getLabel("minimumOrderMessage", user?.role, {
+                  {tRole("minimumOrder.message", user?.role, {
                     amount: remainingAmount.toFixed(2),
                   })}
                 </Text>
@@ -843,10 +843,10 @@ const Cart = () => {
                   ]}
                 >
                   {canSchedulePickup || canProceedToPurchase
-                    ? getLabel("schedulePickup", user?.role)
+                    ? tRole("pickup.schedule", user?.role)
                     : canGuestProceed
                     ? t('auth.loginToContinue')
-                    : getLabel("minimumOrderButton", user?.role)}
+                    : tRole("minimumOrder.button", user?.role)}
                 </Text>
               </AnimatedButton>
               {cartArray.length > 0 && (

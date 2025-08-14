@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { I18nManager } from 'react-native';
 import i18next from '../localization/i18n';
 import { changeLanguage as handleLanguageChange } from '../localization/languageUtils';
+import { getRoleBasedTranslation } from '../localization/roleBasedTranslation';
 
 const LocalizationContext = createContext();
 
@@ -36,6 +37,7 @@ export function LocalizationProvider({ children }) {
 
   const value = {
     t,
+    tRole: getRoleBasedTranslation, // New function for role-based translations
     currentLanguage,
     isRTL,
     changeLanguage: handleLanguageChange, // Use the utility function directly

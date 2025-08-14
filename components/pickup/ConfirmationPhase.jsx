@@ -2,19 +2,19 @@
 import * as Clipboard from 'expo-clipboard';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Animated,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Animated,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 
 import { useAuth } from '../../context/AuthContext';
+import { useLocalization } from '../../context/LocalizationContext';
 import { useCart } from '../../hooks/useCart';
 import { borderRadius, spacing, typography } from '../../styles';
 import { colors } from '../../styles/theme';
-import { getLabel } from '../../utils/roleLabels';
 import { isBuyer as isBuyerRole, shouldShowDeliveryFee, shouldShowTotalValue } from '../../utils/roleUtils';
 
 import { getDeliveryFeeForCity } from '../../utils/deliveryFees';
@@ -22,6 +22,7 @@ import { AnimatedButton } from '../common';
 
 const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
   const { user } = useAuth();
+  const { tRole } = useLocalization();
   const { handleClearCart } = useCart(user);
   const [copied, setCopied] = useState(false);
   const rotateValue = useRef(new Animated.Value(0)).current;
@@ -104,9 +105,9 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
           </View>
         </View>
 
-        <Text style={styles.title}>{getLabel('orderConfirmation', user?.role)}</Text>
+        <Text style={styles.title}>{tRole('orders.confirmation', user?.role)}</Text>
         <Text style={styles.subtitle}>
-          {getLabel('orderStatus', user?.role)}
+          {tRole('orders.statusMessage', user?.role)}
         </Text>
 
         <View style={styles.trackingCard}>
@@ -116,7 +117,7 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
               size={24} 
               color={colors.primary} 
             />
-            <Text style={styles.trackingTitle}>{getLabel('trackingInfo', user?.role)}</Text>
+            <Text style={styles.trackingTitle}>{tRole('orders.trackingInfo', user?.role)}</Text>
           </View>
           
           <View style={styles.trackingContent}>
@@ -172,7 +173,7 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
             </View>
             
             <View style={styles.trackingRow}>
-              <Text style={styles.trackingLabel}>{getLabel('estimatedTime', user?.role)}</Text>
+              <Text style={styles.trackingLabel}>{tRole('orders.estimatedTime', user?.role)}</Text>
               <Text style={styles.trackingValue}>Within 24-48 hours</Text>
             </View>
           </View>

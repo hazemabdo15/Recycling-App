@@ -23,7 +23,7 @@ import {
     getIncrementStep,
     normalizeItemData,
 } from "../../utils/cartUtils";
-import { isBuyer } from "../../utils/roleLabels";
+import { isBuyer } from "../../utils/roleUtils";
 import { scaleSize } from "../../utils/scale";
 import { isMaxStockReached, isOutOfStock } from "../../utils/stockUtils";
 import { CategoryCard } from "../cards";

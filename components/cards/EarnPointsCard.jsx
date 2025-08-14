@@ -2,7 +2,8 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { scaleSize } from '../../utils/scale';
+import { scaleSize } from "../../utils/scale";
+import { useLocalization } from "../../context/LocalizationContext";
 
 let Animated,
   useAnimatedStyle,
@@ -69,6 +70,7 @@ const borderRadius = {
 };
 
 const EarnPointsCard = () => {
+  const { t } = useLocalization();
   const cardScale = useSharedValue(0.9);
   const cardOpacity = useSharedValue(0);
   const iconScale = useSharedValue(0.8);
@@ -103,37 +105,37 @@ const EarnPointsCard = () => {
   });
 
   const facts = [
-    "Recycling one aluminum can saves enough energy to run a TV for 3 hours!",
-    "Plastic bottles can take up to 450 years to decompose in a landfill.",
-    "Turning off the tap while brushing your teeth can save up to 8 gallons of water a day.",
-    "Every ton of recycled paper saves 17 trees.",
-    "Composting food scraps reduces landfill waste and creates nutrient-rich soil.",
-    "LED bulbs use at least 75% less energy than traditional incandescent lighting.",
-    "One mature tree can absorb carbon dioxide at a rate of 48 pounds per year.",
-    "Glass can be recycled endlessly without loss in quality or purity.",
-    "Producing new plastic from recycled material uses two-thirds less energy than making it from raw materials.",
-    "Earthworms improve soil health and help plants grow!",
-    "Recycling one ton of plastic saves the equivalent of 1,000–2,000 gallons of gasoline.",
-    "A single drip per second from a leaky faucet wastes over 3,000 gallons of water per year.",
-    "The average person generates over 4 pounds of trash every day.",
-    "Recycling a stack of newspapers just 3 feet high saves one tree.",
-    "Bamboo is one of the fastest-growing plants and is a sustainable alternative to wood.",
-    "Up to 80% of what Americans throw away is recyclable, yet the recycling rate is only about 30%.",
-    "If every American recycled just one-tenth of their newspapers, we could save about 25 million trees each year.",
-    "It takes 500,000 trees to produce the Sunday newspapers each week in the U.S.",
-    "Recycling one glass bottle saves enough energy to power a computer for 30 minutes.",
-    "Aluminum is 100% recyclable and can be recycled indefinitely without losing quality.",
-    "The energy saved from recycling one glass bottle will power a 100-watt light bulb for 4 hours.",
-    "Recycling cardboard only takes 75% of the energy needed to make new cardboard.",
-    "More than 60% of the trash that ends up in the dustbin could be recycled.",
-    "Recycling one ton of paper saves 7,000 gallons of water.",
-    "Americans use 2,500,000 plastic bottles every hour, most of which are thrown away.",
-    "A single recycled tin can saves enough energy to power a television for 3 hours.",
-    "The world’s largest landfill is actually in the Pacific Ocean, known as the Great Pacific Garbage Patch.",
-    "Recycling helps reduce greenhouse gas emissions that contribute to climate change.",
-    "The average glass bottle takes 4,000 years to decompose if not recycled.",
-    "Recycling one ton of aluminum saves 14,000 kWh of energy.",
-    "Recycled paper produces 73% less air pollution than if it was made from raw materials.",
+    t("earnPointsCard.fact_0"),
+    t("earnPointsCard.fact_1"),
+    t("earnPointsCard.fact_2"),
+    t("earnPointsCard.fact_3"),
+    t("earnPointsCard.fact_4"),
+    t("earnPointsCard.fact_5"),
+    t("earnPointsCard.fact_6"),
+    t("earnPointsCard.fact_7"),
+    t("earnPointsCard.fact_8"),
+    t("earnPointsCard.fact_9"),
+    t("earnPointsCard.fact_10"),
+    t("earnPointsCard.fact_11"),
+    t("earnPointsCard.fact_12"),
+    t("earnPointsCard.fact_13"),
+    t("earnPointsCard.fact_14"),
+    t("earnPointsCard.fact_15"),
+    t("earnPointsCard.fact_16"),
+    t("earnPointsCard.fact_17"),
+    t("earnPointsCard.fact_18"),
+    t("earnPointsCard.fact_19"),
+    t("earnPointsCard.fact_20"),
+    t("earnPointsCard.fact_21"),
+    t("earnPointsCard.fact_22"),
+    t("earnPointsCard.fact_23"),
+    t("earnPointsCard.fact_24"),
+    t("earnPointsCard.fact_25"),
+    t("earnPointsCard.fact_26"),
+    t("earnPointsCard.fact_27"),
+    t("earnPointsCard.fact_28"),
+    t("earnPointsCard.fact_29"),
+    t("earnPointsCard.fact_30"),
   ];
 
   const randomIndex = Math.floor(Math.random() * facts.length);
@@ -157,7 +159,7 @@ const EarnPointsCard = () => {
             >
               <Ionicons name="bulb" size={28} color={colors.white} />
             </LinearGradient>
-            <Text style={styles.factTitle}>Did You Know?</Text>
+            <Text style={styles.factTitle}>{t("earnPointsCard.title")}</Text>
           </View>
           <Text style={styles.factText}>{fact}</Text>
         </View>
@@ -204,7 +206,6 @@ const styles = StyleSheet.create({
     fontSize: scaleSize(18),
     fontWeight: "bold",
     color: colors.text,
-    letterSpacing: -0.3,
   },
   factText: {
     fontSize: scaleSize(15),

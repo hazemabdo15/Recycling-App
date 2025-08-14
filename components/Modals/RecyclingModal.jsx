@@ -1,20 +1,20 @@
 ﻿import { MaterialIcons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import {
-  Alert,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Alert,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { useAuth } from "../../context/AuthContext";
 import apiService from "../../services/api/apiService";
 import { colors } from "../../styles/theme";
-import { isBuyer } from "../../utils/roleLabels";
+import { isBuyer } from "../../utils/roleUtils";
 
 const vouchers = [
   {
