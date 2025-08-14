@@ -6,6 +6,7 @@ import { categoryHeaderStyles } from '../../styles/components/categoryStyles';
 import { colors, spacing } from '../../styles/theme';
 import { isBuyer } from '../../utils/roleUtils';
 import { scaleSize } from '../../utils/scale';
+import { t } from 'i18next';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const scale = (size) => (SCREEN_WIDTH / 375) * size;
@@ -85,7 +86,7 @@ const CategoryHeader = ({
                             <Text style={[
                                 categoryHeaderStyles.statLabel,
                                 { fontSize: scale(12) },
-                            ]}>Eco Points</Text>
+                            ]}>{t("common.points")}</Text>
                         </View>
                     )}
                     <View style={categoryHeaderStyles.statItem}>

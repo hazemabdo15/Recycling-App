@@ -420,11 +420,11 @@ export default function Pickup() {
   const getPhaseTitle = () => {
     switch (currentPhase) {
       case 1:
-        return tRole("progressSteps.0", user?.role) || "Address";
+        return tRole("progressSteps.1", user?.role) || "Address";
       case 2:
-        return tRole("progressSteps.1", user?.role) || "Review";
+        return tRole("progressSteps.2", user?.role) || "Review";
       case 3:
-        return tRole("progressSteps.2", user?.role) || "Confirmation";
+        return tRole("progressSteps.3", user?.role) || "Confirmation";
       default:
         return "Schedule Pickup";
     }

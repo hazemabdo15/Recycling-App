@@ -775,7 +775,7 @@ const Cart = () => {
                     color={colors.accent}
                   />
                   <Text style={styles.checkoutSummaryLabelHero}>
-                    Eco Points
+                    {t("common.points")}
                   </Text>
                   <Text style={styles.checkoutSummaryValueHero}>
                     {totalPoints}
@@ -843,7 +843,7 @@ const Cart = () => {
                   ]}
                 >
                   {canSchedulePickup || canProceedToPurchase
-                    ? tRole("pickup.schedule", user?.role)
+                    ? tRole("cart.checkout", user?.role)
                     : canGuestProceed
                     ? t('auth.loginToContinue')
                     : tRole("minimumOrder.button", user?.role)}

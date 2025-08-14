@@ -27,6 +27,7 @@ import {
 } from "../utils/cartUtils";
 import { isBuyer } from "../utils/roleUtils";
 import { scaleSize } from "../utils/scale";
+import { t } from "i18next";
 
 const CategoryDetails = () => {
   const { categoryName } = useLocalSearchParams();
@@ -463,7 +464,7 @@ const CategoryDetails = () => {
 
       <View style={heroStyles.heroContent}>
         <Text style={heroStyles.heroSubtitle}>
-          Explore and manage your {categoryName.toLowerCase()} items
+          {t("categories.subtitle", { categoryName : categoryName.toLowerCase()})}
         </Text>
         
         <View style={heroStyles.statsContainer}>
@@ -474,7 +475,7 @@ const CategoryDetails = () => {
               color={colors.white}
             />
             <Text style={heroStyles.statValue}>{totalItems}</Text>
-            <Text style={heroStyles.statLabel}>Items</Text>
+            <Text style={heroStyles.statLabel}>{t("common.items")}</Text>
           </View>
           
           {!isBuyer(user) && (
@@ -485,7 +486,7 @@ const CategoryDetails = () => {
                 color={colors.white}
               />
               <Text style={heroStyles.statValue}>{totalPoints}</Text>
-              <Text style={heroStyles.statLabel}>Eco Points</Text>
+              <Text style={heroStyles.statLabel}>{t("common.points")}</Text>
             </View>
           )}
           

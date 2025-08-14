@@ -1,5 +1,8 @@
 {
   "common": {
+    "redeemPoints": "Redeem Eco Points",
+    "points": "Eco Points",
+    "items": "Items",
     "back": "Back",
     "cancel": "Cancel",
     "confirm": "Confirm",
@@ -9,6 +12,7 @@
     "retry": "Retry",
     "error": "An error occurred",
     "save": "Save",
+    "saving": "Saving...",
     "edit": "Edit",
     "delete": "Delete",
     "search": "Search",
@@ -277,10 +281,6 @@
       "customer": "Request Pickup",
       "buyer": "Place Order"
     },
-    "schedule": {
-      "customer": "Schedule Pickup",
-      "buyer": "Place Order"
-    },
     "reviewPhase": {
       "title": "Review Your Order",
       "deliveryTo": "Delivery to",
@@ -307,8 +307,19 @@
       "payAndConfirm": "Pay & Confirm Order",
       "selectPaymentMethod": "Select Payment Method",
       "unavailable": "Unavailable",
-      "points": "pts"
-    }
+      "points": "pts",
+      "addAddress": "Add New Address",
+      "editAddress": "Edit Address",
+      "selectCity": "Select your city *",
+      "selectCityLabel": "-- Select your city --",
+      "selectArea": "Select your area *",
+      "streetAddress": "Street Address *",
+      "landmark": "Nearest Landmark (optional)",
+      "building": "Building Number/Name",
+      "floor": "Floor Number",
+      "apartment": "Apartment Number",
+      "notes": "Additional Note"
+  }
   },
   "settings": {
     "language": "Language",
@@ -473,30 +484,8 @@
     "passwordReset": "Password reset successfully"
   },
   "categories": {
+    "subtitle": "Explore and manage your {{categoryName}} items",
     "all": "All Categories",
-    "plastic": "Plastic",
-    "paper": "Paper",
-    "metal": "Metal",
-    "glass": "Glass",
-    "electronics": "Electronics",
-    "textiles": "Textiles",
-    "organic": "Organic",
-    "batteries": "Batteries",
-    "other": "Other",
-    "bottles": "Bottles",
-    "cans": "Cans",
-    "cardboard": "Cardboard",
-    "newspapers": "Newspapers",
-    "magazines": "Magazines",
-    "aluminum": "Aluminum",
-    "steel": "Steel",
-    "computers": "Computers",
-    "phones": "Phones",
-    "appliances": "Appliances",
-    "clothing": "Clothing",
-    "shoes": "Shoes",
-    "food": "Food Waste",
-    "garden": "Garden Waste",
     "itemCard": {
       "outOfStock": "OUT OF STOCK",
       "stock": "Stock"
@@ -760,15 +749,17 @@
     }
   },
   "progressSteps": {
-    "customer": {
-      "1": "Select Address",
-      "2": "Review Order", 
-      "3": "Pickup Confirmed"
+    "1": {
+      "customer": "Pickup Address",
+      "buyer": "Shipping Address"
     },
-    "buyer": {
-      "1": "Select Address",
-      "2": "Review Order",
-      "3": "Order Confirmed"
+    "2": {
+      "customer": "Order Review",
+      "buyer": "Review & Payment"
+    },
+    "3": {
+      "customer": "Confirmation",
+      "buyer": "Order Confirmation"
     }
   },
   "categoryToastMessages": {

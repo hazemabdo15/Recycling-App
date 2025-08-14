@@ -16,6 +16,10 @@
     "recent": "التحديثات الأخيرة"
   },
   "common": {
+    "redeemPoints": "استبدل نقاطك",
+
+    "points": "النقاط",
+    "items": "العناصر",
     "back": "رجوع",
     "cancel": "إلغاء",
     "confirm": "تأكيد",
@@ -25,6 +29,8 @@
     "retry": "إعادة المحاولة",
     "error": "حدث خطأ",
     "save": "حفظ",
+    "saving": "جار الحفظ...",
+
     "edit": "تعديل",
     "delete": "حذف",
     "search": "بحث",
@@ -293,10 +299,6 @@
       "customer": "طلب الاستلام",
       "buyer": "تقديم الطلب"
     },
-    "schedule": {
-      "customer": "جدولة الاستلام",
-      "buyer": "تقديم الطلب"
-    },
     "reviewPhase": {
       "title": "مراجعة طلبك",
       "deliveryTo": "التوصيل إلى",
@@ -323,8 +325,19 @@
       "payAndConfirm": "الدفع وتأكيد الطلب",
       "selectPaymentMethod": "اختر طريقة الدفع",
       "unavailable": "غير متاح",
-      "points": "نقطة"
-    }
+      "points": "نقطة",
+      "addAddress": "إضافة عنوان جديد",
+      "editAddress": "تعديل العنوان",
+      "selectCity": "اختر مدينتك *",
+      "selectArea": "اختر منطقتك *",
+      "selectCityLabel": "-- اختر منطقتك --",
+      "streetAddress": "عنوان الشارع *",
+      "landmark": "أقرب معلم (اختياري)",
+      "building": "رقم/اسم المبنى",
+      "floor": "رقم الطابق",
+      "apartment": "رقم الشقة",
+      "notes": "ملاحظة إضافية"
+  }
   },
   "settings": {
     "language": "اللغة",
@@ -473,30 +486,8 @@
     "passwordReset": "تم إعادة تعيين كلمة المرور بنجاح"
   },
   "categories": {
+    "subtitle": "استكشف وادِر عناصرك من فئة {{categoryName}}",
     "all": "جميع الفئات",
-    "plastic": "البلاستيك",
-    "paper": "الورق",
-    "metal": "المعدن",
-    "glass": "الزجاج",
-    "electronics": "الإلكترونيات",
-    "textiles": "المنسوجات",
-    "organic": "العضوي",
-    "batteries": "البطاريات",
-    "other": "أخرى",
-    "bottles": "زجاجات",
-    "cans": "علب",
-    "cardboard": "كرتون",
-    "newspapers": "صحف",
-    "magazines": "مجلات",
-    "aluminum": "ألمنيوم",
-    "steel": "فولاذ",
-    "computers": "أجهزة كمبيوتر",
-    "phones": "هواتف",
-    "appliances": "أجهزة",
-    "clothing": "ملابس",
-    "shoes": "أحذية",
-    "food": "مخلفات طعام",
-    "garden": "مخلفات حديقة",
     "itemCard": {
       "outOfStock": "نفد المخزون",
       "stock": "المخزون"
@@ -760,15 +751,17 @@
     }
   },
   "progressSteps": {
-    "customer": {
-      "1": "اختر العنوان",
-      "2": "مراجعة الطلب", 
-      "3": "تم تأكيد الاستلام"
+    "1": {
+      "customer": "عنوان الاستلام",
+      "buyer": "عنوان الشحن"
     },
-    "buyer": {
-      "1": "اختر العنوان",
-      "2": "مراجعة الطلب",
-      "3": "تم تأكيد الطلب"
+    "2": {
+      "customer": "مراجعة الطلب",
+      "buyer": "مراجعة والدفع"
+    },
+    "3": {
+      "customer": "تأكيد",
+      "buyer": "تأكيد الطلب"
     }
   },
   "categoryToastMessages": {
