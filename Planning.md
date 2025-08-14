@@ -1,310 +1,566 @@
-# Feature: Achievements/Tiers Page
+```markdown
+# React Native Expo Localization Implementation Plan
 
-## Objective
-Implement a modern, sleek Achievements page that showcases user tiers based on recycling activity. The page should display available tiers, benefits, current progress, and include a beautiful tier badge in the profile card. This enhances user engagement and gamification of the recycling experience.
+## Overview
+This plan outlines the steps needed to implement comprehensive localization support in the recycling app, accommodating both English and Arabic languages with proper RTL support. The implementation will handle both static UI text and dynamic content from the backend API.
 
----
+## 1. Install Required Dependencies
 
-## Current Structure Analysis
-Based on your workspace structure:
-- **Navigation**: The page will be created in the `app` folder as `achievements.jsx`
-- **Components**: Reusable components will go in `components/achievements/`
-- **Utils**: Tier calculation logic in `utils/tiers.js`
-- **Styles**: Following existing pattern with inline StyleSheet
-- **Integration**: Connect with existing `ProfileMenu.jsx` and `ProfileCard.jsx`
-
----
-
-## Tier Configuration
-
-### Reward Levels (Fixed)
-```javascript
-export const rewardLevels = [
-  {
-    id: 1,
-    name: "Eco Beginner",
-    minRecycles: 0,
-    maxRecycles: 4,
-    bonusPerOrder: 1,
-    bonusPerReachedTier: 50,
-  },
-  {
-    id: 2,
-    name: "Eco Starter",
-    minRecycles: 5,
-    maxRecycles: 14,
-    bonusPerOrder: 5,
-    bonusPerReachedTier: 150,
-  },
-  {
-    id: 3,
-    name: "Green Helper",
-    minRecycles: 15,
-    maxRecycles: 29,
-    bonusPerOrder: 10,
-    bonusPerReachedTier: 300,
-  },
-  {
-    id: 4,
-    name: "Silver Recycler",
-    minRecycles: 30,
-    maxRecycles: 49,
-    bonusPerOrder: 15,
-    bonusPerReachedTier: 500,
-  },
-  {
-    id: 5,
-    name: "Gold Guardian",
-    minRecycles: 50, // Fixed from 20
-    maxRecycles: 74,
-    bonusPerOrder: 20,
-    bonusPerReachedTier: 700,
-  },
-  {
-    id: 6,
-    name: "Platinum Pioneer",
-    minRecycles: 75,
-    maxRecycles: 99,
-    bonusPerOrder: 25,
-    bonusPerReachedTier: 850,
-  },
-  {
-    id: 7,
-    name: "Diamond Elite",
-    minRecycles: 100,
-    maxRecycles: 999999,
-    bonusPerOrder: 30,
-    bonusPerReachedTier: 1000,
-  },
-];
+```bash
+npx expo install expo-localization expo-secure-store
+npm install i18next react-i18next @formatjs/intl-pluralrules
 ```
 
----
+## 2. Localization Structure
 
-## Tasks
+```
+root/
+├── locales/
+│   ├── index.js                # i18n configuration
+│   ├── languageDetector.js     # Custom language detector with persistence
+│   ├── en/
+│   │   ├── common.json         # Common UI elements (buttons, errors, etc.)
+│   │   ├── pickup.json         # Pickup workflow strings
+│   │   ├── cart.json           # Cart-related strings 
+│   │   ├── profile.json        # Profile-related strings
+│   │   └── categories.json     # Category browsing static strings
+│   └── ar/
+│       ├── [same structure as en]
+```
 
-### 1. **Core Implementation**
+## 3. Language Detector for Persistence
 
-#### A. Create Tier Logic (`utils/tiers.js`)
 ```javascript
-export const rewardLevels = [
-  // Tier definitions above
-];
+// filepath: locales/languageDetector.js
+import * as SecureStore from 'expo-secure-store';
+import * as Localization from 'expo-localization';
+import { I18nManager } from 'react-native';
 
-export const calculateUserTier = (totalRecycles) => {
-  return rewardLevels.find(tier => 
-    totalRecycles >= tier.minRecycles && totalRecycles <= tier.maxRecycles
-  ) || rewardLevels[0];
+const LANGUAGE_KEY = 'user-language';
+
+const languageDetector = {
+  type: 'languageDetector',
+  async: true,
+  detect: async (callback) => {
+    try {
+      // Try to get stored language
+      const language = await SecureStore.getItemAsync(LANGUAGE_KEY);
+      
+      if (language) {
+        return callback(language);
+      }
+    } catch (error) {
+      console.error('Error reading language preference:', error);
+    }
+    
+    // Fallback to device locale
+    const deviceLanguage = Localization.locale.split('-')[0];
+    // Only use supported languages (en, ar)
+    const supportedLanguage = ['en', 'ar'].includes(deviceLanguage) ? deviceLanguage : 'en';
+    return callback(supportedLanguage);
+  },
+  
+  cacheUserLanguage: async (language) => {
+    try {
+      await SecureStore.setItemAsync(LANGUAGE_KEY, language);
+    } catch (error) {
+      console.error('Error saving language preference:', error);
+    }
+  }
 };
 
-export const getNextTier = (currentTier) => {
-  const currentIndex = rewardLevels.findIndex(tier => tier.id === currentTier.id);
-  return currentIndex < rewardLevels.length - 1 ? rewardLevels[currentIndex + 1] : null;
-};
-
-export const calculateProgress = (totalRecycles, currentTier, nextTier) => {
-  if (!nextTier) return 100; // Max tier reached
-  const progress = ((totalRecycles - currentTier.minRecycles) / (nextTier.minRecycles - currentTier.minRecycles)) * 100;
-  return Math.min(Math.max(progress, 0), 100);
-};
+export default languageDetector;
 ```
 
-#### B. Main Achievements Page (`app/achievements.jsx`)
-- **Header Section**: Gradient background with user's current tier and progress
-- **Progress Section**: Animated progress bar to next tier
-- **Tiers Grid**: Display all available tiers with benefits
-- **Current Tier Highlight**: Special styling for user's current tier
-- **Benefits Modal**: Detailed view when tapping on a tier
+## 4. i18n Configuration
 
-#### C. Tier Badge Component (`components/achievements/TierBadge.jsx`)
-- Animated badge with tier name
-- Gradient background based on tier level
-- Icon/symbol for each tier
-- Integration with `ProfileCard.jsx`
-
-#### D. Tier Card Component (`components/achievements/TierCard.jsx`)
-- Individual tier display with benefits
-- Lock/unlock states
-- Progress indicators
-- Tap to view details
-
-### 2. **Enhanced Features**
-
-#### A. Animations & Micro-interactions
-- **Progress Bar Animation**: Smooth fill animation using React Native Reanimated
-- **Tier Unlock Celebration**: Confetti/particle effects when reaching new tier
-- **Badge Shimmer**: Subtle shine effect on current tier badge
-- **Card Hover**: Scale and shadow effects on tier cards
-
-#### B. Achievement Milestones
 ```javascript
-export const achievementMilestones = [
-  { id: 1, name: "First Steps", description: "Complete your first recycling order", threshold: 1, icon: "leaf" },
-  { id: 2, name: "Getting Started", description: "Complete 5 recycling orders", threshold: 5, icon: "sprout" },
-  { id: 3, name: "Eco Warrior", description: "Complete 25 recycling orders", threshold: 25, icon: "shield" },
-  { id: 4, name: "Planet Saver", description: "Complete 50 recycling orders", threshold: 50, icon: "earth" },
-  { id: 5, name: "Green Legend", description: "Complete 100 recycling orders", threshold: 100, icon: "crown" }
-];
+// filepath: locales/index.js
+import i18n from 'i18next';
+import { initReactI18next } from 'react-i18next';
+import languageDetector from './languageDetector';
+import { I18nManager } from 'react-native';
+import * as Updates from 'expo-updates';
+
+// Import translation files
+import enCommon from './en/common.json';
+import enPickup from './en/pickup.json';
+import enCart from './en/cart.json';
+import enProfile from './en/profile.json';
+import enCategories from './en/categories.json';
+
+import arCommon from './ar/common.json';
+import arPickup from './ar/pickup.json';
+import arCart from './ar/cart.json';
+import arProfile from './ar/profile.json';
+import arCategories from './ar/categories.json';
+
+const resources = {
+  en: {
+    common: enCommon,
+    pickup: enPickup,
+    cart: enCart,
+    profile: enProfile,
+    categories: enCategories,
+  },
+  ar: {
+    common: arCommon,
+    pickup: arPickup,
+    cart: arCart,
+    profile: arProfile,
+    categories: arCategories,
+  },
+};
+
+i18n
+  .use(languageDetector)
+  .use(initReactI18next)
+  .init({
+    compatibilityJSON: 'v3',
+    resources,
+    fallbackLng: 'en',
+    defaultNS: 'common',
+    
+    interpolation: {
+      escapeValue: false,
+    },
+    
+    react: {
+      useSuspense: false,
+    },
+  });
+
+// Handle initial RTL setup
+const isRTL = i18n.language === 'ar';
+if (I18nManager.isRTL !== isRTL) {
+  I18nManager.forceRTL(isRTL);
+  if (process.env.NODE_ENV !== 'development') {
+    try {
+      Updates.reloadAsync();
+    } catch (error) {
+      console.log('Error reloading app:', error);
+    }
+  }
+}
+
+export default i18n;
 ```
 
-#### C. Statistics Dashboard
-- Total environmental impact (CO2 saved, trees planted equivalent)
-- Monthly recycling streaks
-- Recycling habits chart
-- Comparison with other users (optional)
+## 5. Translation Files
 
-### 3. **UI/UX Design Specifications**
+### English Common Strings (Example)
+```json
+{
+  "buttons": {
+    "login": "Login",
+    "logout": "Logout",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "continue": "Continue",
+    "back": "Back",
+    "add": "Add",
+    "remove": "Remove",
+    "checkout": "Checkout",
+    "schedule": "Schedule Pickup"
+  },
+  "errors": {
+    "loginRequired": "Login Required",
+    "networkError": "Network Error",
+    "genericError": "Something went wrong",
+    "emptyCart": "Your cart is empty"
+  },
+  "units": {
+    "kg": "KG",
+    "piece": "Piece",
+    "pieces": "Pieces"
+  },
+  "loading": "Loading...",
+  "success": "Success!",
+  "language": {
+    "en": "English",
+    "ar": "Arabic"
+  },
+  "points": "Points",
+  "price": "EGP",
+  "quantity": "Quantity"
+}
+```
 
-#### A. Color Scheme & Gradients
+### Arabic Common Strings (Example)
+```json
+{
+  "buttons": {
+    "login": "تسجيل الدخول",
+    "logout": "تسجيل الخروج",
+    "submit": "إرسال",
+    "cancel": "إلغاء",
+    "continue": "متابعة",
+    "back": "رجوع",
+    "add": "إضافة",
+    "remove": "إزالة",
+    "checkout": "الدفع",
+    "schedule": "جدولة الاستلام"
+  },
+  "errors": {
+    "loginRequired": "يجب تسجيل الدخول",
+    "networkError": "خطأ في الشبكة",
+    "genericError": "حدث خطأ ما",
+    "emptyCart": "سلة التسوق فارغة"
+  },
+  "units": {
+    "kg": "كجم",
+    "piece": "قطعة",
+    "pieces": "قطع"
+  },
+  "loading": "جاري التحميل...",
+  "success": "تم بنجاح!",
+  "language": {
+    "en": "الإنجليزية",
+    "ar": "العربية"
+  },
+  "points": "نقاط",
+  "price": "جنيه",
+  "quantity": "الكمية"
+}
+```
+
+## 6. Enhanced Translation Hook
+
 ```javascript
-export const tierColors = {
-  "Eco Beginner": { primary: "#10B981", secondary: "#34D399", gradient: ["#10B981", "#34D399"] },
-  "Eco Starter": { primary: "#3B82F6", secondary: "#60A5FA", gradient: ["#3B82F6", "#60A5FA"] },
-  "Green Helper": { primary: "#8B5CF6", secondary: "#A78BFA", gradient: ["#8B5CF6", "#A78BFA"] },
-  "Silver Recycler": { primary: "#6B7280", secondary: "#9CA3AF", gradient: ["#6B7280", "#9CA3AF"] },
-  "Gold Guardian": { primary: "#F59E0B", secondary: "#FBBF24", gradient: ["#F59E0B", "#FBBF24"] },
-  "Platinum Pioneer": { primary: "#8B5CF6", secondary: "#C084FC", gradient: ["#8B5CF6", "#C084FC"] },
-  "Diamond Elite": { primary: "#EC4899", secondary: "#F472B6", gradient: ["#EC4899", "#F472B6"] }
+// filepath: hooks/useTranslation.js
+import { useTranslation as useI18nTranslation } from 'react-i18next';
+import { I18nManager } from 'react-native';
+import { useCallback } from 'react';
+import * as Updates from 'expo-updates';
+import * as SecureStore from 'expo-secure-store';
+
+const LANGUAGE_KEY = 'user-language';
+
+export const useTranslation = (namespace = 'common') => {
+  const { t, i18n } = useI18nTranslation(namespace);
+  
+  const changeLanguage = useCallback(async (language) => {
+    const isRTL = language === 'ar';
+    const needsReload = isRTL !== I18nManager.isRTL;
+    
+    try {
+      // Always save the language preference
+      await SecureStore.setItemAsync(LANGUAGE_KEY, language);
+      
+      // Change language in i18n
+      await i18n.changeLanguage(language);
+      
+      // If RTL setting needs to change, force it and reload
+      if (needsReload) {
+        I18nManager.allowRTL(isRTL);
+        I18nManager.forceRTL(isRTL);
+        
+        // In development, alert instead of reload
+        if (process.env.NODE_ENV === 'development') {
+          alert('Please restart the app to apply RTL changes');
+        } else {
+          await Updates.reloadAsync();
+        }
+      }
+    } catch (error) {
+      console.error('Failed to change language:', error);
+    }
+  }, [i18n]);
+  
+  const currentLanguage = i18n.language;
+  const isRTL = currentLanguage === 'ar';
+  
+  // Helper for measurement units (based on your API responses)
+  const getMeasurementUnit = useCallback((unit) => {
+    return unit === 1 ? t('units.kg') : t('units.piece');
+  }, [t]);
+  
+  return {
+    t,
+    changeLanguage,
+    currentLanguage,
+    isRTL,
+    getMeasurementUnit,
+  };
 };
 ```
 
-#### B. Icons & Symbols
-- Use Material Community Icons for tier symbols
-- Eco Beginner: `leaf-outline`
-- Eco Starter: `sprout-outline`
-- Green Helper: `hand-heart-outline`
-- Silver Recycler: `medal-outline`
-- Gold Guardian: `crown-outline`
-- Platinum Pioneer: `diamond-outline`
-- Diamond Elite: `star-circle-outline`
+## 7. API Integration
 
-#### C. Layout Structure
-1. **Header**: Current tier badge, progress, next tier info
-2. **Stats Section**: Quick stats cards (total orders, points earned, etc.)
-3. **Tiers Grid**: 2-column grid showing all tiers
-4. **Achievements**: Horizontal scrollable list of milestones
+```javascript
+// filepath: services/api.js
+import axios from 'axios';
+import i18n from '../locales';
 
-### 4. **Integration Points**
+const baseURL = 'http://192.168.0.165:5000/api';
 
-#### A. Profile Card Enhancement
-- Add tier badge next to user name in `ProfileCard.jsx`
-- Replace static tier display with dynamic badge
-- Add subtle animation to badge
+const api = axios.create({
+  baseURL,
+  timeout: 10000,
+});
 
-#### B. Profile Menu Navigation
-- Update `ProfileMenu.jsx` achievements handler
-- Remove "Coming soon" alert
-- Navigate to achievements page
+// Add language parameter to all requests
+api.interceptors.request.use((config) => {
+  // Get current language
+  const language = i18n.language || 'en';
+  
+  // Add language to query parameters
+  config.params = {
+    ...config.params,
+    lang: language,
+  };
+  
+  return config;
+});
 
-#### C. Data Integration
-- Use existing `useUserPoints.js` hook
-- Extend to include total completed orders
-- Calculate tier based on `totalRecycled` value
-
-### 5. **File Structure**
-```
-app/
-├── achievements.jsx                 # Main achievements page
-
-components/
-├── achievements/
-│   ├── TierBadge.jsx               # Reusable tier badge component
-│   ├── TierCard.jsx                # Individual tier display
-│   ├── ProgressBar.jsx             # Animated progress bar
-│   ├── AchievementItem.jsx         # Achievement milestone item
-│   └── StatsCard.jsx               # Statistics display card
-
-utils/
-├── tiers.js                        # Tier calculation logic
-├── achievements.js                 # Achievement logic
-
-styles/
-├── achievements.js                 # Centralized styles (optional)
+export default api;
 ```
 
-### 6. **Acceptance Criteria**
+## 8. Language Switcher Component
 
-#### Core Functionality
-- [ ] Display all available tiers with benefits
-- [ ] Show user's current tier with progress to next tier
-- [ ] Animated progress bar showing advancement
-- [ ] Tier badge integration in profile card
-- [ ] Navigation from profile menu
+```javascript
+// filepath: components/common/LanguageSwitcher.jsx
+import React from 'react';
+import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { useTranslation } from '../../hooks/useTranslation';
 
-#### Enhanced Features
-- [ ] Achievement milestones tracking
-- [ ] Smooth animations and micro-interactions
-- [ ] Statistics dashboard
-- [ ] Responsive design for different screen sizes
-- [ ] Error handling for data fetching
+const LanguageSwitcher = () => {
+  const { changeLanguage, currentLanguage, t } = useTranslation();
+  
+  const languages = [
+    { code: 'en', name: t('language.en') },
+    { code: 'ar', name: t('language.ar') },
+  ];
+  
+  return (
+    <View style={styles.container}>
+      {languages.map((lang) => (
+        <TouchableOpacity
+          key={lang.code}
+          style={[
+            styles.button,
+            currentLanguage === lang.code && styles.activeButton,
+          ]}
+          onPress={() => changeLanguage(lang.code)}
+        >
+          <Text style={[
+            styles.buttonText,
+            currentLanguage === lang.code && styles.activeText
+          ]}>
+            {lang.name}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+};
 
-#### Visual Requirements
-- [ ] Modern, sleek design consistent with app theme
-- [ ] Gradient backgrounds and smooth animations
-- [ ] Clear tier progression visualization
-- [ ] Accessibility compliance (proper contrast, labels)
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    paddingVertical: 10,
+  },
+  button: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginHorizontal: 5,
+    borderRadius: 20,
+    backgroundColor: '#f0f0f0',
+  },
+  activeButton: {
+    backgroundColor: '#4CAF50',
+  },
+  buttonText: {
+    fontSize: 14,
+  },
+  activeText: {
+    color: 'white',
+    fontWeight: 'bold',
+  }
+});
 
-### 7. **Technical Considerations**
+export default LanguageSwitcher;
+```
 
-#### A. Performance Optimization
-- Lazy load tier images/icons
-- Memoize tier calculations
-- Optimize animation performance
+## 9. RTL Style Utilities
 
-#### B. State Management
-- Local state for UI interactions
-- Global state for user tier data
-- Cache tier calculations
+```javascript
+// filepath: utils/styleUtils.js
+import { I18nManager } from 'react-native';
+import { useTranslation } from '../hooks/useTranslation';
 
-#### C. Error Handling
-- Graceful fallbacks for missing data
-- Loading states for data fetching
-- Network error handling
+export const getFlexDirection = (direction = 'row') => {
+  if (direction === 'row') {
+    return I18nManager.isRTL ? 'row-reverse' : 'row';
+  }
+  return direction;
+};
 
----
+export const getTextAlign = (align = 'left') => {
+  if (align === 'left') {
+    return I18nManager.isRTL ? 'right' : 'left';
+  }
+  if (align === 'right') {
+    return I18nManager.isRTL ? 'left' : 'right';
+  }
+  return align;
+};
 
-## Implementation Priority
+// React hook for RTL-aware styles
+export const useRTLStyles = () => {
+  const { isRTL } = useTranslation();
+  
+  return {
+    flexRow: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
+    },
+    textAlign: {
+      textAlign: isRTL ? 'right' : 'left',
+    },
+    paddingStart: (value) => ({
+      [isRTL ? 'paddingRight' : 'paddingLeft']: value,
+    }),
+    paddingEnd: (value) => ({
+      [isRTL ? 'paddingLeft' : 'paddingRight']: value,
+    }),
+    marginStart: (value) => ({
+      [isRTL ? 'marginRight' : 'marginLeft']: value,
+    }),
+    marginEnd: (value) => ({
+      [isRTL ? 'marginLeft' : 'marginRight']: value,
+    }),
+  };
+};
+```
 
-1. **Phase 1**: Core tier logic and basic achievements page
-   - Create `utils/tiers.js` with tier calculation logic
-   - Build main `app/achievements.jsx` page
-   - Implement basic tier display without animations
+## 10. App Layout Integration
 
-2. **Phase 2**: Tier badge integration in profile card
-   - Create `TierBadge.jsx` component
-   - Integrate with `ProfileCard.jsx`
-   - Update `ProfileMenu.jsx` navigation
+```javascript
+// filepath: app/_layout.jsx
+import '../locales'; // Import i18n configuration
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { Stack } from 'expo-router';
+import { useTranslation } from '../hooks/useTranslation';
+// Import other necessary providers/contexts
 
-3. **Phase 3**: Enhanced animations and micro-interactions
-   - Add progress bar animations
-   - Implement tier card interactions
-   - Add celebration effects
+export default function RootLayout() {
+  const { t, isRTL } = useTranslation();
+  
+  return (
+    <SafeAreaProvider>
+      <Stack
+        screenOptions={{
+          headerShown: true,
+          headerBackTitle: t('buttons.back'),
+          // RTL-specific navigation adjustments as needed
+        }}
+      />
+    </SafeAreaProvider>
+  );
+}
+```
 
-4. **Phase 4**: Achievement milestones and statistics dashboard
-   - Create achievement system
-   - Add statistics tracking
-   - Implement environmental impact calculations
+## 11. Handling Dynamic API Content
 
----
+Based on the API responses, the backend already supports localization with the `lang` parameter. Create a custom hook to handle this:
 
-## Notes for Implementation
+```javascript
+// filepath: hooks/useLocalizedData.js
+import { useState, useEffect } from 'react';
+import { useTranslation } from './useTranslation';
+import api from '../services/api';
 
-### Data Flow
-1. User profile data → Total completed orders calculation
-2. Total orders → Current tier calculation via `calculateUserTier()`
-3. Current tier → Progress calculation for next tier
-4. Display tier badge in profile and full achievements page
+export function useCategoryData(slug = null, limit = 10) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const { currentLanguage } = useTranslation();
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const endpoint = slug 
+          ? `/categories/get-items/${slug}` 
+          : '/categories';
+          
+        const response = await api.get(endpoint, {
+          params: { limit }
+        });
+        
+        setData(response.data);
+        setError(null);
+      } catch (err) {
+        setError(err);
+        console.error('Error fetching category data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [slug, limit, currentLanguage]); // Re-fetch when language changes
+  
+  return { data, loading, error };
+}
+```
 
-### Key Components to Modify
-- `app/(tabs)/profile.jsx` - Add tier badge
-- `components/profile/ProfileCard.jsx` - Integrate TierBadge
-- `components/profile/ProfileMenu.jsx` - Add navigation to achievements
-- `hooks/useUserPoints.js` - Extend for tier calculations
+## 12. Implementation Phases
 
-### Design Consistency
-- Follow existing app color scheme
-- Use consistent spacing and typography
-- Maintain current navigation patterns
-- Ensure accessibility standards
+### Phase 1: Foundation (Days 1-2)
+- Install dependencies
+- Create folder structure
+- Set up i18n configuration and language detection
+- Create basic translation files with common terms
 
-This implementation will create a comprehensive, engaging achievements system that motivates users to recycle more while providing a modern, visually
+### Phase 2: API Integration (Days 3-4)
+- Update API service to include language parameter
+- Create custom hooks for fetching localized data
+- Test API responses with different language settings
+
+### Phase 3: Component Updates (Days 5-8)
+- Implement language switcher component
+- Update common components with translation support
+- Update screen components one by one:
+  - Category screens
+  - Cart and checkout screens
+  - Pickup flow screens
+  - Profile and settings screens
+
+### Phase 4: RTL Support (Days 9-10)
+- Implement RTL style utilities
+- Update layouts for proper RTL support
+- Test navigation and UI in both LTR and RTL modes
+- Fix layout issues specific to RTL mode
+
+### Phase 5: Testing & Refinement (Days 11-12)
+- Test on real devices with different languages
+- Verify language persistence across app restarts
+- Optimize performance if needed
+- Final bug fixes and cleanup
+
+## 13. Key Considerations
+
+### Dynamic Content
+- All API requests should include the current language parameter
+- Re-fetch data when language changes
+- Use translation namespaces to organize translations logically
+
+### RTL Support
+- Use RTL-aware style utilities consistently
+- Test navigation, modals, and custom components in RTL mode
+- Pay special attention to:
+  - Lists and scrollable content
+  - Icons that indicate direction
+  - Input fields and form layouts
+
+### Performance
+- Load translations asynchronously
+- Use namespaces to load only needed translations
+- Cache translations to improve startup time
+
+### Accessibility
+- Ensure localized content maintains proper accessibility features
+- Test screen readers with localized content
+- Verify text scaling works properly in all languages
