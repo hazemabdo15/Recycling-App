@@ -109,8 +109,8 @@ const AddressPhase = ({ onNext, onAddressSelect, onBack, pickupWorkflow }) => {
 
   const handleDeleteAddress = (address) => {
     Alert.alert(
-      'Delete Address',
-      'Are you sure you want to delete this address?',
+      t("pickup.addressPhase.deleteAddress"),
+      t("pickup.addressPhase.deleteMessage"),
       [
         { text: t("common.cancel"), style: 'cancel' },
         {

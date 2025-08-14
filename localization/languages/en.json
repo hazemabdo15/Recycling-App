@@ -319,6 +319,10 @@
       "floor": "Floor Number",
       "apartment": "Apartment Number",
       "notes": "Additional Note"
+    },
+    "addressPhase": {
+        "deleteAddress": "Delete Address",
+        "deleteMessage": "Are you sure you want to delete this address?"
     }
   },
   "settings": {

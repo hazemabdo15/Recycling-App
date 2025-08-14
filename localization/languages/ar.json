@@ -337,7 +337,11 @@
       "floor": "رقم الطابق",
       "apartment": "رقم الشقة",
       "notes": "ملاحظة إضافية"
-  }
+    },
+    "addressPhase": {
+      "deleteAddress": "حذف العنوان",
+      "deleteMessage": "هل أنت متأكد أنك تريد حذف هذا العنوان؟"
+    }
   },
   "settings": {
     "language": "اللغة",
