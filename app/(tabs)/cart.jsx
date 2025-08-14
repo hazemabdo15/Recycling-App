@@ -3,35 +3,36 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
-  Image,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Image,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { KeyboardAwareFlatList } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
-  AnimatedButton,
-  AnimatedListItem,
-  Loader,
+    AnimatedButton,
+    AnimatedListItem,
+    Loader,
 } from "../../components/common";
 import { useAuth } from "../../context/AuthContext";
+import { useLocalization } from "../../context/LocalizationContext";
 import { useAllItems } from "../../hooks/useAPI";
 import { useCart } from "../../hooks/useCart";
 import { borderRadius, spacing, typography } from "../../styles";
 import { colors } from "../../styles/theme";
 import {
-  CartMessageTypes,
-  showCartMessage,
-  showMaxStockMessage,
+    CartMessageTypes,
+    showCartMessage,
+    showMaxStockMessage,
 } from "../../utils/cartMessages";
 import {
-  getCartKey,
-  getDisplayKey,
-  normalizeItemData,
+    getCartKey,
+    getDisplayKey,
+    normalizeItemData,
 } from "../../utils/cartUtils";
 import { getLabel, isBuyer } from "../../utils/roleLabels";
 import { scaleSize } from "../../utils/scale";
@@ -69,6 +70,7 @@ const getRoleBasedIcon = (iconType, userRole = "customer") => {
 const Cart = () => {
   const insets = useSafeAreaInsets();
   const { user, isLoggedIn } = useAuth();
+  const { t } = useLocalization();
   const {
     cartItems,
     cartItemDetails,
@@ -843,7 +845,7 @@ const Cart = () => {
                   {canSchedulePickup || canProceedToPurchase
                     ? getLabel("schedulePickup", user?.role)
                     : canGuestProceed
-                    ? "Login to Continue"
+                    ? t('auth.loginToContinue')
                     : getLabel("minimumOrderButton", user?.role)}
                 </Text>
               </AnimatedButton>

@@ -5,12 +5,14 @@ import { useState } from 'react';
 import { Dimensions, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLocalization } from '../../context/LocalizationContext';
 import { colors } from '../../styles/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const scaleSize = (size) => (SCREEN_WIDTH / 375) * size;
 
 const RegisterForm = ({ onSubmit, loading, initialData = {} }) => {
+    const { t } = useLocalization();
     const [name, setName] = useState(initialData?.name || '');
     const [number, setNumber] = useState(initialData?.number || '');
     const [email, setEmail] = useState(initialData?.email || '');
@@ -38,8 +40,8 @@ const RegisterForm = ({ onSubmit, loading, initialData = {} }) => {
                 <View style={styles.logoContainer}>
                     <MaterialCommunityIcons name="account-plus" size={scaleSize(50)} color={colors.white} />
                 </View>
-                <Text style={styles.title}>Join EcoRecycle</Text>
-                <Text style={styles.subtitle}>Create your account to start your eco journey</Text>
+                <Text style={styles.title}>{t('auth.createAccount')}</Text>
+                <Text style={styles.subtitle}>{t('auth.register')} {t('home.welcomeMessage')}</Text>
             </View>
 
             {/* Form Card */}
@@ -58,7 +60,7 @@ const RegisterForm = ({ onSubmit, loading, initialData = {} }) => {
                         <Ionicons name="person-outline" size={scaleSize(20)} color={colors.neutral} style={styles.inputIcon} />
                         <TextInput
                             style={[styles.input, isGoogleRegistration && styles.inputReadonly]}
-                            placeholder="Full Name"
+                            placeholder={t('auth.enterName')}
                             placeholderTextColor={colors.neutral}
                             value={name}
                             onChangeText={setName}
@@ -76,7 +78,7 @@ const RegisterForm = ({ onSubmit, loading, initialData = {} }) => {
                         <Ionicons name="call-outline" size={scaleSize(20)} color={colors.neutral} style={styles.inputIcon} />
                         <TextInput
                             style={styles.input}
-                            placeholder="Mobile Number (01xxxxxxxxx)"
+                            placeholder={t('auth.enterPhone')}
                             placeholderTextColor={colors.neutral}
                             value={number}
                             keyboardType="phone-pad"
@@ -89,7 +91,7 @@ const RegisterForm = ({ onSubmit, loading, initialData = {} }) => {
                         <Ionicons name="mail-outline" size={scaleSize(20)} color={colors.neutral} style={styles.inputIcon} />
                         <TextInput
                             style={[styles.input, isGoogleRegistration && styles.inputReadonly]}
-                            placeholder="Email address"
+                            placeholder={t('auth.enterEmail')}
                             placeholderTextColor={colors.neutral}
                             value={email}
                             autoCapitalize="none"
@@ -110,7 +112,7 @@ const RegisterForm = ({ onSubmit, loading, initialData = {} }) => {
                         <Ionicons name="lock-closed-outline" size={scaleSize(20)} color={colors.neutral} style={styles.inputIcon} />
                         <TextInput
                             style={styles.input}
-                            placeholder="Password"
+                            placeholder={t('auth.enterPassword')}
                             placeholderTextColor={colors.neutral}
                             secureTextEntry={!showPassword}
                             value={password}
@@ -132,7 +134,7 @@ const RegisterForm = ({ onSubmit, loading, initialData = {} }) => {
                         <Ionicons name="lock-closed-outline" size={scaleSize(20)} color={colors.neutral} style={styles.inputIcon} />
                         <TextInput
                             style={styles.input}
-                            placeholder="Confirm Password"
+                            placeholder={t('auth.confirmPassword')}
                             placeholderTextColor={colors.neutral}
                             secureTextEntry={!confirmShowPassword}
                             value={confirmPassword}

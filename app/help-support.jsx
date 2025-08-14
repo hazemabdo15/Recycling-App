@@ -2,6 +2,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { KeyboardAwareFlatList } from 'react-native-keyboard-aware-scroll-view';
+import { useLocalization } from '../context/LocalizationContext';
 import { colors } from '../styles';
 import ContactOptions from './ContactOptions';
 import FAQList from './FAQList';
@@ -14,6 +15,7 @@ import { scaleSize } from '../utils/scale';
 
 const HelpSupportScreen = () => {
   const router = useRouter();
+  const { t } = useLocalization();
   const sections = [
     { key: 'header', render: () => (
       <LinearGradient
@@ -34,8 +36,8 @@ const HelpSupportScreen = () => {
             />
           </TouchableOpacity>
           <View style={styles.headerTextFlex}>
-            <Text style={styles.title}>Help & Support</Text>
-            <Text style={styles.subtitle}>How can we help you today?</Text>
+            <Text style={styles.title}>{t('help.title')}</Text>
+            <Text style={styles.subtitle}>{t('help.subtitle')}</Text>
           </View>
         </View>
       </LinearGradient>

@@ -8,6 +8,7 @@ import RecyclingModal from "../../components/Modals/RecyclingModal";
 import ProfileCard from "../../components/profile/ProfileCard";
 import ProfileMenu from "../../components/profile/ProfileMenu";
 import { useAuth } from "../../context/AuthContext";
+import { useLocalization } from "../../context/LocalizationContext";
 import { useUserPoints } from "../../hooks/useUserPoints";
 import apiService from "../../services/api/apiService";
 import { colors } from "../../styles";
@@ -25,6 +26,7 @@ function ProfileContent() {
   const PROFILE_CARD_HEIGHT = 220;
   const insets = useSafeAreaInsets();
   const { user, logout, isLoggedIn } = useAuth();
+  const { t } = useLocalization();
   const router = useRouter();
   // const [allOrders, setAllOrders] = useState([]); // No longer used
   const [avatarUri, setAvatarUri] = useState(null);
@@ -39,8 +41,8 @@ function ProfileContent() {
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
         Alert.alert(
-          "Permission required",
-          "Please allow access to your photos."
+          t('profile.permissionRequired'),
+          t('profile.allowPhotoAccess')
         );
         return;
       }

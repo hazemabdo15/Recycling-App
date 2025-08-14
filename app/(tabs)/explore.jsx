@@ -7,11 +7,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CategoriesGrid } from "../../components/sections";
 import { SearchBar } from "../../components/ui";
 import { useAuth } from "../../context/AuthContext";
+import { useLocalization } from "../../context/LocalizationContext";
 import { colors, spacing } from "../../styles/theme";
 import { getLabel } from "../../utils/roleLabels";
 import { scaleSize } from "../../utils/scale";
 
 const Explore = () => {
+  const { t } = useLocalization();
   const [searchText, setSearchText] = useState("");
   const [filteredCount, setFilteredCount] = useState(0);
   const [showItemsMode, setShowItemsMode] = useState(false);
@@ -69,8 +71,8 @@ const Explore = () => {
           <Text style={styles.heroSubtitle}>
             {searchText
               ? `${filteredCount} ${
-                  showItemsMode ? "items" : "categories"
-                } found`
+                  showItemsMode ? t('explore.items') : t('explore.categories')
+                } ${t('explore.found')}`
               : getLabel("exploreSubtitle", user?.role)}
           </Text>
         </View>
