@@ -2,18 +2,19 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
-    Dimensions,
-    FlatList,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  FlatList,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { showGlobalToast } from '../components/common/GlobalToast';
 import { useAuth } from '../context/AuthContext';
+import { useLocalization } from '../context/LocalizationContext';
 import { useAllItems } from '../hooks/useAPI';
 import { useCart } from '../hooks/useCart';
 import { borderRadius, colors, spacing, typography } from '../styles/theme';
@@ -47,6 +48,7 @@ const DISMISS_THRESHOLD = 150;
 
 export default function AIResultsModal() {
   const { user } = useAuth();
+  const { t } = useLocalization();
   const { handleAddToCart, cartItems } = useCart(user);
   const { items: allItems } = useAllItems();
   const params = useLocalSearchParams();
@@ -199,7 +201,7 @@ export default function AIResultsModal() {
     
     const availableMaterials = materials.filter(item => item.available && item.databaseItem);
     if (availableMaterials.length === 0) {
-      alert('No available materials to add to cart. Items marked in red are not yet in our database.');
+      alert(t('aiResults.noAvailableMaterials'));
       return;
     }
     
@@ -389,7 +391,7 @@ export default function AIResultsModal() {
 
     router.dismissAll();
     router.push('/(tabs)/cart');
-  }, [materials, handleAddToCart, validationResults, cartItems, allItems, user]);
+  }, [materials, handleAddToCart, validationResults, cartItems, allItems, user, t]);
 
   const browseMore = useCallback(() => {
 
@@ -534,16 +536,16 @@ export default function AIResultsModal() {
         <View style={[styles.modal, { paddingTop: insets.top + 20 }]}>
           <View style={styles.handleBar} />
           <View style={styles.header}>
-            <Text style={styles.title}>No Materials Found</Text>
+            <Text style={styles.title}>{t('aiResults.noMaterialsFound')}</Text>
           </View>
           <View style={styles.errorContainer}>
             <MaterialCommunityIcons name="alert-circle-outline" size={48} color={colors.textSecondary} />
-            <Text style={styles.errorText}>No materials were extracted from the recording.</Text>
+            <Text style={styles.errorText}>{t('aiResults.noMaterialsExtracted')}</Text>
             <TouchableOpacity 
               style={styles.retryButton}
               onPress={() => router.back()}
             >
-              <Text style={styles.retryButtonText}>Go Back</Text>
+              <Text style={styles.retryButtonText}>{t('aiResults.goBack')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -572,22 +574,22 @@ export default function AIResultsModal() {
               <View style={styles.aiIcon}>
                 <MaterialCommunityIcons name="robot" size={32} color={colors.white} />
               </View>
-              <Text style={styles.title}>AI Found These Items</Text>
-              <Text style={styles.subtitle}>Review and edit your recycling items</Text>
+              <Text style={styles.title}>{t('aiResults.title')}</Text>
+              <Text style={styles.subtitle}>{t('aiResults.subtitle')}</Text>
               
               {}
               <View style={styles.summaryContainer}>
                 <View style={styles.summaryItem}>
                   <MaterialCommunityIcons name="check-circle" size={20} color={colors.success} />
                   <Text style={styles.summaryText}>
-                    {`${availableCount} available`}
+                    {`${availableCount} ${t('aiResults.available')}`}
                   </Text>
                 </View>
                 {unavailableCount > 0 && (
                   <View style={styles.summaryItem}>
                     <MaterialCommunityIcons name="alert-circle" size={20} color={colors.error} />
                     <Text style={styles.summaryText}>
-                      {`${unavailableCount} not available`}
+                      {`${unavailableCount} ${t('aiResults.notAvailable')}`}
                     </Text>
                   </View>
                 )}
@@ -595,7 +597,7 @@ export default function AIResultsModal() {
                   <View style={styles.summaryItem}>
                     <MaterialCommunityIcons name="alert" size={20} color={colors.warning} />
                     <Text style={styles.summaryText}>
-                      {`${validationResults.errors.length} need${validationResults.errors.length > 1 ? '' : 's'} min quantity`}
+                      {`${validationResults.errors.length} ${t('aiResults.needMinQuantity', { s: validationResults.errors.length > 1 ? '' : 's' })}`}
                     </Text>
                   </View>
                 )}
@@ -620,8 +622,8 @@ export default function AIResultsModal() {
           ) : (
               <View style={styles.emptyState}>
                 <MaterialCommunityIcons name="recycle" size={64} color={colors.base300} />
-                <Text style={styles.emptyTitle}>No items found</Text>
-                <Text style={styles.emptySubtitle}>Try recording again or browse our catalog</Text>
+                <Text style={styles.emptyTitle}>{t('aiResults.noItemsFound')}</Text>
+                <Text style={styles.emptySubtitle}>{t('aiResults.noItemsSubtitle')}</Text>
               </View>
             )}
           </View>
@@ -629,7 +631,7 @@ export default function AIResultsModal() {
           <View style={styles.actionsContainer}>
             <TouchableOpacity style={styles.browseButton} onPress={browseMore}>
               <MaterialCommunityIcons name="magnify" size={20} color={colors.primary} />
-              <Text style={styles.browseButtonText}>Browse Items</Text>
+              <Text style={styles.browseButtonText}>{t('aiResults.browseItems')}</Text>
             </TouchableOpacity>
             
             {materials.length > 0 && (
@@ -651,8 +653,11 @@ export default function AIResultsModal() {
                   validationResults.hasErrors && styles.addToCartButtonTextDisabled
                 ]}>
                   {validationResults.hasErrors 
-                    ? `Fix ${validationResults.errors.length} Item${validationResults.errors.length > 1 ? 's' : ''} First`
-                    : `Add to Cart (${availableCount})`
+                    ? t('aiResults.fixItemsFirst', { 
+                        count: validationResults.errors.length,
+                        s: validationResults.errors.length > 1 ? 's' : ''
+                      })
+                    : `${t('aiResults.addToCart')} (${availableCount})`
                   }
                 </Text>
               </TouchableOpacity>

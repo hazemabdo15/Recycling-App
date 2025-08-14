@@ -126,7 +126,17 @@
     "newPassword": "كلمة المرور الجديدة",
     "waitingApproval": "في انتظار الموافقة",
     "accountPending": "حسابك في انتظار موافقة المدير",
-    "loginToContinue": "تسجيل الدخول للمتابعة"
+    "loginToContinue": "تسجيل الدخول للمتابعة",
+    "roles": {
+      "customer": "عميل",
+      "buyer": "مشترٍ",
+      "delivery": "توصيل"
+    },
+    "roleDescriptions": {
+      "customer": "بيع المواد القابلة لإعادة التدوير",
+      "buyer": "شراء المواد القابلة لإعادة التدوير",
+      "delivery": "توصيل الطلبات"
+    }
   },
   "home": {
     "welcomeMessage": "اجعل كل عنصر يُحسب مع إعادة التدوير",
@@ -222,7 +232,13 @@
     "subtotal": "المجموع الفرعي",
     "tax": "الضريبة",
     "delivery": "التوصيل",
-    "grandTotal": "المجموع الإجمالي"
+    "grandTotal": "المجموع الإجمالي",
+    "confirmOrder": "تأكيد الطلب",
+    "totalAmount": "المبلغ الإجمالي",
+    "placeOrder": "تقديم الطلب",
+    "loadingError": "غير قادر على تحميل تفاصيل العنصر",
+    "loadingErrorMessage": "كان هناك مشكلة في جلب بيانات العنصر. يرجى المحاولة مرة أخرى لاحقًا.",
+    "noItems": "لا توجد عناصر بعد"
   },
   "explore": {
     "title": {
@@ -326,7 +342,25 @@
     "status": "الحالة",
     "confirmation": {
       "customer": "تم تأكيد طلب الاستلام!",
-      "buyer": "تم تأكيد الطلب!"
+      "buyer": "تم تأكيد الطلب!",
+      "trackingNumber": "رقم التتبع",
+      "loading": "جارِ التحميل...",
+      "status": "الحالة",
+      "pending": "قيد الانتظار",
+      "estimatedTime": "خلال 24-48 ساعة",
+      "orderSummary": "ملخص الطلب",
+      "items": "العناصر",
+      "totalPoints": "إجمالي النقاط",
+      "itemsSubtotal": "المجموع الفرعي للعناصر",
+      "totalValue": "القيمة الإجمالية",
+      "deliveryFee": "رسوم التوصيل",
+      "whatNext": "ما الذي سيحدث بعد ذلك؟",
+      "steps": {
+        "review": "سيقوم فريقنا بمراجعة طلبك",
+        "contact": "سنتواصل معك لجدولة الاستلام",
+        "collect": "اجمع المواد القابلة لإعادة التدوير واكسب المكافآت"
+      },
+      "done": "تم"
     },
     "statusMessage": {
       "customer": "تم إرسال طلبك. سنتواصل معك قريباً لجدولة الاستلام.",
@@ -339,6 +373,11 @@
     "estimatedTime": {
       "customer": "الاستلام المقدر",
       "buyer": "التوصيل المقدر"
+    },
+    "orderCard": {
+      "deliveryInfo": "معلومات التوصيل",
+      "scheduledPickup": "الاستلام المجدول",
+      "deliveryAddress": "عنوان التوصيل"
     }
   },
   "wallet": {
@@ -746,5 +785,27 @@
       "customer": "مطلوب 100 جنيه مصري كحد أدنى",
       "buyer": "مطلوب 100 جنيه مصري كحد أدنى"
     }
+  },
+  "aiResults": {
+    "detectedMaterials": "المواد المكتشفة",
+    "recommendedActions": "الإجراءات الموصى بها",
+    "environmentalImpact": "التأثير البيئي",
+    "close": "إغلاق",
+    "accept": "قبول",
+    "analyzeAnother": "تحليل آخر",
+    "title": "الذكاء الاصطناعي وجد هذه العناصر",
+    "subtitle": "راجع وعدل عناصر إعادة التدوير الخاصة بك",
+    "available": "متاح",
+    "notAvailable": "غير متاح",
+    "needMinQuantity": "تحتاج{s} الحد الأدنى للكمية",
+    "noItemsFound": "لم يتم العثور على عناصر",
+    "noItemsSubtitle": "جرب التسجيل مرة أخرى أو تصفح الكتالوج",
+    "browseItems": "تصفح العناصر",
+    "addToCart": "أضف إلى السلة",
+    "fixItemsFirst": "أصلح {count} عنصر{s} أولاً",
+    "noMaterialsFound": "لم يتم العثور على مواد",
+    "noMaterialsExtracted": "لم يتم استخراج أي مواد من التسجيل.",
+    "goBack": "العودة",
+    "noAvailableMaterials": "لا توجد مواد متاحة لإضافة إلى السلة. العناصر المحددة باللون الأحمر ليست موجودة في قاعدة البيانات الخاصة بنا بعد."
   }
 }

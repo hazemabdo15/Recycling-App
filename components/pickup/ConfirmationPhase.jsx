@@ -22,7 +22,7 @@ import { AnimatedButton } from '../common';
 
 const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
   const { user } = useAuth();
-  const { tRole } = useLocalization();
+  const { t, tRole } = useLocalization();
   const { handleClearCart } = useCart(user);
   const [copied, setCopied] = useState(false);
   const rotateValue = useRef(new Animated.Value(0)).current;
@@ -122,7 +122,7 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
           
           <View style={styles.trackingContent}>
             <View style={styles.trackingRow}>
-              <Text style={styles.trackingLabel}>Tracking Number</Text>
+              <Text style={styles.trackingLabel}>{t('orders.confirmation.trackingNumber')}</Text>
               <View style={styles.trackingNumberContainer}>
                 {trackingNumber ? (
                   <>
@@ -158,33 +158,33 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
                         color={colors.neutral} 
                       />
                     </Animated.View>
-                    <Text style={styles.loadingText}>Loading...</Text>
+                    <Text style={styles.loadingText}>{t('orders.confirmation.loading')}</Text>
                   </View>
                 )}
               </View>
             </View>
             
             <View style={styles.trackingRow}>
-              <Text style={styles.trackingLabel}>Status</Text>
+              <Text style={styles.trackingLabel}>{t('orders.confirmation.status')}</Text>
               <View style={styles.statusContainer}>
                 <View style={[styles.statusDot, { backgroundColor: colors.accent }]} />
-                <Text style={styles.statusText}>Pending</Text>
+                <Text style={styles.statusText}>{t('orders.confirmation.pending')}</Text>
               </View>
             </View>
             
             <View style={styles.trackingRow}>
               <Text style={styles.trackingLabel}>{tRole('orders.estimatedTime', user?.role)}</Text>
-              <Text style={styles.trackingValue}>Within 24-48 hours</Text>
+              <Text style={styles.trackingValue}>{t('orders.confirmation.estimatedTime')}</Text>
             </View>
           </View>
         </View>
 
         {order && (
           <View style={styles.orderCard}>
-            <Text style={styles.orderTitle}>Order Summary</Text>
+            <Text style={styles.orderTitle}>{t('orders.confirmation.orderSummary')}</Text>
             
             <View style={styles.orderRow}>
-              <Text style={styles.orderLabel}>Items</Text>
+              <Text style={styles.orderLabel}>{t('orders.confirmation.items')}</Text>
               <Text style={styles.orderValue}>
                 {orderItems?.length || 0} items
               </Text>
@@ -192,7 +192,7 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
             
             {!isBuyerRole(user) && (
               <View style={styles.orderRow}>
-                <Text style={styles.orderLabel}>Total Points</Text>
+                <Text style={styles.orderLabel}>{t('orders.confirmation.totalPoints')}</Text>
                 <Text style={[styles.orderValue, { color: colors.accent }]}>
                   {orderItems?.reduce((sum, item) => 
                     sum + (item.points * item.quantity), 0) || 0}
@@ -202,7 +202,7 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
             
             <View style={styles.orderRow}>
               <Text style={styles.orderLabel}>
-                {isBuyerRole(user) ? 'Items Subtotal' : 'Total Value'}
+                {isBuyerRole(user) ? t('orders.confirmation.itemsSubtotal') : t('orders.confirmation.totalValue')}
               </Text>
               <Text style={styles.orderValue}>
                 {itemsSubtotal.toFixed(2)} EGP
@@ -212,7 +212,7 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
             {/* ✅ Only show for buyers */}
             {shouldShowDeliveryFee(user) && (
               <View style={styles.orderRow}>
-                <Text style={styles.orderLabel}>Delivery Fee</Text>
+                <Text style={styles.orderLabel}>{t('orders.confirmation.deliveryFee')}</Text>
                 <Text style={styles.orderValue}>
                   {deliveryFee.toFixed(2)} EGP
                 </Text>
@@ -222,7 +222,7 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
             {/* ✅ Only show total for buyers */}
             {shouldShowTotalValue(user) && (
               <View style={styles.orderRow}>
-                <Text style={styles.orderLabel}>Total Value</Text>
+                <Text style={styles.orderLabel}>{t('orders.confirmation.totalValue')}</Text>
                 <Text style={[styles.orderValue, { color: colors.secondary }]}>
                   {totalValue.toFixed(2)} EGP
                 </Text>
@@ -232,24 +232,24 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
         )}
 
         <View style={styles.stepsCard}>
-          <Text style={styles.stepsTitle}>What happens next?</Text>
+          <Text style={styles.stepsTitle}>{t('orders.confirmation.whatNext')}</Text>
           <View style={styles.stepItem}>
             <View style={styles.stepNumber}>
               <Text style={styles.stepNumberText}>1</Text>
             </View>
-            <Text style={styles.stepText}>Our team will review your request</Text>
+            <Text style={styles.stepText}>{t('orders.confirmation.steps.review')}</Text>
           </View>
           <View style={styles.stepItem}>
             <View style={styles.stepNumber}>
               <Text style={styles.stepNumberText}>2</Text>
             </View>
-            <Text style={styles.stepText}>We&apos;ll contact you to schedule pickup</Text>
+            <Text style={styles.stepText}>{t('orders.confirmation.steps.contact')}</Text>
           </View>
           <View style={styles.stepItem}>
             <View style={styles.stepNumber}>
               <Text style={styles.stepNumberText}>3</Text>
             </View>
-            <Text style={styles.stepText}>Collect your recyclables and earn rewards</Text>
+            <Text style={styles.stepText}>{t('orders.confirmation.steps.collect')}</Text>
           </View>
         </View>
         </View>
@@ -258,7 +258,7 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
       <View style={styles.footer}>
         <AnimatedButton style={styles.newRequestButton} onPress={handleDone}>
           <MaterialCommunityIcons name="check" size={20} color={colors.white} />
-          <Text style={styles.newRequestButtonText}>Done</Text>
+          <Text style={styles.newRequestButtonText}>{t('orders.confirmation.done')}</Text>
         </AnimatedButton>
       </View>
     </View>

@@ -648,9 +648,9 @@ const Cart = () => {
     return (
       <View style={styles.emptyCartContainer}>
         <Loader style={{ height: 180 }} />
-        <Text style={styles.emptyCartTitle}>Unable to load item details</Text>
+        <Text style={styles.emptyCartTitle}>{t('cart.loadingError')}</Text>
         <Text style={styles.emptyCartSubtitle}>
-          There was a problem fetching item data. Please try again later.
+          {t('cart.loadingErrorMessage')}
         </Text>
       </View>
     );
@@ -674,7 +674,7 @@ const Cart = () => {
             <Text style={styles.heroTitle}>
               {tRole("cart.title", user?.role)}
             </Text>
-            <Text style={styles.heroSubtitle}>No items yet</Text>
+            <Text style={styles.heroSubtitle}>{t('cart.noItems')}</Text>
             <AnimatedButton
               style={styles.heroFindBtn}
               onPress={() => router.push("/(tabs)/explore")}

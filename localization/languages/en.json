@@ -110,7 +110,17 @@
     "newPassword": "New Password",
     "waitingApproval": "Waiting for Approval",
     "accountPending": "Your account is pending admin approval",
-    "loginToContinue": "Login to Continue"
+    "loginToContinue": "Login to Continue",
+    "roles": {
+      "customer": "Customer",
+      "buyer": "Buyer",
+      "delivery": "Delivery"
+    },
+    "roleDescriptions": {
+      "customer": "Sell recyclables",
+      "buyer": "Buy recyclables",
+      "delivery": "Deliver orders"
+    }
   },
   "home": {
     "welcomeMessage": "Make every item count with recycling",
@@ -206,7 +216,13 @@
     "subtotal": "Subtotal",
     "tax": "Tax",
     "delivery": "Delivery",
-    "grandTotal": "Grand Total"
+    "grandTotal": "Grand Total",
+    "confirmOrder": "Confirm Order",
+    "totalAmount": "Total Amount",
+    "placeOrder": "Place Order",
+    "loadingError": "Unable to load item details",
+    "loadingErrorMessage": "There was a problem fetching item data. Please try again later.",
+    "noItems": "No items yet"
   },
   "explore": {
     "title": {
@@ -310,7 +326,25 @@
     "status": "Status",
     "confirmation": {
       "customer": "Pickup Request Confirmed!",
-      "buyer": "Order Confirmed!"
+      "buyer": "Order Confirmed!",
+      "trackingNumber": "Tracking Number",
+      "loading": "Loading...",
+      "status": "Status",
+      "pending": "Pending",
+      "estimatedTime": "Within 24-48 hours",
+      "orderSummary": "Order Summary",
+      "items": "Items",
+      "totalPoints": "Total Points",
+      "itemsSubtotal": "Items Subtotal",
+      "totalValue": "Total Value",
+      "deliveryFee": "Delivery Fee",
+      "whatNext": "What happens next?",
+      "steps": {
+        "review": "Our team will review your request",
+        "contact": "We'll contact you to schedule pickup",
+        "collect": "Collect your recyclables and earn rewards"
+      },
+      "done": "Done"
     },
     "statusMessage": {
       "customer": "Your request has been sent. We will contact you soon for pickup scheduling.",
@@ -323,6 +357,11 @@
     "estimatedTime": {
       "customer": "Estimated Pickup",
       "buyer": "Estimated Delivery"
+    },
+    "orderCard": {
+      "deliveryInfo": "Delivery Info",
+      "scheduledPickup": "Scheduled Pickup",
+      "deliveryAddress": "Delivery Address"
     }
   },
   "wallet": {
@@ -746,5 +785,27 @@
       "customer": "Minimum 100 EGP Required",
       "buyer": "Minimum 100 EGP Required"
     }
+  },
+  "aiResults": {
+    "detectedMaterials": "Detected Materials",
+    "recommendedActions": "Recommended Actions",
+    "environmentalImpact": "Environmental Impact",
+    "close": "Close",
+    "accept": "Accept",
+    "analyzeAnother": "Analyze Another",
+    "title": "AI Found These Items",
+    "subtitle": "Review and edit your recycling items",
+    "available": "available",
+    "notAvailable": "not available",
+    "needMinQuantity": "need{s} min quantity",
+    "noItemsFound": "No items found",
+    "noItemsSubtitle": "Try recording again or browse our catalog",
+    "browseItems": "Browse Items",
+    "addToCart": "Add to Cart",
+    "fixItemsFirst": "Fix {count} Item{s} First",
+    "noMaterialsFound": "No Materials Found",
+    "noMaterialsExtracted": "No materials were extracted from the recording.",
+    "goBack": "Go Back",
+    "noAvailableMaterials": "No available materials to add to cart. Items marked in red are not yet in our database."
   }
 }
