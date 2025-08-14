@@ -1,7 +1,8 @@
-import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { formatDate, formatTime, getStatusBadgeStyle, getStatusText } from '../../utils/deliveryHelpers';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useLocalization } from '../../context/LocalizationContext';
 import { colors } from '../../styles/theme';
+import { formatDate, formatTime, getStatusBadgeStyle, getStatusText } from '../../utils/deliveryHelpers';
 
 const getInitials = (name) => {
   if (!name) return '';
@@ -9,6 +10,7 @@ const getInitials = (name) => {
 };
 
 export default function OrderCard({ item, onViewDetails, onComplete }) {
+  const { t } = useLocalization();
   return (
     <View style={styles.orderCard}>
       <View style={styles.customerInfo}>
@@ -30,7 +32,7 @@ export default function OrderCard({ item, onViewDetails, onComplete }) {
 
       <View style={styles.orderInfo}>
         <View style={styles.orderDetail}>
-          <Text style={styles.orderLabel}>Order Date</Text>
+          <Text style={styles.orderLabel}>{t('orders.orderCard.orderDate')}</Text>
           <Text style={styles.orderValue}>{formatDate(item.createdAt)}</Text>
           <Text style={styles.orderTime}>{formatTime(item.createdAt)}</Text>
         </View>
@@ -45,14 +47,14 @@ export default function OrderCard({ item, onViewDetails, onComplete }) {
       <View style={styles.actionButtons}>
         <TouchableOpacity onPress={() => onViewDetails(item)} style={styles.detailsButton}>
           <Ionicons name="document-text-outline" size={16} color={colors.primary} />
-          <Text style={styles.detailsButtonText}>View Details</Text>
+          <Text style={styles.detailsButtonText}>{t('orders.orderCard.viewDetails')}</Text>
         </TouchableOpacity>
 
         {item.status === 'assigntocourier' && (
           <TouchableOpacity onPress={() => onComplete(item)} style={styles.completeButton}>
             <Ionicons name="checkmark-circle" size={16} color="white" />
             <Text style={styles.completeButtonText}>
-              {item.user.role === 'customer' ? 'Collect' : 'Deliver'}
+              {item.user.role === 'customer' ? t('orders.orderCard.collect') : t('orders.orderCard.deliver')}
             </Text>
           </TouchableOpacity>
         )}
@@ -61,7 +63,7 @@ export default function OrderCard({ item, onViewDetails, onComplete }) {
           <View style={styles.completedBadge}>
             <Ionicons name="checkmark-circle" size={16} color="#22c55e" />
             <Text style={styles.completedText}>
-              {item.user.role === 'customer' ? 'Collected' : 'Delivered'}
+              {item.user.role === 'customer' ? t('orders.orderCard.collected') : t('orders.orderCard.delivered')}
             </Text>
           </View>
         )}

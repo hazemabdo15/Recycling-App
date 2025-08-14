@@ -135,7 +135,16 @@
     "roleDescriptions": {
       "customer": "بيع المواد القابلة لإعادة التدوير",
       "buyer": "شراء المواد القابلة لإعادة التدوير",
-      "delivery": "توصيل الطلبات"
+      "delivery": "الاستلام والتوصيل"
+    },
+    "registerForm": {
+      "title": "إنشاء حساب",
+      "subtitle": "انضم إلى مجتمعنا الصديق للبيئة اليوم",
+      "roleSelection": "أقوم بالتسجيل كـ:",
+      "creatingAccount": "جاري إنشاء الحساب...",
+      "alreadyHaveAccount": "لديك حساب بالفعل؟",
+      "hidePassword": "إخفاء كلمة المرور",
+      "showPassword": "إظهار كلمة المرور"
     }
   },
   "home": {
@@ -287,6 +296,34 @@
     "schedule": {
       "customer": "جدولة الاستلام",
       "buyer": "تقديم الطلب"
+    },
+    "reviewPhase": {
+      "title": "مراجعة طلبك",
+      "deliveryTo": "التوصيل إلى",
+      "noAddress": "لم يتم اختيار عنوان",
+      "loadingItems": "جارِ تحميل العناصر...",
+      "unavailableItems": "قد تكون بعض العناصر غير متاحة",
+      "unavailableMessage": "قد تكون هذه العناصر قد أُزيلت من الكتالوج. يمكنك المتابعة مع طلبك.",
+      "itemsInCart": "العناصر في سلتك",
+      "paymentMethod": "طريقة الدفع",
+      "cashOnDelivery": "الدفع عند التوصيل",
+      "cashDescription": "ادفع عند توصيل طلبك",
+      "creditCard": "بطاقة ائتمان",
+      "cardDescription": "ادفع بأمان عبر الإنترنت بواسطة بطاقتك",
+      "orderSummary": "ملخص الطلب",
+      "totalItems": "إجمالي العناصر:",
+      "totalPoints": "إجمالي النقاط:",
+      "itemsSubtotal": "المجموع الفرعي للعناصر:",
+      "totalValue": "القيمة الإجمالية:",
+      "deliveryFee": "رسوم التوصيل:",
+      "backToAddress": "العودة إلى العنوان",
+      "confirmOrder": "تأكيد الطلب",
+      "creatingOrder": "جارِ إنشاء الطلب...",
+      "processing": "جارِ المعالجة...",
+      "payAndConfirm": "الدفع وتأكيد الطلب",
+      "selectPaymentMethod": "اختر طريقة الدفع",
+      "unavailable": "غير متاح",
+      "points": "نقطة"
     }
   },
   "settings": {
@@ -377,7 +414,13 @@
     "orderCard": {
       "deliveryInfo": "معلومات التوصيل",
       "scheduledPickup": "الاستلام المجدول",
-      "deliveryAddress": "عنوان التوصيل"
+      "deliveryAddress": "عنوان التوصيل",
+      "orderDate": "تاريخ الطلب",
+      "viewDetails": "عرض التفاصيل",
+      "collect": "استلام",
+      "deliver": "توصيل",
+      "collected": "تم الاستلام",
+      "delivered": "تم التوصيل"
     }
   },
   "wallet": {
@@ -453,7 +496,15 @@
     "clothing": "ملابس",
     "shoes": "أحذية",
     "food": "مخلفات طعام",
-    "garden": "مخلفات حديقة"
+    "garden": "مخلفات حديقة",
+    "itemCard": {
+      "outOfStock": "نفد المخزون",
+      "stock": "المخزون"
+    },
+    "errors": {
+      "notEnoughStock": "لا توجد كمية كافية في المخزون لإضافة هذا العنصر.",
+      "cannotAddMore": "لا يمكنك إضافة المزيد. يوجد فقط {{quantity}} في المخزون."
+    }
   },
   "delivery": {
     "title": "التوصيل",

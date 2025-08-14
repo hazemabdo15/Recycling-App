@@ -1,15 +1,16 @@
 ﻿import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import {
-    Alert,
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useAuth } from "../../context/AuthContext";
+import { useLocalization } from "../../context/LocalizationContext";
 import { useCart } from "../../hooks/useCart";
 import { usePayment } from "../../hooks/usePayment";
 // import { orderService } from "../../services/api/orders"; // Removed - using unified flow
@@ -32,6 +33,7 @@ const ReviewPhase = ({
   user: propUser,
   accessToken,
 }) => {
+  const { t } = useLocalization();
   const [allItems, setAllItems] = useState([]);
   const [itemsLoaded, setItemsLoaded] = useState(false);
   const [cartItemsDisplay, setCartItemsDisplay] = useState([]);
@@ -410,7 +412,7 @@ const ReviewPhase = ({
                   size={12}
                   color={colors.warning}
                 />
-                <Text style={styles.warningText}>Unavailable</Text>
+                <Text style={styles.warningText}>{t('pickup.reviewPhase.unavailable')}</Text>
               </View>
             )}
           </View>
@@ -426,7 +428,7 @@ const ReviewPhase = ({
                   size={14}
                   color={colors.accent}
                 />
-                <Text style={styles.points}>{item.totalPoints} pts</Text>
+                <Text style={styles.points}>{item.totalPoints} {t('pickup.reviewPhase.points')}</Text>
               </View>
             )}
           </View>
@@ -451,13 +453,13 @@ const ReviewPhase = ({
           }}
         >
           <View style={{ flex: 1 }}>
-            <Text style={styles.title}>Review Your Order</Text>
+            <Text style={styles.title}>{t('pickup.reviewPhase.title')}</Text>
             <Text style={styles.subtitle}>
               {selectedAddress?.street
-                ? `Delivery to ${selectedAddress.street}, ${
+                ? `${t('pickup.reviewPhase.deliveryTo')} ${selectedAddress.street}, ${
                     selectedAddress.area || selectedAddress.city
                   }`
-                : "No address selected"}
+                : t('pickup.reviewPhase.noAddress')}
             </Text>
           </View>
         </View>
@@ -470,7 +472,7 @@ const ReviewPhase = ({
             size={32}
             color={colors.primary}
           />
-          <Text style={styles.loadingText}>Loading items...</Text>
+          <Text style={styles.loadingText}>{t('pickup.reviewPhase.loadingItems')}</Text>
         </View>
       ) : (
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -483,11 +485,10 @@ const ReviewPhase = ({
               />
               <View style={styles.warningBannerText}>
                 <Text style={styles.warningBannerTitle}>
-                  Some items may be unavailable
+                  {t('pickup.reviewPhase.unavailableItems')}
                 </Text>
                 <Text style={styles.warningBannerSubtitle}>
-                  These items might have been removed from the catalog. You can
-                  still proceed with your order.
+                  {t('pickup.reviewPhase.unavailableMessage')}
                 </Text>
               </View>
             </View>
@@ -500,7 +501,7 @@ const ReviewPhase = ({
                 size={20}
                 color={colors.primary}
               />
-              <Text style={styles.sectionTitle}>Items in your cart</Text>
+              <Text style={styles.sectionTitle}>{t('pickup.reviewPhase.itemsInCart')}</Text>
             </View>
             {cartItemsDisplay.map((item, index) => renderCartItem(item, index))}
           </View>
@@ -513,7 +514,7 @@ const ReviewPhase = ({
                   size={20}
                   color={colors.primary}
                 />
-                <Text style={styles.sectionTitle}>Payment Method</Text>
+                <Text style={styles.sectionTitle}>{t('pickup.reviewPhase.paymentMethod')}</Text>
               </View>
               <View style={styles.paymentMethodContainer}>
                 <TouchableOpacity
@@ -534,10 +535,10 @@ const ReviewPhase = ({
                         styles.paymentMethodTitle,
                         selectedPaymentMethod === 'cash' && styles.selectedPaymentMethodTitle,
                       ]}>
-                        Cash on Delivery
+                        {t('pickup.reviewPhase.cashOnDelivery')}
                       </Text>
                       <Text style={styles.paymentMethodDescription}>
-                        Pay when your order is delivered
+                        {t('pickup.reviewPhase.cashDescription')}
                       </Text>
                     </View>
                     <View style={styles.radioButton}>
@@ -566,7 +567,7 @@ const ReviewPhase = ({
                         styles.paymentMethodTitle,
                         selectedPaymentMethod === 'card' && styles.selectedPaymentMethodTitle,
                       ]}>
-                        Credit Card
+                        {t('pickup.reviewPhase.creditCard')}
                       </Text>
                       <Text style={styles.paymentMethodDescription}>
                         Pay securely online with your card

@@ -1,4 +1,5 @@
 ﻿import { StyleSheet, Text, View } from "react-native";
+import { useLocalization } from "../../context/LocalizationContext";
 import { itemCardStyles } from "../../styles/components/categoryStyles";
 import { colors } from "../../styles/theme";
 import { getUnitDisplay } from "../../utils/cartUtils";
@@ -22,6 +23,7 @@ const ItemCard = ({
   index = 0,
   user = null,
 }) => {
+  const { t } = useLocalization();
   const unitDisplay = getUnitDisplay(item.measurement_unit);
   // Only show stock-related logic for buyers
   const showStockLogic = isBuyer(user);
@@ -41,7 +43,7 @@ const ItemCard = ({
       {outOfStock && (
         <View style={styles.cornerBannerWrapper} pointerEvents="none">
           <View style={styles.cornerBanner}>
-            <Text style={styles.cornerBannerText}>OUT OF STOCK</Text>
+            <Text style={styles.cornerBannerText}>{t('categories.itemCard.outOfStock')}</Text>
           </View>
         </View>
       )}
@@ -50,8 +52,8 @@ const ItemCard = ({
         <View style={styles.stockRightBadge}>
           <Text style={styles.stockRightText}>
             {typeof item.quantity === "number"
-              ? `Stock: ${item.quantity} ${unitDisplay}`
-              : "Stock: N/A"}
+              ? `${t('categories.itemCard.stock')}: ${item.quantity} ${unitDisplay}`
+              : `${t('categories.itemCard.stock')}: N/A`}
           </Text>
         </View>
       )}

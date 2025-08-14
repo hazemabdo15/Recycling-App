@@ -12,7 +12,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const scaleSize = (size) => (SCREEN_WIDTH / 375) * size;
 
 const RegisterForm = ({ onSubmit, loading, initialData = {} }) => {
-    const { t } = useLocalization();
+    const { t, tRole } = useLocalization();
     const [name, setName] = useState(initialData?.name || '');
     const [number, setNumber] = useState(initialData?.number || '');
     const [email, setEmail] = useState(initialData?.email || '');
@@ -40,8 +40,8 @@ const RegisterForm = ({ onSubmit, loading, initialData = {} }) => {
                 <View style={styles.logoContainer}>
                     <MaterialCommunityIcons name="account-plus" size={scaleSize(50)} color={colors.white} />
                 </View>
-                <Text style={styles.title}>{t('auth.createAccount')}</Text>
-                <Text style={styles.subtitle}>{t('auth.register')} {t('home.welcomeMessage')}</Text>
+                <Text style={styles.title}>{t('auth.registerForm.title')}</Text>
+                <Text style={styles.subtitle}>{t('auth.registerForm.subtitle')}</Text>
             </View>
 
             {/* Form Card */}
@@ -121,7 +121,7 @@ const RegisterForm = ({ onSubmit, loading, initialData = {} }) => {
                         <Pressable
                             onPress={() => setShowPassword(!showPassword)}
                             style={styles.eyeIcon}
-                            accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+                            accessibilityLabel={showPassword ? t('auth.registerForm.hidePassword') : t('auth.registerForm.showPassword')}
                         >
                             <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={scaleSize(20)} color={colors.neutral} />
                         </Pressable>
@@ -143,7 +143,7 @@ const RegisterForm = ({ onSubmit, loading, initialData = {} }) => {
                         <Pressable
                             onPress={() => setConfirmShowPassword(!confirmShowPassword)}
                             style={styles.eyeIcon}
-                            accessibilityLabel={confirmShowPassword ? 'Hide password' : 'Show password'}
+                            accessibilityLabel={confirmShowPassword ? t('auth.registerForm.hidePassword') : t('auth.registerForm.showPassword')}
                         >
                             <Ionicons name={confirmShowPassword ? 'eye-off' : 'eye'} size={scaleSize(20)} color={colors.neutral} />
                         </Pressable>
@@ -152,7 +152,7 @@ const RegisterForm = ({ onSubmit, loading, initialData = {} }) => {
 
                     {/* Role Selection */}
                     <View style={styles.roleSection}>
-                        <Text style={styles.roleLabel}>I am registering as:</Text>
+                        <Text style={styles.roleLabel}>{t('auth.registerForm.roleSelection')}</Text>
                         <View style={styles.roleContainer}>
                             <Pressable
                                 style={[styles.roleOption, role === 'customer' && styles.roleOptionActive]}
@@ -164,10 +164,10 @@ const RegisterForm = ({ onSubmit, loading, initialData = {} }) => {
                                     color={role === 'customer' ? colors.white : colors.primary}
                                 />
                                 <Text style={[styles.roleText, role === 'customer' && styles.roleTextActive]}>
-                                    Customer
+                                    {tRole('customer', 'roles.customer')}
                                 </Text>
                                 <Text style={[styles.roleSubtext, role === 'customer' && styles.roleSubtextActive]}>
-                                    Sell recyclables
+                                    {t('auth.roleDescriptions.customer')}
                                 </Text>
                             </Pressable>
 
@@ -181,10 +181,10 @@ const RegisterForm = ({ onSubmit, loading, initialData = {} }) => {
                                     color={role === 'buyer' ? colors.white : colors.primary}
                                 />
                                 <Text style={[styles.roleText, role === 'buyer' && styles.roleTextActive]}>
-                                    Buyer
+                                    {tRole('buyer', 'roles.buyer')}
                                 </Text>
                                 <Text style={[styles.roleSubtext, role === 'buyer' && styles.roleSubtextActive]}>
-                                    Buy recyclables
+                                    {t('auth.roleDescriptions.buyer')}
                                 </Text>
                             </Pressable>
 
@@ -198,10 +198,10 @@ const RegisterForm = ({ onSubmit, loading, initialData = {} }) => {
                                     color={role === 'delivery' ? colors.white : colors.primary}
                                 />
                                 <Text style={[styles.roleText, role === 'delivery' && styles.roleTextActive]}>
-                                    Delivery
+                                    {tRole('delivery', 'roles.delivery')}
                                 </Text>
                                 <Text style={[styles.roleSubtext, role === 'delivery' && styles.roleSubtextActive]}>
-                                    Pickup & deliver
+                                    {t('auth.roleDescriptions.delivery')}
                                 </Text>
                             </Pressable>
                         </View>
@@ -222,7 +222,7 @@ const RegisterForm = ({ onSubmit, loading, initialData = {} }) => {
                         >
                             {loading && <View style={styles.loadingSpinner} />}
                             <Text style={styles.registerText}>
-                                {loading ? "Creating Account..." : "Create Account"}
+                                {loading ? t('auth.registerForm.creatingAccount') : t('auth.createAccount')}
                             </Text>
                         </LinearGradient>
                     </Pressable>
@@ -230,7 +230,7 @@ const RegisterForm = ({ onSubmit, loading, initialData = {} }) => {
                     {/* Login Link */}
                     <Pressable onPress={() => router.push('/login')} style={styles.loginLinkContainer}>
                         <Text style={styles.loginLinkText}>
-                            Already have an account? <Text style={styles.loginLinkBold}>Sign In</Text>
+                            {t('auth.registerForm.alreadyHaveAccount')} <Text style={styles.loginLinkBold}>{t('auth.signIn')}</Text>
                         </Text>
                     </Pressable>
                 </View>

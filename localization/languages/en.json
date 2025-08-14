@@ -119,7 +119,16 @@
     "roleDescriptions": {
       "customer": "Sell recyclables",
       "buyer": "Buy recyclables",
-      "delivery": "Deliver orders"
+      "delivery": "Pickup & deliver"
+    },
+    "registerForm": {
+      "title": "Create Account",
+      "subtitle": "Join our eco-friendly community today",
+      "roleSelection": "I am registering as:",
+      "creatingAccount": "Creating Account...",
+      "alreadyHaveAccount": "Already have an account?",
+      "hidePassword": "Hide password",
+      "showPassword": "Show password"
     }
   },
   "home": {
@@ -271,6 +280,34 @@
     "schedule": {
       "customer": "Schedule Pickup",
       "buyer": "Place Order"
+    },
+    "reviewPhase": {
+      "title": "Review Your Order",
+      "deliveryTo": "Delivery to",
+      "noAddress": "No address selected",
+      "loadingItems": "Loading items...",
+      "unavailableItems": "Some items may be unavailable",
+      "unavailableMessage": "These items might have been removed from the catalog. You can still proceed with your order.",
+      "itemsInCart": "Items in your cart",
+      "paymentMethod": "Payment Method",
+      "cashOnDelivery": "Cash on Delivery",
+      "cashDescription": "Pay when your order is delivered",
+      "creditCard": "Credit Card",
+      "cardDescription": "Pay securely online with your card",
+      "orderSummary": "Order Summary",
+      "totalItems": "Total Items:",
+      "totalPoints": "Total Points:",
+      "itemsSubtotal": "Items Subtotal:",
+      "totalValue": "Total Value:",
+      "deliveryFee": "Delivery Fee:",
+      "backToAddress": "Back to Address",
+      "confirmOrder": "Confirm Order",
+      "creatingOrder": "Creating Order...",
+      "processing": "Processing...",
+      "payAndConfirm": "Pay & Confirm Order",
+      "selectPaymentMethod": "Select Payment Method",
+      "unavailable": "Unavailable",
+      "points": "pts"
     }
   },
   "settings": {
@@ -361,7 +398,13 @@
     "orderCard": {
       "deliveryInfo": "Delivery Info",
       "scheduledPickup": "Scheduled Pickup",
-      "deliveryAddress": "Delivery Address"
+      "deliveryAddress": "Delivery Address",
+      "orderDate": "Order Date",
+      "viewDetails": "View Details",
+      "collect": "Collect",
+      "deliver": "Deliver",
+      "collected": "Collected",
+      "delivered": "Delivered"
     }
   },
   "wallet": {
@@ -453,7 +496,15 @@
     "clothing": "Clothing",
     "shoes": "Shoes",
     "food": "Food Waste",
-    "garden": "Garden Waste"
+    "garden": "Garden Waste",
+    "itemCard": {
+      "outOfStock": "OUT OF STOCK",
+      "stock": "Stock"
+    },
+    "errors": {
+      "notEnoughStock": "Not enough quantity in stock to add this item.",
+      "cannotAddMore": "You cannot add more. Only {{quantity}} in stock."
+    }
   },
   "delivery": {
     "title": "Delivery",
