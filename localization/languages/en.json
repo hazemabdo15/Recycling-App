@@ -319,7 +319,7 @@
       "floor": "Floor Number",
       "apartment": "Apartment Number",
       "notes": "Additional Note"
-  }
+    }
   },
   "settings": {
     "language": "Language",

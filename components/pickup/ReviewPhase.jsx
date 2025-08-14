@@ -591,17 +591,17 @@ const ReviewPhase = ({
                 size={20}
                 color={colors.primary}
               />
-              <Text style={styles.sectionTitle}>Order Summary</Text>
+              <Text style={styles.sectionTitle}>{t("pickup.reviewPhase.orderSummary")}</Text>
             </View>
             <View style={styles.summaryCard}>
               <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Total Items:</Text>
+                <Text style={styles.summaryLabel}>{t("pickup.reviewPhase.totalItems")}</Text>
                 <Text style={styles.summaryValue}>{totalItems}</Text>
               </View>
               
               {!isBuyerRole(user) && (
                 <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>Total Points:</Text>
+                  <Text style={styles.summaryLabel}>{t("pickup.reviewPhase.totalPoints")}</Text>
                   <View style={styles.pointsContainer}>
                     <MaterialCommunityIcons
                       name="star"
@@ -617,7 +617,7 @@ const ReviewPhase = ({
               
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>
-                  {isBuyerRole(user) ? 'Items Subtotal:' : 'Total Value:'}
+                  {isBuyerRole(user) ? t("pickup.reviewPhase.itemsSubtotal") : t("pickup.reviewPhase.totalValue")}
                 </Text>
                 <Text style={styles.summaryValue}>
                   {itemsTotalPrice.toFixed(2)} EGP
@@ -658,7 +658,7 @@ const ReviewPhase = ({
           }}
           disabled={isAnyProcessing}
         >
-          <Text style={styles.backButtonText}>Back to Address</Text>
+          <Text style={styles.backButtonText}>{t("pickup.reviewPhase.backToAddress")}</Text>
         </TouchableOpacity>
 
         <AnimatedButton
@@ -685,15 +685,15 @@ const ReviewPhase = ({
           <Text style={styles.confirmButtonText}>
             {isAnyProcessing
               ? isCashOrderProcessing
-                ? "Creating Order..."
+                ? t('pickup.reviewPhase.creatingOrder')
                 : "Processing..."
               : shouldUsePayment(user)
               ? selectedPaymentMethod === 'cash'
-                ? "Confirm Order"
+                ? t("pickup.reviewPhase.confirmOrder")
                 : selectedPaymentMethod === 'card'
-                ? "Pay & Confirm Order"
-                : "Select Payment Method"
-              : "Confirm Order"}
+                ? t("pickup.reviewPhase.payAndConfirm")
+                : t("pickup.reviewPhase.selectPaymentMethod")
+              : t("pickup.reviewPhase.confirmOrder")}
           </Text>
         </AnimatedButton>
       </View>
