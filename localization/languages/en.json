@@ -321,8 +321,8 @@
       "notes": "Additional Note"
     },
     "addressPhase": {
-        "deleteAddress": "Delete Address",
-        "deleteMessage": "Are you sure you want to delete this address?"
+      "deleteAddress": "Delete Address",
+      "deleteMessage": "Are you sure you want to delete this address?"
     }
   },
   "settings": {
@@ -343,6 +343,9 @@
   },
   "notifications": {
     "title": "Notifications",
+    "subtitle": "Stay updated with your recycling activities",
+    "unreadNotificationSingular": "{{count}} unread notification",
+    "unreadNotificationPlural": "{{count}} unread notifications",
     "markAllRead": "Mark All as Read",
     "markAll": "Mark All",
     "markAllConfirm": "Mark {{count}} notifications as read?",

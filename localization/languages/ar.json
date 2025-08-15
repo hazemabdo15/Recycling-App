@@ -361,6 +361,9 @@
   },
   "notifications": {
     "title": "الإشعارات",
+    "subtitle": "تابع أنشطة إعادة التدوير الخاصة بك",
+    "unreadNotificationSingular": "{{count}} إشعار غير مقروء",
+    "unreadNotificationPlural": "{{count}} إشعارات غير مقروءة",
     "markAllRead": "تحديد الكل كمقروء",
     "markAll": "تحديد الكل",
     "markAllConfirm": "تحديد {{count}} إشعارات كمقروءة؟",

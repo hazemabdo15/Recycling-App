@@ -164,7 +164,7 @@ const RegisterForm = ({ onSubmit, loading, initialData = {} }) => {
                                     color={role === 'customer' ? colors.white : colors.primary}
                                 />
                                 <Text style={[styles.roleText, role === 'customer' && styles.roleTextActive]}>
-                                    {tRole('customer', 'roles.customer')}
+                                    {tRole('auth.roles', 'customer')}
                                 </Text>
                                 <Text style={[styles.roleSubtext, role === 'customer' && styles.roleSubtextActive]}>
                                     {t('auth.roleDescriptions.customer')}
@@ -181,7 +181,7 @@ const RegisterForm = ({ onSubmit, loading, initialData = {} }) => {
                                     color={role === 'buyer' ? colors.white : colors.primary}
                                 />
                                 <Text style={[styles.roleText, role === 'buyer' && styles.roleTextActive]}>
-                                    {tRole('buyer', 'roles.buyer')}
+                                    {tRole('auth.roles', 'buyer')}
                                 </Text>
                                 <Text style={[styles.roleSubtext, role === 'buyer' && styles.roleSubtextActive]}>
                                     {t('auth.roleDescriptions.buyer')}
@@ -198,7 +198,7 @@ const RegisterForm = ({ onSubmit, loading, initialData = {} }) => {
                                     color={role === 'delivery' ? colors.white : colors.primary}
                                 />
                                 <Text style={[styles.roleText, role === 'delivery' && styles.roleTextActive]}>
-                                    {tRole('delivery', 'roles.delivery')}
+                                    {tRole('auth.roles', 'delivery')}
                                 </Text>
                                 <Text style={[styles.roleSubtext, role === 'delivery' && styles.roleSubtextActive]}>
                                     {t('auth.roleDescriptions.delivery')}

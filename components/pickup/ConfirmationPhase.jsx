@@ -186,7 +186,7 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
             <View style={styles.orderRow}>
               <Text style={styles.orderLabel}>{t('orders.confirmation.items')}</Text>
               <Text style={styles.orderValue}>
-                {orderItems?.length || 0} items
+                {orderItems?.length || 0} {t("common.items")}
               </Text>
             </View>
             

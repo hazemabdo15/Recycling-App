@@ -264,7 +264,7 @@ const NotificationsScreen = () => {
             <Ionicons name="arrow-back" size={24} color={colors.white} />
           </TouchableOpacity>
           
-          <Text style={styles.heroTitle}>Notifications</Text>
+          <Text style={styles.heroTitle}>{t("notifications.title")}</Text>
           
           <View style={styles.connectionStatus}>
             <View style={[styles.connectionDot, { 
@@ -275,11 +275,11 @@ const NotificationsScreen = () => {
 
         <View style={styles.heroContent}>
           <Text style={styles.heroSubtitle}>
-            Stay updated with your recycling activities
+            {t("notifications.subtitle")}
           </Text>
           {unreadCount > 0 && (
             <Text style={styles.unreadText}>
-              {unreadCount} unread notification{unreadCount > 1 ? "s" : ""}
+              {unreadCount > 1 ? t("notifications.unreadNotificationPlural", { count: unreadCount }) : t("notifications.unreadNotificationSingular", { count: unreadCount })}
             </Text>
           )}
         </View>

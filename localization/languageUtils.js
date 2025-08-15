@@ -52,26 +52,27 @@ export const changeLanguage = async (lng) => {
             // In production, this reloads the app automatically
             if (!__DEV__) {
               await Updates.reloadAsync();
-            } else {
-              // In development, guide the user to reload manually
-              Alert.alert(
-                "Development Mode",
-                "Please manually reload the app from the Expo developer menu:\n\n" +
-                "• Shake device or press:\n" +
-                "• iOS: ⌘ + D\n" +
-                "• Android: ⌘ + M (Mac) / Ctrl + M (Windows)\n" +
-                "• Then select 'Reload'",
-                [{
-                  text: "OK",
-                  onPress: () => {
-                    // Force exit the app in development to ensure clean reload
-                    if (__DEV__) {
-                      console.log('Language changed to:', lng, 'RTL:', isNewLangRTL);
-                    }
-                  }
-                }]
-              );
-            }
+            } 
+            // else {
+            //   // In development, guide the user to reload manually
+            //   Alert.alert(
+            //     "Development Mode",
+            //     "Please manually reload the app from the Expo developer menu:\n\n" +
+            //     "• Shake device or press:\n" +
+            //     "• iOS: ⌘ + D\n" +
+            //     "• Android: ⌘ + M (Mac) / Ctrl + M (Windows)\n" +
+            //     "• Then select 'Reload'",
+            //     [{
+            //       text: "OK",
+            //       onPress: () => {
+            //         // Force exit the app in development to ensure clean reload
+            //         if (__DEV__) {
+            //           console.log('Language changed to:', lng, 'RTL:', isNewLangRTL);
+            //         }
+            //       }
+            //     }]
+            //   );
+            // }
           } catch (error) {
             console.error('Failed to reload app', error);
           }
