@@ -8,6 +8,7 @@ import { isBuyer, isCustomer } from '../../utils/roleUtils';
 import { scaleSize } from '../../utils/scale';
 import { calculateUserTier, getTierColors } from '../../utils/tiers';
 import TierBadge from '../achievements/TierBadge';
+import { t } from 'i18next';
 
 export default function ProfileCard({ user, points = 0, tier = '', onLogout, onRedeem, showRedeem, onEditAvatar, style, avatarLoading }) {
   const [showImagePreview, setShowImagePreview] = useState(false);
@@ -137,7 +138,7 @@ export default function ProfileCard({ user, points = 0, tier = '', onLogout, onR
               style={styles.actionButtonGradient}
             >
               <MaterialCommunityIcons name="gift" size={scaleSize(18)} color="white" />
-              <Text style={styles.actionButtonText}>Redeem Points</Text>
+              <Text style={styles.actionButtonText}>{t("common.redeemPoints")}</Text>
               <MaterialCommunityIcons name="arrow-right" size={scaleSize(16)} color="white" />
             </LinearGradient>
           </TouchableOpacity>

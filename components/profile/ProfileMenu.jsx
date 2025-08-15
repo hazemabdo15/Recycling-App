@@ -77,7 +77,7 @@ export default function ProfileMenu({
           <Ionicons name="gift" size={scaleSize(24)} color="#6366F1" />
         </View>
       ),
-      label: t('wallet.redeem') + ' ' + t('wallet.history'),
+      label: t('wallet.redeemHistory'),
       subtitle: t('wallet.pointsSpent'),
     },
     {

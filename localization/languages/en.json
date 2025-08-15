@@ -433,9 +433,10 @@
     "addFunds": "Add Funds",
     "withdraw": "Withdraw",
     "transfer": "Transfer",
-    "history": "Transaction History",
+    "history": "History",
     "earnMore": "Earn More Points",
-    "redeem": "Redeem Points",
+    "redeem": "Redeem",
+    "redeemHistory": "Redeem History",
     "pointsEarned": "Points Earned",
     "pointsSpent": "Points Spent"
   },
