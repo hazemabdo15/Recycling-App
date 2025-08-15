@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { RefreshControl, StatusBar, Text, TouchableOpacity, View } from "react-native";
 import { KeyboardAwareFlatList } from 'react-native-keyboard-aware-scroll-view';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from 'react-i18next'; // Add this import
 import { EmptyState, ItemCard } from "../components/category";
 import { ErrorState, Loader } from "../components/common";
 import { useAuth } from "../context/AuthContext";
@@ -27,15 +28,44 @@ import {
 } from "../utils/cartUtils";
 import { isBuyer } from "../utils/roleUtils";
 import { scaleSize } from "../utils/scale";
-import { t } from "i18next";
+
+
 
 const CategoryDetails = () => {
   const { categoryName } = useLocalSearchParams();
   const navigation = useNavigation();
   const { user } = useAuth();
   const { tRole } = useLocalization();
+  const { t } = useTranslation(); // Add translation hook
 
   const [pendingOperations, setPendingOperations] = useState({});
+// Helper function to get translated category/subcategory name
+const getTranslatedName = (t, originalName, type = 'categories') => {
+  if (!originalName) return originalName;
+  
+  // Convert to lowercase and replace spaces with hyphens for key matching
+  const key = originalName.toLowerCase();
+  console.log(originalName,'kkkk');
+  
+  
+  // Try to get translation from categories or subcategories
+  const translatedName = type === 'subcategories' 
+    ? t(`items.${categoryName}.${key}`, { defaultValue: null })
+    : t(`categories.${key}.name`, { defaultValue: null });
+  
+  // If no translation found, try the paper section for special cases
+  if (!translatedName && type === 'categories') {
+    const paperTranslation = t(`categories.paper.name`, { defaultValue: null });
+    if (paperTranslation && key === 'paper') {
+      return paperTranslation;
+    }
+  }
+  
+  // Return translated name or fall back to original
+  return translatedName || originalName;
+};
+  // Get translated category name for display
+  const translatedCategoryName = getTranslatedName(t, categoryName, 'categories');
 
   useEffect(() => {
     navigation.setOptions({ headerShown: false });
@@ -70,9 +100,14 @@ const CategoryDetails = () => {
     const processedItem = needsNormalization ? normalizeItemData(item) : item;
     const itemKey = getCartKey(processedItem);
     const cartQuantity = cartItems[itemKey] || 0;
+    
+    // Add translated name to item
+    const translatedItemName = getTranslatedName(t, processedItem.name, 'subcategories');
+    
     return {
       ...processedItem,
       cartQuantity, // this is the quantity in the cart
+      displayName: translatedItemName, // Add translated name for display
     };
   });
 
@@ -98,7 +133,7 @@ const CategoryDetails = () => {
     }
 
     console.log("Processing manual input:", {
-      item: item?.name,
+      item: item?.displayName || item?.name,
       value,
       itemQuantity: item?.quantity,
     });
@@ -108,20 +143,23 @@ const CategoryDetails = () => {
       return;
     }
 
+    // Use translated item name in messages
+    const itemDisplayName = item.displayName || item.name;
+
     // Validate minimum quantity based on measurement unit
     const measurementUnit =
       item.measurement_unit || (item.unit === "KG" ? 1 : 2);
     if (value > 0) {
       if (measurementUnit === 1 && value < 0.25) {
         showCartMessage(CartMessageTypes.INVALID_QUANTITY, {
-          itemName: item.name,
+          itemName: itemDisplayName,
           measurementUnit: measurementUnit,
           isBuyer: user?.role === "buyer",
         });
         return;
       } else if (measurementUnit === 2 && value < 1) {
         showCartMessage(CartMessageTypes.INVALID_QUANTITY, {
-          itemName: item.name,
+          itemName: itemDisplayName,
           measurementUnit: measurementUnit,
           isBuyer: user?.role === "buyer",
         });
@@ -132,7 +170,7 @@ const CategoryDetails = () => {
     // Only check stock for buyer users
     if (isBuyer(user) && value > item.quantity) {
       showCartMessage(CartMessageTypes.STOCK_ERROR, {
-        itemName: item.name,
+        itemName: itemDisplayName,
         maxStock: item.quantity,
         measurementUnit: item.measurement_unit,
         isBuyer: true,
@@ -143,7 +181,7 @@ const CategoryDetails = () => {
     setPendingOperations((prev) => ({ ...prev, [itemKey]: "manualInput" }));
     try {
       console.log("Calling handleSetQuantity with:", {
-        item: item.name,
+        item: itemDisplayName,
         value,
       });
       const result = await handleSetQuantity(item, value);
@@ -152,7 +190,7 @@ const CategoryDetails = () => {
       // Only show removal message when quantity is set to 0
       if (value === 0) {
         showCartMessage(CartMessageTypes.MANUAL_REMOVED, {
-          itemName: item.name,
+          itemName: itemDisplayName,
           measurementUnit: item.measurement_unit,
           isBuyer: user?.role === "buyer",
         });
@@ -160,7 +198,7 @@ const CategoryDetails = () => {
     } catch (_err) {
       console.log("handleSetQuantity error:", _err);
       showCartMessage(CartMessageTypes.OPERATION_FAILED, {
-        itemName: item.name,
+        itemName: itemDisplayName,
         measurementUnit: item.measurement_unit,
         isBuyer: user?.role === "buyer",
       });
@@ -176,6 +214,7 @@ const CategoryDetails = () => {
   const renderItem = ({ item, index }) => {
     const itemKey = getCartKey(item);
     const itemPendingAction = pendingOperations[itemKey];
+    const itemDisplayName = item.displayName || item.name;
 
     // Stock logic - only for buyer users
     let maxReached = false;
@@ -196,7 +235,11 @@ const CategoryDetails = () => {
 
     return (
       <ItemCard
-        item={item}
+        item={{
+          ...item,
+          // Pass the display name to ItemCard so it shows translated text
+          name: itemDisplayName
+        }}
         quantity={item.cartQuantity}
         disabled={!!itemPendingAction}
         pendingAction={itemPendingAction}
@@ -213,14 +256,14 @@ const CategoryDetails = () => {
           ) {
             if (maxReached) {
               showMaxStockMessage(
-                item.name,
+                itemDisplayName,
                 item.quantity,
                 item.measurement_unit
               );
             }
             if (outOfStock) {
               showCartMessage(CartMessageTypes.STOCK_ERROR, {
-                itemName: item.name,
+                itemName: itemDisplayName,
                 maxStock: 0,
                 measurementUnit: item.measurement_unit,
                 isBuyer: true,
@@ -233,7 +276,7 @@ const CategoryDetails = () => {
           const step = getIncrementStep(normalizedItem.measurement_unit);
 
           showCartMessage(CartMessageTypes.ADD_SINGLE, {
-            itemName: item.name || "item",
+            itemName: itemDisplayName,
             quantity: step,
             measurementUnit: normalizedItem.measurement_unit,
             isBuyer: user?.role === "buyer",
@@ -256,7 +299,7 @@ const CategoryDetails = () => {
             if (addResult === false) {
               // Show maxStock toast if add was blocked
               showMaxStockMessage(
-                item.name,
+                itemDisplayName,
                 item.quantity,
                 item.measurement_unit
               );
@@ -264,7 +307,7 @@ const CategoryDetails = () => {
           } catch (err) {
             console.error("[CategoryDetails] Error increasing quantity:", err);
             showCartMessage(CartMessageTypes.OPERATION_FAILED, {
-              itemName: item.name,
+              itemName: itemDisplayName,
               measurementUnit: item.measurement_unit,
               isBuyer: user?.role === "buyer",
             });
@@ -286,7 +329,7 @@ const CategoryDetails = () => {
 
           if (remainingQuantity > 0) {
             showCartMessage(CartMessageTypes.REMOVE_SINGLE, {
-              itemName: item.name || "item",
+              itemName: itemDisplayName,
               quantity: step,
               measurementUnit: normalizedItem.measurement_unit,
               remainingQuantity: remainingQuantity,
@@ -294,7 +337,7 @@ const CategoryDetails = () => {
             });
           } else {
             showCartMessage(CartMessageTypes.ITEM_REMOVED, {
-              itemName: item.name || "item",
+              itemName: itemDisplayName,
               measurementUnit: normalizedItem.measurement_unit,
               isBuyer: user?.role === "buyer",
             });
@@ -317,7 +360,7 @@ const CategoryDetails = () => {
           } catch (err) {
             console.error("[CategoryDetails] Error decreasing quantity:", err);
             showCartMessage(CartMessageTypes.OPERATION_FAILED, {
-              itemName: item.name,
+              itemName: itemDisplayName,
               measurementUnit: item.measurement_unit,
               isBuyer: user?.role === "buyer",
             });
@@ -339,7 +382,7 @@ const CategoryDetails = () => {
             !canAddToCart(item, item.cartQuantity, fastStep)
           ) {
             showMaxStockMessage(
-              item.name,
+              itemDisplayName,
               item.quantity,
               item.measurement_unit
             );
@@ -349,7 +392,7 @@ const CategoryDetails = () => {
           const normalizedItem = normalizeItemData(item);
 
           showCartMessage(CartMessageTypes.ADD_FAST, {
-            itemName: item.name || "item",
+            itemName: itemDisplayName,
             quantity: fastStep,
             measurementUnit: normalizedItem.measurement_unit,
             isBuyer: user?.role === "buyer",
@@ -373,7 +416,11 @@ const CategoryDetails = () => {
               "[CategoryDetails] Error fast increasing quantity:",
               err
             );
-            showCartMessage(CartMessageTypes.OPERATION_FAILED);
+            showCartMessage(CartMessageTypes.OPERATION_FAILED, {
+              itemName: itemDisplayName,
+              measurementUnit: item.measurement_unit,
+              isBuyer: user?.role === "buyer",
+            });
           } finally {
             clearTimeout(timeoutId);
             setPendingOperations((prev) => {
@@ -392,7 +439,7 @@ const CategoryDetails = () => {
 
           if (remainingQuantity > 0) {
             showCartMessage(CartMessageTypes.REMOVE_FAST, {
-              itemName: item.name || "item",
+              itemName: itemDisplayName,
               quantity: fastStep,
               measurementUnit: normalizedItem.measurement_unit,
               remainingQuantity: remainingQuantity,
@@ -400,7 +447,7 @@ const CategoryDetails = () => {
             });
           } else {
             showCartMessage(CartMessageTypes.ITEM_REMOVED, {
-              itemName: item.name || "item",
+              itemName: itemDisplayName,
               measurementUnit: normalizedItem.measurement_unit,
               isBuyer: user?.role === "buyer",
             });
@@ -424,7 +471,11 @@ const CategoryDetails = () => {
               "[CategoryDetails] Error fast decreasing quantity:",
               err
             );
-            showCartMessage(CartMessageTypes.OPERATION_FAILED);
+            showCartMessage(CartMessageTypes.OPERATION_FAILED, {
+              itemName: itemDisplayName,
+              measurementUnit: item.measurement_unit,
+              isBuyer: user?.role === "buyer",
+            });
           } finally {
             clearTimeout(timeoutId);
             setPendingOperations((prev) => {
@@ -437,8 +488,9 @@ const CategoryDetails = () => {
       />
     );
   };
+  
   const handleAddItem = () => {
-    console.log("Add item to", categoryName);
+    console.log("Add item to", translatedCategoryName);
   };
 
   // Hero Header Component
@@ -457,14 +509,14 @@ const CategoryDetails = () => {
           <MaterialCommunityIcons name="arrow-left" size={24} color={colors.white} />
         </TouchableOpacity>
         
-        <Text style={heroStyles.heroTitle}>{categoryName}</Text>
+        <Text style={heroStyles.heroTitle}>{translatedCategoryName}</Text>
         
         <View style={heroStyles.spacer} />
       </View>
 
       <View style={heroStyles.heroContent}>
         <Text style={heroStyles.heroSubtitle}>
-          {t("categories.subtitle", { categoryName : categoryName.toLowerCase()})}
+          {t("categories.subtitle", { categoryName: translatedCategoryName.toLowerCase() })}
         </Text>
         
         <View style={heroStyles.statsContainer}>
@@ -503,6 +555,7 @@ const CategoryDetails = () => {
       </View>
     </LinearGradient>
   );
+  
   if (loading && !refreshing) {
     return (
       <View style={[layoutStyles.container, { paddingTop: insets.top }]}> 
@@ -515,6 +568,7 @@ const CategoryDetails = () => {
       </View>
     );
   }
+  
   if (error) {
     return (
       <View style={[layoutStyles.container, { paddingTop: insets.top }]}>
@@ -523,10 +577,11 @@ const CategoryDetails = () => {
           backgroundColor="transparent"
           translucent
         />
-        <ErrorState message={`Error loading ${categoryName} items`} />
+        <ErrorState message={t('categories.errorLoading', 'Error loading {{categoryName}} items', { categoryName: translatedCategoryName })} />
       </View>
     );
   }
+  
   return (
     <View
       style={[
@@ -543,7 +598,10 @@ const CategoryDetails = () => {
       <HeroHeader />
 
       {mergedItems.length === 0 ? (
-        <EmptyState categoryName={categoryName} onAddItem={handleAddItem} />
+        <EmptyState 
+          categoryName={translatedCategoryName} 
+          onAddItem={handleAddItem} 
+        />
       ) : (
         <KeyboardAwareFlatList
           data={mergedItems}

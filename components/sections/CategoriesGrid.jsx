@@ -8,6 +8,7 @@ import {
     View,
 } from "react-native";
 import { KeyboardAwareFlatList } from 'react-native-keyboard-aware-scroll-view';
+import { useTranslation } from 'react-i18next'; // Add this import
 import { useAuth } from "../../context/AuthContext";
 import { useCategories } from "../../hooks/useAPI";
 import { useCart } from "../../hooks/useCart";
@@ -31,6 +32,29 @@ import { ItemCard } from "../category";
 import { FadeInView } from "../common";
 import { showGlobalToast } from "../common/GlobalToast";
 
+// Helper function to get translated category/subcategory name
+const getTranslatedName = (t, originalName, type = 'categories') => {
+  if (!originalName) return originalName;
+  
+  const key = originalName.toLowerCase();
+  
+  // Try to get translation from categories or subcategories
+  const translatedName = type === 'subcategories' 
+    ? t(`items.${key}`, { defaultValue: null })
+    : t(`categories.${key}.name`, { defaultValue: null });
+  
+  // If no translation found, try the paper section for special cases
+  if (!translatedName && type === 'categories') {
+    const paperTranslation = t(`categories.paper.name`, { defaultValue: null });
+    if (paperTranslation && key === 'paper') {
+      return paperTranslation;
+    }
+  }
+  
+  // Return translated name or fall back to original
+  return translatedName || originalName;
+};
+
 const CategoriesGrid = ({
   searchText = "",
   onCategoryPress,
@@ -38,8 +62,10 @@ const CategoriesGrid = ({
   showItemsMode = false,
   flatListBottomPadding = 0,
 }) => {
+  const { t } = useTranslation(); // Add translation hook
   const [refreshing, setRefreshing] = useState(false);
   const { refetch } = require("../../hooks/useAPI").useAllItems();
+  
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
@@ -48,6 +74,7 @@ const CategoriesGrid = ({
       setRefreshing(false);
     }
   };
+  
   const { user } = useAuth();
   const { categories, loading, error } = useCategories();
   const {
@@ -66,18 +93,21 @@ const CategoriesGrid = ({
     const normalizedItem = normalizeItemData(item);
     const currentQuantity = cartItems[getCartKey(item)] || 0;
 
+    // Use translated name in messages
+    const translatedItemName = getTranslatedName(t, normalizedItem?.name, 'subcategories');
+
     // Validate minimum quantity based on measurement unit
     if (value > 0) {
       if (normalizedItem.measurement_unit === 1 && value < 0.25) {
         showCartMessage(CartMessageTypes.INVALID_QUANTITY, {
-          itemName: normalizedItem?.name || 'Item',
+          itemName: translatedItemName,
           measurementUnit: normalizedItem.measurement_unit,
           isBuyer: user?.role === "buyer",
         });
         return;
       } else if (normalizedItem.measurement_unit === 2 && value < 1) {
         showCartMessage(CartMessageTypes.INVALID_QUANTITY, {
-          itemName: normalizedItem?.name || 'Item',
+          itemName: translatedItemName,
           measurementUnit: normalizedItem.measurement_unit,
           isBuyer: user?.role === "buyer",
         });
@@ -88,7 +118,7 @@ const CategoriesGrid = ({
     // Only check stock for buyer users
     if (isBuyer(user) && value > item.quantity) {
       showMaxStockMessage(
-        normalizedItem?.name || 'Item',
+        translatedItemName,
         item.quantity,
         normalizedItem.measurement_unit
       );
@@ -100,38 +130,9 @@ const CategoriesGrid = ({
 
     try {
       await handleSetQuantity(item, value);
-
-      // Show unified message based on the operation
-      if (value === 0) {
-        // Only show removal message when quantity is set to 0
-        // No toast for manual removed
-        // showCartMessage(CartMessageTypes.MANUAL_REMOVED, {
-        //   itemName: normalizedItem.name,
-        //   measurementUnit: normalizedItem.measurement_unit,
-        //   isBuyer: user?.role === 'buyer',
-        // });
-      } else if (value > currentQuantity) {
-        // Always show the final quantity for manual set, not the added amount
-        // No toast for manual set
-        // showCartMessage(CartMessageTypes.MANUAL_SET, {
-        //   itemName: normalizedItem.name,
-        //   quantity: value,
-        //   measurementUnit: normalizedItem.measurement_unit,
-        //   isBuyer: user?.role === 'buyer',
-        // });
-      } else if (value < currentQuantity) {
-        // Show quantity change, not removal
-        // No toast for manual set
-        // showCartMessage(CartMessageTypes.MANUAL_SET, {
-        //   itemName: normalizedItem.name,
-        //   quantity: value,
-        //   measurementUnit: normalizedItem.measurement_unit,
-        //   isBuyer: user?.role === 'buyer',
-        // });
-      }
     } catch (_err) {
       showCartMessage(CartMessageTypes.OPERATION_FAILED, {
-        itemName: normalizedItem?.name || 'Item',
+        itemName: translatedItemName,
         measurementUnit: normalizedItem.measurement_unit,
         isBuyer: user?.role === "buyer",
       });
@@ -158,26 +159,49 @@ const CategoriesGrid = ({
                 categoryName: item.categoryName || category.name,
                 category: category,
               });
+              
+              // Add translated names to the normalized item
+              const translatedItemName = getTranslatedName(t, normalizedItem.name, 'subcategories');
+              const translatedCategoryName = getTranslatedName(t, category.name, 'categories');
+              
               const itemKey = getCartKey(normalizedItem);
-              // DO NOT overwrite normalizedItem.quantity (stock from API)
               const cartQuantity = cartItems[itemKey] || 0;
+              
               return {
                 ...normalizedItem,
+                displayName: translatedItemName, // Add display name for UI
+                translatedCategoryName: translatedCategoryName, // Add translated category name
                 cartQuantity,
-                category: category,
+                category: {
+                  ...category,
+                  displayName: translatedCategoryName
+                },
               };
             }) || []
         )
-        .filter((item) => item && item.name && item.name.toLowerCase().includes(searchLower));
+        .filter((item) => {
+          if (!item || !item.displayName) return false;
+          // Search in both original and translated names
+          return item.displayName.toLowerCase().includes(searchLower) ||
+                 (item.name && item.name.toLowerCase().includes(searchLower));
+        });
 
       return { filteredCategories: [], filteredItems: items };
     } else {
-      const cats = categories.filter((category) =>
-        category && category.name && category.name.toLowerCase().includes(searchLower)
-      );
+      const cats = categories
+        .map(category => ({
+          ...category,
+          displayName: getTranslatedName(t, category.name, 'categories')
+        }))
+        .filter((category) => {
+          if (!category || !category.displayName) return false;
+          // Search in both original and translated names
+          return category.displayName.toLowerCase().includes(searchLower) ||
+                 (category.name && category.name.toLowerCase().includes(searchLower));
+        });
       return { filteredCategories: cats, filteredItems: [] };
     }
-  }, [categories, showItemsMode, searchText, cartItems]);
+  }, [categories, showItemsMode, searchText, cartItems, t]);
 
   const handleCartOperation = useCallback(
     async (item, operation) => {
@@ -186,6 +210,8 @@ const CategoriesGrid = ({
 
       // Get normalized item data
       const normalizedItem = normalizeItemData(item);
+      const translatedItemName = getTranslatedName(t, normalizedItem?.name, 'subcategories');
+      
       const step = operation.includes("fast")
         ? 5
         : getIncrementStep(normalizedItem.measurement_unit);
@@ -204,17 +230,17 @@ const CategoriesGrid = ({
           [itemKey]: operation,
         }));
 
-        // Show toast instantly before async operation
+        // Show toast instantly before async operation with translated name
         if (operation === "increase") {
           showCartMessage(CartMessageTypes.ADD_SINGLE, {
-            itemName: normalizedItem?.name || 'Item',
+            itemName: translatedItemName,
             quantity: step,
             measurementUnit: normalizedItem.measurement_unit,
             isBuyer: user?.role === "buyer",
           });
         } else if (operation === "decrease") {
           showCartMessage(CartMessageTypes.REMOVE_SINGLE, {
-            itemName: normalizedItem?.name || 'Item',
+            itemName: translatedItemName,
             quantity: step,
             measurementUnit: normalizedItem.measurement_unit,
             remainingQuantity: Math.max(0, (item.cartQuantity || 0) - step),
@@ -222,14 +248,14 @@ const CategoriesGrid = ({
           });
         } else if (operation === "fastIncrease") {
           showCartMessage(CartMessageTypes.ADD_FAST, {
-            itemName: normalizedItem?.name || 'Item',
+            itemName: translatedItemName,
             quantity: step,
             measurementUnit: normalizedItem.measurement_unit,
             isBuyer: user?.role === "buyer",
           });
         } else if (operation === "fastDecrease") {
           showCartMessage(CartMessageTypes.REMOVE_FAST, {
-            itemName: normalizedItem?.name || 'Item',
+            itemName: translatedItemName,
             quantity: step,
             measurementUnit: normalizedItem.measurement_unit,
             remainingQuantity: Math.max(0, (item.cartQuantity || 0) - step),
@@ -264,9 +290,9 @@ const CategoriesGrid = ({
         if (operation.includes("increase")) {
           if (operation === "increase" || operation === "fastIncrease") {
             if (increaseResult === false) {
-              // Show unified stock error message
+              // Show unified stock error message with translated name
               showMaxStockMessage(
-                normalizedItem?.name || 'Item',
+                translatedItemName,
                 item.quantity || 0,
                 normalizedItem.measurement_unit
               );
@@ -276,7 +302,7 @@ const CategoriesGrid = ({
       } catch (err) {
         console.error(`[CategoriesGrid] Error ${operation} quantity:`, err);
         showCartMessage(CartMessageTypes.OPERATION_FAILED, {
-          itemName: normalizedItem?.name || 'Item',
+          itemName: translatedItemName,
           measurementUnit: normalizedItem.measurement_unit,
           isBuyer: user?.role === "buyer",
         });
@@ -296,6 +322,7 @@ const CategoriesGrid = ({
       handleFastDecreaseQuantity,
       pendingOperations,
       user,
+      t,
     ]
   );
 
@@ -313,23 +340,26 @@ const CategoriesGrid = ({
     onFilteredCountChange,
     showItemsMode,
   ]);
+  
   const handleCategoryPress = (categoryOrItem) => {
     if (onCategoryPress) {
       onCategoryPress(categoryOrItem);
     }
   };
+  
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#0E9F6E" />
-        <Text style={styles.loadingText}>Loading categories...</Text>
+        <Text style={styles.loadingText}>{t('common.loading', 'Loading categories...')}</Text>
       </View>
     );
   }
+  
   if (error) {
     return (
       <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Error: {error}</Text>
+        <Text style={styles.errorText}>{t('common.error', 'Error')}: {error}</Text>
       </View>
     );
   }
@@ -337,7 +367,7 @@ const CategoriesGrid = ({
   if (!categories || categories.length === 0) {
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>No categories available</Text>
+        <Text style={styles.emptyText}>{t('categories.noCategories', 'No categories available')}</Text>
       </View>
     );
   }
@@ -366,7 +396,11 @@ const CategoriesGrid = ({
             return (
               <ItemCard
                 key={itemKey || `${item.name}-${index}`}
-                item={item}
+                item={{
+                  ...item,
+                  // Pass the display name to ItemCard so it shows translated text
+                  name: item.displayName || item.name
+                }}
                 quantity={cartQuantity}
                 index={index}
                 disabled={!!itemPendingAction}
@@ -380,7 +414,7 @@ const CategoriesGrid = ({
                   if (isBuyer(user) && (itemPendingAction || outOfStock)) {
                     if (outOfStock) {
                       showGlobalToast(
-                        "This item is out of stock.",
+                        t('cart.outOfStock', 'This item is out of stock.'),
                         1200,
                         "error"
                       );
@@ -398,7 +432,7 @@ const CategoriesGrid = ({
                       item.quantity < minStockRequired
                     ) {
                       showGlobalToast(
-                        "Not enough quantity in stock to add this item.",
+                        t('cart.notEnoughStock', 'Not enough quantity in stock to add this item.'),
                         1200,
                         "error"
                       );
@@ -408,7 +442,7 @@ const CategoriesGrid = ({
                     const step = getIncrementStep(item.measurement_unit);
                     const remainingStock = item.quantity - cartQuantity;
                     console.log("[CategoriesGrid] Stock check:", {
-                      itemName: item?.name || 'Item',
+                      itemName: item.displayName || item?.name || 'Item',
                       totalStock: item.quantity,
                       cartQuantity,
                       remainingStock,
@@ -421,7 +455,7 @@ const CategoriesGrid = ({
                       remainingStock < step ||
                       cartQuantity + step > item.quantity
                     ) {
-                      const maxMsg = `You cannot add more. Only ${item.quantity} in stock.`;
+                      const maxMsg = t('cart.maxStock', 'You cannot add more. Only {{quantity}} in stock.', { quantity: item.quantity });
                       console.log(
                         "[CategoriesGrid] Showing maxStock toast:",
                         maxMsg
@@ -444,7 +478,7 @@ const CategoriesGrid = ({
                       item.quantity < minStockRequired
                     ) {
                       showGlobalToast(
-                        "Not enough quantity in stock to add this item.",
+                        t('cart.notEnoughStock', 'Not enough quantity in stock to add this item.'),
                         1200,
                         "error"
                       );
@@ -454,7 +488,7 @@ const CategoriesGrid = ({
                     const fastStep = 5;
                     const remainingStock = item.quantity - cartQuantity;
                     console.log("[CategoriesGrid] Fast stock check:", {
-                      itemName: item.name,
+                      itemName: item.displayName || item.name,
                       totalStock: item.quantity,
                       cartQuantity,
                       remainingStock,
@@ -467,7 +501,7 @@ const CategoriesGrid = ({
                       remainingStock < fastStep ||
                       cartQuantity + fastStep > item.quantity
                     ) {
-                      const maxMsg = `You cannot add more. Only ${item.quantity} in stock.`;
+                      const maxMsg = t('cart.maxStock', 'You cannot add more. Only {{quantity}} in stock.', { quantity: item.quantity });
                       console.log(
                         "[CategoriesGrid] Showing fast maxStock toast:",
                         maxMsg
@@ -509,7 +543,11 @@ const CategoriesGrid = ({
           renderItem={({ item: category }) => (
             <CategoryCard
               key={category._id}
-              category={category}
+              category={{
+                ...category,
+                // Pass the display name to CategoryCard so it shows translated text
+                name: category.displayName || category.name
+              }}
               onPress={() => handleCategoryPress(category)}
               style={styles.categoryCard}
             />
@@ -530,6 +568,7 @@ const CategoriesGrid = ({
     </FadeInView>
   );
 };
+
 const styles = StyleSheet.create({
   scrollContainer: {
     paddingBottom: scaleSize(40),
@@ -595,4 +634,5 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 });
+
 export default CategoriesGrid;

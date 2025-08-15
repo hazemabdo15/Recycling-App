@@ -501,6 +501,10 @@
     "errors": {
       "notEnoughStock": "Not enough quantity in stock to add this item.",
       "cannotAddMore": "You cannot add more. Only {{quantity}} in stock."
+    },
+    "paper": {
+      "name": "paper",
+      "description": "eng"
     }
   },
   "delivery": {
@@ -857,5 +861,10 @@
     "noMaterialsExtracted": "No materials were extracted from the recording.",
     "goBack": "Go Back",
     "noAvailableMaterials": "No available materials to add to cart. Items marked in red are not yet in our database."
+  },
+  "items": {
+    "paper": {
+      "shredded papers": "shredded papers"
+    }
   }
 }
