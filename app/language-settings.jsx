@@ -1,0 +1,193 @@
+import { MaterialIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import {
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+import { useLocalization } from '../context/LocalizationContext';
+import { colors } from '../styles/theme';
+import { scaleSize } from '../utils/scale';
+
+export default function LanguageSettings() {
+  const router = useRouter();
+  const { t, currentLanguage, changeLanguage, isRTL } = useLocalization();
+
+  const languages = [
+    { code: 'en', name: 'English', nativeName: 'English' },
+    { code: 'ar', name: 'Arabic', nativeName: 'العربية' },
+  ];
+
+  const handleLanguageChange = async (languageCode) => {
+    if (languageCode !== currentLanguage) {
+      await changeLanguage(languageCode);
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
+          <MaterialIcons
+            name="arrow-back-ios"
+            size={scaleSize(22)}
+            color={colors.primary}
+            style={{ transform: [{ scaleX: isRTL ? -1 : 1 }] }}
+          />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>{t('settings.language')}</Text>
+        <View style={styles.placeholder} />
+      </View>
+
+      {/* Content */}
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <Text style={styles.sectionTitle}>{t('settings.changeLanguage')}</Text>
+        
+        <View style={styles.languageList}>
+          {languages.map((language) => (
+            <TouchableOpacity
+              key={language.code}
+              style={[
+                styles.languageItem,
+                currentLanguage === language.code && styles.activeLanguageItem,
+              ]}
+              onPress={() => handleLanguageChange(language.code)}
+            >
+              <View style={styles.languageInfo}>
+                <Text style={[
+                  styles.languageName,
+                  currentLanguage === language.code && styles.activeLanguageName,
+                ]}>
+                  {language.nativeName}
+                </Text>
+                <Text style={[
+                  styles.languageSubtitle,
+                  currentLanguage === language.code && styles.activeLanguageSubtitle,
+                ]}>
+                  {language.name}
+                </Text>
+              </View>
+              
+              {currentLanguage === language.code && (
+                <MaterialIcons
+                  name="check-circle"
+                  size={scaleSize(24)}
+                  color={colors.primary}
+                />
+              )}
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.infoContainer}>
+          <MaterialIcons
+            name="info-outline"
+            size={scaleSize(20)}
+            color={colors.textSecondary}
+          />
+          <Text style={styles.infoText}>
+            {t('settings.language')} changes will apply immediately. Some changes may require an app restart for full effect.
+          </Text>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: scaleSize(20),
+    paddingVertical: scaleSize(16),
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  backButton: {
+    padding: scaleSize(8),
+  },
+  headerTitle: {
+    fontSize: scaleSize(18),
+    fontWeight: '600',
+    color: colors.text,
+  },
+  placeholder: {
+    width: scaleSize(40),
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: scaleSize(20),
+  },
+  sectionTitle: {
+    fontSize: scaleSize(16),
+    fontWeight: '600',
+    color: colors.text,
+    marginTop: scaleSize(24),
+    marginBottom: scaleSize(16),
+  },
+  languageList: {
+    backgroundColor: colors.surface,
+    borderRadius: scaleSize(12),
+    overflow: 'hidden',
+  },
+  languageItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: scaleSize(20),
+    paddingVertical: scaleSize(16),
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  activeLanguageItem: {
+    backgroundColor: colors.primaryLight,
+  },
+  languageInfo: {
+    flex: 1,
+  },
+  languageName: {
+    fontSize: scaleSize(16),
+    fontWeight: '500',
+    color: colors.text,
+    marginBottom: scaleSize(4),
+  },
+  activeLanguageName: {
+    color: colors.primary,
+  },
+  languageSubtitle: {
+    fontSize: scaleSize(14),
+    color: colors.textSecondary,
+  },
+  activeLanguageSubtitle: {
+    color: colors.primary,
+  },
+  infoContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: scaleSize(24),
+    paddingHorizontal: scaleSize(16),
+    paddingVertical: scaleSize(16),
+    backgroundColor: colors.surface,
+    borderRadius: scaleSize(12),
+    marginBottom: scaleSize(24),
+  },
+  infoText: {
+    flex: 1,
+    fontSize: scaleSize(14),
+    color: colors.textSecondary,
+    marginStart: scaleSize(12),
+    lineHeight: scaleSize(20),
+  },
+});

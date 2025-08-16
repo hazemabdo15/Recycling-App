@@ -1,6 +1,7 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useLocalization } from "../../context/LocalizationContext";
 import { colors } from "../../styles";
 import { scaleSize } from "../../utils/scale";
 
@@ -13,6 +14,8 @@ export default function ProfileMenu({
   onLogout,
   style,
 }) {
+  const { t } = useLocalization();
+  
   const handlePress = (key) => {
     switch (key) {
       case "recyclingHistory":
@@ -22,24 +25,24 @@ export default function ProfileMenu({
         router.push('/achievements');
         break;
       case "notifications":
-        Alert.alert("Coming soon");
+        Alert.alert(t('common.loading'));
         break;
       case "helpSupport":
         if (onHelpSupport) {
           onHelpSupport();
         } else {
-          Alert.alert("Coming soon");
+          Alert.alert(t('common.loading'));
         }
         break;
       case "redeemHistory":
         if (onRedeemHistory) {
           onRedeemHistory();
         } else {
-          Alert.alert("Coming soon");
+          Alert.alert(t('common.loading'));
         }
         break;
       case "settings":
-        Alert.alert("Coming soon");
+        router.push('/language-settings');
         break;
       case "logout":
         onLogout && onLogout();
@@ -48,13 +51,98 @@ export default function ProfileMenu({
         if (onEWallet) {
           onEWallet();
         } else {
-          Alert.alert("Coming soon");
+          Alert.alert(t('common.loading'));
         }
         break;
       default:
         break;
     }
   };
+
+  const menuItems = [
+    {
+      key: "eWallet",
+      icon: (
+        <View style={[styles.iconBg, { backgroundColor: "#fffbe6" }]}>
+          <Ionicons name="wallet" size={scaleSize(24)} color="#F59E42" />
+        </View>
+      ),
+      label: t('profile.wallet'),
+      subtitle: t('wallet.balance') + ' ' + t('common.and') + ' ' + t('wallet.transactions'),
+    },
+    {
+      key: "redeemHistory",
+      icon: (
+        <View style={[styles.iconBg, { backgroundColor: "#e0e7ff" }]}>
+          <Ionicons name="gift" size={scaleSize(24)} color="#6366F1" />
+        </View>
+      ),
+      label: t('wallet.redeemHistory'),
+      subtitle: t('wallet.pointsSpent'),
+    },
+    {
+      key: "recyclingHistory",
+      icon: (
+        <View style={[styles.iconBg, { backgroundColor: "#e8f7e5" }]}>
+          <MaterialCommunityIcons
+            name="recycle-variant"
+            size={scaleSize(26)}
+            color="#34A853"
+          />
+        </View>
+      ),
+      label: t('orders.history'),
+      subtitle: t('orders.history'),
+    },
+    {
+      key: "achievements",
+      icon: (
+        <View style={[styles.iconBg, { backgroundColor: "#fff7e6" }]}>
+          <MaterialCommunityIcons
+            name="medal"
+            size={scaleSize(24)}
+            color="#F59E42"
+          />
+        </View>
+      ),
+      label: t('profile.achievements'),
+      subtitle: t('achievements.milestones'),
+    },
+    {
+      key: "settings",
+      icon: (
+        <View style={[styles.iconBg, { backgroundColor: "#f0f9ff" }]}>
+          <Ionicons name="language" size={scaleSize(24)} color="#0EA5E9" />
+        </View>
+      ),
+      label: t('settings.language'),
+      subtitle: t('settings.changeLanguage'),
+    },
+    {
+      key: "helpSupport",
+      icon: (
+        <View style={[styles.iconBg, { backgroundColor: "#f3e8ff" }]}>
+          <Ionicons name="help-circle" size={scaleSize(24)} color="#8B5CF6" />
+        </View>
+      ),
+      label: t('profile.help'),
+      subtitle: t('help.contact'),
+    },
+    {
+      key: "logout",
+      icon: (
+        <View style={[styles.iconBg, { backgroundColor: "#fff1f2" }]}>
+          <MaterialCommunityIcons
+            name="logout-variant"
+            size={scaleSize(24)}
+            color="#EF4444"
+          />
+        </View>
+      ),
+      label: t('profile.logout'),
+      subtitle: t('auth.signIn'),
+    },
+  ];
 
   // Filter out E-Wallet and Redeem History for buyers
   const filteredMenuItems =
@@ -155,79 +243,3 @@ const styles = StyleSheet.create({
     letterSpacing: 0.05,
   },
 });
-
-const menuItems = [
-  {
-    key: "eWallet",
-    icon: (
-      <View style={[styles.iconBg, { backgroundColor: "#fffbe6" }]}>
-        <Ionicons name="wallet" size={scaleSize(24)} color="#F59E42" />
-      </View>
-    ),
-    label: "E-Wallet",
-    subtitle: "Check your balance and transactions",
-  },
-  {
-    key: "redeemHistory",
-    icon: (
-      <View style={[styles.iconBg, { backgroundColor: "#e0e7ff" }]}>
-        <Ionicons name="gift" size={scaleSize(24)} color="#6366F1" />
-      </View>
-    ),
-    label: "Redeem History",
-    subtitle: "Track all your redeemed rewards",
-  },
-  {
-    key: "recyclingHistory",
-    icon: (
-      <View style={[styles.iconBg, { backgroundColor: "#e8f7e5" }]}>
-        <MaterialCommunityIcons
-          name="recycle-variant"
-          size={scaleSize(26)}
-          color="#34A853"
-        />
-      </View>
-    ),
-    label: "Recycling History",
-    subtitle: "View your past recycling orders",
-  },
-
-  {
-    key: "achievements",
-    icon: (
-      <View style={[styles.iconBg, { backgroundColor: "#fff7e6" }]}>
-        <MaterialCommunityIcons
-          name="medal"
-          size={scaleSize(24)}
-          color="#F59E42"
-        />
-      </View>
-    ),
-    label: "Achievements",
-    subtitle: "See your recycling milestones",
-  },
-  {
-    key: "helpSupport",
-    icon: (
-      <View style={[styles.iconBg, { backgroundColor: "#f3e8ff" }]}>
-        <Ionicons name="help-circle" size={scaleSize(24)} color="#8B5CF6" />
-      </View>
-    ),
-    label: "Help & Support",
-    subtitle: "Get help and contact support",
-  },
-  {
-    key: "logout",
-    icon: (
-      <View style={[styles.iconBg, { backgroundColor: "#fff1f2" }]}>
-        <MaterialCommunityIcons
-          name="logout-variant"
-          size={scaleSize(24)}
-          color="#EF4444"
-        />
-      </View>
-    ),
-    label: "Log Out",
-    subtitle: "Sign out of your account",
-  },
-];

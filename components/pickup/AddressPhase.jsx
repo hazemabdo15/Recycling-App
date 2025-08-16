@@ -13,11 +13,12 @@ import {
 } from 'react-native';
 
 import { useAuth } from '../../context/AuthContext';
+import { useLocalization } from '../../context/LocalizationContext';
 import { borderRadius, spacing, typography } from '../../styles';
 import { colors } from '../../styles/theme';
 
+import { t } from 'i18next';
 import { CITIES } from '../../utils/deliveryFees';
-import { getLabel } from '../../utils/roleLabels';
 import { AnimatedButton } from '../common';
 
 const AREAS = {
@@ -28,6 +29,7 @@ const AREAS = {
 
 const AddressPhase = ({ onNext, onAddressSelect, onBack, pickupWorkflow }) => {
   const { isLoggedIn, user } = useAuth();
+  const { tRole } = useLocalization();
   const hasFetchedAddresses = useRef(false);
   const [showForm, setShowForm] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
@@ -107,12 +109,12 @@ const AddressPhase = ({ onNext, onAddressSelect, onBack, pickupWorkflow }) => {
 
   const handleDeleteAddress = (address) => {
     Alert.alert(
-      'Delete Address',
-      'Are you sure you want to delete this address?',
+      t("pickup.addressPhase.deleteAddress"),
+      t("pickup.addressPhase.deleteMessage"),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t("common.cancel"), style: 'cancel' },
         {
-          text: 'Delete',
+          text: t("common.delete"),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -206,18 +208,18 @@ const AddressPhase = ({ onNext, onAddressSelect, onBack, pickupWorkflow }) => {
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         <View style={styles.formContainer}>
           <Text style={styles.formTitle}>
-            {editingAddress ? 'Edit Address' : 'Add New Address'}
+            {editingAddress ? t('pickup.reviewPhase.editAddress') : t('pickup.reviewPhase.addAddress')}
           </Text>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Select your city *</Text>
+            <Text style={styles.label}>{t("pickup.reviewPhase.selectCity")}</Text>
             <View style={styles.pickerContainer}>
               <Picker
                 selectedValue={formData.city}
                 onValueChange={(value) => setFormData({ ...formData, city: value, area: '' })}
                 style={styles.picker}
               >
-                <Picker.Item label="-- Select City --" value="" />
+                <Picker.Item label={t("pickup.reviewPhase.selectCityLabel")} value="" />
                 {CITIES.map((city) => (
                   <Picker.Item key={city} label={city} value={city} />
                 ))}
@@ -227,7 +229,7 @@ const AddressPhase = ({ onNext, onAddressSelect, onBack, pickupWorkflow }) => {
 
           {formData.city && (
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Select your area *</Text>
+              <Text style={styles.label}>{t("pickup.reviewPhase.selectArea")}</Text>
               <View style={styles.pickerContainer}>
                 <Picker
                   selectedValue={formData.area}
@@ -244,7 +246,7 @@ const AddressPhase = ({ onNext, onAddressSelect, onBack, pickupWorkflow }) => {
           )}
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Street Address *</Text>
+            <Text style={styles.label}>{t("pickup.reviewPhase.streetAddress")}</Text>
             <TextInput
               style={styles.textInput}
               value={formData.street}
@@ -255,7 +257,7 @@ const AddressPhase = ({ onNext, onAddressSelect, onBack, pickupWorkflow }) => {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Nearest Landmark (optional)</Text>
+            <Text style={styles.label}>{t("pickup.reviewPhase.landmark")}</Text>
             <TextInput
               style={styles.textInput}
               value={formData.landmark}
@@ -267,7 +269,7 @@ const AddressPhase = ({ onNext, onAddressSelect, onBack, pickupWorkflow }) => {
 
           <View style={styles.row}>
             <View style={[styles.inputGroup, { flex: 1, marginRight: spacing.sm }]}>
-              <Text style={styles.label}>Building Number/Name</Text>
+              <Text style={styles.label}>{t("pickup.reviewPhase.building")}</Text>
               <TextInput
                 style={styles.textInput}
                 value={formData.building}
@@ -277,7 +279,7 @@ const AddressPhase = ({ onNext, onAddressSelect, onBack, pickupWorkflow }) => {
               />
             </View>
             <View style={[styles.inputGroup, { flex: 1, marginLeft: spacing.sm }]}>
-              <Text style={styles.label}>Floor Number</Text>
+              <Text style={styles.label}>{t("pickup.reviewPhase.floor")}</Text>
               <TextInput
                 style={styles.textInput}
                 value={formData.floor}
@@ -291,7 +293,7 @@ const AddressPhase = ({ onNext, onAddressSelect, onBack, pickupWorkflow }) => {
 
           <View style={styles.row}>
             <View style={[styles.inputGroup, { flex: 1, marginRight: spacing.sm }]}>
-              <Text style={styles.label}>Apartment Number</Text>
+              <Text style={styles.label}>{t("pickup.reviewPhase.apartment")}</Text>
               <TextInput
                 style={styles.textInput}
                 value={formData.apartment}
@@ -301,7 +303,7 @@ const AddressPhase = ({ onNext, onAddressSelect, onBack, pickupWorkflow }) => {
               />
             </View>
             <View style={[styles.inputGroup, { flex: 1, marginLeft: spacing.sm }]}>
-              <Text style={styles.label}>Additional Note</Text>
+              <Text style={styles.label}>{t("pickup.reviewPhase.notes")}</Text>
               <TextInput
                 style={styles.textInput}
                 value={formData.notes}
@@ -314,7 +316,7 @@ const AddressPhase = ({ onNext, onAddressSelect, onBack, pickupWorkflow }) => {
 
           <View style={styles.buttonRow}>
             <TouchableOpacity style={styles.cancelButton} onPress={handleCancelForm}>
-              <Text style={styles.cancelButtonText}>Cancel</Text>
+              <Text style={styles.cancelButtonText}>{t("common.cancel")}</Text>
             </TouchableOpacity>
             <AnimatedButton
               style={styles.saveButton}
@@ -322,7 +324,7 @@ const AddressPhase = ({ onNext, onAddressSelect, onBack, pickupWorkflow }) => {
               disabled={pickupWorkflow.loading}
             >
               <Text style={styles.saveButtonText}>
-                {pickupWorkflow.loading ? 'Saving...' : 'Save'}
+                {pickupWorkflow.loading ? t("common.saving") : t("common.save")}
               </Text>
             </AnimatedButton>
           </View>
@@ -334,13 +336,13 @@ const AddressPhase = ({ onNext, onAddressSelect, onBack, pickupWorkflow }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>{getLabel('selectAddress', user?.role)}</Text>
+        <Text style={styles.title}>{tRole('address.select', user?.role)}</Text>
         <TouchableOpacity
           style={styles.addButton}
           onPress={() => setShowForm(true)}
         >
           <MaterialCommunityIcons name="plus" size={24} color={colors.white} />
-          <Text style={styles.addButtonText}>Add New Address</Text>
+          <Text style={styles.addButtonText}>{t("pickup.reviewPhase.addAddress")}</Text>
         </TouchableOpacity>
       </View>
 
@@ -389,7 +391,7 @@ const AddressPhase = ({ onNext, onAddressSelect, onBack, pickupWorkflow }) => {
 
       <View style={styles.footer}>
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <Text style={styles.backButtonText}>Back</Text>
+          <Text style={styles.backButtonText}>{t("common.back")}</Text>
         </TouchableOpacity>
       </View>
     </View>

@@ -7,11 +7,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CategoriesGrid } from "../../components/sections";
 import { SearchBar } from "../../components/ui";
 import { useAuth } from "../../context/AuthContext";
+import { useLocalization } from "../../context/LocalizationContext";
 import { colors, spacing } from "../../styles/theme";
-import { getLabel } from "../../utils/roleLabels";
 import { scaleSize } from "../../utils/scale";
 
 const Explore = () => {
+  const { t, tRole } = useLocalization();
   const [searchText, setSearchText] = useState("");
   const [filteredCount, setFilteredCount] = useState(0);
   const [showItemsMode, setShowItemsMode] = useState(false);
@@ -64,19 +65,19 @@ const Explore = () => {
         />
         <View style={styles.heroContent}>
           <Text style={styles.heroTitle}>
-            {getLabel("exploreTitle", user?.role)}
+            {tRole("explore.title", user?.role)}
           </Text>
           <Text style={styles.heroSubtitle}>
             {searchText
               ? `${filteredCount} ${
-                  showItemsMode ? "items" : "categories"
-                } found`
-              : getLabel("exploreSubtitle", user?.role)}
+                  showItemsMode ? t('explore.items') : t('explore.categories')
+                } ${t('explore.found')}`
+              : tRole("explore.subtitle", user?.role)}
           </Text>
         </View>
         <View style={styles.searchBarWrapper}>
           <SearchBar
-            placeholder={getLabel("searchPlaceholder", user?.role)}
+            placeholder={tRole("explore.searchPlaceholder", user?.role)}
             onSearch={handleSearch}
             onFilter={handleFilter}
           />

@@ -3,37 +3,38 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
-  Image,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Image,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { KeyboardAwareFlatList } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
-  AnimatedButton,
-  AnimatedListItem,
-  Loader,
+    AnimatedButton,
+    AnimatedListItem,
+    Loader,
 } from "../../components/common";
 import { useAuth } from "../../context/AuthContext";
+import { useLocalization } from "../../context/LocalizationContext";
 import { useAllItems } from "../../hooks/useAPI";
 import { useCart } from "../../hooks/useCart";
 import { borderRadius, spacing, typography } from "../../styles";
 import { colors } from "../../styles/theme";
 import {
-  CartMessageTypes,
-  showCartMessage,
-  showMaxStockMessage,
+    CartMessageTypes,
+    showCartMessage,
+    showMaxStockMessage,
 } from "../../utils/cartMessages";
 import {
-  getCartKey,
-  getDisplayKey,
-  normalizeItemData,
+    getCartKey,
+    getDisplayKey,
+    normalizeItemData,
 } from "../../utils/cartUtils";
-import { getLabel, isBuyer } from "../../utils/roleLabels";
+import { isBuyer } from "../../utils/roleUtils";
 import { scaleSize } from "../../utils/scale";
 
 const getRoleBasedIcon = (iconType, userRole = "customer") => {
@@ -69,6 +70,7 @@ const getRoleBasedIcon = (iconType, userRole = "customer") => {
 const Cart = () => {
   const insets = useSafeAreaInsets();
   const { user, isLoggedIn } = useAuth();
+  const { t, tRole } = useLocalization();
   const {
     cartItems,
     cartItemDetails,
@@ -646,9 +648,9 @@ const Cart = () => {
     return (
       <View style={styles.emptyCartContainer}>
         <Loader style={{ height: 180 }} />
-        <Text style={styles.emptyCartTitle}>Unable to load item details</Text>
+        <Text style={styles.emptyCartTitle}>{t('cart.loadingError')}</Text>
         <Text style={styles.emptyCartSubtitle}>
-          There was a problem fetching item data. Please try again later.
+          {t('cart.loadingErrorMessage')}
         </Text>
       </View>
     );
@@ -670,9 +672,9 @@ const Cart = () => {
         >
           <View style={styles.heroContent}>
             <Text style={styles.heroTitle}>
-              {getLabel("cartTitle", user?.role)}
+              {tRole("cart.title", user?.role)}
             </Text>
-            <Text style={styles.heroSubtitle}>No items yet</Text>
+            <Text style={styles.heroSubtitle}>{t('cart.noItems')}</Text>
             <AnimatedButton
               style={styles.heroFindBtn}
               onPress={() => router.push("/(tabs)/explore")}
@@ -683,7 +685,7 @@ const Cart = () => {
                 color={colors.white}
               />
               <Text style={styles.heroFindBtnText}>
-                {getLabel("cartPage.findItemsButton", user?.role)}
+                {tRole("cart.findItemsButton", user?.role)}
               </Text>
             </AnimatedButton>
           </View>
@@ -697,10 +699,10 @@ const Cart = () => {
             />
           </View>
           <Text style={styles.emptyCartTitle}>
-            {getLabel("emptyCartTitle", user?.role)}
+            {tRole("cart.empty", user?.role)}
           </Text>
           <Text style={styles.emptyCartSubtitle}>
-            {getLabel("emptyCartSubtitle", user?.role)}
+            {tRole("cart.emptySubtitle", user?.role)}
           </Text>
         </View>
       </View>
@@ -759,10 +761,10 @@ const Cart = () => {
         <View style={styles.heroRowHeader}>
           <View style={styles.heroContent}>
             <Text style={styles.heroTitle}>
-              {getLabel("cartTitle", user?.role)}
+              {tRole("cart.title", user?.role)}
             </Text>
             <Text style={styles.heroSubtitle}>
-              {cartArray.length} {getLabel("itemsReadyFor", user?.role)}
+              {cartArray.length} {tRole("itemsReadyFor", user?.role)}
             </Text>
             <View style={styles.checkoutSummaryRowHero}>
               {!isBuyer(user) && (
@@ -773,7 +775,7 @@ const Cart = () => {
                     color={colors.accent}
                   />
                   <Text style={styles.checkoutSummaryLabelHero}>
-                    Eco Points
+                    {t("common.points")}
                   </Text>
                   <Text style={styles.checkoutSummaryValueHero}>
                     {totalPoints}
@@ -787,7 +789,7 @@ const Cart = () => {
                   color={colors.secondary}
                 />
                 <Text style={styles.checkoutSummaryLabelHero}>
-                  {getLabel("money", user?.role)}
+                  {tRole("money", user?.role)}
                 </Text>
                 <Text style={styles.checkoutSummaryValueHero}>
                   {totalValue.toFixed(2)} EGP
@@ -802,7 +804,7 @@ const Cart = () => {
                   color={colors.warning}
                 />
                 <Text style={styles.minimumOrderText}>
-                  {getLabel("minimumOrderMessage", user?.role, {
+                  {tRole("minimumOrder.message", user?.role, {
                     amount: remainingAmount.toFixed(2),
                   })}
                 </Text>
@@ -841,10 +843,10 @@ const Cart = () => {
                   ]}
                 >
                   {canSchedulePickup || canProceedToPurchase
-                    ? getLabel("schedulePickup", user?.role)
+                    ? tRole("cart.checkout", user?.role)
                     : canGuestProceed
-                    ? "Login to Continue"
-                    : getLabel("minimumOrderButton", user?.role)}
+                    ? t('auth.loginToContinue')
+                    : tRole("minimumOrder.button", user?.role)}
                 </Text>
               </AnimatedButton>
               {cartArray.length > 0 && (

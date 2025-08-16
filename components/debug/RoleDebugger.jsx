@@ -1,17 +1,19 @@
 ﻿import { StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
+import { useLocalization } from '../../context/LocalizationContext';
 import { colors } from '../../styles/theme';
-import { getLabel, isBuyer, isCustomer } from '../../utils/roleLabels';
+import { isBuyer, isCustomer } from '../../utils/roleUtils';
 
 const RoleDebugger = () => {
   const { user, isLoggedIn } = useAuth();
+  const { tRole } = useLocalization();
 
   const testLabels = [
-    'cartTitle',
-    'schedulePickup',
-    'orderConfirmation',
-    'appName',
-    'welcomeMessage'
+    'cart.title',
+    'pickup.schedulePickup',
+    'orders.confirmation',
+    'app.name',
+    'common.welcome'
   ];
 
   if (!isLoggedIn || !user) {
@@ -41,7 +43,7 @@ const RoleDebugger = () => {
         {testLabels.map(label => (
           <View key={label} style={styles.labelTest}>
             <Text style={styles.labelKey}>{label}:</Text>
-            <Text style={styles.labelValue}>{getLabel(label, user.role)}</Text>
+            <Text style={styles.labelValue}>{tRole(label, user.role)}</Text>
           </View>
         ))}
       </View>

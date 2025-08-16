@@ -6,10 +6,10 @@ import React from "react";
 import { Dimensions, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../../context/AuthContext";
+import { useLocalization } from "../../context/LocalizationContext";
 import { useCart } from "../../hooks/useCart";
 import { useVoiceModal } from "../../hooks/useVoiceModal";
 import { colors, shadows } from "../../styles/theme";
-import { getLabel } from "../../utils/roleLabels";
 import { scaleSize } from '../../utils/scale';
 
 let Animated, useSharedValue, useAnimatedStyle, withTiming, withSpring, withRepeat, withSequence;
@@ -63,10 +63,18 @@ export function TabBar({ state, descriptors, navigation }) {
   const insets = useSafeAreaInsets();
   const { openVoiceModal } = useVoiceModal();
   const { user } = useAuth();
+  const { t, tRole } = useLocalization();
   const { cartItems } = useCart(user);
 
   const getTabLabel = (routeName) => {
-    return getLabel(`tabLabels.${routeName}`, user?.role) || routeName;
+    // Map route names to translation keys
+    const tabTranslationMap = {
+      home: t('tabs.home'),
+      explore: tRole('tabs.explore', user?.role),
+      cart: tRole('tabs.cart', user?.role),
+      profile: t('tabs.profile'),
+    };
+    return tabTranslationMap[routeName] || routeName;
   };
 
   const cartItemsCount = cartItems ? Object.keys(cartItems).filter(key => {

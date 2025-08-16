@@ -1,10 +1,12 @@
 ﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Dimensions, Text, View } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
+import { useLocalization } from '../../context/LocalizationContext';
 import { categoryHeaderStyles } from '../../styles/components/categoryStyles';
 import { colors, spacing } from '../../styles/theme';
-import { getLabel, isBuyer } from '../../utils/roleLabels';
+import { isBuyer } from '../../utils/roleUtils';
 import { scaleSize } from '../../utils/scale';
+import { t } from 'i18next';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const scale = (size) => (SCREEN_WIDTH / 375) * size;
@@ -19,6 +21,7 @@ const CategoryHeader = ({
     onGoBack
 }) => {
     const { user } = useAuth();
+    const { tRole } = useLocalization();
     return (
         <View
             style={[
@@ -83,7 +86,7 @@ const CategoryHeader = ({
                             <Text style={[
                                 categoryHeaderStyles.statLabel,
                                 { fontSize: scale(12) },
-                            ]}>Eco Points</Text>
+                            ]}>{t("common.points")}</Text>
                         </View>
                     )}
                     <View style={categoryHeaderStyles.statItem}>
@@ -99,7 +102,7 @@ const CategoryHeader = ({
                         <Text style={[
                             categoryHeaderStyles.statLabel,
                             { fontSize: scale(12) },
-                        ]}>{getLabel("money", user?.role)}</Text>
+                        ]}>{tRole("money", user?.role)}</Text>
                     </View>
                 </View>
             </View>

@@ -14,6 +14,7 @@ import {
     View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useLocalization } from "../context/LocalizationContext";
 import { useNotifications } from "../context/NotificationContext";
 import { colors, spacing } from "../styles/theme";
 import { scaleSize } from '../utils/scale';
@@ -21,6 +22,7 @@ import { scaleSize } from '../utils/scale';
 const NotificationsScreen = () => {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { t } = useLocalization();
   const [isRefreshing, setIsRefreshing] = useState(false);
   
   const {
@@ -106,12 +108,12 @@ const NotificationsScreen = () => {
 
   const handleDeleteNotification = (notificationId) => {
     Alert.alert(
-      "Delete Notification",
-      "Are you sure you want to delete this notification?",
+      t('notifications.deleteTitle'),
+      t('notifications.deleteConfirm'),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t('common.cancel'), style: "cancel" },
         {
-          text: "Delete",
+          text: t('common.delete'),
           style: "destructive",
           onPress: async () => {
             await deleteNotification(notificationId);
@@ -124,17 +126,17 @@ const NotificationsScreen = () => {
   const handleReadAll = async () => {
     const unreadNotifications = notifications.filter(notif => !notif.read && !notif.isRead);
     if (unreadNotifications.length === 0) {
-      Alert.alert("Info", "No unread notifications");
+      Alert.alert(t('common.info'), t('notifications.noUnread'));
       return;
     }
 
     Alert.alert(
-      "Mark All as Read",
-      `Mark ${unreadNotifications.length} notifications as read?`,
+      t('notifications.markAllRead'),
+      t('notifications.markAllConfirm', { count: unreadNotifications.length }),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t('common.cancel'), style: "cancel" },
         {
-          text: "Mark All",
+          text: t('notifications.markAll'),
           onPress: async () => {
             await markAsRead();
           },
@@ -262,7 +264,7 @@ const NotificationsScreen = () => {
             <Ionicons name="arrow-back" size={24} color={colors.white} />
           </TouchableOpacity>
           
-          <Text style={styles.heroTitle}>Notifications</Text>
+          <Text style={styles.heroTitle}>{t("notifications.title")}</Text>
           
           <View style={styles.connectionStatus}>
             <View style={[styles.connectionDot, { 
@@ -273,11 +275,11 @@ const NotificationsScreen = () => {
 
         <View style={styles.heroContent}>
           <Text style={styles.heroSubtitle}>
-            Stay updated with your recycling activities
+            {t("notifications.subtitle")}
           </Text>
           {unreadCount > 0 && (
             <Text style={styles.unreadText}>
-              {unreadCount} unread notification{unreadCount > 1 ? "s" : ""}
+              {unreadCount > 1 ? t("notifications.unreadNotificationPlural", { count: unreadCount }) : t("notifications.unreadNotificationSingular", { count: unreadCount })}
             </Text>
           )}
         </View>

@@ -4,32 +4,34 @@ import * as Print from "expo-print";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
-  Alert,
-  FlatList,
-  Image,
-  PanResponder,
-  RefreshControl,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    Alert,
+    FlatList,
+    Image,
+    PanResponder,
+    RefreshControl,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Loader } from "../components/common";
 import { showGlobalToast } from "../components/common/GlobalToast";
 import ReviewManager from "../components/profile/ReviewManager";
 import { useAuth } from "../context/AuthContext";
+import { useLocalization } from "../context/LocalizationContext";
 import { orderService } from "../services/api/orders";
 import { colors } from "../styles";
 import { generateOrderReportHTML } from "../utils/orderReportPDF";
-import { getLabel, isBuyer, isCustomer } from "../utils/roleLabels";
+import { isBuyer, isCustomer } from "../utils/roleUtils";
 import { scaleSize } from "../utils/scale";
 
 const tabs = ["incoming", "completed", "cancelled"];
 
 export default function RecyclingHistory() {
   const { user, isLoggedIn } = useAuth();
+  const { tRole } = useLocalization();
   const router = useRouter();
   const [allOrders, setAllOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -116,11 +118,11 @@ export default function RecyclingHistory() {
   const getTabDisplayName = (tab) => {
     switch (tab) {
       case "incoming":
-        return getLabel("profileLabels.incomingTab", user?.role);
+        return tRole("profileLabels.incomingTab", user?.role);
       case "completed":
-        return getLabel("profileLabels.completedTab", user?.role);
+        return tRole("profileLabels.completedTab", user?.role);
       case "cancelled":
-        return getLabel("profileLabels.cancelledTab", user?.role);
+        return tRole("profileLabels.cancelledTab", user?.role);
       default:
         return tab;
     }

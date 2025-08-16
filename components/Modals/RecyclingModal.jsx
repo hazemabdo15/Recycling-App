@@ -1,20 +1,21 @@
 ﻿import { MaterialIcons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import {
-  Alert,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Alert,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { useAuth } from "../../context/AuthContext";
 import apiService from "../../services/api/apiService";
 import { colors } from "../../styles/theme";
-import { isBuyer } from "../../utils/roleLabels";
+import { isBuyer } from "../../utils/roleUtils";
+import { t } from "i18next";
 
 const vouchers = [
   {
@@ -179,7 +180,7 @@ const RecyclingModal = ({ visible, onClose, totalPoints, onPointsUpdated }) => {
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={handleClose}>
       <View style={styles.header}>
-        <Text style={styles.title}>Redeem Eco Points</Text>
+        <Text style={styles.title}>{t("common.redeemPoints")}</Text>
         <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
           <MaterialIcons name="close" size={24} color="#fff" />
         </TouchableOpacity>

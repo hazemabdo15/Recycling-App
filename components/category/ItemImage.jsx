@@ -3,7 +3,7 @@ import { Image, Text, View } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { itemImageStyles } from '../../styles/components/categoryStyles';
 import { colors } from '../../styles/theme';
-import { isBuyer } from '../../utils/roleLabels';
+import { isBuyer } from '../../utils/roleUtils';
 
 const ItemImage = ({ imageUri, points, placeholder = "recycle" }) => {
     const { user } = useAuth();
