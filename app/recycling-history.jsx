@@ -2,18 +2,18 @@ import { Feather, MaterialIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Print from "expo-print";
 import { useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    Alert,
-    FlatList,
-    Image,
-    PanResponder,
-    RefreshControl,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Alert,
+  FlatList,
+  Image,
+  PanResponder,
+  RefreshControl,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Loader } from "../components/common";
@@ -26,17 +26,34 @@ import { colors } from "../styles";
 import { generateOrderReportHTML } from "../utils/orderReportPDF";
 import { isBuyer, isCustomer } from "../utils/roleUtils";
 import { scaleSize } from "../utils/scale";
+import { getTranslatedName } from "../utils/translationHelpers";
 
 const tabs = ["incoming", "completed", "cancelled"];
 
 export default function RecyclingHistory() {
   const { user, isLoggedIn } = useAuth();
-  const { tRole } = useLocalization();
+  const { tRole, t } = useLocalization();
   const router = useRouter();
   const [allOrders, setAllOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("incoming");
   const [refreshing, setRefreshing] = useState(false);
+
+  // Helper function to get translated item name
+  const getTranslatedItemName = useCallback((item) => {
+    if (!item || !t) return item?.itemName || item?.name || "Unknown Item";
+    
+    const originalName = item.itemName || item.name || "Unknown Item";
+    const categoryName = item.categoryName || item.category || null;
+    
+    const translatedName = getTranslatedName(t, originalName, "subcategories", {
+      categoryName: categoryName
+        ? categoryName.toLowerCase().replace(/\s+/g, "-")
+        : null,
+    });
+    
+    return translatedName || originalName;
+  }, [t]);
 
   // For swipe gesture
   const panResponder = useRef(
@@ -218,7 +235,7 @@ export default function RecyclingHistory() {
             />
             <View style={styles.itemDetailsModern}>
               <Text style={styles.itemNameModern}>
-                {item.itemName}
+                {getTranslatedItemName(item)}
               </Text>
               <Text style={styles.itemInfoModern}>
                 Qty: {item.quantity}{" "}

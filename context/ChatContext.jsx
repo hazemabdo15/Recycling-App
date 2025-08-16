@@ -14,7 +14,7 @@ export const ChatProvider = ({ children }) => {
         'home',
         'explore',
         'cart',
-        'profile',
+        // 'profile',
     ];
     const lastSegment = pathname ? pathname.split('/').filter(Boolean).pop() : '';
     const shouldHideFAB = !lastSegment || !allowedTabs.includes(lastSegment);

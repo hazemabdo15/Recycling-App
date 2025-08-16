@@ -3,20 +3,20 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
-    Image,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Image,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { KeyboardAwareFlatList } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
-    AnimatedButton,
-    AnimatedListItem,
-    Loader,
+  AnimatedButton,
+  AnimatedListItem,
+  Loader,
 } from "../../components/common";
 import { useAuth } from "../../context/AuthContext";
 import { useLocalization } from "../../context/LocalizationContext";
@@ -25,17 +25,18 @@ import { useCart } from "../../hooks/useCart";
 import { borderRadius, spacing, typography } from "../../styles";
 import { colors } from "../../styles/theme";
 import {
-    CartMessageTypes,
-    showCartMessage,
-    showMaxStockMessage,
+  CartMessageTypes,
+  showCartMessage,
+  showMaxStockMessage,
 } from "../../utils/cartMessages";
 import {
-    getCartKey,
-    getDisplayKey,
-    normalizeItemData,
+  getCartKey,
+  getDisplayKey,
+  normalizeItemData,
 } from "../../utils/cartUtils";
 import { isBuyer } from "../../utils/roleUtils";
 import { scaleSize } from "../../utils/scale";
+import { getTranslatedName } from "../../utils/translationHelpers";
 
 const getRoleBasedIcon = (iconType, userRole = "customer") => {
   const iconMappings = {
@@ -85,6 +86,18 @@ const Cart = () => {
   const [loading, setLoading] = useState(true);
   const [showEmptyState, setShowEmptyState] = useState(false);
   const [inputValues, setInputValues] = useState({});
+
+  // Helper function to get translated item names consistently
+  const getTranslatedItemName = (item) => {
+    const originalName = item.name || item.material || "Unknown Item";
+    const categoryName = item.categoryName || item.category || null;
+    const translatedName = getTranslatedName(t, originalName, "subcategories", {
+      categoryName: categoryName
+        ? categoryName.toLowerCase().replace(/\s+/g, "-")
+        : null,
+    });
+    return translatedName || originalName;
+  };
 
   // Cart is already synced via CartContext, no need for manual refresh on focus
 
@@ -265,8 +278,9 @@ const Cart = () => {
     } catch (err) {
       console.error("[Cart] Error increasing quantity:", err);
       const normalizedItem = normalizeItemData(item);
+      const translatedItemName = getTranslatedItemName(normalizedItem);
       showCartMessage(CartMessageTypes.OPERATION_FAILED, {
-        itemName: normalizedItem.name,
+        itemName: translatedItemName,
         measurementUnit: normalizedItem.measurement_unit,
         isBuyer: user?.role === "buyer",
       });
@@ -289,8 +303,9 @@ const Cart = () => {
     } catch (err) {
       console.error("[Cart] Error decreasing quantity:", err);
       const normalizedItem = normalizeItemData(item);
+      const translatedItemName = getTranslatedItemName(normalizedItem);
       showCartMessage(CartMessageTypes.OPERATION_FAILED, {
-        itemName: normalizedItem.name,
+        itemName: translatedItemName,
         measurementUnit: item.measurement_unit || (item.unit === "KG" ? 1 : 2),
         isBuyer: user?.role === "buyer",
       });
@@ -304,16 +319,18 @@ const Cart = () => {
 
       // Show toast only for removal
       const normalizedItem = normalizeItemData(item);
+      const translatedItemName = getTranslatedItemName(normalizedItem);
       showCartMessage(CartMessageTypes.REMOVE_ALL, {
-        itemName: normalizedItem.name,
+        itemName: translatedItemName,
         measurementUnit: normalizedItem.measurement_unit,
         isBuyer: user?.role === "buyer",
       });
     } catch (err) {
       console.error("[Cart] Error removing item:", err);
       const normalizedItem = normalizeItemData(item);
+      const translatedItemName = getTranslatedItemName(normalizedItem);
       showCartMessage(CartMessageTypes.OPERATION_FAILED, {
-        itemName: normalizedItem.name,
+        itemName: translatedItemName,
         measurementUnit: item.measurement_unit || (item.unit === "KG" ? 1 : 2),
         isBuyer: user?.role === "buyer",
       });
@@ -352,8 +369,9 @@ const Cart = () => {
         await handleRemoveFromCart(itemId);
         // Show unified removal message
         const normalizedItem = normalizeItemData(item);
+        const translatedItemName = getTranslatedItemName(normalizedItem);
         showCartMessage(CartMessageTypes.REMOVE_ALL, {
-          itemName: normalizedItem.name,
+          itemName: translatedItemName,
           measurementUnit: normalizedItem.measurement_unit,
           isBuyer: user?.role === "buyer",
         });
@@ -388,8 +406,9 @@ const Cart = () => {
         // Pieces - smart rounding to nearest whole number
         if (parsedValue <= 0) {
           const normalizedItem = normalizeItemData(item);
+          const translatedItemName = getTranslatedItemName(normalizedItem);
           showCartMessage(CartMessageTypes.INVALID_QUANTITY, {
-            itemName: normalizedItem.name,
+            itemName: translatedItemName,
             measurementUnit: measurementUnit,
             isBuyer: user?.role === "buyer",
           });
@@ -471,7 +490,7 @@ const Cart = () => {
   };
 
   const renderCartItem = ({ item, index }) => {
-    const name = item.name || item.material || "Unknown Item";
+    const name = getTranslatedItemName(item);
     let unit = item.unit || item.measurement_unit || "";
     if (unit === 1 || unit === "1") unit = "KG";
     if (unit === 2 || unit === "2") unit = "Piece";
@@ -648,9 +667,9 @@ const Cart = () => {
     return (
       <View style={styles.emptyCartContainer}>
         <Loader style={{ height: 180 }} />
-        <Text style={styles.emptyCartTitle}>{t('cart.loadingError')}</Text>
+        <Text style={styles.emptyCartTitle}>{t("cart.loadingError")}</Text>
         <Text style={styles.emptyCartSubtitle}>
-          {t('cart.loadingErrorMessage')}
+          {t("cart.loadingErrorMessage")}
         </Text>
       </View>
     );
@@ -674,7 +693,7 @@ const Cart = () => {
             <Text style={styles.heroTitle}>
               {tRole("cart.title", user?.role)}
             </Text>
-            <Text style={styles.heroSubtitle}>{t('cart.noItems')}</Text>
+            <Text style={styles.heroSubtitle}>{t("cart.noItems")}</Text>
             <AnimatedButton
               style={styles.heroFindBtn}
               onPress={() => router.push("/(tabs)/explore")}
@@ -845,7 +864,7 @@ const Cart = () => {
                   {canSchedulePickup || canProceedToPurchase
                     ? tRole("cart.checkout", user?.role)
                     : canGuestProceed
-                    ? t('auth.loginToContinue')
+                    ? t("auth.loginToContinue")
                     : tRole("minimumOrder.button", user?.role)}
                 </Text>
               </AnimatedButton>

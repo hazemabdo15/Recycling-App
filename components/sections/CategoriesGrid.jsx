@@ -1,59 +1,37 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from 'react-i18next'; // Add this import
 import {
-    ActivityIndicator,
-    FlatList,
-    RefreshControl,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import { KeyboardAwareFlatList } from 'react-native-keyboard-aware-scroll-view';
-import { useTranslation } from 'react-i18next'; // Add this import
 import { useAuth } from "../../context/AuthContext";
 import { useCategories } from "../../hooks/useAPI";
 import { useCart } from "../../hooks/useCart";
 import { spacing } from "../../styles";
 import { colors } from "../../styles/theme";
 import {
-    CartMessageTypes,
-    showCartMessage,
-    showMaxStockMessage,
+  CartMessageTypes,
+  showCartMessage,
+  showMaxStockMessage,
 } from "../../utils/cartMessages";
 import {
-    getCartKey,
-    getIncrementStep,
-    normalizeItemData,
+  getCartKey,
+  getIncrementStep,
+  normalizeItemData,
 } from "../../utils/cartUtils";
 import { isBuyer } from "../../utils/roleUtils";
 import { scaleSize } from "../../utils/scale";
 import { isMaxStockReached, isOutOfStock } from "../../utils/stockUtils";
+import { getTranslatedName } from "../../utils/translationHelpers";
 import { CategoryCard } from "../cards";
 import { ItemCard } from "../category";
 import { FadeInView } from "../common";
 import { showGlobalToast } from "../common/GlobalToast";
-
-// Helper function to get translated category/subcategory name
-const getTranslatedName = (t, originalName, type = 'categories') => {
-  if (!originalName) return originalName;
-  
-  const key = originalName.toLowerCase();
-  
-  // Try to get translation from categories or subcategories
-  const translatedName = type === 'subcategories' 
-    ? t(`items.${key}`, { defaultValue: null })
-    : t(`categories.${key}.name`, { defaultValue: null });
-  
-  // If no translation found, try the paper section for special cases
-  if (!translatedName && type === 'categories') {
-    const paperTranslation = t(`categories.paper.name`, { defaultValue: null });
-    if (paperTranslation && key === 'paper') {
-      return paperTranslation;
-    }
-  }
-  
-  // Return translated name or fall back to original
-  return translatedName || originalName;
-};
 
 const CategoriesGrid = ({
   searchText = "",
@@ -90,11 +68,10 @@ const CategoriesGrid = ({
   const handleManualInput = async (item, value) => {
     if (!item) return;
 
-    const normalizedItem = normalizeItemData(item);
-    const currentQuantity = cartItems[getCartKey(item)] || 0;
+  const normalizedItem = normalizeItemData(item);
 
-    // Use translated name in messages
-    const translatedItemName = getTranslatedName(t, normalizedItem?.name, 'subcategories');
+  // Use translated name in messages (scope by categoryName when available)
+  const translatedItemName = getTranslatedName(t, normalizedItem?.name, 'subcategories', { categoryName: normalizedItem?.categoryName, hyphenate: true });
 
     // Validate minimum quantity based on measurement unit
     if (value > 0) {
@@ -161,8 +138,8 @@ const CategoriesGrid = ({
               });
               
               // Add translated names to the normalized item
-              const translatedItemName = getTranslatedName(t, normalizedItem.name, 'subcategories');
-              const translatedCategoryName = getTranslatedName(t, category.name, 'categories');
+              const translatedItemName = getTranslatedName(t, normalizedItem.name, 'subcategories', { categoryName: normalizedItem.categoryName || category.name, hyphenate: true });
+              const translatedCategoryName = getTranslatedName(t, category.name, 'categories', { hyphenate: true });
               
               const itemKey = getCartKey(normalizedItem);
               const cartQuantity = cartItems[itemKey] || 0;
@@ -191,7 +168,7 @@ const CategoriesGrid = ({
       const cats = categories
         .map(category => ({
           ...category,
-          displayName: getTranslatedName(t, category.name, 'categories')
+          displayName: getTranslatedName(t, category.name, 'categories', { hyphenate: true })
         }))
         .filter((category) => {
           if (!category || !category.displayName) return false;
@@ -208,9 +185,9 @@ const CategoriesGrid = ({
       const itemKey = getCartKey(item);
       if (pendingOperations[itemKey]) return;
 
-      // Get normalized item data
-      const normalizedItem = normalizeItemData(item);
-      const translatedItemName = getTranslatedName(t, normalizedItem?.name, 'subcategories');
+  // Get normalized item data
+  const normalizedItem = normalizeItemData(item);
+  const translatedItemName = getTranslatedName(t, normalizedItem?.name, 'subcategories', { categoryName: normalizedItem?.categoryName, hyphenate: true });
       
       const step = operation.includes("fast")
         ? 5
@@ -531,7 +508,7 @@ const CategoriesGrid = ({
           ListFooterComponent={<View style={{ height: 100 }} />}
           showsVerticalScrollIndicator={false}
           enableOnAndroid
-          extraScrollHeight={100}
+          extraScrollHeight={70}
           keyboardShouldPersistTaps="handled"
         />
       ) : (

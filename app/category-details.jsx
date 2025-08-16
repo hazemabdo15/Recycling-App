@@ -2,6 +2,7 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next"; // Add this import
 import {
   RefreshControl,
   StatusBar,
@@ -11,7 +12,6 @@ import {
 } from "react-native";
 import { KeyboardAwareFlatList } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTranslation } from "react-i18next"; // Add this import
 import { EmptyState, ItemCard } from "../components/category";
 import { ErrorState, Loader } from "../components/common";
 import { useAuth } from "../context/AuthContext";
@@ -34,6 +34,7 @@ import {
 } from "../utils/cartUtils";
 import { isBuyer } from "../utils/roleUtils";
 import { scaleSize } from "../utils/scale";
+import { getTranslatedName } from "../utils/translationHelpers";
 
 const CategoryDetails = () => {
   const { categoryName } = useLocalSearchParams();
@@ -43,39 +44,8 @@ const CategoryDetails = () => {
   const { t } = useTranslation(); // Add translation hook
 
   const [pendingOperations, setPendingOperations] = useState({});
-  // Helper function to get translated category/subcategory name
-  const getTranslatedName = (t, originalName, type = "categories") => {
-    if (!originalName) return originalName;
-
-    // Convert to lowercase and replace spaces with hyphens for key matching
-    const key = originalName.toLowerCase();
-    console.log(originalName, "kkkk");
-
-    // Try to get translation from categories or subcategories
-    const translatedName =
-      type === "subcategories"
-        ? t(`items.${categoryName}.${key}`, { defaultValue: null })
-        : t(`categories.${key}.name`, { defaultValue: null });
-
-    // If no translation found, try the paper section for special cases
-    if (!translatedName && type === "categories") {
-      const paperTranslation = t(`categories.paper.name`, {
-        defaultValue: null,
-      });
-      if (paperTranslation && key === "paper") {
-        return paperTranslation;
-      }
-    }
-
-    // Return translated name or fall back to original
-    return translatedName || originalName;
-  };
-  // Get translated category name for display
-  const translatedCategoryName = getTranslatedName(
-    t,
-    categoryName,
-    "categories"
-  );
+  // Get translated category name for display (use shared helper)
+  const translatedCategoryName = getTranslatedName(t, categoryName, 'categories', { hyphenate: true });
 
   useEffect(() => {
     navigation.setOptions({ headerShown: false });
@@ -115,7 +85,8 @@ const CategoryDetails = () => {
     const translatedItemName = getTranslatedName(
       t,
       processedItem.name,
-      "subcategories"
+      "subcategories",
+      { categoryName: categoryName, hyphenate: true }
     );
 
     return {
@@ -653,7 +624,7 @@ const CategoryDetails = () => {
             />
           }
           enableOnAndroid
-          extraScrollHeight={200}
+          extraScrollHeight={160}
           keyboardOpeningTime={0}
           keyboardShouldPersistTaps="handled"
         />

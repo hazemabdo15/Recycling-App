@@ -19,6 +19,7 @@ import { useAllItems } from '../hooks/useAPI';
 import { useCart } from '../hooks/useCart';
 import { borderRadius, colors, spacing, typography } from '../styles/theme';
 import { isBuyer } from '../utils/roleUtils';
+import { getTranslatedName } from '../utils/translationHelpers';
 
 let Reanimated, interpolate, runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming;
 
@@ -83,6 +84,16 @@ export default function AIResultsModal() {
 
   const initialMaterials = parsedVerifiedMaterials.length > 0 ? parsedVerifiedMaterials : parsedExtractedMaterials;
   const [materials, setMaterials] = useState(initialMaterials);
+
+  // Helper function to get translated item names consistently
+  const getTranslatedItemName = useCallback((item) => {
+    const originalName = item.name || item.material || "Unknown Item";
+    const categoryName = item.categoryName || item.category || null;
+    const translatedName = getTranslatedName(t, originalName, 'subcategories', { 
+      categoryName: categoryName ? categoryName.toLowerCase().replace(/\s+/g, '-') : null 
+    });
+    return translatedName || originalName;
+  }, [t]);
 
   const safeMaterials = useMemo(() => materials || [], [materials]);
   const availableCount = safeMaterials.filter(material => material.available !== false).length;
@@ -246,13 +257,27 @@ export default function AIResultsModal() {
       const itemId = material.databaseItem._id;
       const requestedQuantity = material.quantity;
       
+      // Find the original item from allItems to get the English name
+      const originalItem = allItems.find(item => item._id === itemId);
+      const itemName = originalItem ? originalItem.name : material.databaseItem.name;
+      
+      // Debug: Log the item names to understand what we're working with
+      console.log('🔍 [AI Results Modal] Item name analysis:', {
+        originalMaterial: material.material,
+        databaseItemName: material.databaseItem.name,
+        allItemsName: originalItem?.name,
+        finalItemName: itemName,
+        databaseItemId: material.databaseItem._id,
+        categoryName: material.databaseItem.categoryName
+      });
+      
       // For customers (non-buyers), add full requested quantity without stock checks
       if (!applyStockValidation) {
         processedItems.push({
           _id: material.databaseItem._id,
           categoryId: material.databaseItem.categoryId,
           categoryName: material.databaseItem.categoryName,
-          name: material.databaseItem.name,
+          name: itemName, // Use original English name from allItems or fallback to database
           image: material.databaseItem.image,
           points: material.databaseItem.points,
           price: material.databaseItem.price,
@@ -272,7 +297,7 @@ export default function AIResultsModal() {
           _id: material.databaseItem._id,
           categoryId: material.databaseItem.categoryId,
           categoryName: material.databaseItem.categoryName,
-          name: material.databaseItem.name,
+          name: itemName, // Use original English name from allItems or fallback to database
           image: material.databaseItem.image,
           points: material.databaseItem.points,
           price: material.databaseItem.price,
@@ -286,8 +311,9 @@ export default function AIResultsModal() {
       if (stockQuantity <= 0) {
         // Don't add out of stock items, but record as discarded
         const unitText = material.databaseItem.measurement_unit === 1 ? 'kg' : 'pieces';
+        const translatedItemName = getTranslatedItemName(material.databaseItem);
         stockWarnings.push({
-          name: material.databaseItem.name,
+          name: translatedItemName, // Use translated name for user messages
           discarded: requestedQuantity,
           unit: unitText,
           availableStock: stockQuantity,
@@ -307,7 +333,7 @@ export default function AIResultsModal() {
           _id: material.databaseItem._id,
           categoryId: material.databaseItem.categoryId,
           categoryName: material.databaseItem.categoryName,
-          name: material.databaseItem.name,
+          name: itemName, // Use original English name from allItems or fallback to database
           image: material.databaseItem.image,
           points: material.databaseItem.points,
           price: material.databaseItem.price,
@@ -318,8 +344,9 @@ export default function AIResultsModal() {
       
       if (discardedQuantity > 0) {
         const unitText = material.databaseItem.measurement_unit === 1 ? 'kg' : 'pieces';
+        const translatedItemName = getTranslatedItemName(material.databaseItem);
         stockWarnings.push({
-          name: material.databaseItem.name,
+          name: translatedItemName, // Use translated name for user messages
           discarded: discardedQuantity,
           unit: unitText,
           availableStock: stockQuantity,
@@ -391,7 +418,7 @@ export default function AIResultsModal() {
 
     router.dismissAll();
     router.push('/(tabs)/cart');
-  }, [materials, handleAddToCart, validationResults, cartItems, allItems, user, t]);
+  }, [materials, handleAddToCart, validationResults, cartItems, allItems, user, t, getTranslatedItemName]);
 
   const browseMore = useCallback(() => {
 
@@ -401,9 +428,11 @@ export default function AIResultsModal() {
 
   const renderMaterialItem = ({ item, index }) => {
     const isAvailable = item.available !== false;
-    const displayName = isAvailable && item.databaseItem 
-      ? item.databaseItem.name 
-      : item.material;
+    
+    // Get the appropriate item object for translation
+    const itemForTranslation = isAvailable && item.databaseItem ? item.databaseItem : item;
+    const translatedName = getTranslatedItemName(itemForTranslation);
+    const displayName = translatedName || (isAvailable && item.databaseItem ? item.databaseItem.name : item.material);
 
     const validationError = validationResults.errors.find(error => error.index === index);
     const hasValidationError = !!validationError;

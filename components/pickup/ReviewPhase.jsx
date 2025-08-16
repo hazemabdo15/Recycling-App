@@ -1,5 +1,5 @@
 ﻿import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Alert,
   Image,
@@ -19,6 +19,7 @@ import { borderRadius, spacing, typography } from "../../styles";
 import { colors } from "../../styles/theme";
 import { normalizeItemData } from "../../utils/cartUtils";
 import { isBuyer, isBuyer as isBuyerRole, shouldShowDeliveryFee, shouldShowTotalValue } from "../../utils/roleUtils";
+import { getTranslatedName } from "../../utils/translationHelpers";
 
 
 import { getDeliveryFeeForCity } from '../../utils/deliveryFees';
@@ -41,6 +42,17 @@ const ReviewPhase = ({
 
   const [isCashOrderProcessing, setIsCashOrderProcessing] = useState(false);
   const [deliveryFee, setDeliveryFee] = useState(0);
+
+  // Helper function to get translated item names consistently
+  const getTranslatedItemName = useCallback((item) => {
+    const originalName = item.name || item.itemName || item.material || "Unknown Item";
+    const categoryName = item.categoryName || item.category || null;
+    const translatedName = getTranslatedName(t, originalName, 'subcategories', { 
+      categoryName: categoryName ? categoryName.toLowerCase().replace(/\s+/g, '-') : null 
+    });
+    return translatedName || originalName;
+  }, [t]);
+
   // ✅ Role-based delivery fee calculation
   useEffect(() => {
     if (selectedAddress && selectedAddress.city && shouldShowDeliveryFee(user)) {
@@ -106,14 +118,11 @@ const ReviewPhase = ({
 
           if (realItem) {
             const normalizedItem = normalizeItemData(realItem);
+            const translatedItemName = getTranslatedItemName(normalizedItem);
             return {
               categoryId,
               quantity,
-              itemName:
-                normalizedItem.name ||
-                normalizedItem.itemName ||
-                normalizedItem.categoryName ||
-                `Item ${categoryId.slice(-4)}`,
+              itemName: translatedItemName,
               measurement_unit:
                 normalizedItem.measurement_unit === 1 ? "KG" : "Piece",
               points: normalizedItem.points || 10,
@@ -196,7 +205,7 @@ const ReviewPhase = ({
 
       setCartItemsDisplay(displayItems);
     }
-  }, [itemsLoaded, cartItems, allItems]);
+  }, [itemsLoaded, cartItems, allItems, getTranslatedItemName]);
 
   const handlePaymentFlow = async (cartItemsArray, userData) => {
     if (selectedPaymentMethod === 'cash') {
@@ -302,15 +311,13 @@ const ReviewPhase = ({
                 : 2
               : Number(normalizedItem.measurement_unit);
 
+          const translatedItemName = getTranslatedItemName(normalizedItem);
+
           return {
             _id: normalizedItem._id || normalizedItem.id || categoryId,
             categoryId: categoryId,
             quantity: quantity,
-            name:
-              normalizedItem.name ||
-              normalizedItem.itemName ||
-              normalizedItem.categoryName ||
-              "Unknown Item",
+            name: translatedItemName,
             categoryName: normalizedItem.categoryName || "Unknown Category",
             measurement_unit: measurementUnit,
             points: normalizedItem.points || 10,

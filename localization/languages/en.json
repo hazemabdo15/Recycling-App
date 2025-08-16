@@ -517,11 +517,45 @@
     "spare-parts": {
       "name" : "Spare Parts",
       "description": "Variety of Spare Parts"
+    },
+    "metals": {
+      "name": "Metals",
+      "description": "variety of metals"
+    },
+    "home-appliances": {
+      "name": "Home Appliances",
+      "description": "variety of home appliances"
     }
   },
   "items": {
     "paper": {
-      "shredded paper": "shredded papers"
+      "shredded-paper": "shredded papers",
+      "books": "books",
+      "news-paper": "news papers"
+    },
+    "e-wasted": {
+      "router": "router",
+      "mobile": "mobile",
+      "laptop": "laptop",
+      "receiver": "receiver",
+      "powerbank": "power bank"
+    },
+    "spare-parts": {
+      "car-battery": "car battery"
+    },
+    "metals": {
+      "cooking-pan": "cooking pan",
+      "hammer": "hammer",
+      "tea-pot": "tea pot"
+    },
+    "plastic": {
+      "acrylic": "acrylic",
+      "solid-plastic": "solid plastic",
+      "water-colman": "water colman",
+      "plastic-barrel": "plastic barrel"
+    },
+    "home-appliances": {
+      "fan": "fan"
     }
   },
   "delivery": {
