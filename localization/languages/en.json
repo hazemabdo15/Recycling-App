@@ -505,6 +505,23 @@
     "paper": {
       "name": "paper",
       "description": "eng"
+    },
+    "plastic": {
+      "name": "plastic",
+      "description": "variety of plastic items"
+    },
+    "e-wasted": {
+      "name": "E-Wasted",
+      "description": "e wasted items"
+    },
+    "spare-parts": {
+      "name" : "Spare Parts",
+      "description": "Variety of Spare Parts"
+    }
+  },
+  "items": {
+    "paper": {
+      "shredded paper": "shredded papers"
     }
   },
   "delivery": {
@@ -861,10 +878,5 @@
     "noMaterialsExtracted": "No materials were extracted from the recording.",
     "goBack": "Go Back",
     "noAvailableMaterials": "No available materials to add to cart. Items marked in red are not yet in our database."
-  },
-  "items": {
-    "paper": {
-      "shredded papers": "shredded papers"
-    }
   }
 }

@@ -503,8 +503,25 @@
       "cannotAddMore": "لا يمكنك إضافة المزيد. يوجد فقط {{quantity}} في المخزون."
     },
     "paper": {
-      "name": "ورق بسسس",
+      "name": "ورق",
       "description": "عربي"
+    },
+    "plastic": {
+      "name": "بلاسيتك",
+      "description": "مجموعة من العناصر"
+    },
+    "e-wasted": {
+      "name": "نفايات الكترونية",
+      "description": "بعض من النفايات الالكترونية"
+    },
+    "spare-parts": {
+      "name" : "قطع غيار",
+      "description": "مجموعة متنوعة من قطع الغيار"
+    }
+  },
+  "items": {
+    "paper": {
+      "shredded paper": "ورق متقطع"
     }
   },
   "delivery": {
@@ -861,10 +878,5 @@
     "noMaterialsExtracted": "لم يتم استخراج أي مواد من التسجيل.",
     "goBack": "العودة",
     "noAvailableMaterials": "لا توجد مواد متاحة لإضافة إلى السلة. العناصر المحددة باللون الأحمر ليست موجودة في قاعدة البيانات الخاصة بنا بعد."
-  },
-  "items": {
-    "paper": {
-      "shredded papers": "ورق متقطع"
-    }
   }
 }
