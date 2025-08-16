@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
   stockBadgeRTL_Custom: {
     position: "absolute",
     top: 10,
-    left: 250, // Positioned on the left side for RTL
+    left: 250,
     backgroundColor: colors.base200 || "#F3F4F6",
     borderRadius: 8,
     paddingHorizontal: 10,
@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
   },
   
   // ==========================================
-  // LTR STYLES - THESE WORK CORRECTLY
+  // LTR STYLES 
   // ==========================================
   cornerBannerWrapperLTR_Custom: {
     position: 'absolute',
@@ -207,39 +207,6 @@ const styles = StyleSheet.create({
   // ==========================================
   // ORIGINAL STYLES (KEPT FOR REFERENCE)
   // ==========================================
-  cornerBannerWrapper: {
-    position: 'absolute',
-    top: 14,
-    right: -80,
-    width: 260,
-    height: 40,
-    zIndex: 30,
-    pointerEvents: 'none',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cornerBannerWrapperRTL: {
-    right: undefined,
-    left: -80,
-  },
-  cornerBanner: {
-    width: 260,
-    height: 40,
-    backgroundColor: 'rgba(239,68,68,0.92)', // red-500
-    justifyContent: 'center',
-    alignItems: 'center',
-    transform: [{ rotate: '45deg' }],
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    elevation: 2,
-    overflow: 'hidden',
-  },
-  cornerBannerRTL: {
-    transform: [{ rotate: '-45deg' }],
-  },
   cornerBannerText: {
     color: 'white',
     fontWeight: 'bold',
@@ -251,63 +218,11 @@ const styles = StyleSheet.create({
     width: 280,
     alignSelf: 'left',
   },
-  stockRightBadge: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    backgroundColor: colors.base200 || "#F3F4F6",
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    zIndex: 12,
-    minWidth: 60,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  stockBadgeRTL: {
-    right: undefined,
-    left: 10,
-  },
-  stockRightText: {
-    color: colors.primary || "#0E9F6E",
-    fontWeight: "600",
-    fontSize: 12,
-    letterSpacing: 0.2,
-  },
   stockBadgeText: {
     color: colors.primary || "#0E9F6E",
     fontWeight: "600",
     fontSize: 12,
     letterSpacing: 0.2,
-  },
-  outOfStockBadge: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    backgroundColor: colors.error,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    zIndex: 12,
-    minWidth: 60,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  outOfStockText: {
-    color: colors.white,
-    fontWeight: "bold",
-    fontSize: 12,
-    letterSpacing: 0.5,
   },
 });
 
