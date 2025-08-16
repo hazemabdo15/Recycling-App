@@ -1,9 +1,11 @@
 ﻿import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { memo, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useLocalization } from "../../context/LocalizationContext";
 import { orderService } from "../../services/api/orders";
 import { scaleSize } from '../../utils/scale';
+import { getTranslatedName } from "../../utils/translationHelpers";
 const colors = {
   primary: "#0E9F6E",
   secondary: "#8BC34A",
@@ -33,9 +35,39 @@ const ICON_MAP = {
 
 const TopRecycledSection = memo(() => {
   const router = useRouter();
+  const { t } = useLocalization();
   const [topItems, setTopItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Helper function to get translated item name
+  const getTranslatedItemName = useCallback((item) => {
+    if (!item || !t) return item?._id?.itemName || item?.itemName || "Unknown Item";
+    
+    const originalName = item._id?.itemName || item.itemName || "Unknown Item";
+    // Try multiple possible category name fields and sources
+    let categoryName = item.categoryName || item.category || item._id?.categoryName || null;
+    
+    // If categoryName is not found, try to extract from categoryNames array
+    if (!categoryName && item.categoryNames && Array.isArray(item.categoryNames) && item.categoryNames.length > 0) {
+      categoryName = item.categoryNames[0]; // Use the first category name
+    }
+    
+    // Debug logging to understand the data structure
+    console.log('TopRecycledSection - Item data:', {
+      originalName,
+      categoryName,
+      fullItem: item
+    });
+    
+    const translatedName = getTranslatedName(t, originalName, "subcategories", {
+      categoryName: categoryName
+        ? categoryName.toLowerCase().replace(/\s+/g, "-")
+        : null,
+    });
+    
+    return translatedName || originalName;
+  }, [t]);
 
   useEffect(() => {
     let mounted = true;
@@ -126,7 +158,7 @@ const TopRecycledSection = memo(() => {
                     color={iconInfo.color}
                   />
                 </View>
-                <Text style={styles.itemName}>{item._id?.itemName || item.itemName}</Text>
+                <Text style={styles.itemName}>{getTranslatedItemName(item)}</Text>
                 <View style={styles.statsContainer}>
                   <View style={styles.statItem}>
                     <MaterialCommunityIcons

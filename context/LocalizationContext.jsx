@@ -1,9 +1,11 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { I18nManager } from 'react-native';
 import i18next from '../localization/i18n';
 import { changeLanguage as handleLanguageChange } from '../localization/languageUtils';
 import { getRoleBasedTranslation } from '../localization/roleBasedTranslation';
+
+// RTL languages list (should match the one in languageUtils.js)
+const RTL_LANGUAGES = ['ar', 'he', 'ur'];
 
 const LocalizationContext = createContext();
 
@@ -18,12 +20,20 @@ export const useLocalization = () => {
 export function LocalizationProvider({ children }) {
   const { t } = useTranslation();
   const [currentLanguage, setCurrentLanguage] = useState(i18next.language);
-  const [isRTL, setIsRTL] = useState(I18nManager.isRTL);
+  
+  // Calculate RTL based on current language instead of just I18nManager.isRTL
+  const isLanguageRTL = RTL_LANGUAGES.includes(currentLanguage);
+  const [isRTL, setIsRTL] = useState(isLanguageRTL);
 
   useEffect(() => {
     const languageChangedListener = (lng) => {
+      console.log('Language changed to:', lng);
       setCurrentLanguage(lng);
-      setIsRTL(I18nManager.isRTL);
+      
+      // Update RTL state based on the new language
+      const newIsRTL = RTL_LANGUAGES.includes(lng);
+      setIsRTL(newIsRTL);
+      console.log('RTL state updated to:', newIsRTL);
     };
     
     // Listen for language changes from i18next

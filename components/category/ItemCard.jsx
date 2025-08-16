@@ -23,8 +23,20 @@ const ItemCard = ({
   index = 0,
   user = null,
 }) => {
-  const { t } = useLocalization();
+  const { t, isRTL } = useLocalization();
   const unitDisplay = getUnitDisplay(item.measurement_unit);
+  
+  // Debug RTL state
+  console.log('ItemCard RTL state:', isRTL);
+  
+  // Use separate style objects for RTL and LTR
+  const bannerWrapperStyle = isRTL ? styles.cornerBannerWrapperRTL_Custom : styles.cornerBannerWrapperLTR_Custom;
+  const bannerStyle = isRTL ? styles.cornerBannerRTL_Custom : styles.cornerBannerLTR_Custom;
+  
+  // Debug the applied styles
+  console.log('Banner wrapper style:', bannerWrapperStyle);
+  console.log('Banner style:', bannerStyle);
+  
   // Only show stock-related logic for buyers
   const showStockLogic = isBuyer(user);
   const outOfStock = showStockLogic
@@ -39,17 +51,20 @@ const ItemCard = ({
         ...itemCardStyles.itemCard,
       }}
     >
+      {/* Debug: Log parent container styles */}
+      {console.log('Parent container styles:', itemCardStyles.itemCard)}
+      
       {/* Diagonal Out of Stock Banner Overlay */}
       {outOfStock && (
-        <View style={styles.cornerBannerWrapper} pointerEvents="none">
-          <View style={styles.cornerBanner}>
+        <View style={bannerWrapperStyle} pointerEvents="none">
+          <View style={bannerStyle}>
             <Text style={styles.cornerBannerText}>{t('categories.itemCard.outOfStock')}</Text>
           </View>
         </View>
       )}
       {/* Show badge with stock quantity only if in stock, hide if out of stock */}
       {showStockLogic && !outOfStock && (
-        <View style={styles.stockRightBadge}>
+        <View style={[styles.stockRightBadge, isRTL && styles.stockBadgeRTL]}>
           <Text style={styles.stockRightText}>
             {typeof item.quantity === "number"
               ? `${t('categories.itemCard.stock')}: ${item.quantity} ${unitDisplay}`
@@ -93,6 +108,69 @@ const ItemCard = ({
 };
 
 const styles = StyleSheet.create({
+  // ==========================================
+  // RTL STYLES - TWEAK THESE FOR RTL LAYOUT
+  // ==========================================
+  cornerBannerWrapperRTL_Custom: {
+    position: 'absolute',
+    top: 14,
+    left: 200, // Change this value to adjust RTL position
+    width: 260,
+    height: 40,
+    zIndex: 30,
+    pointerEvents: 'none',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cornerBannerRTL_Custom: {
+    width: 260,
+    height: 40,
+    backgroundColor: 'rgba(239,68,68,0.92)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    transform: [{ rotate: '-45deg' }], // Change rotation angle here
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 2,
+    overflow: 'hidden',
+  },
+  
+  // ==========================================
+  // LTR STYLES - THESE WORK CORRECTLY
+  // ==========================================
+  cornerBannerWrapperLTR_Custom: {
+    position: 'absolute',
+    top: 14,
+    right: -80,
+    width: 260,
+    height: 40,
+    zIndex: 30,
+    pointerEvents: 'none',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cornerBannerLTR_Custom: {
+    width: 260,
+    height: 40,
+    backgroundColor: 'rgba(239,68,68,0.92)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    transform: [{ rotate: '45deg' }],
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 2,
+    overflow: 'hidden',
+  },
+  
+  // ==========================================
+  // ORIGINAL STYLES (KEPT FOR REFERENCE)
+  // ==========================================
   cornerBannerWrapper: {
     position: 'absolute',
     top: 14,
@@ -103,6 +181,10 @@ const styles = StyleSheet.create({
     pointerEvents: 'none',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  cornerBannerWrapperRTL: {
+    right: undefined,
+    left: -80,
   },
   cornerBanner: {
     width: 260,
@@ -118,6 +200,9 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
     overflow: 'hidden',
+  },
+  cornerBannerRTL: {
+    transform: [{ rotate: '-45deg' }],
   },
   cornerBannerText: {
     color: 'white',
@@ -147,6 +232,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 2,
     elevation: 2,
+  },
+  stockBadgeRTL: {
+    right: undefined,
+    left: 10,
   },
   stockRightText: {
     color: colors.primary || "#0E9F6E",
