@@ -64,8 +64,8 @@ const ItemCard = ({
       )}
       {/* Show badge with stock quantity only if in stock, hide if out of stock */}
       {showStockLogic && !outOfStock && (
-        <View style={[styles.stockRightBadge, isRTL && styles.stockBadgeRTL]}>
-          <Text style={styles.stockRightText}>
+        <View style={isRTL ? styles.stockBadgeRTL_Custom : styles.stockBadgeLTR_Custom}>
+          <Text style={styles.stockBadgeText}>
             {typeof item.quantity === "number"
               ? `${t('categories.itemCard.stock')}: ${item.quantity} ${unitDisplay}`
               : `${t('categories.itemCard.stock')}: N/A`}
@@ -137,6 +137,24 @@ const styles = StyleSheet.create({
     elevation: 2,
     overflow: 'hidden',
   },
+  stockBadgeRTL_Custom: {
+    position: "absolute",
+    top: 10,
+    left: 250, // Positioned on the left side for RTL
+    backgroundColor: colors.base200 || "#F3F4F6",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    zIndex: 12,
+    minWidth: 60,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 2,
+  },
   
   // ==========================================
   // LTR STYLES - THESE WORK CORRECTLY
@@ -166,6 +184,24 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
     overflow: 'hidden',
+  },
+  stockBadgeLTR_Custom: {
+    position: "absolute",
+    top: 10,
+    right: 10, // Positioned on the right side for LTR
+    backgroundColor: colors.base200 || "#F3F4F6",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    zIndex: 12,
+    minWidth: 60,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 2,
   },
   
   // ==========================================
@@ -238,6 +274,12 @@ const styles = StyleSheet.create({
     left: 10,
   },
   stockRightText: {
+    color: colors.primary || "#0E9F6E",
+    fontWeight: "600",
+    fontSize: 12,
+    letterSpacing: 0.2,
+  },
+  stockBadgeText: {
     color: colors.primary || "#0E9F6E",
     fontWeight: "600",
     fontSize: 12,
