@@ -34,24 +34,40 @@ import {
 } from "../utils/cartUtils";
 import { isBuyer } from "../utils/roleUtils";
 import { scaleSize } from "../utils/scale";
-import { getTranslatedName } from "../utils/translationHelpers";
+import { extractNameFromMultilingual, getTranslatedName } from "../utils/translationHelpers";
 
 const CategoryDetails = () => {
-  const { categoryName } = useLocalSearchParams();
+  const { categoryName: categoryNameParam } = useLocalSearchParams();
   const navigation = useNavigation();
   const { user } = useAuth();
-  const { tRole } = useLocalization();
+  const { tRole, currentLanguage } = useLocalization();
   const { t } = useTranslation(); // Add translation hook
 
   const [pendingOperations, setPendingOperations] = useState({});
+  
+  // Parse the category name if it's a JSON string, otherwise use as-is
+  let categoryName;
+  try {
+    categoryName = JSON.parse(categoryNameParam);
+  } catch {
+    categoryName = categoryNameParam;
+  }
+  
   // Get translated category name for display (use shared helper)
-  const translatedCategoryName = getTranslatedName(t, categoryName, 'categories', { hyphenate: true });
+  const translatedCategoryName = getTranslatedName(t, categoryName, 'categories', { 
+    currentLanguage 
+  });
 
   useEffect(() => {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
 
-  const { items, loading, error, refetch } = useCategoryItems(categoryName);
+  // For API calls, use the English name or fallback to the original string
+  const categoryNameForAPI = typeof categoryName === 'object' 
+    ? (categoryName.en || categoryName.ar || Object.values(categoryName)[0])
+    : categoryName;
+
+  const { items, loading, error, refetch } = useCategoryItems(categoryNameForAPI);
   const [refreshing, setRefreshing] = useState(false);
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -81,18 +97,22 @@ const CategoryDetails = () => {
     const itemKey = getCartKey(processedItem);
     const cartQuantity = cartItems[itemKey] || 0;
 
-    // Add translated name to item
+    // Handle multilingual item name - extract from the item name structure
+    const itemDisplayName = extractNameFromMultilingual(processedItem.name, currentLanguage);
+    
+    // Add translated name to item (fallback to translation system if multilingual data not available)
     const translatedItemName = getTranslatedName(
       t,
       processedItem.name,
       "subcategories",
-      { categoryName: categoryName, hyphenate: true }
+      { categoryName: categoryName, currentLanguage }
     );
 
     return {
       ...processedItem,
       cartQuantity, // this is the quantity in the cart
       displayName: translatedItemName, // Add translated name for display
+      originalName: itemDisplayName, // Keep the original multilingual name for reference
     };
   });
 
@@ -199,7 +219,8 @@ const CategoryDetails = () => {
   const renderItem = ({ item, index }) => {
     const itemKey = getCartKey(item);
     const itemPendingAction = pendingOperations[itemKey];
-    const itemDisplayName = item.displayName || item.name;
+    // Use displayName if available (already translated), otherwise extract from multilingual name
+    const itemDisplayName = item.displayName || extractNameFromMultilingual(item.name, currentLanguage);
 
     // Stock logic - only for buyer users
     let maxReached = false;

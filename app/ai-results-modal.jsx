@@ -15,11 +15,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { showGlobalToast } from '../components/common/GlobalToast';
 import { useAuth } from '../context/AuthContext';
 import { useLocalization } from '../context/LocalizationContext';
+import itemsData from '../data/items.json'; // Import items data for Arabic name lookup
 import { useAllItems } from '../hooks/useAPI';
 import { useCart } from '../hooks/useCart';
 import { borderRadius, colors, spacing, typography } from '../styles/theme';
 import { isBuyer } from '../utils/roleUtils';
-import { getTranslatedName } from '../utils/translationHelpers';
+import { extractNameFromMultilingual, getTranslatedName } from '../utils/translationHelpers';
 
 let Reanimated, interpolate, runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming;
 
@@ -49,7 +50,7 @@ const DISMISS_THRESHOLD = 150;
 
 export default function AIResultsModal() {
   const { user } = useAuth();
-  const { t } = useLocalization();
+  const { t, currentLanguage } = useLocalization();
   const { handleAddToCart, cartItems } = useCart(user);
   const { items: allItems } = useAllItems();
   const params = useLocalSearchParams();
@@ -87,13 +88,81 @@ export default function AIResultsModal() {
 
   // Helper function to get translated item names consistently
   const getTranslatedItemName = useCallback((item) => {
+    // If the item has a database item with multilingual name, use that directly
+    if (item.databaseItem && item.databaseItem.name) {
+      return extractNameFromMultilingual(item.databaseItem.name, currentLanguage);
+    }
+    
+    // If the item itself has a multilingual name object, use that
+    if (item.name && typeof item.name === 'object') {
+      return extractNameFromMultilingual(item.name, currentLanguage);
+    }
+    
+    // For unmatched materials from AI extraction, prefer originalText if available and language is Arabic
+    if (!item.databaseItem && item.originalText && currentLanguage === 'ar') {
+      return item.originalText;
+    }
+    
+    // For unmatched materials from AI extraction, check if we have Arabic name in items.json
+    if (!item.databaseItem && (item.material || item.name)) {
+      const materialName = item.material || item.name;
+      
+      // If language is Arabic, try to find the Arabic name in items.json
+      if (currentLanguage === 'ar') {
+        // Look for the material in items.json (case-insensitive)
+        const itemKey = Object.keys(itemsData).find(key => 
+          key.toLowerCase() === materialName.toLowerCase()
+        );
+        
+        if (itemKey && itemsData[itemKey].arname) {
+          return itemsData[itemKey].arname;
+        }
+      }
+      
+      // Return the original material name
+      return materialName;
+    }
+    
+    // For AI-extracted materials that don't have database matches yet
     const originalName = item.name || item.material || "Unknown Item";
     const categoryName = item.categoryName || item.category || null;
-    const translatedName = getTranslatedName(t, originalName, 'subcategories', { 
-      categoryName: categoryName ? categoryName.toLowerCase().replace(/\s+/g, '-') : null 
-    });
-    return translatedName || originalName;
-  }, [t]);
+    
+    // If it's a string name, it might be from AI extraction - try translation as fallback
+    if (typeof originalName === 'string') {
+      // If language is Arabic, try to find the Arabic name in items.json first
+      if (currentLanguage === 'ar') {
+        const itemKey = Object.keys(itemsData).find(key => 
+          key.toLowerCase() === originalName.toLowerCase()
+        );
+        
+        if (itemKey && itemsData[itemKey].arname) {
+          return itemsData[itemKey].arname;
+        }
+      }
+      
+      // Safely extract category name from multilingual structure
+      const categoryNameForTranslation = categoryName 
+        ? extractNameFromMultilingual(categoryName, currentLanguage) 
+        : null;
+      
+      const translatedName = getTranslatedName(t, originalName, 'subcategories', { 
+        categoryName: categoryNameForTranslation
+          ? categoryNameForTranslation.toLowerCase().replace(/\s+/g, '-')
+          : null,
+        currentLanguage
+      });
+      
+      // Only use translated name if it's different from the key pattern
+      // If it returns something like "items.shredded-paper", use original instead
+      if (translatedName && !translatedName.includes('items.') && translatedName !== originalName) {
+        return translatedName;
+      }
+      
+      return originalName;
+    }
+    
+    return originalName;
+  }, [t, currentLanguage]);
 
   const safeMaterials = useMemo(() => materials || [], [materials]);
   const availableCount = safeMaterials.filter(material => material.available !== false).length;
@@ -432,7 +501,7 @@ export default function AIResultsModal() {
     // Get the appropriate item object for translation
     const itemForTranslation = isAvailable && item.databaseItem ? item.databaseItem : item;
     const translatedName = getTranslatedItemName(itemForTranslation);
-    const displayName = translatedName || (isAvailable && item.databaseItem ? item.databaseItem.name : item.material);
+    const displayName = translatedName || item.material || "Unknown Item";
 
     const validationError = validationResults.errors.find(error => error.index === index);
     const hasValidationError = !!validationError;

@@ -2,13 +2,30 @@
 import apiCache from "../../utils/apiCache";
 import logger from "../../utils/logger";
 import { measureApiCall } from "../../utils/performanceMonitor";
+import { extractNameFromMultilingual } from "../../utils/translationHelpers";
 import { API_ENDPOINTS } from "./config";
 
 const fallbackCategories = [
-  { _id: "1", name: "Paper", arname: "ورق", image: "paper.png" },
-  { _id: "2", name: "Plastic", arname: "بلاستيك", image: "plastic.png" },
-  { _id: "3", name: "Metal", arname: "معدن", image: "metal.png" },
-  { _id: "4", name: "Glass", arname: "زجاج", image: "glass.png" },
+  { 
+    _id: "1", 
+    name: { en: "Paper", ar: "ورق" }, 
+    image: "paper.png" 
+  },
+  { 
+    _id: "2", 
+    name: { en: "Plastic", ar: "بلاستيك" }, 
+    image: "plastic.png" 
+  },
+  { 
+    _id: "3", 
+    name: { en: "Metal", ar: "معدن" }, 
+    image: "metal.png" 
+  },
+  { 
+    _id: "4", 
+    name: { en: "Glass", ar: "زجاج" }, 
+    image: "glass.png" 
+  },
 ];
 
 const generateFallbackItems = () => {
@@ -17,8 +34,7 @@ const generateFallbackItems = () => {
   for (const [name, details] of Object.entries(itemsData)) {
     items.push({
       _id: id.toString(),
-      name,
-      arname: details.arname,
+      name: { en: name, ar: details.arname },
       measurement_unit: details.unit,
       points: Math.floor(Math.random() * 100) + 50,
       price: Math.floor(Math.random() * 20) + 5,
@@ -67,7 +83,7 @@ export const categoriesAPI = {
           },
           "WARN"
         );
-        return fallbackCategories;
+        return { data: fallbackCategories };
       }
     }, "categories-get-all");
   },
@@ -99,7 +115,7 @@ export const categoriesAPI = {
           },
           "WARN"
         );
-        return { items: fallbackItems };
+        return { data: { items: fallbackItems } };
       }
     }, "categories-get-all-items");
   },
@@ -123,10 +139,19 @@ export const categoriesAPI = {
         return data;
       } catch (error) {
         const fallbackItems = generateFallbackItems().filter(
-          (item) =>
-            item.name.toLowerCase().includes(categoryName.toLowerCase()) ||
-            (categoryName.toLowerCase().includes("paper") &&
-              item.measurement_unit === "KG")
+          (item) => {
+            // Handle multilingual item names for filtering
+            const itemNameEn = item.name?.en || item.name || '';
+            const itemNameAr = item.name?.ar || '';
+            
+            // Safely extract category name from multilingual structure
+            const categoryNameExtracted = extractNameFromMultilingual(categoryName, 'en');
+            const categoryNameLower = categoryNameExtracted ? categoryNameExtracted.toLowerCase() : '';
+            
+            return itemNameEn.toLowerCase().includes(categoryNameLower) ||
+                   itemNameAr.toLowerCase().includes(categoryNameLower) ||
+                   (categoryNameLower.includes("paper") && item.measurement_unit === "KG");
+          }
         );
 
         logger.api(
@@ -139,7 +164,7 @@ export const categoriesAPI = {
           "WARN"
         );
 
-        return fallbackItems.slice(0, 10);
+        return { data: fallbackItems.slice(0, 10) };
       }
     }, "categories-get-items");
   },

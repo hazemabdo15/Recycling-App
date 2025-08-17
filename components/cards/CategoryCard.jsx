@@ -1,6 +1,8 @@
 ﻿import { memo, useCallback } from 'react';
 import { Dimensions, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useLocalization } from '../../context/LocalizationContext';
 import { getCategoryImageProps } from '../../utils/categoryUtils';
+import { extractNameFromMultilingual } from '../../utils/translationHelpers';
 import { CategoryImage } from '../ui';
 
 let Animated, useSharedValue, useAnimatedStyle, withSpring;
@@ -27,8 +29,14 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const scaleSize = (size) => (SCREEN_WIDTH / 375) * size;
 
 const CategoryCard = memo(({ category, onPress }) => {
+    const { currentLanguage } = useLocalization();
     const scale = useSharedValue(1);
-    const imageProps = getCategoryImageProps(category);
+    
+    // Get category image props with multilingual support
+    const imageProps = getCategoryImageProps(category, currentLanguage);
+    
+    // Extract category name for accessibility
+    const categoryDisplayName = extractNameFromMultilingual(category.name, currentLanguage);
 
     const handlePressIn = useCallback(() => {
         scale.value = withSpring(0.96, { damping: 20, stiffness: 300 });
@@ -59,8 +67,8 @@ const CategoryCard = memo(({ category, onPress }) => {
                 android_ripple={{ color: '#e0e0e0', borderless: false }}
                 accessible={true}
                 accessibilityRole="button"
-                accessibilityLabel={`${category.name} category`}
-                accessibilityHint={`Navigate to ${category.name} recycling items`}
+                accessibilityLabel={`${categoryDisplayName} category`}
+                accessibilityHint={`Navigate to ${categoryDisplayName} recycling items`}
             >
                 <Animated.View style={[styles.cardContent, { padding: scaleSize(20) }]}
                 >
@@ -69,7 +77,7 @@ const CategoryCard = memo(({ category, onPress }) => {
                         size={scaleSize(60)}
                         style={[styles.categoryIcon, { marginBottom: scaleSize(12) }]}
                     />
-                    <Text style={[styles.categoryText, { fontSize: scaleSize(16) }]}>{category.name}</Text>
+                    <Text style={[styles.categoryText, { fontSize: scaleSize(16) }]}>{imageProps.title}</Text>
                 </Animated.View>
             </Pressable>
         </Animated.View>

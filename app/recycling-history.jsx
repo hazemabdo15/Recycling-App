@@ -26,13 +26,13 @@ import { colors } from "../styles";
 import { generateOrderReportHTML } from "../utils/orderReportPDF";
 import { isBuyer, isCustomer } from "../utils/roleUtils";
 import { scaleSize } from "../utils/scale";
-import { getTranslatedName } from "../utils/translationHelpers";
+import { extractNameFromMultilingual, getTranslatedName } from "../utils/translationHelpers";
 
 const tabs = ["incoming", "completed", "cancelled"];
 
 export default function RecyclingHistory() {
   const { user, isLoggedIn } = useAuth();
-  const { tRole, t } = useLocalization();
+  const { tRole, t, currentLanguage } = useLocalization();
   const router = useRouter();
   const [allOrders, setAllOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -46,14 +46,20 @@ export default function RecyclingHistory() {
     const originalName = item.itemName || item.name || "Unknown Item";
     const categoryName = item.categoryName || item.category || null;
     
+    // Safely extract category name from multilingual structure
+    const categoryNameForTranslation = categoryName 
+      ? extractNameFromMultilingual(categoryName, currentLanguage) 
+      : null;
+    
     const translatedName = getTranslatedName(t, originalName, "subcategories", {
-      categoryName: categoryName
-        ? categoryName.toLowerCase().replace(/\s+/g, "-")
+      categoryName: categoryNameForTranslation
+        ? categoryNameForTranslation.toLowerCase().replace(/\s+/g, "-")
         : null,
+      currentLanguage
     });
     
     return translatedName || originalName;
-  }, [t]);
+  }, [t, currentLanguage]);
 
   // For swipe gesture
   const panResponder = useRef(

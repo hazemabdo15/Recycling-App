@@ -1,4 +1,5 @@
-﻿import apiService from "./api/apiService";
+﻿import { extractNameFromMultilingual } from '../utils/translationHelpers';
+import apiService from "./api/apiService";
 let cachedDatabaseItems = new Map(); // Use Map to cache per role
 let cacheTimestamp = null;
 const CACHE_DURATION = 5 * 60 * 1000;
@@ -51,8 +52,12 @@ export async function fetchDatabaseItems(userRole = 'customer') {
       
       if (category.items && Array.isArray(category.items)) {
         category.items.forEach(item => {
+          // Extract the name from multilingual object safely
+          const itemNameExtracted = extractNameFromMultilingual(item.name, 'en');
+          
           console.log('📝 [Material Verification] Processing item:', {
             name: item.name,
+            extractedName: itemNameExtracted,
             id: item._id,
             measurement_unit: item.measurement_unit,
             points: item.points,
@@ -69,7 +74,7 @@ export async function fetchDatabaseItems(userRole = 'customer') {
           
           allItems.push(itemData);
 
-          const itemName = item.name.toLowerCase().trim();
+          const itemName = itemNameExtracted.toLowerCase().trim();
           itemsIndex.set(itemName, itemData);
 
           const nameNoSpaces = itemName.replace(/\s+/g, '');
@@ -84,6 +89,9 @@ export async function fetchDatabaseItems(userRole = 'customer') {
       } else if (category.subcategories && Array.isArray(category.subcategories)) {
 
         category.subcategories.forEach(subcategory => {
+          // Extract the name from multilingual object safely
+          const subcategoryNameExtracted = extractNameFromMultilingual(subcategory.name, 'en');
+          
           const itemData = {
             ...subcategory,
             categoryId: category._id,
@@ -94,7 +102,7 @@ export async function fetchDatabaseItems(userRole = 'customer') {
           
           allItems.push(itemData);
 
-          const itemName = subcategory.name.toLowerCase().trim();
+          const itemName = subcategoryNameExtracted.toLowerCase().trim();
           itemsIndex.set(itemName, itemData);
 
           const nameNoSpaces = itemName.replace(/\s+/g, '');
@@ -209,7 +217,9 @@ function findBestMatch(materialName, databaseItems) {
   const SIMILARITY_THRESHOLD = 70;
   
   databaseItems.items.forEach(item => {
-    const score = calculateSimilarity(materialName, item.name);
+    // Extract name from multilingual object safely
+    const itemNameExtracted = extractNameFromMultilingual(item.name, 'en');
+    const score = calculateSimilarity(materialName, itemNameExtracted);
     if (score > bestScore && score >= SIMILARITY_THRESHOLD) {
       bestScore = score;
       bestMatch = item;
