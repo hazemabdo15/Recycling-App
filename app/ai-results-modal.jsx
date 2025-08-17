@@ -2,13 +2,13 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
-  Dimensions,
-  FlatList,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Dimensions,
+    FlatList,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,7 +19,7 @@ import { useAllItems } from '../hooks/useAPI';
 import { useCart } from '../hooks/useCart';
 import { borderRadius, colors, spacing, typography } from '../styles/theme';
 import { isBuyer } from '../utils/roleUtils';
-import { getTranslatedName } from '../utils/translationHelpers';
+import { extractNameFromMultilingual, getTranslatedName } from '../utils/translationHelpers';
 
 let Reanimated, interpolate, runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming;
 
@@ -49,7 +49,7 @@ const DISMISS_THRESHOLD = 150;
 
 export default function AIResultsModal() {
   const { user } = useAuth();
-  const { t } = useLocalization();
+  const { t, currentLanguage } = useLocalization();
   const { handleAddToCart, cartItems } = useCart(user);
   const { items: allItems } = useAllItems();
   const params = useLocalSearchParams();
@@ -89,11 +89,20 @@ export default function AIResultsModal() {
   const getTranslatedItemName = useCallback((item) => {
     const originalName = item.name || item.material || "Unknown Item";
     const categoryName = item.categoryName || item.category || null;
+    
+    // Safely extract category name from multilingual structure
+    const categoryNameForTranslation = categoryName 
+      ? extractNameFromMultilingual(categoryName, currentLanguage) 
+      : null;
+    
     const translatedName = getTranslatedName(t, originalName, 'subcategories', { 
-      categoryName: categoryName ? categoryName.toLowerCase().replace(/\s+/g, '-') : null 
+      categoryName: categoryNameForTranslation
+        ? categoryNameForTranslation.toLowerCase().replace(/\s+/g, '-')
+        : null,
+      currentLanguage
     });
     return translatedName || originalName;
-  }, [t]);
+  }, [t, currentLanguage]);
 
   const safeMaterials = useMemo(() => materials || [], [materials]);
   const availableCount = safeMaterials.filter(material => material.available !== false).length;

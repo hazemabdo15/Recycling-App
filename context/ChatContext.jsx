@@ -12,8 +12,8 @@ export const ChatProvider = ({ children }) => {
     // Only show FAB on these tab routes (support both '/home' and '/(tabs)/home' etc)
     const allowedTabs = [
         'home',
-        'explore',
-        'cart',
+        // 'explore',
+        // 'cart',
         // 'profile',
     ];
     const lastSegment = pathname ? pathname.split('/').filter(Boolean).pop() : '';

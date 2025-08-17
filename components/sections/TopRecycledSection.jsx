@@ -5,7 +5,7 @@ import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "rea
 import { useLocalization } from "../../context/LocalizationContext";
 import { orderService } from "../../services/api/orders";
 import { scaleSize } from '../../utils/scale';
-import { getTranslatedName } from "../../utils/translationHelpers";
+import { extractNameFromMultilingual, getTranslatedName } from "../../utils/translationHelpers";
 const colors = {
   primary: "#0E9F6E",
   secondary: "#8BC34A",
@@ -35,7 +35,7 @@ const ICON_MAP = {
 
 const TopRecycledSection = memo(() => {
   const router = useRouter();
-  const { t } = useLocalization();
+  const { t, currentLanguage } = useLocalization();
   const [topItems, setTopItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -60,14 +60,20 @@ const TopRecycledSection = memo(() => {
       fullItem: item
     });
     
+    // Safely extract category name from multilingual structure
+    const categoryNameForTranslation = categoryName 
+      ? extractNameFromMultilingual(categoryName, currentLanguage) 
+      : null;
+    
     const translatedName = getTranslatedName(t, originalName, "subcategories", {
-      categoryName: categoryName
-        ? categoryName.toLowerCase().replace(/\s+/g, "-")
+      categoryName: categoryNameForTranslation
+        ? categoryNameForTranslation.toLowerCase().replace(/\s+/g, "-")
         : null,
+      currentLanguage
     });
     
     return translatedName || originalName;
-  }, [t]);
+  }, [t, currentLanguage]);
 
   useEffect(() => {
     let mounted = true;
@@ -95,13 +101,14 @@ const TopRecycledSection = memo(() => {
   function getBestCategoryRoute(categoryNames) {
     if (!Array.isArray(categoryNames) || categoryNames.length === 0) return null;
     // Prefer kebab-case (contains '-')
-    const kebab = categoryNames.find(name => name.includes('-'));
+    const kebab = categoryNames.find(name => name && name.includes('-'));
     if (kebab) return kebab;
     // Fallback: prefer lowercase
-    const lower = categoryNames.find(name => name === name.toLowerCase());
+    const lower = categoryNames.find(name => name && name === name.toLowerCase());
     if (lower) return lower;
-    // Fallback: use the first
-    return categoryNames[0];
+    // Fallback: use the first valid name
+    const validName = categoryNames.find(name => name && typeof name === 'string');
+    return validName || null;
   }
 
   const handleItemPress = (item) => {

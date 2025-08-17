@@ -32,9 +32,13 @@ const Explore = () => {
     setShowItemsMode((prev) => !prev);
   };
   const handleCategoryPress = (category) => {
+    // Pass the category name object to support multilingual structure
     router.push({
       pathname: "/category-details",
-      params: { categoryName: category.name },
+      params: { 
+        categoryName: JSON.stringify(category.name),
+        categoryId: category._id 
+      },
     });
   };
   const handleFilteredCountChange = (count) => {

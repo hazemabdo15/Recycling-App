@@ -1,8 +1,14 @@
-﻿export const getCategoryIcon = (categoryName) => {
+﻿import { extractNameFromMultilingual } from './translationHelpers';
+
+export const getCategoryIcon = (categoryName) => {
+    // Handle multilingual category names - extract English name for icon mapping
+    const nameForMapping = extractNameFromMultilingual(categoryName, 'en');
+    
     const iconMap = {
         'Plastic': { iconName: 'bottle-soda', iconColor: '#FF69B4' },
         'Glass': { iconName: 'glass-fragile', iconColor: '#4FC3F7' },
         'Paper': { iconName: 'file-document', iconColor: '#8BC34A' },
+        'paaper': { iconName: 'file-document', iconColor: '#8BC34A' }, // Handle the typo in your example
         'Metal': { iconName: 'hammer-wrench', iconColor: '#FF9800' },
         'Electronics': { iconName: 'battery-charging', iconColor: '#F44336' },
         'Textiles': { iconName: 'tshirt-crew', iconColor: '#9C27B0' },
@@ -21,14 +27,18 @@
         'CDs/DVDs': { iconName: 'disc', iconColor: '#AB47BC' },
         'Shoes': { iconName: 'shoe-formal', iconColor: '#5D4037' },
     };
-    return iconMap[categoryName] || { iconName: 'help-circle', iconColor: '#9E9E9E' };
+    return iconMap[nameForMapping] || { iconName: 'help-circle', iconColor: '#9E9E9E' };
 };
-export const getCategoryImageProps = (category) => {
+
+export const getCategoryImageProps = (category, currentLanguage = 'en') => {
+    // Extract name for display and for icon mapping
+    const categoryDisplayName = extractNameFromMultilingual(category.name, currentLanguage);
     const iconData = getCategoryIcon(category.name);
+    
     return {
         imageUri: category.image,
         iconName: iconData.iconName,
         iconColor: iconData.iconColor,
-        title: category.name,
+        title: categoryDisplayName,
     };
 };
