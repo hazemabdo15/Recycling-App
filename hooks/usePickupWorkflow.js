@@ -163,9 +163,14 @@ export const usePickupWorkflow = () => {
 
   // Enhanced createOrder using unified service with proper data handling
   const createOrder = useCallback(async (orderOptions = {}) => {
+    // Allow passing address in orderOptions to override selectedAddress from state
+    const addressToUse = orderOptions.address || selectedAddress;
+    
     console.log('Order creation attempt', { 
       hasSelectedAddress: !!selectedAddress,
+      hasAddressToUse: !!addressToUse,
       selectedAddressId: selectedAddress?._id,
+      addressToUseId: addressToUse?._id,
       hasUser: !!user,
       userId: user?._id,
       hasCartItemDetails: !!cartItemDetails,
@@ -173,7 +178,7 @@ export const usePickupWorkflow = () => {
       orderOptions
     });
 
-    if (!selectedAddress) {
+    if (!addressToUse) {
       const errorMsg = 'Please select an address first';
       console.error('Order creation failed - no address:', errorMsg);
       throw new Error(errorMsg);
@@ -195,7 +200,7 @@ export const usePickupWorkflow = () => {
     if (orderOptions.paymentMethod === 'credit-card') {
       console.log('💾 [Pickup Workflow] Saving state before payment redirect');
       await workflowStateUtils.saveWorkflowState({
-        selectedAddress,
+        selectedAddress: addressToUse,
         currentPhase,
         cartItemDetails
       });
@@ -206,7 +211,7 @@ export const usePickupWorkflow = () => {
     try {
       // Single call to unified service
       const order = await unifiedOrderService.createPickupOrder(
-        selectedAddress, 
+        addressToUse, 
         user, 
         cartItemDetails,
         orderOptions

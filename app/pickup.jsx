@@ -24,6 +24,7 @@ import { isAuthenticated } from "../services/auth";
 import { colors, spacing, typography } from "../styles/theme";
 import { isBuyer } from "../utils/roleUtils";
 import { scaleSize } from "../utils/scale";
+import { workflowStateUtils } from "../utils/workflowStateUtils";
 
 export default function Pickup() {
   const insets = useSafeAreaInsets();
@@ -139,11 +140,21 @@ export default function Pickup() {
           setCreatingOrder(true);
 
           // ✅ Check if we have address in workflow state, if not try to restore from previous state
-          if (!selectedAddress) {
+          let addressToUse = selectedAddress;
+          if (!addressToUse) {
             console.warn(
-              "No selected address found in deep link handler, attempting to use last known address"
+              "No selected address found in deep link handler, attempting to restore from saved workflow state"
             );
-            // Let the createOrder function handle the validation and show appropriate error
+            // Try to restore from saved workflow state
+            const savedState = await workflowStateUtils.restoreWorkflowState();
+            if (savedState && savedState.selectedAddress) {
+              console.log("Found saved address in workflow state:", savedState.selectedAddress);
+              addressToUse = savedState.selectedAddress;
+              setSelectedAddress(savedState.selectedAddress);
+            } else {
+              console.error("No address found in workflow state either");
+              throw new Error("Please select an address first");
+            }
           }
 
           // ✅ Single order creation call through unified workflow
@@ -151,6 +162,7 @@ export default function Pickup() {
           let orderOptions = {
             paymentStatus: "success",
             paymentIntentId,
+            address: addressToUse, // Pass the address directly
           };
           if (isBuyer(user)) {
             orderOptions = {
@@ -212,7 +224,7 @@ export default function Pickup() {
         }
       }
     },
-    [selectedAddress, user, createOrder, setCurrentPhase]
+    [selectedAddress, user, createOrder, setCurrentPhase, setSelectedAddress]
   );
 
   useEffect(() => {
