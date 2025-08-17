@@ -255,7 +255,7 @@ function ProfileContent() {
       <ScrollView
         contentContainerStyle={{
           minHeight: windowHeight - PROFILE_CARD_HEIGHT,
-          paddingBottom: insets.bottom + scaleSize(16),
+          paddingBottom: insets.bottom + scaleSize(70),
         }}
         showsVerticalScrollIndicator={false}
         refreshControl={
