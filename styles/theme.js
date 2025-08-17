@@ -11,7 +11,7 @@
   white: "#ffffff",
   black: "#171717",
   error: "#EF4444",
-  warning: "#a79d31ff",
+  warning: "#F59E0B", // More vibrant orange for better visibility
   success: "#10B981",
   info: "#3B82F6",
   background: "#FAFAFA",

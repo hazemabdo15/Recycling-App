@@ -18,11 +18,21 @@ import { useLocalization } from "../context/LocalizationContext";
 import { useNotifications } from "../context/NotificationContext";
 import { colors, spacing } from "../styles/theme";
 import { scaleSize } from '../utils/scale';
+import { extractNameFromMultilingual } from '../utils/translationHelpers';
+
+/**
+ * Notification Types & UI Mapping:
+ * - order_assigned → Blue badge, person-add icon
+ * - order_status → Orange badge, info icon  
+ * - order_cancelled → Red badge, X icon
+ * - order_completed → Green badge, checkmark icon
+ * - system → Purple badge, star icon
+ */
 
 const NotificationsScreen = () => {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { t } = useLocalization();
+  const { t, currentLanguage } = useLocalization();
   const [isRefreshing, setIsRefreshing] = useState(false);
   
   const {
@@ -59,21 +69,26 @@ const NotificationsScreen = () => {
   const getNotificationIcon = (type) => {
     switch (type?.toLowerCase()) {
       case "order_assigned":
-      case "order_confirmed":
-        return "checkmark-circle";
+        return "person-add";
+      case "order_status":
+        return "information-circle";
       case "order_cancelled":
-      case "order_failed":
         return "close-circle";
       case "order_completed":
-        return "trophy";
-      case "order_picked_up":
-        return "car";
+        return "checkmark-circle";
+      case "system":
+        return "star";
       case "points_awarded":
         return "gift";
-      case "system":
-        return "settings";
       case "promotion":
         return "megaphone";
+      // Legacy types for backward compatibility
+      case "order_confirmed":
+        return "checkmark-circle";
+      case "order_failed":
+        return "close-circle";
+      case "order_picked_up":
+        return "car";
       default:
         return "notifications";
     }
@@ -82,20 +97,26 @@ const NotificationsScreen = () => {
   const getNotificationColor = (type) => {
     switch (type?.toLowerCase()) {
       case "order_assigned":
-      case "order_confirmed":
+        return colors.info;
+      case "order_status":
+        return colors.warning;
+      case "order_cancelled":
+        return colors.error;
       case "order_completed":
         return colors.success;
-      case "order_cancelled":
+      case "system":
+        return colors.accent;
+      case "points_awarded":
+        return colors.warning;
+      case "promotion":
+        return colors.accent;
+      // Legacy types for backward compatibility
+      case "order_confirmed":
+        return colors.success;
       case "order_failed":
         return colors.error;
       case "order_picked_up":
         return colors.info;
-      case "points_awarded":
-        return colors.warning;
-      case "system":
-        return colors.secondary;
-      case "promotion":
-        return colors.accent;
       default:
         return colors.primary;
     }
@@ -145,11 +166,30 @@ const NotificationsScreen = () => {
     );
   };
 
+  // Helper to safely extract localized content from notification
+  const getLocalizedNotificationContent = useCallback((notification) => {
+    const title = typeof notification.title === 'object' 
+      ? extractNameFromMultilingual(notification.title, currentLanguage)
+      : notification.title;
+
+    const body = typeof notification.body === 'object'
+      ? extractNameFromMultilingual(notification.body, currentLanguage)
+      : notification.body || notification.message;
+
+    return {
+      title: title || 'Notification',
+      body: body || 'New notification'
+    };
+  }, [currentLanguage]);
+
   const renderNotification = ({ item, index }) => {
     const isRead = item.read || item.isRead;
     const notificationColor = getNotificationColor(item.type);
     const iconName = getNotificationIcon(item.type);
     const notificationId = item.id || item._id;
+    
+    // Get localized content (this should already be processed by context, but double-check)
+    const { title, body } = getLocalizedNotificationContent(item);
     
     console.log('🔍 Notification data:', {
       id: item.id,
@@ -157,7 +197,9 @@ const NotificationsScreen = () => {
       notificationId,
       isRead,
       read: item.read,
-      isReadField: item.isRead
+      isReadField: item.isRead,
+      title,
+      body
     });
     
     return (
@@ -191,13 +233,13 @@ const NotificationsScreen = () => {
               <View style={styles.textContainer}>
                 <View style={styles.titleRow}>
                   <Text style={[styles.notificationTitle, { color: isRead ? colors.textSecondary : colors.text }]}>
-                    {item.title || 'No Title'}
+                    {title}
                   </Text>
                   {!isRead && <View style={styles.unreadDot} />}
                 </View>
                 
                 <Text style={[styles.notificationBody, { color: isRead ? colors.textTertiary : colors.textSecondary }]}>
-                  {item.body || item.message || 'No content'}
+                  {body}
                 </Text>
                 
                 <View style={styles.notificationFooter}>
@@ -235,7 +277,7 @@ const NotificationsScreen = () => {
           color={colors.textSecondary}
         />
       </View>
-      <Text style={styles.emptyTitle}>No notifications yet</Text>
+      <Text style={styles.emptyTitle}>{t('notifications.noNotifications')}</Text>
       <Text style={styles.emptySubtitle}>
         You&apos;ll receive notifications about your orders and account updates here
       </Text>

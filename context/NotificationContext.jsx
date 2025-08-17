@@ -5,11 +5,25 @@ import { io } from 'socket.io-client';
 import { API_BASE_URL } from '../services/api/config';
 import { notificationsAPI } from '../services/api/notifications';
 import { refreshAccessToken } from '../services/auth';
+import { extractNameFromMultilingual } from '../utils/translationHelpers';
 import { useAuth } from './AuthContext';
+import { useLocalization } from './LocalizationContext';
 
 const NotificationContext = createContext();
 
 const SOCKET_URL = API_BASE_URL;
+
+/**
+ * Expected notification types from backend:
+ * - order_status: General order status updates
+ * - order_assigned: Order assigned to courier
+ * - order_cancelled: Order cancellation with reason
+ * - order_completed: Order completion
+ * - system: System notifications (tier upgrades, achievements)
+ * 
+ * Legacy types (for backward compatibility):
+ * - order_confirmed, order_failed, order_picked_up
+ */
 
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
@@ -17,11 +31,36 @@ export const NotificationProvider = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false);
   
   const { user, accessToken, isLoggedIn } = useAuth();
+  const { currentLanguage } = useLocalization();
 
   const currentSocket = useRef(null);
   const isConnecting = useRef(false);
   const hasInitialized = useRef(null);
   const lastRefreshTime = useRef(0);
+
+  // Helper function to get localized notification content
+  const getLocalizedNotification = useCallback((notification) => {
+    if (!notification) return notification;
+
+    const localizedTitle = typeof notification.title === 'object' 
+      ? extractNameFromMultilingual(notification.title, currentLanguage)
+      : notification.title;
+
+    const localizedBody = typeof notification.body === 'object'
+      ? extractNameFromMultilingual(notification.body, currentLanguage)
+      : notification.body;
+
+    return {
+      ...notification,
+      title: localizedTitle || notification.title || 'Notification',
+      body: localizedBody || notification.body || notification.message || 'New notification'
+    };
+  }, [currentLanguage]);
+
+  // Process notifications array to localize content
+  const processNotifications = useCallback((notificationsList) => {
+    return notificationsList.map(notification => getLocalizedNotification(notification));
+  }, [getLocalizedNotification]);
 
   const refreshNotifications = useCallback(async () => {
     const now = Date.now();
@@ -45,13 +84,16 @@ export const NotificationProvider = ({ children }) => {
       const notificationsList = data.data?.data?.notifications || data.data?.notifications || data.notifications || [];
       const count = data.data?.data?.unreadCount || data.data?.unreadCount || data.unreadCount || 0;
       
-      setNotifications(notificationsList);
+      // Process notifications to extract localized content
+      const processedNotifications = processNotifications(notificationsList);
+      
+      setNotifications(processedNotifications);
       setUnreadCount(count);
-      console.log('🔄 Refreshed', notificationsList.length, 'notifications,', count, 'unread');
+      console.log('🔄 Refreshed', processedNotifications.length, 'notifications,', count, 'unread');
     } catch (error) {
       console.error('Error refreshing notifications:', error);
     }
-  }, [accessToken, user]);
+  }, [accessToken, user, processNotifications]);
 
   useEffect(() => {
     const isAuthenticated = isLoggedIn && user && !user.isGuest && accessToken;
@@ -88,7 +130,16 @@ export const NotificationProvider = ({ children }) => {
       }
       isConnecting.current = false;
     };
-  }, [isLoggedIn, user, accessToken]);
+  }, [isLoggedIn, user, accessToken, doConnect, doFetch]);
+
+  // Re-process notifications when language changes
+  useEffect(() => {
+    if (notifications.length > 0) {
+      console.log('🌍 Language changed, re-processing notifications for language:', currentLanguage);
+      // Re-fetch to get fresh localized content
+      refreshNotifications();
+    }
+  }, [currentLanguage, refreshNotifications, notifications.length]);
 
   const doFetch = useCallback(async () => {
     try {
@@ -104,14 +155,17 @@ export const NotificationProvider = ({ children }) => {
       const notificationsList = data.data?.data?.notifications || data.data?.notifications || data.notifications || [];
       const count = data.data?.data?.unreadCount || data.data?.unreadCount || data.unreadCount || 0;
       
-      setNotifications(notificationsList);
+      // Process notifications to extract localized content
+      const processedNotifications = processNotifications(notificationsList);
+      
+      setNotifications(processedNotifications);
       setUnreadCount(count);
-      console.log('📋 Fetched', notificationsList.length, 'notifications,', count, 'unread');
+      console.log('📋 Fetched', processedNotifications.length, 'notifications,', count, 'unread');
     } catch (error) {
       console.error('❌ Error fetching notifications:', error.message || error);
 
     }
-  }, [accessToken]);
+  }, [accessToken, processNotifications]);
 
   const isTokenExpired = (token) => {
     if (!token) return true;
@@ -231,23 +285,28 @@ export const NotificationProvider = ({ children }) => {
       socketConnection.on('notification:new', (notification) => {
         console.log('📢 New notification received via socket:', notification);
 
+        // Localize the incoming notification
+        const localizedNotification = getLocalizedNotification(notification);
+
         setNotifications(prev => {
 
-          const exists = prev.some(n => (n.id || n._id) === (notification.id || notification._id));
+          const exists = prev.some(n => (n.id || n._id) === (localizedNotification.id || localizedNotification._id));
           if (exists) {
             return prev;
           }
-          return [notification, ...prev];
+          return [localizedNotification, ...prev];
         });
 
         setUnreadCount(prev => prev + 1);
 
         const orderTypes = [
           'order_assigned',
-          'order_confirmed', 
+          'order_status', 
           'order_cancelled',
-          'order_failed',
           'order_completed',
+          // Legacy types for backward compatibility
+          'order_confirmed',
+          'order_failed',
           'order_picked_up'
         ];
         
@@ -255,7 +314,7 @@ export const NotificationProvider = ({ children }) => {
         const shouldShowAlert = !orderTypes.includes(notificationType);
         
         if (shouldShowAlert) {
-          Alert.alert(notification.title, notification.body, [{ text: 'OK' }]);
+          Alert.alert(localizedNotification.title, localizedNotification.body, [{ text: 'OK' }]);
         }
       });
 
@@ -276,25 +335,33 @@ export const NotificationProvider = ({ children }) => {
 
       commonNotificationEvents.forEach(eventName => {
         socketConnection.on(eventName, (notification) => {
+          // Localize the incoming notification
+          const localizedNotification = getLocalizedNotification(notification);
 
           setNotifications(prev => {
-            const exists = prev.some(n => (n.id || n._id) === (notification.id || notification._id));
+            const exists = prev.some(n => (n.id || n._id) === (localizedNotification.id || localizedNotification._id));
             if (exists) {
               return prev;
             }
-            return [notification, ...prev];
+            return [localizedNotification, ...prev];
           });
           
           setUnreadCount(prev => prev + 1);
 
           const orderTypes = [
-            'order_assigned', 'order_confirmed', 'order_cancelled',
-            'order_failed', 'order_completed', 'order_picked_up'
+            'order_assigned',
+            'order_status', 
+            'order_cancelled',
+            'order_completed',
+            // Legacy types for backward compatibility
+            'order_confirmed',
+            'order_failed',
+            'order_picked_up'
           ];
           
           const notificationType = notification.type?.toLowerCase();
           if (!orderTypes.includes(notificationType)) {
-            Alert.alert(notification.title, notification.body, [{ text: 'OK' }]);
+            Alert.alert(localizedNotification.title, localizedNotification.body, [{ text: 'OK' }]);
           }
         });
       });
@@ -305,7 +372,7 @@ export const NotificationProvider = ({ children }) => {
       setIsConnected(false);
       isConnecting.current = false;
     }
-  }, [accessToken, user]);
+  }, [accessToken, user, getLocalizedNotification]);
 
   const markAsRead = useCallback(async () => {
     if (!user || user.isGuest || !accessToken) {
