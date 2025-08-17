@@ -19,7 +19,7 @@ import { borderRadius, spacing, typography } from "../../styles";
 import { colors } from "../../styles/theme";
 import { normalizeItemData } from "../../utils/cartUtils";
 import { isBuyer, isBuyer as isBuyerRole, shouldShowDeliveryFee, shouldShowTotalValue } from "../../utils/roleUtils";
-import { getTranslatedName } from "../../utils/translationHelpers";
+import { extractNameFromMultilingual, getTranslatedName } from "../../utils/translationHelpers";
 
 
 import { getDeliveryFeeForCity } from '../../utils/deliveryFees';
@@ -34,7 +34,7 @@ const ReviewPhase = ({
   user: propUser,
   accessToken,
 }) => {
-  const { t } = useLocalization();
+  const { t, currentLanguage } = useLocalization();
   const [allItems, setAllItems] = useState([]);
   const [itemsLoaded, setItemsLoaded] = useState(false);
   const [cartItemsDisplay, setCartItemsDisplay] = useState([]);
@@ -47,11 +47,20 @@ const ReviewPhase = ({
   const getTranslatedItemName = useCallback((item) => {
     const originalName = item.name || item.itemName || item.material || "Unknown Item";
     const categoryName = item.categoryName || item.category || null;
-    const translatedName = getTranslatedName(t, originalName, 'subcategories', { 
-      categoryName: categoryName ? categoryName.toLowerCase().replace(/\s+/g, '-') : null 
+    
+    // Safely extract category name from multilingual structure
+    const categoryNameForTranslation = categoryName 
+      ? extractNameFromMultilingual(categoryName, currentLanguage) 
+      : null;
+    
+    const translatedName = getTranslatedName(t, originalName, "subcategories", {
+      categoryName: categoryNameForTranslation
+        ? categoryNameForTranslation.toLowerCase().replace(/\s+/g, "-")
+        : null,
+      currentLanguage
     });
     return translatedName || originalName;
-  }, [t]);
+  }, [t, currentLanguage]);
 
   // ✅ Role-based delivery fee calculation
   useEffect(() => {

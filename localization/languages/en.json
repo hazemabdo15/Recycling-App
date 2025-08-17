@@ -515,7 +515,7 @@
       "description": "e wasted items"
     },
     "spare-parts": {
-      "name" : "Spare Parts",
+      "name": "Spare Parts",
       "description": "Variety of Spare Parts"
     },
     "metals": {
@@ -525,11 +525,15 @@
     "home-appliances": {
       "name": "Home Appliances",
       "description": "variety of home appliances"
+    },
+    "antiques": {
+      "name": "antiques",
+      "description": "All your valuable anitques"
     }
   },
   "items": {
     "paper": {
-      "shredded-paper": "shredded papers",
+      "shredded-paper": "shredded-paper",
       "books": "books",
       "news-paper": "news papers"
     },
@@ -556,6 +560,9 @@
     },
     "home-appliances": {
       "fan": "fan"
+    },
+    "antiques": {
+      "typewriter": "Typewriter"
     }
   },
   "delivery": {

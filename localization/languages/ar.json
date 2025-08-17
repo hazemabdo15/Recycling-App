@@ -515,7 +515,7 @@
       "description": "بعض من النفايات الالكترونية"
     },
     "spare-parts": {
-      "name" : "قطع غيار",
+      "name": "قطع غيار",
       "description": "مجموعة متنوعة من قطع الغيار"
     },
     "metals": {
@@ -525,38 +525,45 @@
     "home-appliances": {
       "name": "الأجهزة المنزلية",
       "description": "مجموعة متنوعة من الأجهزة المنزلية"
+    },
+    "antiques": {
+      "name": "أنتيكات",
+      "description": "أنتيكات رائعه"
     }
   },
   "items": {
-  "paper": {
-    "shredded-paper": "ورق متقطع",
-    "books": "كتب",
-    "news-paper": "جرائد"
-  },
-  "e-wasted": {
-    "router": "راوتر",
-    "mobile": "موبايل",
-    "laptop": "لاب توب",
-    "receiver": "ريسيفر",
-    "powerbank": "باور بانك"
-  },
-  "spare-parts": {
-    "car-battery": "بطارية عربية"
-  },
-  "metals": {
-    "cooking-pan": "طاسة طبخ",
-    "hammer": "شاكوش",
-    "tea-pot": "براد شاي"
-  },
-  "plastic": {
-    "acrylic": "أكريليك",
-    "solid-plastic": "بلاستيك جامد",
-    "water-colman": "حافظة مية",
-    "plastic-barrel": "برميل بلاستيك"
-  },
-  "home-appliances": {
-    "fan": "مروحة"
-  }
+    "paper": {
+      "shredded-paper": "ورق متقطع",
+      "books": "كتب",
+      "news-paper": "جرائد"
+    },
+    "e-wasted": {
+      "router": "راوتر",
+      "mobile": "موبايل",
+      "laptop": "لاب توب",
+      "receiver": "ريسيفر",
+      "powerbank": "باور بانك"
+    },
+    "spare-parts": {
+      "car-battery": "بطارية عربية"
+    },
+    "metals": {
+      "cooking-pan": "طاسة طبخ",
+      "hammer": "شاكوش",
+      "tea-pot": "براد شاي"
+    },
+    "plastic": {
+      "acrylic": "أكريليك",
+      "solid-plastic": "بلاستيك جامد",
+      "water-colman": "حافظة مية",
+      "plastic-barrel": "برميل بلاستيك"
+    },
+    "home-appliances": {
+      "fan": "مروحة"
+    },
+    "antiques": {
+      "typewriter": "آلة كاتبة"
+    }
   },
   "delivery": {
     "title": "التوصيل",

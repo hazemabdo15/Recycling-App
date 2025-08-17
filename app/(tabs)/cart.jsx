@@ -36,7 +36,7 @@ import {
 } from "../../utils/cartUtils";
 import { isBuyer } from "../../utils/roleUtils";
 import { scaleSize } from "../../utils/scale";
-import { getTranslatedName } from "../../utils/translationHelpers";
+import { extractNameFromMultilingual, getTranslatedName } from "../../utils/translationHelpers";
 
 const getRoleBasedIcon = (iconType, userRole = "customer") => {
   const iconMappings = {
@@ -71,7 +71,7 @@ const getRoleBasedIcon = (iconType, userRole = "customer") => {
 const Cart = () => {
   const insets = useSafeAreaInsets();
   const { user, isLoggedIn } = useAuth();
-  const { t, tRole } = useLocalization();
+  const { t, tRole, currentLanguage } = useLocalization();
   const {
     cartItems,
     cartItemDetails,
@@ -91,10 +91,17 @@ const Cart = () => {
   const getTranslatedItemName = (item) => {
     const originalName = item.name || item.material || "Unknown Item";
     const categoryName = item.categoryName || item.category || null;
+    
+    // Safely extract category name from multilingual structure
+    const categoryNameForTranslation = categoryName 
+      ? extractNameFromMultilingual(categoryName, currentLanguage) 
+      : null;
+    
     const translatedName = getTranslatedName(t, originalName, "subcategories", {
-      categoryName: categoryName
-        ? categoryName.toLowerCase().replace(/\s+/g, "-")
+      categoryName: categoryNameForTranslation
+        ? categoryNameForTranslation.toLowerCase().replace(/\s+/g, "-")
         : null,
+      currentLanguage
     });
     return translatedName || originalName;
   };
@@ -255,8 +262,9 @@ const Cart = () => {
           newQuantity > actualStockQuantity
         ) {
           const normalizedItem = normalizeItemData(item);
+          const translatedItemName = getTranslatedItemName(normalizedItem);
           showMaxStockMessage(
-            normalizedItem.name,
+            translatedItemName,
             item.quantity,
             normalizedItem.measurement_unit
           );
@@ -383,8 +391,9 @@ const Cart = () => {
         // KG - smart rounding to nearest multiple of 0.25
         if (parsedValue <= 0) {
           const normalizedItem = normalizeItemData(item);
+          const translatedItemName = getTranslatedItemName(normalizedItem);
           showCartMessage(CartMessageTypes.INVALID_QUANTITY, {
-            itemName: normalizedItem.name,
+            itemName: translatedItemName,
             measurementUnit: measurementUnit,
             isBuyer: user?.role === "buyer",
           });
@@ -445,8 +454,9 @@ const Cart = () => {
           parsedValue > actualStockQuantity
         ) {
           const normalizedItem = normalizeItemData(item);
+          const translatedItemName = getTranslatedItemName(normalizedItem);
           showMaxStockMessage(
-            normalizedItem.name,
+            translatedItemName,
             item.quantity,
             normalizedItem.measurement_unit
           );
@@ -466,8 +476,9 @@ const Cart = () => {
     } catch (err) {
       console.error("[Cart] Error setting manual quantity:", err);
       const normalizedItem = normalizeItemData(item);
+      const translatedItemName = getTranslatedItemName(normalizedItem);
       showCartMessage(CartMessageTypes.OPERATION_FAILED, {
-        itemName: normalizedItem.name,
+        itemName: translatedItemName,
         measurementUnit: normalizedItem.measurement_unit,
         isBuyer: user?.role === "buyer",
       });

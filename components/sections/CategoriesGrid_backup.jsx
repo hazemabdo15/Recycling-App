@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from 'react-i18next'; // Add this import
 import {
-  ActivityIndicator,
-  FlatList,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  View,
+    ActivityIndicator,
+    FlatList,
+    RefreshControl,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
 import { KeyboardAwareFlatList } from 'react-native-keyboard-aware-scroll-view';
 import { useAuth } from "../../context/AuthContext";
@@ -16,14 +16,14 @@ import { useCart } from "../../hooks/useCart";
 import { spacing } from "../../styles";
 import { colors } from "../../styles/theme";
 import {
-  CartMessageTypes,
-  showCartMessage,
-  showMaxStockMessage,
+    CartMessageTypes,
+    showCartMessage,
+    showMaxStockMessage,
 } from "../../utils/cartMessages";
 import {
-  getCartKey,
-  getIncrementStep,
-  normalizeItemData,
+    getCartKey,
+    getIncrementStep,
+    normalizeItemData,
 } from "../../utils/cartUtils";
 import { isBuyer } from "../../utils/roleUtils";
 import { scaleSize } from "../../utils/scale";

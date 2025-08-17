@@ -98,6 +98,7 @@ Rules:
   "items": [
     {
       "material": "English name here",
+      "originalText": "Original text from transcription if different from English name",
       "quantity": float,
       "unit": "KG" | "piece"
     }
@@ -107,6 +108,7 @@ Rules:
 - Only use materials from the provided list (see below). If a material is not in the list, ignore it.
 - If a material appears multiple times, merge them and sum their quantities.
 - For each material, use the canonical English name from the list.
+- Include "originalText" field with the original Arabic/transcribed text if the input was not in English
 - If the unit is missing or ambiguous, use the default unit for that material from the list.
 - Accept both Arabic and English names, and be robust to typos and variants.
 - If the quantity is missing, assume 1.
@@ -122,9 +124,9 @@ Example:
 Input: "3 كيلو بلاستيك و 2 كراسي و مكواة"
 Output: {
   "items": [
-    { "material": "Plastics", "quantity": 3, "unit": "KG" },
-    { "material": "Chair", "quantity": 2, "unit": "piece" },
-    { "material": "Iron", "quantity": 1, "unit": "piece" }
+    { "material": "Plastics", "originalText": "بلاستيك", "quantity": 3, "unit": "KG" },
+    { "material": "Chair", "originalText": "كراسي", "quantity": 2, "unit": "piece" },
+    { "material": "Iron", "originalText": "مكواة", "quantity": 1, "unit": "piece" }
   ]
 }
 `;
@@ -212,9 +214,14 @@ export async function extractMaterialsFromTranscription(transcription) {
       const key = `${canonicalName}_${unit}`;
       if (materialCounts[key]) {
         materialCounts[key].quantity += quantity;
+        // If we have multiple instances, keep the first originalText or prefer Arabic if available
+        if (item.originalText && !materialCounts[key].originalText) {
+          materialCounts[key].originalText = item.originalText;
+        }
       } else {
         materialCounts[key] = {
           material: canonicalName,
+          originalText: item.originalText || null, // Preserve original text if provided
           quantity,
           unit,
         };
