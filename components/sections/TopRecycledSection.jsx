@@ -5,7 +5,7 @@ import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "rea
 import { useLocalization } from "../../context/LocalizationContext";
 import { orderService } from "../../services/api/orders";
 import { scaleSize } from '../../utils/scale';
-import { extractNameFromMultilingual, getTranslatedName } from "../../utils/translationHelpers";
+import { extractNameFromMultilingual } from "../../utils/translationHelpers";
 const colors = {
   primary: "#0E9F6E",
   secondary: "#8BC34A",
@@ -24,15 +24,6 @@ const borderRadius = {
   xl: 32,
 };
 
-const ICON_MAP = {
-  Plastic: { name: "bottle-soda", color: "#FF69B4" },
-  "Aluminum": { name: "cup", color: "#9E9E9E" },
-  "Cardboard": { name: "package-variant", color: "#8BC34A" },
-  "Glass": { name: "glass-fragile", color: "#4FC3F7" },
-  "Paper": { name: "file-document", color: "#FF9800" },
-
-};
-
 const TopRecycledSection = memo(() => {
   const router = useRouter();
   const { t, currentLanguage } = useLocalization();
@@ -42,37 +33,15 @@ const TopRecycledSection = memo(() => {
 
   // Helper function to get translated item name
   const getTranslatedItemName = useCallback((item) => {
-    if (!item || !t) return item?._id?.itemName || item?.itemName || "Unknown Item";
+    if (!item || !t) return item?._id || item?.displayName || "Unknown Item";
     
-    const originalName = item._id?.itemName || item.itemName || "Unknown Item";
-    // Try multiple possible category name fields and sources
-    let categoryName = item.categoryName || item.category || item._id?.categoryName || null;
-    
-    // If categoryName is not found, try to extract from categoryNames array
-    if (!categoryName && item.categoryNames && Array.isArray(item.categoryNames) && item.categoryNames.length > 0) {
-      categoryName = item.categoryNames[0]; // Use the first category name
+    // New API structure: item has name object with multilingual support
+    if (item.name && typeof item.name === 'object') {
+      return extractNameFromMultilingual(item.name, currentLanguage);
     }
     
-    // Debug logging to understand the data structure
-    console.log('TopRecycledSection - Item data:', {
-      originalName,
-      categoryName,
-      fullItem: item
-    });
-    
-    // Safely extract category name from multilingual structure
-    const categoryNameForTranslation = categoryName 
-      ? extractNameFromMultilingual(categoryName, currentLanguage) 
-      : null;
-    
-    const translatedName = getTranslatedName(t, originalName, "subcategories", {
-      categoryName: categoryNameForTranslation
-        ? categoryNameForTranslation.toLowerCase().replace(/\s+/g, "-")
-        : null,
-      currentLanguage
-    });
-    
-    return translatedName || originalName;
+    // Fallback to displayName or _id
+    return item.displayName || item._id || "Unknown Item";
   }, [t, currentLanguage]);
 
   useEffect(() => {
@@ -97,22 +66,17 @@ const TopRecycledSection = memo(() => {
     return () => { mounted = false; };
   }, []);
 
-  // Helper to select the best category route
-  function getBestCategoryRoute(categoryNames) {
-    if (!Array.isArray(categoryNames) || categoryNames.length === 0) return null;
-    // Prefer kebab-case (contains '-')
-    const kebab = categoryNames.find(name => name && name.includes('-'));
-    if (kebab) return kebab;
-    // Fallback: prefer lowercase
-    const lower = categoryNames.find(name => name && name === name.toLowerCase());
-    if (lower) return lower;
-    // Fallback: use the first valid name
-    const validName = categoryNames.find(name => name && typeof name === 'string');
-    return validName || null;
-  }
+  // Helper to get category name for navigation
+  const getCategoryNameForNavigation = useCallback((item) => {
+    if (!item.categoryName) return null;
+    
+    // Extract English category name for navigation
+    const englishCategoryName = extractNameFromMultilingual(item.categoryName, 'en');
+    return englishCategoryName ? englishCategoryName.toLowerCase() : null;
+  }, []);
 
   const handleItemPress = (item) => {
-    const categoryName = getBestCategoryRoute(item.categoryNames);
+    const categoryName = getCategoryNameForNavigation(item);
     if (categoryName) {
       router.push({
         pathname: '/category-details',
@@ -137,10 +101,9 @@ const TopRecycledSection = memo(() => {
           contentContainerStyle={styles.scrollContainer}
         >
           {topItems.map((item, index) => {
-            const iconInfo = ICON_MAP[item.categoryName] || { name: "recycle", color: colors.primary };
             return (
               <TouchableOpacity
-                key={item._id?.itemName || item._id || index}
+                key={item._id || index}
                 style={[
                   styles.itemCard,
                   index === topItems.length - 1 && { marginRight: 0 },
@@ -160,9 +123,9 @@ const TopRecycledSection = memo(() => {
                 ) : null}
                 <View style={styles.iconContainer}>
                   <MaterialCommunityIcons
-                    name={iconInfo.name}
+                    name="recycle"
                     size={28}
-                    color={iconInfo.color}
+                    color={colors.primary}
                   />
                 </View>
                 <Text style={styles.itemName}>{getTranslatedItemName(item)}</Text>
