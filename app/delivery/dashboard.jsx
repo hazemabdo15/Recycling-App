@@ -1,11 +1,10 @@
-﻿import { useEffect, useState } from 'react';
+﻿import { useState } from 'react';
 import {
   View, Text, TouchableOpacity, Image, TextInput, ScrollView, FlatList, Modal, ActivityIndicator,
   StyleSheet, SafeAreaView, Alert, Pressable
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
-import apiService from '../../services/api/apiService';
 import { colors } from '../../styles/theme';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -13,6 +12,7 @@ import useOrders from '../../hooks/useOrders';
 import OrderCard from '../../components/cards/OrderCardDelivery';
 import OrderDetailsModal from '../../components/Modals/OrderDetailsModal';
 import CompleteOrderModal from '../../components/Modals/CompleteOrderModal';
+import { useLocalization } from '../../context/LocalizationContext';
 
 export default function DeliveryDashboard() {
   const { orders, getAssignedOrders, refreshing, fetchingOrders } = useOrders();
@@ -21,6 +21,8 @@ export default function DeliveryDashboard() {
   const [showProofModal, setShowProofModal] = useState(false);
   const [selectedOrderDetails, setSelectedOrderDetails] = useState(null);
   const [showOrderDetailsModal, setShowOrderDetailsModal] = useState(false);
+  const { currentLanguage, changeLanguage, t, isRTL } = useLocalization(); 
+  const [showMenu, setShowMenu] = useState(false);
   
   const { logout } = useAuth();
   const router = useRouter();
@@ -33,18 +35,6 @@ export default function DeliveryDashboard() {
   const openComplete = (order) => {
     setSelectedOrder(order);
     setShowProofModal(true);
-  };
-
-  // Handle order details view
-  const handleViewOrderDetails = async (order) => {
-    try {
-      const detailedOrder = order; // Assuming the order already contains all needed details
-      setSelectedOrderDetails(detailedOrder);
-      setShowOrderDetailsModal(true);
-    } catch (error) {
-      console.error('Error fetching order details:', error);
-      Alert.alert('Error', 'Failed to load order details. Please try again.');
-    }
   };
 
   // Manual refresh handler
@@ -66,35 +56,65 @@ export default function DeliveryDashboard() {
     } catch (error) {
       console.error("Logout failed", error);
       Alert.alert(
-        "Logout Failed",
-        "There was an error logging out. Please try again."
+        t('auth.logout_failed'),
+        t('auth.logout_error_message')
       );
     }
   };
 
+  const toggleLanguage = () => {
+    const newLanguage = currentLanguage === 'en' ? 'ar' : 'en';
+    changeLanguage(newLanguage);
+  };
+
+  // Dynamic styles for RTL
+  const dynamicStyles = {
+    container: [styles.container, isRTL && styles.rtlContainer],
+    header: [styles.header, isRTL && styles.rtlHeader],
+    headerLeft: [styles.headerLeft, isRTL && styles.rtlHeaderLeft],
+    headerRight: [styles.headerRight, isRTL && styles.rtlHeaderRight],
+    orderCount: [styles.orderCount, isRTL && styles.rtlOrderCount],
+    menuOverlay: [styles.menuOverlay, isRTL && styles.rtlMenuOverlay],
+    menuItem: [styles.menuItem, isRTL && styles.rtlMenuItem],
+  };
+
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Enhanced Header */}
-      <View style={styles.header}>
-        <StatusBar style="dark" backgroundColor="#ffffff" />
-        <View style={styles.headerLeft}>
+    <SafeAreaView style={dynamicStyles.container}>
+      <StatusBar style="dark" backgroundColor="#ffffff" />
+      
+      {/* Fixed Header */}
+      <View style={dynamicStyles.header}>
+        {/* Left Side - Title and Icon */}
+        <View style={dynamicStyles.headerLeft}>
           <View style={styles.headerIcon}>
-            <Ionicons name="car" size={24} color="white" />
+            <Ionicons name="car" size={20} color="white" />
           </View>
-          <View>
-            <Text style={styles.title}>Delivery Dashboard</Text>
+          <View style={styles.titleContainer}>
+            <Text style={styles.title} numberOfLines={1}>
+              {t('dashboard.delivery_dashboard')}
+            </Text>
           </View>
         </View>
-        <View style={styles.headerRight}>
-          <View style={styles.orderCount}>
-            <Ionicons name="cube" size={16} color={colors.primary} />
-            <Text style={styles.orderCountText}>{orders.length} Orders</Text>
+
+        {/* Right Side - Action Buttons */}
+        <View style={dynamicStyles.headerRight}>
+          {/* Order Count Badge */}
+          <View style={dynamicStyles.orderCount}>
+            <Ionicons 
+              name="cube" 
+              size={14} 
+              color={colors.primary}
+              style={[styles.orderCountIcon, isRTL && styles.rtlIcon]}
+            />
+            <Text style={styles.orderCountText}>
+              {orders.length}
+            </Text>
           </View>
           
           {/* Refresh Button */}
           <TouchableOpacity 
             onPress={handleManualRefresh} 
-            style={[styles.refreshButton, fetchingOrders && styles.refreshButtonDisabled]}
+            style={[styles.actionButton, styles.refreshButton, fetchingOrders && styles.refreshButtonDisabled]}
             disabled={fetchingOrders}
           >
             {fetchingOrders ? (
@@ -102,15 +122,18 @@ export default function DeliveryDashboard() {
             ) : (
               <Ionicons 
                 name="refresh" 
-                size={20} 
+                size={18} 
                 color={colors.primary} 
-                style={fetchingOrders ? styles.refreshIconDisabled : null}
               />
             )}
           </TouchableOpacity>
           
-          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-            <Ionicons name="log-out-outline" size={24} color={colors.danger} />
+          {/* Menu Button */}
+          <TouchableOpacity 
+            onPress={() => setShowMenu(true)} 
+            style={[styles.actionButton, styles.menuButton]}
+          >
+            <Ionicons name="ellipsis-vertical" size={18} color={colors.text} />
           </TouchableOpacity>
         </View>
       </View>
@@ -119,8 +142,8 @@ export default function DeliveryDashboard() {
       {orders.length === 0 ? (
         <View style={styles.emptyState}>
           <Ionicons name="car-outline" size={64} color={colors.primary} />
-          <Text style={styles.emptyTitle}>No orders assigned yet</Text>
-          <Text style={styles.emptyText}>Once orders are assigned to you, they will appear here.</Text>
+          <Text style={styles.emptyTitle}>{t('orders.no_orders_assigned')}</Text>
+          <Text style={styles.emptyText}>{t('orders.orders_will_appear_here')}</Text>
         </View>
       ) : (
         <FlatList
@@ -135,6 +158,7 @@ export default function DeliveryDashboard() {
               onComplete={openComplete}
             />
           )}
+          contentContainerStyle={styles.listContainer}
         />
       )}
 
@@ -152,8 +176,8 @@ export default function DeliveryDashboard() {
         presentationStyle="pageSheet"
       >
         <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Order Details</Text>
+          <View style={[styles.modalHeader, isRTL && styles.rtlModalHeader]}>
+            <Text style={styles.modalTitle}>{t('orders.order_details')}</Text>
             <TouchableOpacity onPress={() => setShowOrderDetailsModal(false)}>
               <Ionicons name="close" size={24} color={colors.text} />
             </TouchableOpacity>
@@ -162,38 +186,38 @@ export default function DeliveryDashboard() {
             {selectedOrderDetails && (
               <View style={styles.orderDetailsCard}>
                 <Text style={styles.orderDetailTitle}>
-                  Order #{selectedOrderDetails._id?.slice(-8)}
+                  {t('order.order_number', { id: selectedOrderDetails._id?.slice(-8) })}
                 </Text>
                 <Text style={styles.orderDetailCustomer}>
-                  Customer: {selectedOrderDetails.user?.userName}
+                  {t('order.customer')}: {selectedOrderDetails.user?.userName}
                 </Text>
                 {/* Add more order details here as needed */}
                 {selectedOrderDetails.items && selectedOrderDetails.items.length > 0 && (
                   <View style={styles.itemsList}>
-                    <Text style={styles.itemsTitle}>Items:</Text>
+                    <Text style={styles.itemsTitle}>{t('orders.items')}:</Text>
                     {selectedOrderDetails.items.map((item, index) => (
                       <View key={index} style={styles.itemRow}>
                         <Text style={styles.itemName}>
-                          {item.itemName || item.name || item.productName || 'Item'}
+                          {item.name?.[currentLanguage] || item.itemName || item.name || item.productName || t('common.item')}
                         </Text>
                         <Text style={styles.itemQuantity}>
-                          {item.quantity} {item.unit}
+                          {item.quantity} {item.measurement_unit === 1 ? t('units.kg') : t('units.piece')}
                         </Text>
                       </View>
                     ))}
                   </View>
                 )}
                 <View style={styles.orderMeta}>
-                  <Text style={styles.orderMetaLabel}>Status:</Text>
+                  <Text style={styles.orderMetaLabel}>{t('orders.status')}:</Text>
                   <Text style={styles.orderMetaValue}>
-                    {selectedOrderDetails.status === 'assigntocourier' ? 'Ready for Delivery' : 
+                    {selectedOrderDetails.status === 'assigntocourier' ? t('orders.ready_for_delivery') : 
                      selectedOrderDetails.status.charAt(0).toUpperCase() + selectedOrderDetails.status.slice(1)}
                   </Text>
                 </View>
                 <View style={styles.orderMeta}>
-                  <Text style={styles.orderMetaLabel}>Created:</Text>
+                  <Text style={styles.orderMetaLabel}>{t('orders.created')}:</Text>
                   <Text style={styles.orderMetaValue}>
-                    {new Date(selectedOrderDetails.createdAt).toLocaleDateString("en-GB", {
+                    {new Date(selectedOrderDetails.createdAt).toLocaleDateString(currentLanguage === 'ar' ? 'ar-EG' : 'en-GB', {
                       day: '2-digit',
                       month: 'short',
                       year: 'numeric',
@@ -215,6 +239,59 @@ export default function DeliveryDashboard() {
         onClose={() => setShowProofModal(false)}
         onOrderCompleted={handleOrderCompleted}
       />
+
+      {/* Menu Modal */}
+      <Modal
+        visible={showMenu}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowMenu(false)}
+      >
+        <Pressable 
+          style={dynamicStyles.menuOverlay} 
+          onPress={() => setShowMenu(false)}
+        >
+          <View style={styles.menuContainer}>
+            {/* Language Option */}
+            <TouchableOpacity 
+              style={dynamicStyles.menuItem}
+              onPress={() => {
+                toggleLanguage();
+                setShowMenu(false);
+              }}
+            >
+              <Ionicons 
+                name="language" 
+                size={20} 
+                color={colors.text}
+                style={[styles.menuIcon, isRTL && styles.rtlMenuIcon]}
+              />
+              <Text style={styles.menuText}>
+                {currentLanguage === 'en' ? t('menu.switch_to_arabic') : t('menu.switch_to_english')}
+              </Text>
+            </TouchableOpacity>
+            
+            {/* Logout Option */}
+            <TouchableOpacity 
+              style={dynamicStyles.menuItem}
+              onPress={() => {
+                setShowMenu(false);
+                handleLogout();
+              }}
+            >
+              <Ionicons 
+                name="log-out-outline" 
+                size={20} 
+                color={colors.danger}
+                style={[styles.menuIcon, isRTL && styles.rtlMenuIcon]}
+              />
+              <Text style={[styles.menuText, { color: colors.danger }]}>
+                {t('auth.logout')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -225,11 +302,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     paddingTop: 35,
   },
+  rtlContainer: {
+    direction: 'rtl',
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     backgroundColor: 'white',
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
@@ -238,75 +319,101 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    minHeight: 56,
+  },
+  rtlHeader: {
+    flexDirection: 'row-reverse',
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
     flex: 1,
+    marginRight: 12,
+  },
+  rtlHeaderLeft: {
+    flexDirection: 'row-reverse',
+    marginRight: 0,
+    marginLeft: 12,
   },
   headerIcon: {
-    width: 38,
-    height: 38,
+    width: 32,
+    height: 32,
     backgroundColor: colors.primary,
-    borderRadius: 12,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 8,
+  },
+  titleContainer: {
+    flex: 1,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '500',
+    fontSize: 16,
+    fontWeight: '600',
     color: colors.text,
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    flexShrink: 0,
+  },
+  rtlHeaderRight: {
+    flexDirection: 'row-reverse',
   },
   orderCount: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
     backgroundColor: '#dbeafe',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    minWidth: 40,
+    justifyContent: 'center',
+  },
+  rtlOrderCount: {
+    flexDirection: 'row-reverse',
+  },
+  orderCountIcon: {
+    marginRight: 4,
+  },
+  rtlIcon: {
+    marginRight: 0,
+    marginLeft: 4,
   },
   orderCountText: {
     fontSize: 12,
     fontWeight: '600',
     color: colors.primary,
   },
-  refreshButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#dbeafe',
+  actionButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  refreshButton: {
+    backgroundColor: '#dbeafe',
     borderWidth: 1,
-    borderColor: '#3b82f6',
+    borderColor: '#bfdbfe',
   },
   refreshButtonDisabled: {
     backgroundColor: '#f3f4f6',
     borderColor: '#d1d5db',
   },
-  refreshIconDisabled: {
-    opacity: 0.5,
-  },
-  logoutButton: {
-    padding: 8,
-    backgroundColor: '#fee2e2',
-    borderRadius: 8,
+  menuButton: {
+    backgroundColor: '#f8fafc',
     borderWidth: 1,
-    borderColor: '#fecaca',
+    borderColor: '#e2e8f0',
+  },
+  listContainer: {
+    padding: 16,
   },
   emptyState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 32,
   },
   emptyTitle: {
     fontSize: 20,
@@ -314,12 +421,14 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginTop: 16,
     marginBottom: 8,
+    textAlign: 'center',
   },
   emptyText: {
     fontSize: 14,
     color: colors.textSecondary,
     textAlign: 'center',
-    maxWidth: 250,
+    maxWidth: 280,
+    lineHeight: 20,
   },
   modalContainer: {
     flex: 1,
@@ -333,6 +442,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
     backgroundColor: 'white',
+  },
+  rtlModalHeader: {
+    flexDirection: 'row-reverse',
   },
   modalTitle: {
     fontSize: 18,
@@ -372,7 +484,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 4,
+    paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#f3f4f6',
   },
@@ -399,6 +511,52 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   orderMetaValue: {
+    fontSize: 14,
+    color: colors.text,
+    fontWeight: '500',
+  },
+  menuOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-end',
+    paddingTop: 100,
+    paddingRight: 16,
+  },
+  rtlMenuOverlay: {
+    alignItems: 'flex-start',
+    paddingRight: 0,
+    paddingLeft: 16,
+  },
+  menuContainer: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 8,
+    minWidth: 180,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  rtlMenuItem: {
+    flexDirection: 'row-reverse',
+  },
+  menuIcon: {
+    marginRight: 10,
+  },
+  rtlMenuIcon: {
+    marginRight: 0,
+    marginLeft: 10,
+  },
+  menuText: {
     fontSize: 14,
     color: colors.text,
     fontWeight: '500',

@@ -2,6 +2,7 @@ import { Modal, View, Text, TouchableOpacity, ScrollView, Image, StyleSheet } fr
 import { Ionicons } from '@expo/vector-icons';
 import { formatDate, formatTime, getStatusBadgeStyle, getStatusText } from '../../utils/deliveryHelpers';
 import { colors } from '../../styles/theme';
+import { useLocalization } from '../../context/LocalizationContext';
 
 const getInitials = (name) => {
   if (!name) return '';
@@ -9,7 +10,14 @@ const getInitials = (name) => {
 };
 
 export default function OrderDetailsModal({ visible, onClose, order }) {
+  const { currentLanguage, t } = useLocalization();
   if (!order) return null;
+
+  const getLocalizedText = (textObject, fallback = '') => {
+    if (!textObject) return fallback;
+    if (typeof textObject === 'string') return textObject;
+    return textObject[currentLanguage] || textObject.en || fallback;
+  };
 
   return (
     <Modal
@@ -19,54 +27,19 @@ export default function OrderDetailsModal({ visible, onClose, order }) {
     >
       <View style={styles.modalContainer}>
         <View style={styles.modalHeader}>
-          <Text style={styles.modalTitle}>Order Details</Text>
+          <Text style={styles.modalTitle}>{t('orderDetails.title') || 'Order Details'}</Text>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
             <Ionicons name="close" size={24} color={colors.text} />
           </TouchableOpacity>
         </View>
         
         <ScrollView style={styles.orderDetailsContent} showsVerticalScrollIndicator={false}>
-          {/* Order Summary Card */}
-          <View style={styles.detailCard}>
-            <View style={styles.detailCardHeader}>
-              <Ionicons name="document-text" size={20} color={colors.primary} />
-              <Text style={styles.detailCardTitle}>Order Summary</Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Order ID:</Text>
-              <Text style={styles.detailValue}>#{order._id?.slice(-8)}</Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Status:</Text>
-              <View style={[styles.statusBadge, getStatusBadgeStyle(order.status)]}>
-                <Text style={[styles.statusText, { color: getStatusBadgeStyle(order.status).color }]}>
-                  {getStatusText(order.status)}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Created:</Text>
-              <View>
-                <Text style={styles.detailValue}>{formatDate(order.createdAt)}</Text>
-                <Text style={styles.detailSubValue}>{formatTime(order.createdAt)}</Text>
-              </View>
-            </View>
-            {order.completedAt && (
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Completed:</Text>
-                <View>
-                  <Text style={styles.detailValue}>{formatDate(order.completedAt)}</Text>
-                  <Text style={styles.detailSubValue}>{formatTime(order.completedAt)}</Text>
-                </View>
-              </View>
-            )}
-          </View>
 
           {/* Customer Information Card */}
           <View style={styles.detailCard}>
             <View style={styles.detailCardHeader}>
               <Ionicons name="person" size={20} color={colors.primary} />
-              <Text style={styles.detailCardTitle}>Customer Information</Text>
+              <Text style={styles.detailCardTitle}>{t('orderDetails.customerInformation') || 'Customer Information'}</Text>
             </View>
             <View style={styles.customerInfoDetail}>
               {order.user.image ? (
@@ -92,7 +65,7 @@ export default function OrderDetailsModal({ visible, onClose, order }) {
             <View style={styles.detailCard}>
               <View style={styles.detailCardHeader}>
                 <Ionicons name="location" size={20} color={colors.primary} />
-                <Text style={styles.detailCardTitle}>Delivery Address</Text>
+                <Text style={styles.detailCardTitle}>{t('orderDetails.deliveryAddress') || 'Delivery Address'}</Text>
               </View>
               <View style={styles.addressContainer}>
                 <Text style={styles.addressText}>
@@ -108,7 +81,7 @@ export default function OrderDetailsModal({ visible, onClose, order }) {
                 </Text>
                 {order.address.landmark && (
                   <Text style={styles.landmarkText}>
-                    Landmark: {order.address.landmark}
+                    {t('orderDetails.landmark') || 'Landmark'}: {order.address.landmark}
                   </Text>
                 )}
               </View>
@@ -120,69 +93,24 @@ export default function OrderDetailsModal({ visible, onClose, order }) {
             <View style={styles.detailCard}>
               <View style={styles.detailCardHeader}>
                 <Ionicons name="list" size={20} color={colors.primary} />
-                <Text style={styles.detailCardTitle}>Items ({order.items.length})</Text>
+                <Text style={styles.detailCardTitle}>
+                  {t('orderDetails.items') || 'Items'} ({order.items.length})
+                </Text>
               </View>
               {order.items.map((item, index) => (
-                <View key={index} style={styles.itemContainer}>
-                  <View style={styles.itemHeader}>
-                    <Text style={styles.itemName}>
-                      {item.itemName || item.name || item.productName || 'Item'}
-                    </Text>
-                    <Text style={styles.itemQuantity}>
-                      {item.quantity} {item.unit || 'pcs'}
-                    </Text>
+                  <View key={index} style={styles.itemContainer}>
+                    <View style={styles.itemHeader}>
+                      <Text style={styles.itemName}>
+                        {getLocalizedText(item.name, 'Item')}
+                      </Text>
+                      <Text style={styles.itemQuantity}>
+                        {item.quantity} {item.measurement_unit === 1 ? t('units.kg') : t('units.piece') || 'pcs'}
+                      </Text>
+                    </View>
                   </View>
-                  {item.points && (
-                    <Text style={styles.itemPoints}>
-                      {item.points} points per {item.unit || 'piece'}
-                    </Text>
-                  )}
-                </View>
               ))}
             </View>
           )}
-
-          {/* Courier Information Card */}
-          {order.courier && (
-            <View style={styles.detailCard}>
-              <View style={styles.detailCardHeader}>
-                <Ionicons name="car" size={20} color={colors.primary} />
-                <Text style={styles.detailCardTitle}>Courier Information</Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Name:</Text>
-                <Text style={styles.detailValue}>{order.courier.name}</Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Email:</Text>
-                <Text style={styles.detailValue}>{order.courier.email}</Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Phone:</Text>
-                <Text style={styles.detailValue}>{order.courier.phoneNumber}</Text>
-              </View>
-            </View>
-          )}
-
-          {/* Additional Information Card */}
-          <View style={styles.detailCard}>
-            <View style={styles.detailCardHeader}>
-              <Ionicons name="information-circle" size={20} color={colors.primary} />
-              <Text style={styles.detailCardTitle}>Additional Information</Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Delivery Fee:</Text>
-              <Text style={styles.detailValue}>
-                {order.deliveryFee ? `$${order.deliveryFee}` : 'Free'}
-              </Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Total Amount:</Text>
-              <Text style={styles.detailValue}>
-                {order.totalAmount ? `$${order.totalAmount}` : 'N/A'}
-              </Text>
-            </View>
-          </View>
         </ScrollView>
       </View>
     </Modal>

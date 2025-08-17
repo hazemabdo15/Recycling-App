@@ -78,7 +78,8 @@
     "popular": "Popular",
     "featured": "Featured",
     "recommended": "Recommended",
-    "comingSoon": "Coming Soon"
+    "comingSoon": "Coming Soon",
+    "item": "Item"
   },
   "app": {
     "name": {
@@ -91,6 +92,7 @@
   },
   "auth": {
     "login": "Login",
+    "logout": "Logout",
     "register": "Register",
     "email": "Email",
     "password": "Password",
@@ -425,6 +427,28 @@
       "delivered": "Delivered"
     }
   },
+  "orderDetails": {
+    "title": "Order Details",
+    "orderSummary": "Order Summary", 
+    "orderId": "Order ID",
+    "status": "Status",
+    "created": "Created",
+    "completed": "Completed",
+    "customerInformation": "Customer Information",
+    "deliveryAddress": "Delivery Address",
+    "landmark": "Landmark",
+    "items": "Items",
+    "courierInformation": "Courier Information",
+    "name": "Name",
+    "email": "Email", 
+    "phone": "Phone",
+    "additionalInformation": "Additional Information",
+    "deliveryFee": "Delivery Fee",
+    "totalAmount": "Total Amount",
+    "pointsPer": "points per",
+    "free": "Free",
+    "unavailable": "N/A"
+  },
   "wallet": {
     "title": "E-Wallet",
     "balance": "Balance",
@@ -574,7 +598,31 @@
     "free": "Free Delivery",
     "express": "Express Delivery",
     "standard": "Standard Delivery",
-    "scheduled": "Scheduled Delivery"
+    "scheduled": "Scheduled Delivery",
+    "complete_delivery": "Complete Delivery",
+    "photo_required": "Photo Required",
+    "photo_required_message": "Please take a delivery proof photo",
+    "notes_required": "Notes Required",
+    "notes_required_message": "Please add notes about the quantity changes",
+    "quantities_required": "Quantities Required",
+    "quantities_required_message": "Please enter actual quantities for all items",
+    "weight_required": "Weight Required",
+    "weight_required_message": "Please enter the estimated weight",
+    "delivery_completed": "Delivery Completed",
+    "delivery_completed_message": "Your delivery has been successfully completed.",
+    "failed_to_complete": "Failed to complete order. Please try again.",
+    "verify_quantities": "Verify Quantities",
+    "original": "Original",
+    "actual": "Actual",
+    "difference": "Diff",
+    "reason_for_changes": "Reason for Changes",
+    "explain_quantity_differences": "Explain quantity differences...",
+    "estimated_weight_required": "Estimated Weight (kg) *",
+    "estimated_weight": "Estimated Weight",
+    "weight_placeholder": "e.g. 2.5",
+    "order_weight": "Order weight",
+    "mark_as_collected": "Mark as Collected",
+    "mark_as_delivered": "Mark as Delivered"
   },
   "voice": {
     "title": "Voice Assistant",
@@ -919,5 +967,31 @@
     "noMaterialsExtracted": "No materials were extracted from the recording.",
     "goBack": "Go Back",
     "noAvailableMaterials": "No available materials to add to cart. Items marked in red are not yet in our database."
+  },
+  "permissions": {
+    "camera_required": "Permission Required",
+    "camera_required_message": "Camera permission is required to take photos."
+  },
+  "camera": {
+    "failed_to_open": "Failed to open camera. Please try again.",
+    "no_photo_taken": "No photo taken",
+    "retake_photo": "Retake Photo",
+    "take_collection_photo": "Take Collection Photo",
+    "take_delivery_photo": "Take Delivery Photo"
+  },
+  "order": {
+    "order_number": "Order #{{id}}",
+    "customer": "Customer"
+  },
+  "dashboard": {
+    "delivery_dashboard": "Delivery Dashboard"
+  },
+  "units": {
+    "kg": "kg",
+    "piece": "piece",
+    "pieces": "pieces"
+  },
+  "menu" : {
+    "switch_to_arabic": "التحويل الى العربية"
   }
 }

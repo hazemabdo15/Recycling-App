@@ -253,9 +253,10 @@ function ProfileContent() {
         avatarLoading={avatarLoading}
       />
       <ScrollView
+        style = {{ flex: 1}}
         contentContainerStyle={{
           minHeight: windowHeight - PROFILE_CARD_HEIGHT,
-          paddingBottom: insets.bottom + scaleSize(16),
+          paddingBottom: insets.bottom + scaleSize(100),
         }}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -648,7 +649,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   redeemButton: {
-    backgroundColor: "#a7f3d0",
+    backgroundColor: colors.primary,
     padding: scaleSize(16),
     borderRadius: scaleSize(12),
     marginVertical: scaleSize(16),

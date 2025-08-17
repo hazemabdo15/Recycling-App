@@ -94,7 +94,8 @@
     "popular": "شائع",
     "featured": "مميز",
     "recommended": "موصى به",
-    "comingSoon": "قريباً"
+    "comingSoon": "قريباً",
+    "item": "عنصر"
   },
   "app": {
     "name": {
@@ -107,6 +108,7 @@
   },
   "auth": {
     "login": "تسجيل الدخول",
+    "logout": "تسجيل الخروج",
     "register": "التسجيل",
     "email": "البريد الإلكتروني",
     "password": "كلمة المرور",
@@ -441,6 +443,26 @@
       "delivered": "تم التوصيل"
     }
   },
+  "orderDetails": {
+      "title": "تفاصيل الطلب",
+      "orderSummary": "ملخص الطلب",
+      "orderId": "رقم الطلب",
+      "status": "الحالة", 
+      "created": "تم الإنشاء",
+      "completed": "تم الإكمال",
+      "customerInformation": "معلومات العميل",
+      "deliveryAddress": "عنوان التسليم",
+      "landmark": "معلم مميز",
+      "items": "العناصر",
+      "courierInformation": "معلومات المرسال",
+      "name": "الاسم",
+      "email": "البريد الإلكتروني",
+      "phone": "الهاتف", 
+      "additionalInformation": "معلومات إضافية",
+      "deliveryFee": "رسوم التوصيل",
+      "totalAmount": "المبلغ الإجمالي",
+      "pointsPer": "نقاط لكل"
+  },
   "wallet": {
     "title": "المحفظة الإلكترونية",
     "balance": "الرصيد",
@@ -574,7 +596,31 @@
     "free": "توصيل مجاني",
     "express": "توصيل سريع",
     "standard": "توصيل عادي",
-    "scheduled": "توصيل مجدول"
+    "scheduled": "توصيل مجدول",
+    "complete_delivery": "إكمال التوصيل",
+    "photo_required": "الصورة مطلوبة",
+    "photo_required_message": "يرجى التقاط صورة إثبات التوصيل",
+    "notes_required": "الملاحظات مطلوبة",
+    "notes_required_message": "يرجى إضافة ملاحظات حول تغييرات الكمية",
+    "quantities_required": "الكميات مطلوبة",
+    "quantities_required_message": "يرجى إدخال الكميات الفعلية لجميع العناصر",
+    "weight_required": "الوزن مطلوب",
+    "weight_required_message": "يرجى إدخال الوزن المقدر",
+    "delivery_completed": "تم التوصيل",
+    "delivery_completed_message": "تم إكمال التوصيل بنجاح.",
+    "failed_to_complete": "فشل في إكمال الطلب. حاول مرة أخرى.",
+    "verify_quantities": "التحقق من الكميات",
+    "original": "الأصلي",
+    "actual": "الفعلي",
+    "difference": "الفرق",
+    "reason_for_changes": "سبب التغييرات",
+    "explain_quantity_differences": "اشرح الاختلافات في الكمية...",
+    "estimated_weight_required": "الوزن المقدر (كيلو) *",
+    "estimated_weight": "الوزن المقدر",
+    "weight_placeholder": "مثال: 2.5",
+    "order_weight": "وزن الطلب",
+    "mark_as_collected": "تحديد كمحصل",
+    "mark_as_delivered": "تحديد كمُسلم"
   },
   "voice": {
     "title": "المساعد الصوتي",
@@ -919,5 +965,31 @@
     "noMaterialsExtracted": "لم يتم استخراج أي مواد من التسجيل.",
     "goBack": "العودة",
     "noAvailableMaterials": "لا توجد مواد متاحة لإضافة إلى السلة. العناصر المحددة باللون الأحمر ليست موجودة في قاعدة البيانات الخاصة بنا بعد."
+  },
+  "permissions": {
+    "camera_required": "صلاحية مطلوبة",
+    "camera_required_message": "صلاحية الكاميرا مطلوبة لالتقاط الصور."
+  },
+  "camera": {
+    "failed_to_open": "فشل في فتح الكاميرا. حاول مرة أخرى.",
+    "no_photo_taken": "لم يتم التقاط صورة",
+    "retake_photo": "إعادة التقاط الصورة",
+    "take_collection_photo": "التقاط صورة التحصيل",
+    "take_delivery_photo": "التقاط صورة التوصيل"
+  },
+  "order": {
+    "order_number": "الطلب رقم {{id}}",
+    "customer": "العميل"
+  },
+  "dashboard": {
+    "delivery_dashboard": "لوحة التحكم بالتوصيل"
+  },
+  "units": {
+    "kg": "كيلو",
+    "piece": "قطعة",
+    "pieces": "قطع"
+  },
+  "menu" : {
+    "switch_to_english": "Switch to English"
   }
 }

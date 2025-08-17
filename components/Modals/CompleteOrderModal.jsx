@@ -7,6 +7,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import apiService from '../../services/api/apiService';
 import { colors } from '../../styles/theme';
+import { useLocalization } from '../../context/LocalizationContext';
 
 const CompleteOrderModal = ({ 
   visible, 
@@ -14,6 +15,7 @@ const CompleteOrderModal = ({
   onClose, 
   onOrderCompleted 
 }) => {
+  const { t, currentLanguage, isRTL } = useLocalization();
   const [photo, setPhoto] = useState(null);
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
@@ -32,13 +34,13 @@ const CompleteOrderModal = ({
         const initialQuantities = {};
         
         selectedOrder.items.forEach((item) => {
-          const correctUnit = item.measurement_unit === 1 ? 'kg' : 'piece';
+          const correctUnit = item.measurement_unit === 1 ? t('units.kg') : t('units.piece');
           const isUnitMismatch = item.unit !== correctUnit;
           
           initialQuantities[item._id] = {
             originalQuantity: item.quantity,
             actualQuantity: item.quantity,
-            name: item.itemName || item.name || item.productName || 'Item',
+            name: item.name?.[currentLanguage] || item.itemName || item.name || item.productName || t('common.item'),
             unit: correctUnit,
             measurement_unit: item.measurement_unit,
             hasUnitMismatch: isUnitMismatch,
@@ -55,7 +57,7 @@ const CompleteOrderModal = ({
         setShowQuantityForm(false);
       }
     }
-  }, [selectedOrder, visible]);
+  }, [selectedOrder, visible, currentLanguage, t]);
 
   // Calculate total points
   const calculateTotalPoints = () => {
@@ -109,9 +111,9 @@ const CompleteOrderModal = ({
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert(
-          'Permission Required', 
-          'Camera permission is required to take photos.',
-          [{ text: 'OK' }]
+          t('permissions.camera_required'), 
+          t('permissions.camera_required_message'),
+          [{ text: t('common.ok') }]
         );
         return;
       }
@@ -128,13 +130,13 @@ const CompleteOrderModal = ({
       }
     } catch (error) {
       console.error('Error picking image:', error);
-      Alert.alert('Error', 'Failed to open camera. Please try again.');
+      Alert.alert(t('common.error'), t('camera.failed_to_open'));
     }
   };
 
   const completeOrder = async () => {
     if (!photo) {
-      Alert.alert('Photo Required', 'Please take a delivery proof photo');
+      Alert.alert(t('delivery.photo_required'), t('delivery.photo_required_message'));
       return;
     }
 
@@ -146,7 +148,7 @@ const CompleteOrderModal = ({
       });
       
       if (hasChanges && !quantityNotes.trim()) {
-        Alert.alert('Notes Required', 'Please add notes about the quantity changes');
+        Alert.alert(t('delivery.notes_required'), t('delivery.notes_required_message'));
         return;
       }
 
@@ -155,14 +157,14 @@ const CompleteOrderModal = ({
       );
 
       if (hasEmptyQuantities) {
-        Alert.alert('Quantities Required', 'Please enter actual quantities for all items');
+        Alert.alert(t('delivery.quantities_required'), t('delivery.quantities_required_message'));
         return;
       }
     }
 
     // Validate weight for customer orders
     if (userRole === 'customer' && !notes.trim()) {
-      Alert.alert('Weight Required', 'Please enter the estimated weight');
+      Alert.alert(t('delivery.weight_required'), t('delivery.weight_required_message'));
       return;
     }
 
@@ -185,16 +187,16 @@ const CompleteOrderModal = ({
       const response = await apiService.post(`/${selectedOrder._id}/complete-with-proof`, formData);
       if (response.message === 'Order completed successfully with delivery proof') {
         Alert.alert(
-          'Delivery Completed',
-          'Your delivery has been successfully completed.',
-          [{ text: 'OK' }]
+          t('delivery.delivery_completed'),
+          t('delivery.delivery_completed_message'),
+          [{ text: t('common.ok') }]
         );
         onOrderCompleted?.();
         resetModal();
       }
     } catch (err) {
       console.error('Error submitting proof', err);
-      Alert.alert('Error', 'Failed to complete order. Please try again.');
+      Alert.alert(t('common.error'), t('delivery.failed_to_complete'));
     } finally {
       setLoading(false);
       resetModal();
@@ -214,15 +216,25 @@ const CompleteOrderModal = ({
 
   if (!selectedOrder) return null;
 
+  const dynamicStyles = {
+    modalContainer: [styles.modalContainer, isRTL && styles.rtlContainer],
+    modalHeader: [styles.modalHeader, isRTL && styles.rtlHeader],
+    quantitySectionHeader: [styles.quantitySectionHeader, isRTL && styles.rtlRow],
+    quantityInputs: [styles.quantityInputs, isRTL && styles.rtlRow],
+    cameraButton: [styles.cameraButton, isRTL && styles.rtlRow],
+    modalButtons: [styles.modalButtons, isRTL && styles.rtlRow],
+    submitButton: [styles.button, styles.submitButton, isRTL && styles.rtlRow],
+  };
+
   return (
     <Modal
       visible={visible}
       animationType="slide"
       presentationStyle="pageSheet"
     >
-      <View style={styles.modalContainer}>
-        <View style={styles.modalHeader}>
-          <Text style={styles.modalTitle}>Complete Delivery</Text>
+      <View style={dynamicStyles.modalContainer}>
+        <View style={dynamicStyles.modalHeader}>
+          <Text style={styles.modalTitle}>{t('delivery.complete_delivery')}</Text>
           <TouchableOpacity onPress={resetModal}>
             <Ionicons name="close" size={24} color={colors.text} />
           </TouchableOpacity>
@@ -231,19 +243,19 @@ const CompleteOrderModal = ({
         <ScrollView contentContainerStyle={styles.modalContent}>
           <View style={styles.orderSummary}>
             <Text style={styles.orderSummaryTitle}>
-              Order #{selectedOrder._id?.slice(-8)}
+              {t('order.order_number', { id: selectedOrder._id?.slice(-8) })}
             </Text>
             <Text style={styles.orderSummaryCustomer}>
-              Customer: {selectedOrder.user?.userName}
+              {t('order.customer')}: {selectedOrder.user?.userName}
             </Text>
           </View>
 
           {/* Quantity Review Form for Non-Customer Orders Only */}
           {userRole == 'customer' && showQuantityForm && (
             <View style={styles.quantitySection}>
-              <View style={styles.quantitySectionHeader}>
+              <View style={dynamicStyles.quantitySectionHeader}>
                 <Ionicons name="create-outline" size={20} color="#d97706" />
-                <Text style={styles.quantitySectionTitle}>Verify Quantities</Text>
+                <Text style={styles.quantitySectionTitle}>{t('delivery.verify_quantities')}</Text>
               </View>
               
               {Object.entries(quantities).map(([itemId, item]) => (
@@ -251,9 +263,9 @@ const CompleteOrderModal = ({
                   <Text style={styles.quantityItemName}>
                     {item.name} ({item.unit})
                   </Text>
-                  <View style={styles.quantityInputs}>
+                  <View style={dynamicStyles.quantityInputs}>
                     <View style={styles.quantityInputGroup}>
-                      <Text style={styles.quantityLabel}>Original</Text>
+                      <Text style={styles.quantityLabel}>{t('delivery.original')}</Text>
                       <TextInput
                         value={item.originalQuantity.toString()}
                         editable={false}
@@ -261,7 +273,7 @@ const CompleteOrderModal = ({
                       />
                     </View>
                     <View style={styles.quantityInputGroup}>
-                      <Text style={styles.quantityLabel}>Actual *</Text>
+                      <Text style={styles.quantityLabel}>{t('delivery.actual')} *</Text>
                       <TextInput
                         value={item.actualQuantity.toString()}
                         onChangeText={(value) => handleQuantityChange(itemId, value, item.measurement_unit)}
@@ -273,7 +285,7 @@ const CompleteOrderModal = ({
                   {(item.originalQuantity !== item.actualQuantity && item.actualQuantity !== '') && (
                     <View style={styles.quantityDiff}>
                       <Text style={styles.quantityDiffText}>
-                        Diff: {item.measurement_unit === 2 
+                        {t('delivery.difference')}: {item.measurement_unit === 2 
                           ? `${Math.round(Number(item.actualQuantity) - item.originalQuantity)} ${item.unit}`
                           : `${(Number(item.actualQuantity) - item.originalQuantity).toFixed(1)} ${item.unit}`
                         }
@@ -289,11 +301,11 @@ const CompleteOrderModal = ({
                 return item.originalQuantity !== actualQty;
               }) && (
                 <View style={styles.quantityNotesSection}>
-                  <Text style={styles.quantityNotesLabel}>Reason for Changes *</Text>
+                  <Text style={styles.quantityNotesLabel}>{t('delivery.reason_for_changes')} *</Text>
                   <TextInput
                     value={quantityNotes}
                     onChangeText={setQuantityNotes}
-                    placeholder="Explain quantity differences..."
+                    placeholder={t('delivery.explain_quantity_differences')}
                     placeholderTextColor={colors.placeholder}
                     style={styles.quantityNotesInput}
                     multiline
@@ -306,12 +318,12 @@ const CompleteOrderModal = ({
 
           {/* Weight/Notes Input */}
           <Text style={styles.notesLabel}>
-            {userRole === 'customer' ? 'Estimated Weight (kg) *' : 'Estimated Weight'}
+            {userRole === 'customer' ? t('delivery.estimated_weight_required') : t('delivery.estimated_weight')}
           </Text>
           <TextInput
             value={notes}
             onChangeText={setNotes}
-            placeholder={userRole === 'customer' ? "e.g. 2.5" : "Order weight"}
+            placeholder={userRole === 'customer' ? t('delivery.weight_placeholder') : t('delivery.order_weight')}
             placeholderTextColor={colors.placeholder}
             style={styles.notesInput}
             keyboardType={userRole === 'customer' ? "numeric" : "default"}
@@ -336,36 +348,36 @@ const CompleteOrderModal = ({
           ) : (
             <View style={styles.photoPlaceholder}>
               <Ionicons name="camera" size={48} color={colors.placeholder} />
-              <Text style={styles.placeholderText}>No photo taken</Text>
+              <Text style={styles.placeholderText}>{t('camera.no_photo_taken')}</Text>
             </View>
           )}
 
           <TouchableOpacity
             onPress={pickImage}
-            style={styles.cameraButton}
+            style={dynamicStyles.cameraButton}
           >
             <Ionicons
               name="camera"
               size={20}
               color="white"
-              style={styles.buttonIcon}
+              style={[styles.buttonIcon, isRTL && styles.rtlButtonIcon]}
             />
             <Text style={styles.buttonText}>
-              {photo ? 'Retake Photo' : `Take ${userRole === 'customer' ? 'Collection' : 'Delivery'} Photo`}
+              {photo ? t('camera.retake_photo') : userRole === 'customer' ? t('camera.take_collection_photo') : t('camera.take_delivery_photo')}
             </Text>
           </TouchableOpacity>
 
-          <View style={styles.modalButtons}>
+          <View style={dynamicStyles.modalButtons}>
             <TouchableOpacity
               onPress={resetModal}
               style={[styles.button, styles.cancelButton]}
             >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
+              <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               onPress={completeOrder}
-              style={[styles.button, styles.submitButton]}
+              style={dynamicStyles.submitButton}
               disabled={loading || !photo }
             >
               {loading ? (
@@ -376,10 +388,10 @@ const CompleteOrderModal = ({
                     name="checkmark-circle"
                     size={20}
                     color="white"
-                    style={styles.buttonIcon}
+                    style={[styles.buttonIcon, isRTL && styles.rtlButtonIcon]}
                   />
                   <Text style={styles.buttonText}>
-                    {userRole === 'customer' ? 'Mark as Collected' : 'Mark as Delivered'}
+                    {userRole === 'customer' ? t('delivery.mark_as_collected') : t('delivery.mark_as_delivered')}
                   </Text>
                 </>
               )}
@@ -396,6 +408,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  rtlContainer: {
+    direction: 'rtl',
+  },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -404,6 +419,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
     backgroundColor: 'white',
+  },
+  rtlHeader: {
+    flexDirection: 'row-reverse',
   },
   modalTitle: {
     fontSize: 18,
@@ -440,6 +458,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     marginBottom: 16,
+  },
+  rtlRow: {
+    flexDirection: 'row-reverse',
   },
   quantitySectionTitle: {
     fontSize: 16,
@@ -575,6 +596,10 @@ const styles = StyleSheet.create({
   },
   buttonIcon: {
     marginRight: 4,
+  },
+  rtlButtonIcon: {
+    marginRight: 0,
+    marginLeft: 4,
   },
   buttonText: {
     fontSize: 14,
