@@ -15,7 +15,7 @@ import { useAuth } from "../../context/AuthContext";
 import apiService from "../../services/api/apiService";
 import { colors } from "../../styles/theme";
 import { isBuyer } from "../../utils/roleUtils";
-import { t } from "i18next";
+import { useLocalization } from '../../context/LocalizationContext'
 
 const vouchers = [
   {
@@ -46,6 +46,7 @@ const RecyclingModal = ({ visible, onClose, totalPoints, onPointsUpdated }) => {
   const [isRedemptionInProgress, setIsRedemptionInProgress] = useState(false);
   const [pointsChanged, setPointsChanged] = useState(false);
   const [redeemedType, setRedeemedType] = useState(null); // Track what was actually redeemed
+  const { t } = useLocalization();
 
   const { user } = useAuth();
 
@@ -112,19 +113,38 @@ const RecyclingModal = ({ visible, onClose, totalPoints, onPointsUpdated }) => {
     setIsRedemptionInProgress(true);
 
     if (activeOption === "money") {
-      if (!amount || requiredPoints > userPointsValue) {
-        Alert.alert("Invalid Amount", "You do not have enough points");
-        setIsRedemptionInProgress(false);
-        return;
+      const enteredAmount = parseFloat(amount);
+      const calculatedPoints = Math.ceil(enteredAmount * 19);
+
+      if (!amount || isNaN(enteredAmount) || enteredAmount <= 0) {
+          Alert.alert(
+            t("recyclingModal.alerts.error"), 
+            t("recyclingModal.alerts.invalidAmount")
+          );
+          setIsRedemptionInProgress(false);
+          return;
       }
+
+      if (calculatedPoints > userPointsValue) {
+          Alert.alert(
+            t("recyclingModal.alerts.error"), 
+            t("recyclingModal.alerts.invalidAmount", {
+              required: calculatedPoints,
+              available: userPointsValue
+            })
+          );
+          setIsRedemptionInProgress(false);
+          return;
+      }
+
       try {
         await apiService.post(`/users/${user._id}/points/deduct`, {
-          points: requiredPoints,
+          points: calculatedPoints,
           reason: `Cashback for ${amount} EGP`,
         });
         
         // Update local points immediately
-        setLocalPoints(prev => prev - requiredPoints);
+        setLocalPoints(prev => prev - calculatedPoints);
         setQrValue(`Cashback: ${amount} EGP redeemed!`);
         setQrVisible(true);
         setPointsChanged(true);
@@ -135,7 +155,7 @@ const RecyclingModal = ({ visible, onClose, totalPoints, onPointsUpdated }) => {
       } catch (error) {
         Alert.alert(
           "Error",
-          error?.response?.data?.message || "Could not deduct points"
+          error?.response?.data?.message || t("alerts.couldNotDeduct")
         );
       } finally {
         setIsRedemptionInProgress(false);
@@ -145,7 +165,7 @@ const RecyclingModal = ({ visible, onClose, totalPoints, onPointsUpdated }) => {
     if (activeOption === "voucher") {
       const voucher = vouchers.find((v) => v.id === selectedVoucher);
       if (!voucher) {
-        Alert.alert("Select a voucher");
+        Alert.alert(t("recyclingModal.alerts.selectVoucher"));
         setIsRedemptionInProgress(false);
         return;
       }
@@ -188,9 +208,9 @@ const RecyclingModal = ({ visible, onClose, totalPoints, onPointsUpdated }) => {
 
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.pointsContainer}>
-          <Text style={styles.pointsLabel}>Your Balance</Text>
+          <Text style={styles.pointsLabel}>{t("recyclingModal.yourBalance")}</Text>
           <Text style={styles.pointsValue}>
-            {userPointsValue.toLocaleString()} Points
+            {userPointsValue.toLocaleString()} {t("recyclingModal.points")}
           </Text>
         </View>
 
@@ -216,7 +236,7 @@ const RecyclingModal = ({ visible, onClose, totalPoints, onPointsUpdated }) => {
                 activeOption === "voucher" && styles.activeOptionText,
               ]}
             >
-              Vouchers
+             { t("recyclingModal.vouchers") }
             </Text>
           </TouchableOpacity>
 
@@ -241,14 +261,14 @@ const RecyclingModal = ({ visible, onClose, totalPoints, onPointsUpdated }) => {
                 activeOption === "money" && styles.activeOptionText,
               ]}
             >
-              Cash Out
+              {t("recyclingModal.cashOut")}
             </Text>
           </TouchableOpacity>
         </View>
 
         {activeOption === "voucher" && (
           <View style={styles.voucherContainer}>
-            <Text style={styles.sectionTitle}>Available Vouchers</Text>
+            <Text style={styles.sectionTitle}>{t("recyclingModal.availableVouchers")}</Text>
             {vouchers.map((voucher) => {
               const canRedeem =
                 userPointsValue >= voucher.points &&
@@ -278,13 +298,13 @@ const RecyclingModal = ({ visible, onClose, totalPoints, onPointsUpdated }) => {
                   </View>
                   <View style={styles.voucherPoints}>
                     <Text style={styles.voucherPointsText}>
-                      {voucher.points} pts
+                      {voucher.points} {t("recyclingModal.points")}
                     </Text>
                     {!canRedeem && (
                       <Text style={styles.voucherUnavailable}>
                         {redeemedVouchers.includes(voucher.id)
-                          ? "Redeemed"
-                          : "Not enough points"}
+                          ? t("recyclingModal.redeemed")
+                          : t("recyclingModal.notEnoughPoints")}
                       </Text>
                     )}
                   </View>
@@ -296,24 +316,30 @@ const RecyclingModal = ({ visible, onClose, totalPoints, onPointsUpdated }) => {
 
         {activeOption === "money" && (
           <View style={styles.moneyContainer}>
-            <Text style={styles.sectionTitle}>Cash Out</Text>
-            <Text style={styles.inputLabel}>Amount to Redeem (EGP)</Text>
+            <Text style={styles.sectionTitle}>{t("recyclingModal.cashOut")}</Text>
+            <Text style={styles.inputLabel}>
+              {t("recyclingModal.amountLabel")} (19 {t("recyclingModal.points")} = 1 {t("recyclingModal.egp")})
+            </Text>
             <TextInput
               value={amount}
-              onChangeText={setAmount}
-              placeholder="Enter amount"
+              onChangeText={(text) => {
+                if (/^\d*\.?\d*$/.test(text)) {
+                  setAmount(text);
+                }
+              }}
+              placeholder={t("recyclingModal.enterAmount")}
               keyboardType="numeric"
               style={styles.input}
             />
             <View style={styles.pointsInfo}>
               <View style={styles.pointsInfoRow}>
-                <Text style={styles.pointsInfoLabel}>Required Points:</Text>
+                <Text style={styles.pointsInfoLabel}>{t("recyclingModal.requiredPoints")}</Text>
                 <Text style={styles.pointsInfoValue}>
                   {requiredPoints.toLocaleString()}
                 </Text>
               </View>
               <View style={styles.pointsInfoRow}>
-                <Text style={styles.pointsInfoLabel}>Remaining Points:</Text>
+                <Text style={styles.pointsInfoLabel}>{t("recyclingModal.remainingPoints")}</Text>
                 <Text
                   style={[
                     styles.pointsInfoValue,
@@ -334,21 +360,21 @@ const RecyclingModal = ({ visible, onClose, totalPoints, onPointsUpdated }) => {
           <View style={styles.qrContainer}>
             {redeemedType === 'voucher' ? (
               <>
-                <Text style={styles.qrTitle}>Your Voucher</Text>
+                <Text style={styles.qrTitle}>{t("recyclingModal.yourVoucher")}</Text>
                 <View style={styles.qrCodeWrapper}>
                   <QRCode value={qrValue} size={200} />
                 </View>
                 <Text style={styles.qrText}>{qrValue}</Text>
                 <Text style={styles.qrInstructions}>
-                  Show this QR code to the merchant to redeem
+                  {t("recyclingModal.qrInstructions")}
                 </Text>
               </>
             ) : redeemedType === 'money' ? (
               <>
-                <Text style={styles.qrTitle}>Cashback Redeemed!</Text>
+                <Text style={styles.qrTitle}>{t("recyclingModal.cashbackRedeemed")}</Text>
                 <Text style={styles.qrText}>{qrValue}</Text>
                 <Text style={styles.qrInstructions}>
-                  You will receive your cashback soon.
+                  {t("recyclingModal.cashbackInstructions")}
                 </Text>
               </>
             ) : null}
@@ -375,17 +401,17 @@ const RecyclingModal = ({ visible, onClose, totalPoints, onPointsUpdated }) => {
           >
             <Text style={styles.redeemButtonText}>
               {isRedemptionInProgress
-                ? "Processing..."
+                ? t("recyclingModal.processing")
                 : activeOption === "voucher"
-                ? "Redeem Voucher"
-                : "Redeem Cash"}
+                ? t("recyclingModal.redeemVoucher")
+                : t("recyclingModal.redeemCash")}
             </Text>
           </TouchableOpacity>
         )}
 
         {qrVisible && redeemedType === activeOption && (
           <TouchableOpacity onPress={handleClose} style={styles.doneButton}>
-            <Text style={styles.doneButtonText}>Done</Text>
+            <Text style={styles.doneButtonText}>{t("recyclingModal.done")}</Text>
           </TouchableOpacity>
         )}
       </ScrollView>

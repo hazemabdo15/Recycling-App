@@ -21,6 +21,7 @@
     "items": "العناصر",
     "back": "رجوع",
     "cancel": "إلغاء",
+    "unknownDate": "تاريخ غير معروف",
     "confirm": "تأكيد",
     "next": "التالي",
     "submit": "إرسال",
@@ -95,7 +96,9 @@
     "featured": "مميز",
     "recommended": "موصى به",
     "comingSoon": "قريباً",
-    "item": "عنصر"
+    "item": "عنصر",
+    "tierLevel": "المستوي",
+    "recycled": "معاد تدويره"
   },
   "app": {
     "name": {
@@ -478,16 +481,58 @@
     "pointsEarned": "النقاط المكتسبة",
     "pointsSpent": "النقاط المنفقة"
   },
-  "achievements": {
+"achievements": {
     "title": "الإنجازات",
-    "unlocked": "مفتوح",
-    "locked": "مقفل",
-    "progress": "التقدم",
-    "reward": "المكافأة",
-    "level": "المستوى",
-    "experience": "الخبرة",
-    "badges": "الشارات",
-    "milestones": "المعالم"
+    "pleaseLogin": "الرجاء تسجيل الدخول لعرض الإنجازات",
+    "ordersCompleted": "تم إكمال {{count}} طلب إعادة تدوير",
+    "progressTo": "التقدم نحو {{tier}}",
+    "ordersToUnlock": "بحاجة إلى {{count}} طلبات أخرى للفتح",
+    "allTiers": "جميع المستويات",
+    "points": "+{{points}} نقطة",
+    "stats": {
+      "kg": "كجم",
+      "liters": "لتر",
+      "co2Saved": "ثاني أكسيد الكربون المُوفر",
+      "treesPlanted": "أشجار مزروعة",
+      "waterSaved": "ماء مُوفر",
+      "kwhSaved": "كيلوواط ساعة مُوفرة"
+    },
+    "modal": {
+      "benefits": "المميزات",
+      "requirements": "المتطلبات",
+      "bonusPerOrder": "+{{bonus}} نقطة لكل طلب إعادة تدوير",
+      "bonusPerTier": "{{bonus}} نقطة مكافأة عند الوصول للمستوى",
+      "requirementRange": "أكمل {{range}} طلب إعادة تدوير",
+      "requirementMin": "أكمل {{count}}+ طلب إعادة تدوير"
+    },
+    "milestones": {
+      "1": {
+        "name": "أول إعادة تدوير",
+        "description": "أكمل طلب إعادة التدوير الأول"
+      },
+      "2": {
+        "name": "مبتدئ بيئي",
+        "description": "أعد تدوير 5 مرات"
+      },
+      "3": {
+        "name": "مهتم بالبيئة",
+        "description": "أعد تدوير 10 مرات"
+      },
+      "4": {
+        "name": "بطل أخضر",
+        "description": "أعد تدوير 25 مرة"
+      },
+      "5": {
+        "name": "منقذ الكوكب",
+        "description": "أعد تدوير 50 مرة"
+      }
+    }
+  },
+  "tiers": {
+    "bronze": "برونزي",
+    "silver": "فضي",
+    "gold": "ذهبي",
+    "platinum": "بلاتيني"
   },
   "errors": {
     "networkError": "خطأ في الاتصال بالشبكة",
@@ -757,6 +802,7 @@
     "title": "اتصل بنا",
     "address": "العنوان",
     "phone": "الهاتف",
+    "call": "اتصل بنا",
     "email": "البريد الإلكتروني",
     "website": "الموقع الإلكتروني",
     "socialMedia": "وسائل التواصل الاجتماعي",
@@ -807,7 +853,6 @@
     "otherQuestions": "أسئلة أخرى"
   },
   "feedback": {
-    "title": "التعليقات",
     "rating": "التقييم",
     "comment": "تعليق",
     "optional": "اختياري",
@@ -820,9 +865,17 @@
     "wouldRecommend": "هل تنصح بهذا التطبيق؟",
     "improvements": "ما الذي يمكننا تحسينه؟",
     "thankYou": "شكراً لك على تعليقاتك!",
-    "submitting": "إرسال التعليقات...",
     "submitted": "تم إرسال التعليقات بنجاح",
-    "failed": "فشل في إرسال التعليقات"
+    "failed": "فشل في إرسال التعليقات",
+    "title": "إرسال ملاحظات",
+    "placeholder": "شاركنا بآرائك...",
+    "submit": "إرسال",
+    "submitting": "جاري الإرسال...",
+    "alerts": {
+      "empty": "الرجاء إدخال ملاحظاتك.",
+      "success": "شكراً لك على ملاحظاتك!",
+      "error": "فشل إرسال الملاحظات."
+    }
   },
   "earnPointsCard": {
     "title": "هل تعلم؟",
@@ -999,6 +1052,103 @@
   },
   "menu": {
     "switch_to_english": "Switch to English"
+  },
+  "recyclingModal": {
+  "yourBalance": "رصيدك",
+  "vouchers": "القسائم",
+  "cashOut": "سحب نقدي",
+  "availableVouchers": "القسائم المتاحة",
+  "redeemed": "تم الاستبدال",
+  "notEnoughPoints": "النقاط غير كافية",
+  "enterAmount": "أدخل المبلغ",
+  "requiredPoints": "النقاط المطلوبة:",
+  "remainingPoints": "النقاط المتبقية:",
+  "yourVoucher": "قسيمتك",
+  "qrInstructions": "اعرض رمز الاستجابة السريعة هذا للتاجر للاستبدال",
+  "cashbackRedeemed": "تم استرداد النقود!",
+  "cashbackInstructions": "ستصلك النقود المستردة قريباً.",
+  "processing": "جاري المعالجة...",
+  "redeemVoucher": "استبدال قسيمة",
+  "redeemCash": "استبدال نقدي",
+  "done": "تم",
+  "amountLabel": "المبلغ المراد استبداله (جنيه مصري)",
+  "points": "نقطة",
+  "egp" : "جنيه مصري",
+  "alerts": {
+    "invalidAmount": "مبلغ غير صالح",
+    "notEnoughPointsAlert": "ليس لديك نقاط كافية",
+    "selectVoucher": "اختر قسيمة",
+    "error": "خطأ",
+    "couldNotDeduct": "تعذر خصم النقاط"
+  }
+},
+"eWallet": {
+    "title": "المحفظة الإلكترونية",
+    "subtitle": "إدارة محفظتك الرقمية",
+    "balance": "الرصيد الحالي",
+    "withdraw": "سحب",
+    "transactions": "المعاملات الأخيرة",
+    "noTransactions": "لا توجد معاملات بعد",
+    "noTransactionsSub": "سوف يظهر سجل معاملاتك هنا",
+    "withdrawModal": {
+      "title": "سحب الأموال",
+      "balance": "الرصيد المتاح",
+      "amount": "مبلغ السحب",
+      "gateway": "اختر بوابة الدفع",
+      "cancel": "إلغاء",
+      "confirm": "سحب",
+      "errors": {
+        "invalidAmount": "الرجاء إدخال مبلغ سحب صالح",
+        "insufficientBalance": "رصيدك غير كافٍ لإتمام عملية السحب",
+        "noGateway": "الرجاء اختيار بوابة دفع"
+      }
+    },
+    "transactionTypes": {
+      "withdrawal": "سحب",
+      "cashback": "استرداد نقدي",
+      "deposit": "إيداع",
+      "reward": "مكافأة"
+    },
+    "transactionDescriptions": {
+      "withdrawal": "سحب عبر {{gateway}}",
+      "cashback": "كاش باك مستحق",
+      "default": "معاملة عبر {{gateway}}",
+      "fallback": "معاملة"
+    }
+  },
+  "redeemHistory": {
+    "title": "سجل الاسترداد",
+    "subtitle": "جميع النقاط المستردة في مكان واحد",
+    "noHistory": "لا يوجد سجل استرداد",
+    "errors": {
+      "fetchFailed": "فشل جلب سجل الاسترداد"
+    },
+    "transactionTypes": {
+      "voucher": "تم استرداد القسيمة: {{name}}",
+      "cashback": "استرداد نقدي بقيمة {{amount}} جنيه",
+      "default": "خصم نقاط"
+    }
+  },
+  "faqs": {
+    "title": "الأسئلة الشائعة",
+    "schedulePickup": {
+      "question": "كيف يمكنني جدولة استلام؟",
+      "answer": "انتقل إلى علامة التبويب 'الاستلام' واملأ بياناتك لجدولة استلام لإعادة التدوير."
+    },
+    "earnPoints": {
+      "question": "كيف أحصل على النقاط؟",
+      "answer": "احصل على نقاط عن طريق إعادة تدوير العناصر وإكمال التحديات في التطبيق."
+    },
+    "contactSupport": {
+      "question": "كيف يمكنني التواصل مع الدعم؟",
+      "answer": "يمكنك التواصل مع الدعم عبر البريد الإلكتروني أو الهاتف أو الدردشة داخل التطبيق من صفحة المساعدة والدعم."
+    }
+  },
+  "quickLinks": {
+    "title": "روابط سريعة",
+    "guide": "دليل كيفية إعادة التدوير",
+    "troubleshooting": "استكشاف الأخطاء وإصلاحها",
+    "tutorials": "الدروس التعليمية"
   },
   "chatModal": {
     "title": "مساعد الذكاء الاصطناعي",

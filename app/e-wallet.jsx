@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useWallet } from "../hooks/useWallet";
 import { colors, shadows, spacing } from "../styles";
 import { scaleSize } from "../utils/scale";
+import { useLocalization } from "../context/LocalizationContext";
 
 export default function EWallet() {
   const insets = useSafeAreaInsets();
@@ -40,6 +41,7 @@ export default function EWallet() {
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [selectedGateway, setSelectedGateway] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const { t, language } = useLocalization();
 
   const paymentGateways = [
     { id: "paypal", name: "PayPal", icon: "logo-paypal", color: "#0070ba" },
@@ -51,17 +53,17 @@ export default function EWallet() {
 
   const handleWithdraw = async () => {
     if (!withdrawAmount || parseFloat(withdrawAmount) <= 0) {
-      Alert.alert("Invalid Amount", "Please enter a valid withdrawal amount.");
+      Alert.alert(t("modals.error"), t("eWallet.withdrawModal.errors.invalidAmount"));
       return;
     }
 
     if (parseFloat(withdrawAmount) > balance) {
-      Alert.alert("Insufficient Balance", "You don't have enough balance for this withdrawal.");
+      Alert.alert(t("modals.error"), t("eWallet.withdrawModal.errors.insufficientBalance"));
       return;
     }
 
     if (!selectedGateway) {
-      Alert.alert("Select Gateway", "Please select a payment gateway.");
+      Alert.alert(t("modals.error"), t("eWallet.withdrawModal.errors.noGateway"));
       return;
     }
 
@@ -164,12 +166,16 @@ export default function EWallet() {
       </View>
       <View style={styles.transactionDetails}>
         <Text style={styles.transactionType}>
-          {item.type?.charAt(0).toUpperCase() + item.type?.slice(1) || 'Transaction'}
+          {t(`eWallet.transactionTypes.${item.type?.toLowerCase()}`) || 'Transaction'}
         </Text>
         <Text style={styles.transactionDescription}>
-          {item.type === 'withdrawal' ? `Withdrawal via ${item.gateway}` : 
-           item.type === 'cashback' ? 'Cashback earned' : 
-           `${item.gateway || 'Transaction'}`}
+          {item.type === 'withdrawal' 
+            ? t("eWallet.transactionDescriptions.withdrawal", { gateway: item.gateway })
+            : item.type === 'cashback'
+              ? t("eWallet.transactionDescriptions.cashback")
+              : item.gateway
+                ? t("eWallet.transactionDescriptions.default", { gateway: item.gateway })
+                : t("eWallet.transactionDescriptions.fallback")}
         </Text>
         <Text style={styles.transactionDate}>
           {formatDate(item.date || item.createdAt || new Date())}
@@ -186,10 +192,10 @@ export default function EWallet() {
           {getTransactionPrefix(item.type)}{formatCurrency(item.amount || 0)}
         </Text>
         {item.type?.toLowerCase() === 'cashback' && (
-          <Text style={styles.cashbackLabel}>Cashback</Text>
+          <Text style={styles.cashbackLabel}>{t("eWallet.transactionTypes.cashback")}</Text>
         )}
         {item.type?.toLowerCase() === 'withdrawal' && (
-          <Text style={styles.withdrawalLabel}>Withdrawal</Text>
+          <Text style={styles.withdrawalLabel}>{t("eWallet.transactionTypes.withdrawal")}</Text>
         )}
       </View>
     </View>
@@ -244,28 +250,28 @@ export default function EWallet() {
             />
           </TouchableOpacity>
           <View style={styles.headerTextFlex}>
-            <Text style={styles.title}>E-Wallet</Text>
-            <Text style={styles.subtitle}>Manage your digital wallet</Text>
+            <Text style={styles.title}>{t("eWallet.title")}</Text>
+            <Text style={styles.subtitle}>{t("eWallet.subtitle")}</Text>
           </View>
         </View>
       </LinearGradient>
 
       {/* Balance Card */}
       <View style={styles.balanceCard}>
-        <Text style={styles.balanceLabel}>Current Balance</Text>
+        <Text style={styles.balanceLabel}>{t("eWallet.balance")}</Text>
         <Text style={styles.balanceAmount}>{formatCurrency(balance)}</Text>
         <TouchableOpacity
           style={styles.withdrawButton}
           onPress={() => setWithdrawModalVisible(true)}
         >
           <Ionicons name="wallet" size={20} color={colors.white} />
-          <Text style={styles.withdrawButtonText}>Withdraw</Text>
+          <Text style={styles.withdrawButtonText}>{t("eWallet.withdraw")}</Text>
         </TouchableOpacity>
       </View>
 
       {/* Transactions */}
       <View style={styles.transactionsContainer}>
-        <Text style={styles.sectionTitle}>Recent Transactions</Text>
+        <Text style={styles.sectionTitle}>{t("eWallet.transactions")}</Text>
         
         {transactionsLoading ? (
           <View style={styles.centered}>
@@ -274,9 +280,9 @@ export default function EWallet() {
         ) : transactions.length === 0 ? (
           <View style={styles.emptyState}>
             <MaterialCommunityIcons name="wallet-outline" size={48} color={colors.textTertiary} />
-            <Text style={styles.emptyStateText}>No transactions yet</Text>
+            <Text style={styles.emptyStateText}>{t("eWallet.noTransactions")}</Text>
             <Text style={styles.emptyStateSubtext}>
-              Your transaction history will appear here
+              {t("eWallet.noTransactionsSub")}
             </Text>
           </View>
         ) : (
@@ -307,7 +313,7 @@ export default function EWallet() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Withdraw Funds</Text>
+              <Text style={styles.modalTitle}>{t("eWallet.withdrawModal.title")}</Text>
               <TouchableOpacity
                 onPress={() => setWithdrawModalVisible(false)}
                 style={styles.modalCloseButton}
@@ -318,23 +324,23 @@ export default function EWallet() {
 
             <View style={styles.modalBody}>
               <Text style={styles.modalBalance}>
-                Available Balance: {formatCurrency(balance)}
+                {t("eWallet.withdrawModal.balance")}: {formatCurrency(balance)}
               </Text>
 
               <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Withdrawal Amount</Text>
+                <Text style={styles.inputLabel}>{t("eWallet.withdrawModal.amount")}</Text>
                 <TextInput
                   style={styles.amountInput}
                   value={withdrawAmount}
                   onChangeText={setWithdrawAmount}
-                  placeholder="Enter amount"
+                  placeholder={t("recyclingModal.enterAmount")}
                   keyboardType="numeric"
                   editable={!submitting}
                 />
               </View>
 
               <View style={styles.gatewayContainer}>
-                <Text style={styles.inputLabel}>Select Payment Gateway</Text>
+                <Text style={styles.inputLabel}>{t("eWallet.withdrawModal.gateway")}</Text>
                 <FlatList
                   data={paymentGateways}
                   keyExtractor={(item) => item.id}
@@ -351,7 +357,7 @@ export default function EWallet() {
                 onPress={() => setWithdrawModalVisible(false)}
                 disabled={submitting}
               >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
+                <Text style={styles.cancelButtonText}>{t("common.cancel")}</Text>
               </TouchableOpacity>
               
               <TouchableOpacity
@@ -362,7 +368,7 @@ export default function EWallet() {
                 {submitting ? (
                   <ActivityIndicator size="small" color={colors.white} />
                 ) : (
-                  <Text style={styles.confirmButtonText}>Withdraw</Text>
+                  <Text style={styles.confirmButtonText}>{t("wallet.withdraw")}</Text>
                 )}
               </TouchableOpacity>
             </View>

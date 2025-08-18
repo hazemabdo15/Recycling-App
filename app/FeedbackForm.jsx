@@ -1,13 +1,16 @@
 import { useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View, I18nManager } from 'react-native';
+import { useLocalization } from '../context/LocalizationContext';
+import { colors } from '../styles';
 
 const FeedbackForm = () => {
+  const { t, language } = useLocalization();
   const [feedback, setFeedback] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async () => {
     if (!feedback.trim()) {
-      Alert.alert('Please enter your feedback.');
+      Alert.alert(t('feedback.alerts.empty'));
       return;
     }
     setSubmitting(true);
@@ -17,27 +20,46 @@ const FeedbackForm = () => {
       setTimeout(() => {
         setSubmitting(false);
         setFeedback('');
-        Alert.alert('Thank you for your feedback!');
+        Alert.alert(t('feedback.alerts.success'));
       }, 1000);
     } catch (_e) {
       setSubmitting(false);
-      Alert.alert('Failed to submit feedback.');
+      Alert.alert(t('feedback.alerts.error'));
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Send Feedback</Text>
+    <View style={[
+      styles.container,
+      language === 'ar' && styles.rtlContainer
+    ]}>
+      <Text style={[
+        styles.sectionTitle,
+        language === 'ar' && styles.rtlText
+      ]}>
+        {t('feedback.title')}
+      </Text>
       <TextInput
-        style={styles.input}
-        placeholder="Let us know your thoughts..."
+        style={[
+          styles.input,
+          language === 'ar' && styles.rtlText
+        ]}
+        placeholder={t('feedback.placeholder')}
         value={feedback}
         onChangeText={setFeedback}
         multiline
         editable={!submitting}
+        textAlignVertical="top"
+        textAlign={language === 'ar' ? 'right' : 'left'}
       />
-      <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={submitting}>
-        <Text style={styles.buttonText}>{submitting ? 'Submitting...' : 'Submit'}</Text>
+      <TouchableOpacity 
+        style={styles.button} 
+        onPress={handleSubmit} 
+        disabled={submitting}
+      >
+        <Text style={styles.buttonText}>
+          {submitting ? t('feedback.submitting') : t('feedback.submit')}
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -48,10 +70,14 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginBottom: 32,
   },
+  rtlContainer: {
+    direction: 'rtl'
+  },
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 12,
+    textAlign: I18nManager.isRTL ? 'right' : 'left',
   },
   input: {
     backgroundColor: '#f5f5f5',
@@ -62,9 +88,14 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderWidth: 1,
     borderColor: '#c8e6c9',
+    writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
+  },
+  rtlText: {
+    textAlign: I18nManager.isRTL ? 'right' : 'left',
+    writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr'
   },
   button: {
-    backgroundColor: '#388e3c',
+    backgroundColor: colors.primary,
     borderRadius: 10,
     paddingVertical: 12,
     alignItems: 'center',
