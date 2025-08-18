@@ -26,6 +26,7 @@ import {
   spacing,
   typography,
 } from "../styles/theme";
+import { t } from "i18next";
 
 let Reanimated,
   interpolate,
@@ -368,7 +369,7 @@ export default function VoiceModal() {
                     color={colors.white}
                   />
                   <Text style={styles.listeningText}>
-                    I&apos;m listening...
+                    {t("voice.listening")}
                   </Text>
                 </View>
                 <View style={styles.waveform}>
@@ -397,11 +398,11 @@ export default function VoiceModal() {
                   />
                 </View>
                 <Text style={styles.promptTitle}>
-                  How can I help you recycle today?
+                  {t("voice.title")}
                 </Text>
                 <View style={styles.examplesContainer}>
                   <Text style={styles.examplesLabel}>
-                    Try saying something like:
+                    {t("voice.subtitle")}
                   </Text>
                   <View style={styles.examplesList}>
                     <View style={styles.examplesRow}>
@@ -412,7 +413,7 @@ export default function VoiceModal() {
                           color={colors.primary}
                         />
                         <Text style={styles.exampleText}>
-                          &ldquo;I have 2 kilos of plastic bottles&rdquo;
+                          &ldquo;{t("voice.example2")}&rdquo;
                         </Text>
                       </View>
                       <View style={styles.exampleItem}>
@@ -422,7 +423,7 @@ export default function VoiceModal() {
                           color={colors.primary}
                         />
                         <Text style={styles.exampleText}>
-                          &ldquo;5 kilos of shredded papers&rdquo;
+                          &ldquo;{t("voice.example1")}&rdquo;
                         </Text>
                       </View>
                     </View>
@@ -434,7 +435,7 @@ export default function VoiceModal() {
                           color={colors.primary}
                         />
                         <Text style={styles.exampleText}>
-                          &ldquo;Metal cans and aluminum&rdquo;
+                          &ldquo;{t("voice.example4")}&rdquo;
                         </Text>
                       </View>
                       <View style={styles.exampleItem}>
@@ -444,7 +445,7 @@ export default function VoiceModal() {
                           color={colors.primary}
                         />
                         <Text style={styles.exampleText}>
-                          &ldquo;Glass jars and bottles&rdquo;
+                          &ldquo;{t("voice.example3")}&rdquo;
                         </Text>
                       </View>
                     </View>
@@ -487,8 +488,8 @@ export default function VoiceModal() {
                 </Reanimated.View>
                 <Text style={styles.hint}>
                   {isRecording
-                    ? "Tap to stop recording"
-                    : "Tap to start recording"}
+                    ? t("voice.stopRecording")
+                    : t("voice.recording")}
                 </Text>
               </View>
             ) : (
@@ -546,7 +547,7 @@ export default function VoiceModal() {
                         size={20}
                         color={colors.white}
                       />
-                      <Text style={styles.sendButtonText}>Send to AI</Text>
+                      <Text style={styles.sendButtonText}>{t("voice.send")}</Text>
                     </>
                   )}
                 </TouchableOpacity>

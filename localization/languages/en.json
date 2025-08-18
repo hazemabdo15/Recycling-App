@@ -625,17 +625,25 @@
     "mark_as_delivered": "Mark as Delivered"
   },
   "voice": {
-    "title": "Voice Assistant",
-    "listening": "Listening...",
+    "listening": "I'm Listening...",
     "processing": "Processing...",
     "speak": "Speak now",
-    "tryAgain": "Try speaking again",
+    "tryAgain": "Please try speaking again",
     "notUnderstood": "Sorry, I didn't understand that",
     "voiceDisabled": "Voice feature is disabled",
-    "enableVoice": "Enable Voice",
-    "aiResults": "AI Results",
+    "enableVoice": "Enable voice",
+    "aiResults": "AI results",
     "suggestion": "Suggestion",
-    "recommendations": "Recommendations"
+    "recommendations": "Recommendations",
+    "title": "How can I help you today?",
+    "subtitle": "Try saying something like...",
+    "example1": "I have 5 kg of shredded paper",
+    "example2": "I have 2 kg of plastic bottles",
+    "example3": "A glass jar and plastic bottles",
+    "example4": "Tin cans and aluminum",
+    "recording": "Tap to record",
+    "stopRecording": "Stop recording",
+    "send": "Send to AI"
   },
   "chat": {
     "title": "Chat",

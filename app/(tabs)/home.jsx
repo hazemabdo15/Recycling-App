@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     color: colors.white,
     textAlign: "center",
     marginBottom: scaleSize(spacing.sm),
-    letterSpacing: -1,
+    letterSpacing: 1,
   },
   heroSubtitle: {
     fontSize: scaleSize(16),
