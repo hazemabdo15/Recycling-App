@@ -444,24 +444,24 @@
     }
   },
   "orderDetails": {
-      "title": "تفاصيل الطلب",
-      "orderSummary": "ملخص الطلب",
-      "orderId": "رقم الطلب",
-      "status": "الحالة", 
-      "created": "تم الإنشاء",
-      "completed": "تم الإكمال",
-      "customerInformation": "معلومات العميل",
-      "deliveryAddress": "عنوان التسليم",
-      "landmark": "معلم مميز",
-      "items": "العناصر",
-      "courierInformation": "معلومات المرسال",
-      "name": "الاسم",
-      "email": "البريد الإلكتروني",
-      "phone": "الهاتف", 
-      "additionalInformation": "معلومات إضافية",
-      "deliveryFee": "رسوم التوصيل",
-      "totalAmount": "المبلغ الإجمالي",
-      "pointsPer": "نقاط لكل"
+    "title": "تفاصيل الطلب",
+    "orderSummary": "ملخص الطلب",
+    "orderId": "رقم الطلب",
+    "status": "الحالة",
+    "created": "تم الإنشاء",
+    "completed": "تم الإكمال",
+    "customerInformation": "معلومات العميل",
+    "deliveryAddress": "عنوان التسليم",
+    "landmark": "معلم مميز",
+    "items": "العناصر",
+    "courierInformation": "معلومات المرسال",
+    "name": "الاسم",
+    "email": "البريد الإلكتروني",
+    "phone": "الهاتف",
+    "additionalInformation": "معلومات إضافية",
+    "deliveryFee": "رسوم التوصيل",
+    "totalAmount": "المبلغ الإجمالي",
+    "pointsPer": "نقاط لكل"
   },
   "wallet": {
     "title": "المحفظة الإلكترونية",
@@ -997,7 +997,22 @@
     "piece": "قطعة",
     "pieces": "قطع"
   },
-  "menu" : {
+  "menu": {
     "switch_to_english": "Switch to English"
+  },
+  "chatModal": {
+    "title": "مساعد الذكاء الاصطناعي",
+    "subtitle": "نحن هنا لمساعدتك",
+    "inputPlaceholder": "اكتب رسالتك...",
+    "sendButton": "إرسال",
+    "closeButton": "إغلاق",
+    "howToDisposeOldElectronics": "كيف أتخلص من الأجهزة الإلكترونية القديمة؟",
+    "canRecyclePlasticBottles": "هل يمكنني إعادة تدوير زجاجات البلاستيك؟",
+    "whatAboutPizzaBoxes": "ماذا عن صناديق البيتزا؟",
+    "howToDonateClothes": "كيف أتبرع بالملابس؟",
+    "areBatteriesRecyclable": "هل البطاريات قابلة لإعادة التدوير؟",
+    "howToDisposeMedications": "كيف أتخلص من الأدوية؟",
+    "whatToDoWithBrokenGlass": "ماذا أفعل بالزجاج المكسور؟",
+    "canRecycleFurniture": "هل يمكنني إعادة تدوير الأثاث؟"
   }
 }

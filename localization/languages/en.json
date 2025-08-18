@@ -429,7 +429,7 @@
   },
   "orderDetails": {
     "title": "Order Details",
-    "orderSummary": "Order Summary", 
+    "orderSummary": "Order Summary",
     "orderId": "Order ID",
     "status": "Status",
     "created": "Created",
@@ -440,7 +440,7 @@
     "items": "Items",
     "courierInformation": "Courier Information",
     "name": "Name",
-    "email": "Email", 
+    "email": "Email",
     "phone": "Phone",
     "additionalInformation": "Additional Information",
     "deliveryFee": "Delivery Fee",
@@ -999,7 +999,22 @@
     "piece": "piece",
     "pieces": "pieces"
   },
-  "menu" : {
+  "menu": {
     "switch_to_arabic": "التحويل الى العربية"
+  },
+  "chatModal": {
+    "title": "AI Assistant",
+    "subtitle": "We're here to help you",
+    "inputPlaceholder": "Type your message...",
+    "sendButton": "Send",
+    "closeButton": "Close",
+    "howToDisposeOldElectronics": "How to dispose old electronics?",
+    "canRecyclePlasticBottles": "Can I recycle plastic bottles?",
+    "whatAboutPizzaBoxes": "What about pizza boxes?",
+    "howToDonateClothes": "How to donate clothes?",
+    "areBatteriesRecyclable": "Are batteries recyclable?",
+    "howToDisposeMedications": "How to dispose medications?",
+    "whatToDoWithBrokenGlass": "What to do with broken glass?",
+    "canRecycleFurniture": "Can I recycle furniture?"
   }
 }
