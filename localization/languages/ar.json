@@ -157,7 +157,7 @@
     }
   },
   "home": {
-    "welcomeMessage": "اجعل كل عنصر يُحسب مع إعادة التدوير",
+    "welcomeMessage": "شارك في مستقبل صحي",
     "welcomeTitle": "مرحباً بك في إيكو بيكأب",
     "trendingTitle": "الأكثر رواجًا هذا الأسبوع",
     "trendingSubtitle": "العناصر الأكثر تدويرًا في منطقتك",
@@ -447,24 +447,24 @@
     }
   },
   "orderDetails": {
-      "title": "تفاصيل الطلب",
-      "orderSummary": "ملخص الطلب",
-      "orderId": "رقم الطلب",
-      "status": "الحالة", 
-      "created": "تم الإنشاء",
-      "completed": "تم الإكمال",
-      "customerInformation": "معلومات العميل",
-      "deliveryAddress": "عنوان التسليم",
-      "landmark": "معلم مميز",
-      "items": "العناصر",
-      "courierInformation": "معلومات المرسال",
-      "name": "الاسم",
-      "email": "البريد الإلكتروني",
-      "phone": "الهاتف", 
-      "additionalInformation": "معلومات إضافية",
-      "deliveryFee": "رسوم التوصيل",
-      "totalAmount": "المبلغ الإجمالي",
-      "pointsPer": "نقاط لكل"
+    "title": "تفاصيل الطلب",
+    "orderSummary": "ملخص الطلب",
+    "orderId": "رقم الطلب",
+    "status": "الحالة",
+    "created": "تم الإنشاء",
+    "completed": "تم الإكمال",
+    "customerInformation": "معلومات العميل",
+    "deliveryAddress": "عنوان التسليم",
+    "landmark": "معلم مميز",
+    "items": "العناصر",
+    "courierInformation": "معلومات المرسال",
+    "name": "الاسم",
+    "email": "البريد الإلكتروني",
+    "phone": "الهاتف",
+    "additionalInformation": "معلومات إضافية",
+    "deliveryFee": "رسوم التوصيل",
+    "totalAmount": "المبلغ الإجمالي",
+    "pointsPer": "نقاط لكل"
   },
   "wallet": {
     "title": "المحفظة الإلكترونية",
@@ -668,8 +668,7 @@
     "mark_as_delivered": "تحديد كمُسلم"
   },
   "voice": {
-    "title": "المساعد الصوتي",
-    "listening": "أستمع...",
+    "listening": "أنا أستمع...",
     "processing": "معالجة...",
     "speak": "تحدث الآن",
     "tryAgain": "حاول التحدث مرة أخرى",
@@ -678,7 +677,16 @@
     "enableVoice": "تفعيل الصوت",
     "aiResults": "نتائج الذكاء الاصطناعي",
     "suggestion": "اقتراح",
-    "recommendations": "التوصيات"
+    "recommendations": "التوصيات",
+    "title": "كيف يمكنني مساعدتك اليوم؟",
+    "subtitle": "حاول قول شيء مثل...",
+    "example1": "لدي 5 كجم من الورق المتقطع",
+    "example2": "لدي 2 كجم من الزجاجات البلاستيكية",
+    "example3": "برطمان زجاجي و زجاجات بلاستيكية",
+    "example4": "علب صفيح و ألمومنيوم",
+    "recording": "اضغط للتسجيل",
+    "stopRecording": "إيقاف التسجيل",
+    "send": "إرسال إلى الذكاء الاصطناعي"
   },
   "chat": {
     "title": "الدردشة",
@@ -1042,7 +1050,7 @@
     "piece": "قطعة",
     "pieces": "قطع"
   },
-  "menu" : {
+  "menu": {
     "switch_to_english": "Switch to English"
   },
   "recyclingModal": {
@@ -1141,5 +1149,20 @@
     "guide": "دليل كيفية إعادة التدوير",
     "troubleshooting": "استكشاف الأخطاء وإصلاحها",
     "tutorials": "الدروس التعليمية"
+  },
+  "chatModal": {
+    "title": "مساعد الذكاء الاصطناعي",
+    "subtitle": "نحن هنا لمساعدتك",
+    "inputPlaceholder": "اكتب رسالتك...",
+    "sendButton": "إرسال",
+    "closeButton": "إغلاق",
+    "howToDisposeOldElectronics": "كيف أتخلص من الأجهزة الإلكترونية القديمة؟",
+    "canRecyclePlasticBottles": "هل يمكنني إعادة تدوير زجاجات البلاستيك؟",
+    "whatAboutPizzaBoxes": "ماذا عن صناديق البيتزا؟",
+    "howToDonateClothes": "كيف أتبرع بالملابس؟",
+    "areBatteriesRecyclable": "هل البطاريات قابلة لإعادة التدوير؟",
+    "howToDisposeMedications": "كيف أتخلص من الأدوية؟",
+    "whatToDoWithBrokenGlass": "ماذا أفعل بالزجاج المكسور؟",
+    "canRecycleFurniture": "هل يمكنني إعادة تدوير الأثاث؟"
   }
 }

@@ -432,7 +432,7 @@
   },
   "orderDetails": {
     "title": "Order Details",
-    "orderSummary": "Order Summary", 
+    "orderSummary": "Order Summary",
     "orderId": "Order ID",
     "status": "Status",
     "created": "Created",
@@ -443,7 +443,7 @@
     "items": "Items",
     "courierInformation": "Courier Information",
     "name": "Name",
-    "email": "Email", 
+    "email": "Email",
     "phone": "Phone",
     "additionalInformation": "Additional Information",
     "deliveryFee": "Delivery Fee",
@@ -617,17 +617,25 @@
     "mark_as_delivered": "Mark as Delivered"
   },
   "voice": {
-    "title": "Voice Assistant",
-    "listening": "Listening...",
+    "listening": "I'm Listening...",
     "processing": "Processing...",
     "speak": "Speak now",
-    "tryAgain": "Try speaking again",
+    "tryAgain": "Please try speaking again",
     "notUnderstood": "Sorry, I didn't understand that",
     "voiceDisabled": "Voice feature is disabled",
-    "enableVoice": "Enable Voice",
-    "aiResults": "AI Results",
+    "enableVoice": "Enable voice",
+    "aiResults": "AI results",
     "suggestion": "Suggestion",
-    "recommendations": "Recommendations"
+    "recommendations": "Recommendations",
+    "title": "How can I help you today?",
+    "subtitle": "Try saying something like...",
+    "example1": "I have 5 kg of shredded paper",
+    "example2": "I have 2 kg of plastic bottles",
+    "example3": "A glass jar and plastic bottles",
+    "example4": "Tin cans and aluminum",
+    "recording": "Tap to record",
+    "stopRecording": "Stop recording",
+    "send": "Send to AI"
   },
   "chat": {
     "title": "Chat",
@@ -991,7 +999,7 @@
     "piece": "piece",
     "pieces": "pieces"
   },
-  "menu" : {
+  "menu": {
     "switch_to_arabic": "التحويل الى العربية"
   },
   "recyclingModal": {
@@ -1143,5 +1151,21 @@
     "silver": "Silver",
     "gold": "Gold",
     "platinum": "Platinum"
+  },
+  "chatModal": {
+    "title": "AI Assistant",
+    "subtitle": "We're here to help you",
+    "inputPlaceholder": "Type your message...",
+    "sendButton": "Send",
+    "closeButton": "Close",
+    "howToDisposeOldElectronics": "How to dispose old electronics?",
+    "canRecyclePlasticBottles": "Can I recycle plastic bottles?",
+    "whatAboutPizzaBoxes": "What about pizza boxes?",
+    "howToDonateClothes": "How to donate clothes?",
+    "areBatteriesRecyclable": "Are batteries recyclable?",
+    "howToDisposeMedications": "How to dispose medications?",
+    "whatToDoWithBrokenGlass": "What to do with broken glass?",
+    "canRecycleFurniture": "Can I recycle furniture?"
+
   }
 }

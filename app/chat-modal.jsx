@@ -16,6 +16,7 @@ import axios from 'axios';
 import { colors, borderRadius, spacing, shadows, typography } from '../styles/theme';
 import { useRouter } from 'expo-router';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { t } from 'i18next';
 
 const MessageItem = React.memo(({ msg }) => (
     <View 
@@ -48,14 +49,14 @@ export default function ChatModal() {
     const [isLoading, setIsLoading] = useState(false);
 
     const placeholders = [
-        'How to dispose old electronics?',
-        'Can I recycle plastic bottles?',
-        'What about pizza boxes?',
-        'How to donate clothes?',
-        'Are batteries recyclable?',
-        'How to dispose medications?',
-        'What to do with broken glass?',
-        'Can I recycle furniture?'
+        t("chatModal.howToDisposeOldElectronics"),
+        t("chatModal.canRecyclePlasticBottles"),
+        t("chatModal.whatAboutPizzaBoxes"),
+        t("chatModal.howToDonateClothes"),
+        t("chatModal.areBatteriesRecyclable"),
+        t("chatModal.howToDisposeMedications"),
+        t("chatModal.whatToDoWithBrokenGlass"),
+        t("chatModal.canRecycleFurniture")
     ];
 
     useEffect(() => {
@@ -183,7 +184,7 @@ export default function ChatModal() {
                             <View style={styles.aiIcon}>
                                 <MaterialCommunityIcons name="robot-outline" size={24} color="white" />
                             </View>
-                            <Text style={styles.headerTitle}>AI Assistant</Text>
+                            <Text style={styles.headerTitle}>{t("chatModal.title")}</Text>
                         </View>
                         <View style={styles.headerActions}>
                             {messages.length > 0 && (
