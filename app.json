@@ -8,6 +8,9 @@
     "scheme": "recyclingapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "localization": {
+      "supportsRtl": true
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.recyclecrew.ecorecycle"

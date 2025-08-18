@@ -106,7 +106,7 @@ export default function ProfileMenu({
         </View>
       ),
       label: t('profile.achievements'),
-      subtitle: t('achievements.milestones'),
+      subtitle: t('achievements.title'),
     },
     {
       key: "settings",

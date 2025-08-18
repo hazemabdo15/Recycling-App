@@ -8,7 +8,8 @@ import { isBuyer, isCustomer } from '../../utils/roleUtils';
 import { scaleSize } from '../../utils/scale';
 import { calculateUserTier, getTierColors } from '../../utils/tiers';
 import TierBadge from '../achievements/TierBadge';
-import { t } from 'i18next';
+import { useLocalization } from '../../context/LocalizationContext';
+
 
 export default function ProfileCard({ user, points = 0, tier = '', onLogout, onRedeem, showRedeem, onEditAvatar, style, avatarLoading }) {
   const [showImagePreview, setShowImagePreview] = useState(false);
@@ -16,6 +17,7 @@ export default function ProfileCard({ user, points = 0, tier = '', onLogout, onR
   const totalRecycles = user?.totalRecycles ?? 0;
   const userTier = calculateUserTier(totalRecycles);
   const tierColors = getTierColors(userTier.name);
+  const { t } = useLocalization();
   
   console.log('ProfileCard points prop:', points);
   
@@ -99,7 +101,7 @@ export default function ProfileCard({ user, points = 0, tier = '', onLogout, onR
                 <MaterialCommunityIcons name="recycle" size={scaleSize(20)} color="#2e7d32" />
               </LinearGradient>
               <Text style={styles.statNumber}>{user?.totalRecycles ?? 0}</Text>
-              <Text style={styles.statLabel}>Recycled</Text>
+              <Text style={styles.statLabel}>{t("common.recycled")}</Text>
             </View>
 
             {!isBuyer(user) && (
@@ -111,7 +113,7 @@ export default function ProfileCard({ user, points = 0, tier = '', onLogout, onR
                   <MaterialCommunityIcons name="diamond-stone" size={scaleSize(20)} color="#f57c00" />
                 </LinearGradient>
                 <Text style={styles.statNumber}>{(points || 0).toLocaleString()}</Text>
-                <Text style={styles.statLabel}>Points</Text>
+                <Text style={styles.statLabel}>{t("wallet.pointsEarned")}</Text>
               </View>
             )}
 
@@ -123,7 +125,7 @@ export default function ProfileCard({ user, points = 0, tier = '', onLogout, onR
                 <MaterialCommunityIcons name="trophy" size={scaleSize(20)} color={tierColors.primary} />
               </LinearGradient>
               <Text style={styles.statNumber}>#{userTier.id}</Text>
-              <Text style={styles.statLabel}>Tier Level</Text>
+              <Text style={styles.statLabel}>{t("common.tierLevel")}</Text>
             </View>
           </View>
         </View>
@@ -132,7 +134,7 @@ export default function ProfileCard({ user, points = 0, tier = '', onLogout, onR
         {showRedeem && isCustomer(user) && (
           <TouchableOpacity style={styles.actionButton} onPress={onRedeem}>
             <LinearGradient
-              colors={['#1976d2', '#2196f3']}
+              colors={[colors.primary, colors.neutral]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.actionButtonGradient}

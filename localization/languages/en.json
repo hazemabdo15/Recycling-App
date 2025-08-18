@@ -15,6 +15,7 @@
     "saving": "Saving...",
     "edit": "Edit",
     "delete": "Delete",
+    "unknownDate": "Unknown date",
     "search": "Search",
     "filter": "Filter",
     "sort": "Sort",
@@ -79,7 +80,9 @@
     "featured": "Featured",
     "recommended": "Recommended",
     "comingSoon": "Coming Soon",
-    "item": "Item"
+    "item": "Item",
+    "tierLevel": "Tier Level",
+    "recycled": "Recycled"
   },
   "app": {
     "name": {
@@ -480,17 +483,6 @@
     "popular": "Popular Topics",
     "recent": "Recent Updates"
   },
-  "achievements": {
-    "title": "Achievements",
-    "unlocked": "Unlocked",
-    "locked": "Locked",
-    "progress": "Progress",
-    "reward": "Reward",
-    "level": "Level",
-    "experience": "Experience",
-    "badges": "Badges",
-    "milestones": "Milestones"
-  },
   "errors": {
     "networkError": "Network connection error",
     "serverError": "Server error occurred",
@@ -749,6 +741,7 @@
   },
   "contact": {
     "title": "Contact Us",
+    "call": "Call Us",
     "address": "Address",
     "phone": "Phone",
     "email": "Email",
@@ -814,9 +807,16 @@
     "wouldRecommend": "Would you recommend this app?",
     "improvements": "What can we improve?",
     "thankYou": "Thank you for your feedback!",
-    "submitting": "Submitting feedback...",
     "submitted": "Feedback submitted successfully",
-    "failed": "Failed to submit feedback"
+    "failed": "Failed to submit feedback",
+    "placeholder": "Let us know your thoughts...",
+    "submit": "Submit",
+    "submitting": "Submitting...",
+    "alerts": {
+      "empty": "Please enter your feedback.",
+      "success": "Thank you for your feedback!",
+      "error": "Failed to submit feedback."
+    }
   },
   "earnPointsCard": {
     "title": "Did You Know?",
@@ -993,5 +993,155 @@
   },
   "menu" : {
     "switch_to_arabic": "التحويل الى العربية"
+  },
+  "recyclingModal": {
+    "yourBalance": "Your Balance",
+    "vouchers": "Vouchers",
+    "cashOut": "Cash Out",
+    "availableVouchers": "Available Vouchers",
+    "redeemed": "Redeemed",
+    "notEnoughPoints": "Not enough points",
+    "enterAmount": "Enter amount",
+    "requiredPoints": "Required Points:",
+    "remainingPoints": "Remaining Points:",
+    "yourVoucher": "Your Voucher",
+    "qrInstructions": "Show this QR code to the merchant to redeem",
+    "cashbackRedeemed": "Cashback Redeemed!",
+    "cashbackInstructions": "You will receive your cashback soon.",
+    "processing": "Processing...",
+    "redeemVoucher": "Redeem Voucher",
+    "redeemCash": "Redeem Cash",
+    "done": "Done",
+    "amountLabel": "Amount to Redeem (EGP)",
+    "points": "Points",
+    "egp": "EGP",
+    "alerts": {
+      "invalidAmount": "Invalid Amount",
+      "notEnoughPointsAlert": "You do not have enough points",
+      "selectVoucher": "Select a voucher",
+      "error": "Error",
+      "couldNotDeduct": "Could not deduct points"
+    }
+  },
+  "eWallet": {
+    "title": "E-Wallet",
+    "subtitle": "Manage your digital wallet",
+    "balance": "Current Balance",
+    "withdraw": "Withdraw",
+    "transactions": "Recent Transactions",
+    "noTransactions": "No transactions yet",
+    "noTransactionsSub": "Your transaction history will appear here",
+    "withdrawModal": {
+      "title": "Withdraw Funds",
+      "balance": "Available Balance",
+      "amount": "Withdrawal Amount",
+      "gateway": "Select Payment Gateway",
+      "cancel": "Cancel",
+      "confirm": "Withdraw",
+      "errors": {
+        "invalidAmount": "Please enter a valid withdrawal amount",
+        "insufficientBalance": "You don't have enough balance for this withdrawal",
+        "noGateway": "Please select a payment gateway"
+      }
+    },
+    "transactionTypes": {
+      "withdrawal": "Withdrawal",
+      "cashback": "Cashback",
+      "deposit": "Deposit",
+      "reward": "Reward"
+    },
+    "transactionDescriptions": {
+      "withdrawal": "Withdrawal via {{gateway}}",
+      "cashback": "Cashback earned",
+      "default": "Transaction via {{gateway}}",
+      "fallback": "Transaction"
+    }
+  },
+  "redeemHistory": {
+    "title": "Redeem History",
+    "subtitle": "All your redeemed points in one place",
+    "noHistory": "No redeem history found",
+    "errors": {
+      "fetchFailed": "Failed to fetch latest redeem history"
+    },
+    "transactionTypes": {
+      "voucher": "Voucher redeemed: {{name}}",
+      "cashback": "Cashback for {{amount}} EGP",
+      "default": "Points deducted"
+    }
+  },
+  "faqs": {
+    "title": "Frequently Asked Questions",
+    "schedulePickup": {
+      "question": "How do I schedule a pickup?",
+      "answer": "Go to the Pickup tab and fill in your details to schedule a recycling pickup."
+    },
+    "earnPoints": {
+      "question": "How do I earn points?",
+      "answer": "Earn points by recycling items and completing challenges in the app."
+    },
+    "contactSupport": {
+      "question": "How can I contact support?",
+      "answer": "You can contact support via email, phone, or in-app chat from the Help & Support page."
+    }
+  },
+  "quickLinks": {
+    "title": "Quick Links",
+    "guide": "How to Recycle Guide",
+    "troubleshooting": "Troubleshooting",
+    "tutorials": "Tutorials"
+  },
+  "achievements": {
+    "title": "Achievements",
+    "pleaseLogin": "Please log in to view achievements",
+    "ordersCompleted": "{{count}} recycling orders completed",
+    "progressTo": "Progress to {{tier}}",
+    "ordersToUnlock": "{{count}} more orders to unlock",
+    "allTiers": "All Tiers",
+    "points": "+{{points}} points",
+    "stats": {
+      "kg": "kg",
+      "liters": "L",
+      "co2Saved": "CO₂ Saved",
+      "treesPlanted": "Trees Planted",
+      "waterSaved": "Water Saved",
+      "kwhSaved": "kWh Saved"
+    },
+    "modal": {
+      "benefits": "Benefits",
+      "requirements": "Requirements",
+      "bonusPerOrder": "+{{bonus}} points per recycling order",
+      "bonusPerTier": "{{bonus}} bonus points when tier is reached",
+      "requirementRange": "Complete {{range}} recycling orders",
+      "requirementMin": "Complete {{count}}+ recycling orders"
+    },
+    "milestones": {
+      "1": {
+        "name": "First Recycling",
+        "description": "Complete your first recycling order"
+      },
+      "2": {
+        "name": "Eco Beginner",
+        "description": "Recycle 5 times"
+      },
+      "3": {
+        "name": "Eco Enthusiast",
+        "description": "Recycle 10 times"
+      },
+      "4": {
+        "name": "Green Champion",
+        "description": "Recycle 25 times"
+      },
+      "5": {
+        "name": "Planet Saver",
+        "description": "Recycle 50 times"
+      }
+    }
+  },
+  "tiers": {
+    "bronze": "Bronze",
+    "silver": "Silver",
+    "gold": "Gold",
+    "platinum": "Platinum"
   }
 }
