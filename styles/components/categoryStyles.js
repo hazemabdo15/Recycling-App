@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { borderRadius, getColors, shadows, spacing } from '../theme';
+import { borderRadius, shadows, spacing, getColors } from '../theme';
 
 // Dynamic style functions for category components
 export const getCategoryHeaderStyles = (isDarkMode = false) => {
