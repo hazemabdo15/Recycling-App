@@ -1,22 +1,26 @@
 ﻿import { Stack } from "expo-router";
 import GlobalToast from '../components/common/GlobalToast';
 import SplashController from '../components/common/SplashController';
+import DynamicStatusBar from '../components/common/DynamicStatusBar';
 import { AuthProvider } from '../context/AuthContext';
 import { CartProvider } from '../context/CartContext';
 import { ChatProvider } from "../context/ChatContext";
 import { LocalizationProvider } from '../context/LocalizationContext';
 import { NotificationProvider } from '../context/NotificationContext';
+import { ThemeProvider } from '../context/ThemeContext';
 import '../localization/i18n'; // MUST BE THE FIRST IMPORT
 
 export default function RootLayout() {
   return (
-    <LocalizationProvider>
-      <AuthProvider>
-        <CartProvider>
-          <NotificationProvider>
-            <ChatProvider>
-              <SplashController>
-                <GlobalToast />
+    <ThemeProvider>
+      <LocalizationProvider>
+        <AuthProvider>
+          <CartProvider>
+            <NotificationProvider>
+              <ChatProvider>
+                <SplashController>
+                  <DynamicStatusBar />
+                  <GlobalToast />
                 <Stack
                   screenOptions={{
                   headerShown: false,
@@ -118,5 +122,6 @@ export default function RootLayout() {
         </CartProvider>
     </AuthProvider>
     </LocalizationProvider>
+    </ThemeProvider>
   );
 }

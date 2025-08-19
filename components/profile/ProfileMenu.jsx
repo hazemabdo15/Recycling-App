@@ -2,7 +2,8 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useLocalization } from "../../context/LocalizationContext";
-import { colors } from "../../styles";
+import { useTheme } from "../../context/ThemeContext";
+import { useThemedStyles } from "../../hooks/useThemedStyles";
 import { scaleSize } from "../../utils/scale";
 
 export default function ProfileMenu({
@@ -15,6 +16,10 @@ export default function ProfileMenu({
   style,
 }) {
   const { t } = useLocalization();
+  const { toggleTheme, isDarkMode } = useTheme();
+  const { colors } = useThemedStyles();
+  
+  const styles = getStyles(colors);
   
   const handlePress = (key) => {
     switch (key) {
@@ -40,6 +45,9 @@ export default function ProfileMenu({
         } else {
           Alert.alert(t('common.loading'));
         }
+        break;
+      case "darkMode":
+        toggleTheme();
         break;
       case "settings":
         router.push('/language-settings');
@@ -119,6 +127,20 @@ export default function ProfileMenu({
       subtitle: t('settings.changeLanguage'),
     },
     {
+      key: "darkMode",
+      icon: (
+        <View style={[styles.iconBg, { backgroundColor: isDarkMode ? "#1f2937" : "#374151" }]}>
+          <Ionicons 
+            name={isDarkMode ? "sunny" : "moon"} 
+            size={scaleSize(24)} 
+            color="#F59E0B" 
+          />
+        </View>
+      ),
+      label: isDarkMode ? "Light Mode" : "Dark Mode",
+      subtitle: "Change app appearance",
+    },
+    {
       key: "helpSupport",
       icon: (
         <View style={[styles.iconBg, { backgroundColor: "#f3e8ff" }]}>
@@ -181,7 +203,7 @@ export default function ProfileMenu({
               <Ionicons
                 name="chevron-forward"
                 size={scaleSize(24)}
-                color={colors.gray}
+                color={colors.textTertiary}
                 style={{ marginLeft: scaleSize(8) }}
               />
             </TouchableOpacity>
@@ -192,7 +214,7 @@ export default function ProfileMenu({
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   menuCard: {
     backgroundColor: colors.white,
     borderRadius: scaleSize(22),
@@ -200,7 +222,7 @@ const styles = StyleSheet.create({
     marginTop: scaleSize(10),
     marginBottom: scaleSize(18),
     paddingVertical: scaleSize(2),
-    shadowColor: "#000",
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
@@ -212,7 +234,7 @@ const styles = StyleSheet.create({
     paddingVertical: scaleSize(18),
     paddingHorizontal: scaleSize(18),
     borderBottomWidth: 1,
-    borderBottomColor: "#f3f4f6",
+    borderBottomColor: colors.base300,
     backgroundColor: "transparent",
   },
   iconBg: {
@@ -230,13 +252,13 @@ const styles = StyleSheet.create({
   label: {
     fontSize: scaleSize(15),
     fontWeight: "800",
-    color: "#1F2937",
+    color: colors.text,
     marginBottom: scaleSize(1),
     letterSpacing: 0.1,
   },
   subtitle: {
     fontSize: scaleSize(12),
-    color: "#7B8794",
+    color: colors.textSecondary,
     marginTop: 0,
     fontWeight: "400",
     letterSpacing: 0.05,
