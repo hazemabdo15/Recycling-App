@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
   factHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: scaleSize(spacing.md),
+    marginBottom: scaleSize(spacing.xs),
   },
   factIcon: {
     width: scaleSize(40),

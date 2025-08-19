@@ -111,6 +111,25 @@ export const getColors = (isDarkMode = false) => {
       ? 'rgba(148, 163, 184, 0.15)' 
       : 'rgba(255, 255, 255, 0.15)',
     textLight: baseColors.textSecondary,
+    
+    // Header specific colors
+    headerButtonBg: isDarkMode ? baseColors.base200 : '#F5F5F5',
+    
+    // Category specific colors
+    surface: baseColors.white,
+    
+    // Profile specific colors
+    border: isDarkMode ? baseColors.base300 : '#e2e8f0',
+    primaryLight: isDarkMode ? baseColors.base200 : '#bbf7d0',
+    primaryDark: isDarkMode ? '#047857' : '#065f46',
+    primarySurface: isDarkMode ? baseColors.base100 : '#f0fdf4',
+    errorLight: isDarkMode ? '#7f1d1d' : '#fee2e2',
+    errorBorder: isDarkMode ? '#b91c1c' : '#fecaca',
+    infoLight: isDarkMode ? '#1e3a8a' : '#e0f2fe',
+    infoBorder: isDarkMode ? '#3b82f6' : '#bae6fd',
+    
+    // StatusBar style
+    statusBarStyle: isDarkMode ? 'light' : 'dark',
   };
 };
 

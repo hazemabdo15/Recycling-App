@@ -121,13 +121,6 @@ const TopRecycledSection = memo(() => {
                     resizeMode="cover"
                   />
                 ) : null}
-                <View style={styles.iconContainer}>
-                  <MaterialCommunityIcons
-                    name="recycle"
-                    size={28}
-                    color={colors.primary}
-                  />
-                </View>
                 <Text style={styles.itemName}>{getTranslatedItemName(item)}</Text>
                 <View style={styles.statsContainer}>
                   <View style={styles.statItem}>

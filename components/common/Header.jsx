@@ -2,7 +2,7 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Dimensions, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { colors, typography } from '../../styles/theme';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { clearSession, getLoggedInUser } from '../../utils/authUtils';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -12,6 +12,7 @@ const scale = (size) => (SCREEN_WIDTH / 375) * size;
 const Header = () => {
     const router = useRouter();
     const [user, setUser] = useState(null);
+    const { colors, typography } = useThemedStyles();
 
     useEffect(() => {
         const loadUser = async () => {
@@ -34,6 +35,8 @@ const Header = () => {
         }
     };
 
+    const styles = getStyles(colors, typography);
+
     return (
         <View style={[styles.header, { paddingHorizontal: scale(20), paddingVertical: scale(15) }]}> 
             <View style={styles.brandContainer}>
@@ -42,7 +45,7 @@ const Header = () => {
             </View>
             <View style={[styles.headerRight, { gap: scale(12) }]}> 
                 <TouchableOpacity style={[styles.headerButton, { width: scale(40), height: scale(40), borderRadius: scale(12) }]}> 
-                    <MaterialCommunityIcons name="bell-outline" size={scale(24)} color="#333" />
+                    <MaterialCommunityIcons name="bell-outline" size={scale(24)} color={colors.text} />
                 </TouchableOpacity>
                 {user ? (
                         <Pressable style={[styles.headerButton, { width: scale(40), height: scale(40), borderRadius: scale(12) }]} onPress={handleLogoutPress}>
@@ -50,19 +53,19 @@ const Header = () => {
                         </Pressable>
                     ) : (
                         <Pressable style={[styles.headerButton, { width: scale(40), height: scale(40), borderRadius: scale(12) }]} onPress={handleLoginPress}>
-                            <Ionicons name="log-in" size={scale(24)} color="#333" />
+                            <Ionicons name="log-in" size={scale(24)} color={colors.text} />
                         </Pressable>
                 )}
             </View>
         </View>
     );
 };
-const styles = StyleSheet.create({
+const getStyles = (colors, typography) => StyleSheet.create({
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: colors.base100,
+        backgroundColor: colors.background,
     },
     brandContainer: {
         flexDirection: 'row',
@@ -74,7 +77,7 @@ const styles = StyleSheet.create({
         color: colors.primary,
     },
     headerButton: {
-        backgroundColor: '#F5F5F5',
+        backgroundColor: colors.headerButtonBg,
         justifyContent: 'center',
         alignItems: 'center',
     },
