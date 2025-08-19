@@ -187,7 +187,7 @@ const QuantityControls = ({
                     />
                     <Text style={[
                         quantityControlsStyles.unitText,
-                        { fontSize: scale(11), marginTop: scale(-2), color: colors.primary, marginLeft: 2 },
+                        { fontSize: scale(11), marginTop: scale(-2), color: colors.primary, marginLeft: 6, paddingRight: 8, paddingLeft: 4 },
                     ]}>
                         {unitDisplay}
                     </Text>
