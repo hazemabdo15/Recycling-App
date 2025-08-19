@@ -1,29 +1,29 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from 'react-i18next'; // Add this import
 import {
-    ActivityIndicator,
-    FlatList,
-    RefreshControl,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import { KeyboardAwareFlatList } from 'react-native-keyboard-aware-scroll-view';
 import { useAuth } from "../../context/AuthContext";
 import { useLocalization } from "../../context/LocalizationContext";
-import { useCategories } from "../../hooks/useAPI";
+import { useAllItems, useCategories } from "../../hooks/useAPI";
 import { useCart } from "../../hooks/useCart";
 import { spacing } from "../../styles";
 import { colors } from "../../styles/theme";
 import {
-    CartMessageTypes,
-    showCartMessage,
-    showMaxStockMessage,
+  CartMessageTypes,
+  showCartMessage,
+  showMaxStockMessage,
 } from "../../utils/cartMessages";
 import {
-    getCartKey,
-    getIncrementStep,
-    normalizeItemData,
+  getCartKey,
+  getIncrementStep,
+  normalizeItemData,
 } from "../../utils/cartUtils";
 import { isBuyer } from "../../utils/roleUtils";
 import { scaleSize } from "../../utils/scale";
@@ -44,19 +44,27 @@ const CategoriesGrid = ({
   const { t } = useTranslation(); // Add translation hook
   const { currentLanguage } = useLocalization(); // Add localization hook for current language
   const [refreshing, setRefreshing] = useState(false);
-  const { refetch } = require("../../hooks/useAPI").useAllItems();
+  
+  const { user } = useAuth();
+  const { categories, loading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useCategories();
+  const { items: allItems, loading: itemsLoading, error: itemsError, refetch: refetchItems } = useAllItems();
+  
+  // Determine which data source to use based on mode
+  const loading = showItemsMode ? itemsLoading : categoriesLoading;
+  const error = showItemsMode ? itemsError : categoriesError;
   
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await refetch();
+      if (showItemsMode) {
+        await refetchItems();
+      } else {
+        await refetchCategories();
+      }
     } finally {
       setRefreshing(false);
     }
   };
-  
-  const { user } = useAuth();
-  const { categories, loading, error } = useCategories();
   const {
     cartItems,
     handleIncreaseQuantity,
@@ -131,54 +139,48 @@ const CategoriesGrid = ({
     const searchLower = searchText.toLowerCase();
 
     if (showItemsMode) {
-      const items = categories
-        .filter(category => category && category.items && Array.isArray(category.items))
-        .flatMap(
-          (category) =>
-            category.items?.map((item) => {
-              try {
-                const normalizedItem = normalizeItemData({
-                  ...item,
-                  categoryId: item.categoryId || category._id,
-                  categoryName: item.categoryName || category.name,
-                  category: category,
-                });
-                
-                // Add translated names to the normalized item with error handling
-                const translatedItemName = getTranslatedName(t, normalizedItem.name, 'subcategories', { 
-                  categoryName: normalizedItem.categoryName || category.name, 
-                  currentLanguage 
-                }) || extractNameFromMultilingual(normalizedItem.name, currentLanguage) || 'Unknown Item';
-                
-                const translatedCategoryName = getTranslatedName(t, category.name, 'categories', { 
-                  currentLanguage 
-                }) || extractNameFromMultilingual(category.name, currentLanguage) || 'Unknown Category';
-                
-                const itemKey = getCartKey(normalizedItem);
-                const cartQuantity = cartItems[itemKey] || 0;
-                
-                return {
-                  ...normalizedItem,
-                  displayName: translatedItemName, // Add display name for UI
-                  translatedCategoryName: translatedCategoryName, // Add translated category name
-                  cartQuantity,
-                  category: {
-                    ...category,
-                    displayName: translatedCategoryName
-                  },
-                };
-              } catch (error) {
-                console.warn('Error processing item:', error, item);
-                return null;
-              }
-            }).filter(Boolean) || []
-        )
+      // Use fresh items data from useAllItems() instead of embedded items in categories
+      const items = allItems
+        .filter(item => item && item.name)
+        .map((item) => {
+          try {
+            const normalizedItem = normalizeItemData({
+              ...item,
+              categoryId: item.categoryId,
+              categoryName: item.categoryName,
+            });
+            
+            // Add translated names to the normalized item with error handling
+            const translatedItemName = getTranslatedName(t, normalizedItem.name, 'subcategories', { 
+              categoryName: normalizedItem.categoryName, 
+              currentLanguage 
+            }) || extractNameFromMultilingual(normalizedItem.name, currentLanguage) || 'Unknown Item';
+            
+            const translatedCategoryName = getTranslatedName(t, normalizedItem.categoryName, 'categories', { 
+              currentLanguage 
+            }) || extractNameFromMultilingual(normalizedItem.categoryName, currentLanguage) || 'Unknown Category';
+            
+            const itemKey = getCartKey(normalizedItem);
+            const cartQuantity = cartItems[itemKey] || 0;
+            
+            return {
+              ...normalizedItem,
+              displayName: translatedItemName, // Add display name for UI
+              translatedCategoryName: translatedCategoryName, // Add translated category name
+              cartQuantity,
+            };
+          } catch (error) {
+            console.warn('Error processing item:', error, item);
+            return null;
+          }
+        })
+        .filter(Boolean)
         .filter((item) => {
           if (!item || !item.displayName) return false;
           
           // Extract original name safely for additional search
           const originalItemName = extractNameFromMultilingual(item.name, currentLanguage) || '';
-          const originalCategoryName = extractNameFromMultilingual(item.category?.name, currentLanguage) || '';
+          const originalCategoryName = extractNameFromMultilingual(item.categoryName, currentLanguage) || '';
           
           // Search in both translated and original names
           return item.displayName.toLowerCase().includes(searchLower) ||
@@ -217,7 +219,7 @@ const CategoriesGrid = ({
         });
       return { filteredCategories: cats, filteredItems: [] };
     }
-  }, [categories, showItemsMode, searchText, cartItems, t, currentLanguage]);
+  }, [categories, allItems, showItemsMode, searchText, cartItems, t, currentLanguage]);
 
   const handleCartOperation = useCallback(
     async (item, operation) => {

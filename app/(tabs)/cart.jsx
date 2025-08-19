@@ -268,8 +268,9 @@ const Cart = () => {
           const translatedItemName = getTranslatedItemName(normalizedItem);
           showMaxStockMessage(
             translatedItemName,
-            item.quantity,
-            normalizedItem.measurement_unit
+            actualStockQuantity, // Pass actual stock quantity, not cart quantity
+            normalizedItem.measurement_unit,
+            t // Pass translation function
           );
           return;
         }
@@ -294,6 +295,7 @@ const Cart = () => {
         itemName: translatedItemName,
         measurementUnit: normalizedItem.measurement_unit,
         isBuyer: user?.role === "buyer",
+        t // Pass translation function
       });
     }
   };
@@ -319,6 +321,7 @@ const Cart = () => {
         itemName: translatedItemName,
         measurementUnit: item.measurement_unit || (item.unit === "KG" ? 1 : 2),
         isBuyer: user?.role === "buyer",
+        t // Pass translation function
       });
     }
   };
@@ -335,6 +338,7 @@ const Cart = () => {
         itemName: translatedItemName,
         measurementUnit: normalizedItem.measurement_unit,
         isBuyer: user?.role === "buyer",
+        t // Pass translation function
       });
     } catch (err) {
       console.error("[Cart] Error removing item:", err);
@@ -344,6 +348,7 @@ const Cart = () => {
         itemName: translatedItemName,
         measurementUnit: item.measurement_unit || (item.unit === "KG" ? 1 : 2),
         isBuyer: user?.role === "buyer",
+        t // Pass translation function
       });
     }
   };
@@ -356,6 +361,7 @@ const Cart = () => {
         itemName: "All items",
         measurementUnit: 2,
         isBuyer: user?.role === "buyer",
+        t // Pass translation function
       });
     } catch (err) {
       console.error("[Cart] Error clearing cart:", err);
@@ -364,6 +370,7 @@ const Cart = () => {
         itemName: "cart",
         measurementUnit: 2,
         isBuyer: user?.role === "buyer",
+        t // Pass translation function
       });
     }
   };
@@ -385,6 +392,7 @@ const Cart = () => {
           itemName: translatedItemName,
           measurementUnit: normalizedItem.measurement_unit,
           isBuyer: user?.role === "buyer",
+          t // Pass translation function
         });
         return true;
       }
@@ -399,6 +407,7 @@ const Cart = () => {
             itemName: translatedItemName,
             measurementUnit: measurementUnit,
             isBuyer: user?.role === "buyer",
+            t // Pass translation function
           });
           return false;
         }
@@ -423,6 +432,7 @@ const Cart = () => {
             itemName: translatedItemName,
             measurementUnit: measurementUnit,
             isBuyer: user?.role === "buyer",
+            t // Pass translation function
           });
           return false;
         }
@@ -460,8 +470,9 @@ const Cart = () => {
           const translatedItemName = getTranslatedItemName(normalizedItem);
           showMaxStockMessage(
             translatedItemName,
-            item.quantity,
-            normalizedItem.measurement_unit
+            actualStockQuantity, // Pass actual stock quantity, not cart quantity
+            normalizedItem.measurement_unit,
+            t // Pass translation function
           );
           return false;
         }
@@ -484,7 +495,7 @@ const Cart = () => {
         itemName: translatedItemName,
         measurementUnit: normalizedItem.measurement_unit,
         isBuyer: user?.role === "buyer",
-      });
+      }, t);
       return false;
     }
   };
