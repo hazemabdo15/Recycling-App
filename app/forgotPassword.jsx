@@ -1,10 +1,10 @@
 import { router } from "expo-router";
-import { useState } from "react";
-import { Alert, StyleSheet, View, Text, TextInput, TouchableOpacity } from "react-native";
-import { forgotPassword } from "../services/auth";
-import { colors, borderRadius, spacing, shadows, typography } from "../styles/theme";
-import { scaleSize } from "../utils/scale";
 import { StatusBar } from "expo-status-bar";
+import { useState } from "react";
+import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { forgotPassword } from "../services/auth";
+import { borderRadius, colors, shadows, spacing, typography } from "../styles/theme";
+import { scaleSize } from "../utils/scale";
 
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState("");
@@ -57,7 +57,7 @@ export default function ForgotPasswordScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>Forgot Password</Text>
         <Text style={styles.subtitle}>
-          Enter your email address and we'll send you a code to reset your password.
+          Enter your email address and we&apos;ll send you a code to reset your password.
         </Text>
       </View>
 

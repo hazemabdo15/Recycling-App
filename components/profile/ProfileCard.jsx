@@ -3,12 +3,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import { ActivityIndicator, Image, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
+import { useLocalization } from '../../context/LocalizationContext';
 import { colors } from '../../styles/theme';
 import { isBuyer, isCustomer } from '../../utils/roleUtils';
 import { scaleSize } from '../../utils/scale';
 import { calculateUserTier, getTierColors } from '../../utils/tiers';
 import TierBadge from '../achievements/TierBadge';
-import { useLocalization } from '../../context/LocalizationContext';
 
 
 export default function ProfileCard({ user, points = 0, tier = '', onLogout, onRedeem, showRedeem, onEditAvatar, style, avatarLoading }) {
@@ -82,10 +82,12 @@ export default function ProfileCard({ user, points = 0, tier = '', onLogout, onR
               <Text style={styles.userName}>{user?.name || 'Guest'}</Text>
               <TierBadge tierName={userTier.name} size="small" showName={false} />
             </View>
-            <Text style={styles.userEmail}>{user?.email || 'No email available'}</Text>
+            <Text style={styles.userEmail}>{user?.email || t('profile.noEmailAvailable')}</Text>
             <View style={styles.tierInfo}>
               <MaterialCommunityIcons name="star-circle" size={scaleSize(14)} color={tierColors.primary} />
-              <Text style={[styles.tierText, { color: tierColors.primary }]}>{userTier.name} Member</Text>
+              <Text style={[styles.tierText, { color: tierColors.primary }]}>
+                {t(`tiers.${userTier.name}`, userTier.name)}
+              </Text>
             </View>
           </View>
         </View>

@@ -1,9 +1,9 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { useState, useRef, useEffect } from "react";
-import { Alert, StyleSheet, View, Text, TextInput, TouchableOpacity } from "react-native";
-import { forgotPassword } from "../services/auth";
-import { colors, borderRadius, spacing, shadows, typography } from "../styles/theme";
 import { StatusBar } from "expo-status-bar";
+import { useEffect, useRef, useState } from "react";
+import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { forgotPassword } from "../services/auth";
+import { borderRadius, colors, shadows, spacing, typography } from "../styles/theme";
 
 export default function ForgotPasswordOtpScreen() {
   const { email } = useLocalSearchParams();
@@ -155,7 +155,7 @@ export default function ForgotPasswordOtpScreen() {
       </TouchableOpacity>
 
       <View style={styles.resendContainer}>
-        <Text style={styles.resendText}>Didn't receive the code?</Text>
+        <Text style={styles.resendText}>Didn&apos;t receive the code?</Text>
         <TouchableOpacity
           onPress={handleResendOtp}
           disabled={resendLoading}

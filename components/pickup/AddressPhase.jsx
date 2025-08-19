@@ -176,14 +176,14 @@ const AddressPhase = ({ onNext, onAddressSelect, onBack, pickupWorkflow }) => {
     <TouchableOpacity style={styles.addressCard} onPress={() => handleAddressSelect(item)}>
       <View style={styles.addressInfo}>
         <Text style={styles.addressTitle}>
-          {item.building && `Building ${item.building}, `}
+          {item.building && t("pickup.addressPhase.building", { building: item.building })}
           {item.street}
         </Text>
         <Text style={styles.addressDetails}>
           {item.area}, {item.city}
         </Text>
         {item.landmark && (
-          <Text style={styles.addressLandmark}>Near {item.landmark}</Text>
+          <Text style={styles.addressLandmark}>{t("pickup.addressPhase.near", { landmark: item.landmark })}</Text>
         )}
       </View>
       <View style={styles.addressActions}>

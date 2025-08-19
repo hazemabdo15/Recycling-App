@@ -186,7 +186,7 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
             <View style={styles.orderRow}>
               <Text style={styles.orderLabel}>{t('orders.confirmation.items')}</Text>
               <Text style={styles.orderValue}>
-                {orderItems?.length || 0} {t("common.items")}
+                {orderItems?.length || 0}
               </Text>
             </View>
             
@@ -205,7 +205,7 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
                 {isBuyerRole(user) ? t('orders.confirmation.itemsSubtotal') : t('orders.confirmation.totalValue')}
               </Text>
               <Text style={styles.orderValue}>
-                {itemsSubtotal.toFixed(2)} EGP
+                {itemsSubtotal.toFixed(2)} {t("units.egp")}
               </Text>
             </View>
             
@@ -214,7 +214,7 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
               <View style={styles.orderRow}>
                 <Text style={styles.orderLabel}>{t('orders.confirmation.deliveryFee')}</Text>
                 <Text style={styles.orderValue}>
-                  {deliveryFee.toFixed(2)} EGP
+                  {deliveryFee.toFixed(2)} {t("units.egp")}
                 </Text>
               </View>
             )}
@@ -224,7 +224,7 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
               <View style={styles.orderRow}>
                 <Text style={styles.orderLabel}>{t('orders.confirmation.totalValue')}</Text>
                 <Text style={[styles.orderValue, { color: colors.secondary }]}>
-                  {totalValue.toFixed(2)} EGP
+                  {totalValue.toFixed(2)} {t("units.egp")}
                 </Text>
               </View>
             )}

@@ -1,18 +1,19 @@
-import React, { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useTranslation } from 'react-i18next';
 import {
-  Modal,
-  View,
-  Text,
-  TouchableOpacity,
-  TextInput,
-  ActivityIndicator,
-  StyleSheet,
-  ScrollView,
+    ActivityIndicator,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
-import optimizedApiService from "../../services/api/apiService";
 import { showGlobalToast } from "../../components/common/GlobalToast";
+import optimizedApiService from "../../services/api/apiService";
 
 export default function DeliveryReviewModal({
   isOpen,
@@ -22,6 +23,7 @@ export default function DeliveryReviewModal({
   existingReview,
   onSubmitted,
 }) {
+  const { t } = useTranslation();
   const [rating, setRating] = useState(0);
   const [comments, setComments] = useState("");
   const [loading, setLoading] = useState(false);
@@ -42,11 +44,11 @@ export default function DeliveryReviewModal({
 
   const handleSubmit = async () => {
     if (!orderId) {
-      showGlobalToast("Missing order ID", 2000);
+      showGlobalToast(t('toast.delivery.missingOrderId'), 2000, 'error');
       return;
     }
     if (rating === 0) {
-      showGlobalToast("Please select a rating", 1500);
+      showGlobalToast(t('toast.delivery.selectRating'), 1500, 'warning');
       return;
     }
 
@@ -74,8 +76,9 @@ export default function DeliveryReviewModal({
       };
 
       showGlobalToast(
-        existingReview ? "Review updated successfully!" : "Review submitted successfully!",
-        1500
+        existingReview ? t('toast.delivery.reviewUpdated') : t('toast.delivery.reviewSubmitted'),
+        1500,
+        'success'
       );
 
       onSubmitted?.(submittedReview);
@@ -83,7 +86,7 @@ export default function DeliveryReviewModal({
 
     } catch (error) {
       console.error("Review submission error:", error);
-      showGlobalToast(error.message || "Failed to submit review", 2000);
+      showGlobalToast(error.message || t('toast.delivery.reviewFailed'), 2000, 'error');
     } finally {
       setLoading(false);
     }

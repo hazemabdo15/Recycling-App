@@ -1,6 +1,7 @@
-﻿
+﻿import { t } from "i18next";
+
 export const getUnitDisplay = (measurementUnit) => {
-    return measurementUnit === 1 ? 'KG' : 'Piece';
+    return measurementUnit === 1 ? t("units.kg") : t("units.piece");
 };
 
 export const getIncrementStep = (measurementUnit) => {

@@ -1,6 +1,7 @@
 ﻿import { router } from "expo-router";
 import * as SecureStore from 'expo-secure-store';
 import { showGlobalToast } from "../../components/common/GlobalToast";
+import i18next from "../../localization/i18n";
 import { clearSession, getAccessToken } from "../../utils/authUtils";
 import { API_CONFIG, BASE_URLS } from "./config";
 let notifyTokenExpired = null;
@@ -298,7 +299,8 @@ class OptimizedAPIService {
         } else {
           console.log(`[API] Refresh failed, logging out user`);
           // Show toast and redirect to login
-          showGlobalToast("Session expired, please log in again.", 1200);
+          const message = i18next.t ? i18next.t('toast.auth.sessionExpired') : "Session expired, please log in again.";
+          showGlobalToast(message, 1200);
           if (getNotifyTokenExpired()) getNotifyTokenExpired()();
           // Use expo-router to redirect
           setTimeout(() => {
@@ -344,7 +346,8 @@ class OptimizedAPIService {
 
       if (error.message === "Session expired" || error.status === 401) {
         await this.clearTokens();
-        showGlobalToast("Session expired, please log in again.", 1200);
+        const message = i18next.t ? i18next.t('toast.auth.sessionExpired') : "Session expired, please log in again.";
+        showGlobalToast(message, 1200);
         if (getNotifyTokenExpired()) getNotifyTokenExpired()();
         setTimeout(() => {
           try {

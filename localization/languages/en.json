@@ -82,7 +82,8 @@
     "comingSoon": "Coming Soon",
     "item": "Item",
     "tierLevel": "Tier Level",
-    "recycled": "Recycled"
+    "recycled": "Recycled",
+    "goBack": "Go Back"
   },
   "app": {
     "name": {
@@ -195,7 +196,9 @@
     "darkMode": "Dark Mode",
     "deleteAccount": "Delete Account",
     "confirmDelete": "Are you sure you want to delete your account?",
-    "cannotUndo": "This action cannot be undone."
+    "cannotUndo": "This action cannot be undone.",
+    "member": "Member",
+    "noEmailAvailable": "No email available"
   },
   "cart": {
     "title": {
@@ -327,7 +330,10 @@
     },
     "addressPhase": {
       "deleteAddress": "Delete Address",
-      "deleteMessage": "Are you sure you want to delete this address?"
+      "deleteMessage": "Are you sure you want to delete this address?",
+      "building": "Building {{building}}, ",
+      "near": "Near {{landmark}}",
+      "floor": "Floor {{floor}}"
     }
   },
   "settings": {
@@ -946,8 +952,8 @@
   },
   "minimumOrder": {
     "message": {
-      "customer": "Add {amount} EGP more to schedule pickup",
-      "buyer": "Add {amount} EGP more to place order"
+      "customer": "Add {{amount}} EGP more to schedule pickup",
+      "buyer": "Add {{amount}} EGP more to place order"
     },
     "button": {
       "customer": "Minimum 100 EGP Required",
@@ -995,9 +1001,18 @@
     "delivery_dashboard": "Delivery Dashboard"
   },
   "units": {
-    "kg": "kg",
-    "piece": "piece",
-    "pieces": "pieces"
+    "kg": "KG",
+    "per": "per",
+    "piece": "Piece",
+    "pieces": "Pieces",
+    "egp": "EGP",
+    "ptsEach": "{{points}} PTS Each",
+    "quantity": "Qty: {{quantity}}",
+    "points": "Points: {{points}}",
+    "price": "Price: {{price}}",
+    "pointsPerOrder": "pts/order",
+    "pointsBonus": "pts bonus",
+    "orders": "orders"
   },
   "menu": {
     "switch_to_arabic": "التحويل الى العربية"
@@ -1064,6 +1079,46 @@
       "default": "Transaction via {{gateway}}",
       "fallback": "Transaction"
     }
+  },
+  "recyclingHistory": {
+    "title": "Recycling History",
+    "subtitle": "All your recycling orders in one place",
+    "noOrdersFound": "No orders found.",
+    "downloadPdf": {
+      "button": "Download PDF",
+      "alertTitle": "Download PDF",
+      "alertMessage": "Do you want to preview the order report as PDF?",
+      "preview": "Preview",
+      "errorTitle": "Error",
+      "errorMessage": "Failed to generate PDF.",
+      "missingDataTitle": "Missing data",
+      "missingDataMessage": "Order or user info is missing."
+    },
+    "cancelOrder": {
+      "button": "Cancel Order",
+      "alertTitle": "Cancel Order",
+      "alertMessage": "Are you sure you want to cancel this order?",
+      "failedMessage": "Failed to cancel order"
+    },
+    "review": {
+      "leaveReview": "Leave Review",
+      "updateReview": "Update Review",
+      "deleteReview": "Delete Review",
+      "deleting": "Deleting...",
+      "deleteAlertTitle": "Delete Review",
+      "deleteAlertMessage": "Are you sure you want to delete your review?",
+      "deleteFailedMessage": "Failed to delete review"
+    },
+    "orderStatus": {
+      "status": "Status",
+      "pending": "Pending",
+      "accepted": "Accepted",
+      "collected": "Collected",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "collectedBadge": "Collected",
+    "unknownItem": "Unknown Item"
   },
   "redeemHistory": {
     "title": "Redeem History",
@@ -1150,7 +1205,14 @@
     "bronze": "Bronze",
     "silver": "Silver",
     "gold": "Gold",
-    "platinum": "Platinum"
+    "platinum": "Platinum",
+    "Eco Beginner": "Eco Beginner",
+    "Eco Starter": "Eco Starter",
+    "Green Helper": "Green Helper",
+    "Silver Recycler": "Silver Recycler",
+    "Gold Guardian": "Gold Guardian",
+    "Platinum Pioneer": "Platinum Pioneer",
+    "Diamond Elite": "Diamond Elite"
   },
   "chatModal": {
     "title": "AI Assistant",
@@ -1166,6 +1228,70 @@
     "howToDisposeMedications": "How to dispose medications?",
     "whatToDoWithBrokenGlass": "What to do with broken glass?",
     "canRecycleFurniture": "Can I recycle furniture?"
-
+  },
+  "toast": {
+    "labels": {
+      "success": "Success!",
+      "error": "Error!",
+      "warning": "Warning!",
+      "info": "Info"
+    },
+    "fallback": {
+      "success": "Action completed successfully!",
+      "error": "Something went wrong.",
+      "warning": "Please check your input.",
+      "info": "Here is some information.",
+      "default": "Notification."
+    },
+    "cart": {
+      "addSingle": "Added {{quantity}} {{unit}} of {{itemName}}",
+      "addFast": "Added {{quantity}} {{unit}} of {{itemName}}",
+      "removeSingle": "Removed {{quantity}} {{unit}} of {{itemName}}",
+      "removeSingleComplete": "{{itemName}} removed from cart",
+      "removeFast": "Removed {{quantity}} {{unit}} of {{itemName}}",
+      "removeFastComplete": "{{itemName}} removed from cart",
+      "removeAll": "{{itemName}} removed from cart",
+      "itemRemoved": "{{itemName}} removed from cart",
+      "notInCart": "{{itemName}} is not in your cart",
+      "invalidQuantityKg": "Please enter a valid quantity (minimum 0.25 kg)",
+      "invalidQuantityPieces": "Please enter a valid quantity (minimum 1 piece)",
+      "manualSet": "Set {{itemName}} quantity to {{quantity}} {{unit}}",
+      "manualRemoved": "Item removed from cart",
+      "stockErrorOutOfStock": "{{itemName}} is out of stock",
+      "stockErrorLimited": "Not enough stock. Only {{maxStock}} {{unit}} available",
+      "addToCartSuccessSingle": "{{totalItems}} item added to cart",
+      "addToCartSuccessMultiple": "{{totalItems}} items added to cart",
+      "operationFailed": "Failed to update cart",
+      "stockWarningSingle": "{{itemName}} is out of stock",
+      "stockWarningLimited": "Only {{stock}} {{unit}} of {{itemName}} in stock",
+      "maxStockReached": "Cannot add more. Only {{maxStock}} {{unit}} available"
+    },
+    "auth": {
+      "sessionExpired": "Session expired, please log in again."
+    },
+    "wallet": {
+      "fetchBalanceFailed": "Failed to fetch balance",
+      "fetchTransactionsFailed": "Failed to fetch transactions",
+      "withdrawalSuccess": "Withdrawal request submitted successfully",
+      "withdrawalFailed": "Failed to submit withdrawal"
+    },
+    "delivery": {
+      "missingOrderId": "Missing order ID",
+      "selectRating": "Please select a rating",
+      "reviewUpdated": "Review updated successfully!",
+      "reviewSubmitted": "Review submitted successfully!",
+      "reviewFailed": "Failed to submit review",
+      "reviewDeleted": "Review deleted successfully"
+    },
+    "ai": {
+      "outOfStockNotAdded": "{{itemName}} is out of stock and was not added to cart.",
+      "limitedStockReduced": "{{itemName}}: Only {{availableToAdd}} {{unit}} available. {{discarded}} {{unit}} discarded.",
+      "multipleItemsAdded": "{{addedCount}} item{{s}} added to cart.",
+      "multipleItemsWithOutOfStock": " {{outOfStockCount}} item{{s}} out of stock.",
+      "multipleItemsWithLimits": " {{limitCount}} item{{s}} had quantities reduced due to stock limits.",
+      "singleItemAdded": "{{addedCount}} item{{s}} added to cart",
+      "noItemsStockLimitations": "No items could be added due to stock limitations",
+      "noItemsAdded": "No items could be added"
+    }
   }
 }

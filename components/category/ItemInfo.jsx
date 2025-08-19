@@ -3,6 +3,7 @@ import { Dimensions, Text, View } from 'react-native';
 import { itemInfoStyles } from '../../styles/components/categoryStyles';
 import { colors } from '../../styles/theme';
 import { getMeasurementIcon } from '../../utils/cartUtils';
+import { t } from 'i18next';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const scale = (size) => (SCREEN_WIDTH / 375) * size;
@@ -18,7 +19,7 @@ const ItemInfo = ({ name, price, measurementUnit, unitDisplay }) => {
                         size={scale(16)}
                         color={colors.secondary}
                     />
-                    <Text style={[itemInfoStyles.itemPrice, { fontSize: scale(16), marginLeft: scale(4) }]}>{price} EGP</Text>
+                    <Text style={[itemInfoStyles.itemPrice, { fontSize: scale(16), marginLeft: scale(4) }]}>{price} {t("units.egp")}</Text>
                 </View>
                 <View style={[itemInfoStyles.unitContainer, { paddingHorizontal: scale(8), paddingVertical: scale(4), borderRadius: scale(8) }]}> 
                     <MaterialCommunityIcons
@@ -26,7 +27,7 @@ const ItemInfo = ({ name, price, measurementUnit, unitDisplay }) => {
                         size={scale(16)}
                         color={colors.neutral}
                     />
-                    <Text style={[itemInfoStyles.itemUnit, { fontSize: scale(12), marginLeft: scale(4) }]}>per {unitDisplay}</Text>
+                    <Text style={[itemInfoStyles.itemUnit, { fontSize: scale(12), marginLeft: scale(4) }]}>{t("units.per")} {unitDisplay}</Text>
                 </View>
             </View>
         </View>

@@ -1,9 +1,11 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, Text, View } from 'react-native';
+import { useLocalization } from '../../context/LocalizationContext';
 import { getTierColors, getTierIcon } from '../../utils/tiers';
 
 const TierBadge = ({ tierName, size = 'medium', showName = true, style }) => {
+  const { t } = useLocalization();
   const colors = getTierColors(tierName);
   const icon = getTierIcon(tierName);
   
@@ -48,7 +50,7 @@ const TierBadge = ({ tierName, size = 'medium', showName = true, style }) => {
       </LinearGradient>
       {showName && (
         <Text style={[styles.tierName, { fontSize: textSize[size] }]}>
-          {tierName}
+          {t(`tiers.${tierName}`, tierName)}
         </Text>
       )}
     </View>

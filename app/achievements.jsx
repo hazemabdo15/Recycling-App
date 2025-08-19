@@ -1,17 +1,17 @@
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
-    FlatList,
-    Modal,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-    I18nManager
+  FlatList,
+  I18nManager,
+  Modal,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import ProgressBar from '../components/achievements/ProgressBar';
 import TierBadge from '../components/achievements/TierBadge';
@@ -21,16 +21,16 @@ import { useAuth } from '../context/AuthContext';
 import { useLocalization } from '../context/LocalizationContext';
 import { useUserPoints } from '../hooks/useUserPoints';
 import {
-    achievementMilestones,
-    calculateEnvironmentalImpact,
-    getCompletedAchievements
+  achievementMilestones,
+  calculateEnvironmentalImpact,
+  getCompletedAchievements
 } from '../utils/achievements';
 import {
-    calculateProgress,
-    calculateUserTier,
-    getNextTier,
-    getTierColors,
-    rewardLevels
+  calculateProgress,
+  calculateUserTier,
+  getNextTier,
+  getTierColors,
+  rewardLevels
 } from '../utils/tiers';
 
 const AchievementsScreen = () => {
@@ -593,7 +593,7 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -604,11 +604,12 @@ const styles = StyleSheet.create({
     margin: 20,
     maxWidth: 350,
     width: '90%',
+    // Enhanced shadow for the tier card
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
-    shadowRadius: 16,
-    elevation: 16,
+    shadowOpacity: 0.25,
+    shadowRadius: 24,
+    elevation: 24,
   },
   modalHeader: {
     alignItems: 'center',

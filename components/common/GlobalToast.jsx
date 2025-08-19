@@ -1,5 +1,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from 'react-i18next';
 import { Animated, Dimensions, PanResponder, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { colors } from "../../styles";
 
@@ -13,31 +14,31 @@ export const showGlobalToast = (message, duration = 1200, type = 'success') => {
   if (addToastFn) addToastFn({ message, duration, type });
 };
 
-const getToastStyle = (type) => {
+const getToastStyle = (type, t) => {
   switch (type) {
     case 'success':
       return {
         backgroundColor: colors.primary || '#0E9F6E',
         icon: '🎉',
-        label: 'Success!'
+        label: t('toast.labels.success')
       };
     case 'error':
       return {
         backgroundColor: colors.error || '#F44336',
         icon: '⛔',
-        label: 'Error!'
+        label: t('toast.labels.error')
       };
     case 'warning':
       return {
         backgroundColor: colors.warning || '#FFA000',
         icon: '🚧',
-        label: 'Warning!'
+        label: t('toast.labels.warning')
       };
     case 'info':
       return {
         backgroundColor: colors.neutral || '#607D8B',
         icon: '💡',
-        label: 'Info'
+        label: t('toast.labels.info')
       };
     default:
       return {
@@ -55,6 +56,7 @@ const TOAST_HEIGHT = 56;
 
 
 const Toast = ({ toast, onDismiss }) => {
+  const { t } = useTranslation();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.85)).current;
   const translateY = useRef(new Animated.Value(40)).current;
@@ -148,23 +150,23 @@ const Toast = ({ toast, onDismiss }) => {
     })
   ).current;
 
-  const { backgroundColor, icon, label } = getToastStyle(toast.type);
+  const { backgroundColor, icon, label } = getToastStyle(toast.type, t);
 
   // No stacking offset needed
-  // Friendly, modern message wording
+  // Friendly, modern message wording with translations
   let message = toast.message;
   // Only fallback if the message is empty or whitespace
   if (!message || /^\s*$/.test(message)) {
     if (toast.type === 'success') {
-      message = 'Action completed successfully!';
+      message = t('toast.fallback.success');
     } else if (toast.type === 'error') {
-      message = 'Something went wrong.';
+      message = t('toast.fallback.error');
     } else if (toast.type === 'warning') {
-      message = 'Please check your input.';
+      message = t('toast.fallback.warning');
     } else if (toast.type === 'info') {
-      message = 'Here is some information.';
+      message = t('toast.fallback.info');
     } else {
-      message = 'Notification.';
+      message = t('toast.fallback.default');
     }
   }
 

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { showGlobalToast } from '../components/common/GlobalToast';
 import { useAuth } from '../context/AuthContext';
+import i18next from '../localization/i18n';
 import { walletService } from '../services/api';
 
 export const useWallet = () => {
@@ -30,7 +31,8 @@ export const useWallet = () => {
       return userBalance;
     } catch (error) {
       console.error('Error fetching balance:', error);
-      showGlobalToast('Failed to fetch balance', 'error');
+      const message = i18next.t ? i18next.t('toast.wallet.fetchBalanceFailed') : 'Failed to fetch balance';
+      showGlobalToast(message, 2000, 'error');
       return null;
     }
   }, [user?._id, setUser]);
@@ -52,7 +54,8 @@ export const useWallet = () => {
       return sorted;
     } catch (error) {
       console.error('Error fetching transactions:', error);
-      showGlobalToast('Failed to fetch transactions', 'error');
+      const message = i18next.t ? i18next.t('toast.wallet.fetchTransactionsFailed') : 'Failed to fetch transactions';
+      showGlobalToast(message, 2000, 'error');
       setTransactions([]);
       return [];
     } finally {
@@ -65,7 +68,8 @@ export const useWallet = () => {
 
     try {
       const transaction = await walletService.createTransaction(user._id, withdrawalData);
-      showGlobalToast('Withdrawal request submitted successfully', 'success');
+      const message = i18next.t ? i18next.t('toast.wallet.withdrawalSuccess') : 'Withdrawal request submitted successfully';
+      showGlobalToast(message, 2000, 'success');
       
       // Refresh data after successful transaction
       await Promise.all([fetchBalance(), fetchTransactions()]);
@@ -73,7 +77,8 @@ export const useWallet = () => {
       return transaction;
     } catch (error) {
       console.error('Error creating withdrawal:', error);
-      showGlobalToast(error.message || 'Failed to submit withdrawal', 'error');
+      const message = i18next.t ? i18next.t('toast.wallet.withdrawalFailed') : (error.message || 'Failed to submit withdrawal');
+      showGlobalToast(message, 2000, 'error');
       throw error;
     }
   }, [user?._id, fetchBalance, fetchTransactions]);

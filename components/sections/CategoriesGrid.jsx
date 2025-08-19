@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from 'react-i18next'; // Add this import
 import {
-  ActivityIndicator,
-  FlatList,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  View,
+    ActivityIndicator,
+    FlatList,
+    RefreshControl,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
 import { KeyboardAwareFlatList } from 'react-native-keyboard-aware-scroll-view';
 import { useAuth } from "../../context/AuthContext";
@@ -16,14 +16,14 @@ import { useCart } from "../../hooks/useCart";
 import { spacing } from "../../styles";
 import { colors } from "../../styles/theme";
 import {
-  CartMessageTypes,
-  showCartMessage,
-  showMaxStockMessage,
+    CartMessageTypes,
+    showCartMessage,
+    showMaxStockMessage,
 } from "../../utils/cartMessages";
 import {
-  getCartKey,
-  getIncrementStep,
-  normalizeItemData,
+    getCartKey,
+    getIncrementStep,
+    normalizeItemData,
 } from "../../utils/cartUtils";
 import { isBuyer } from "../../utils/roleUtils";
 import { scaleSize } from "../../utils/scale";
@@ -82,6 +82,7 @@ const CategoriesGrid = ({
           itemName: translatedItemName,
           measurementUnit: normalizedItem.measurement_unit,
           isBuyer: user?.role === "buyer",
+          t
         });
         return;
       } else if (normalizedItem.measurement_unit === 2 && value < 1) {
@@ -89,6 +90,7 @@ const CategoriesGrid = ({
           itemName: translatedItemName,
           measurementUnit: normalizedItem.measurement_unit,
           isBuyer: user?.role === "buyer",
+          t
         });
         return;
       }
@@ -114,6 +116,7 @@ const CategoriesGrid = ({
         itemName: translatedItemName,
         measurementUnit: normalizedItem.measurement_unit,
         isBuyer: user?.role === "buyer",
+        t
       });
     } finally {
       setPendingOperations((prev) => {
@@ -250,6 +253,7 @@ const CategoriesGrid = ({
             quantity: step,
             measurementUnit: normalizedItem.measurement_unit,
             isBuyer: user?.role === "buyer",
+            t
           });
         } else if (operation === "decrease") {
           showCartMessage(CartMessageTypes.REMOVE_SINGLE, {
@@ -258,6 +262,7 @@ const CategoriesGrid = ({
             measurementUnit: normalizedItem.measurement_unit,
             remainingQuantity: Math.max(0, (item.cartQuantity || 0) - step),
             isBuyer: user?.role === "buyer",
+            t
           });
         } else if (operation === "fastIncrease") {
           showCartMessage(CartMessageTypes.ADD_FAST, {
@@ -265,6 +270,7 @@ const CategoriesGrid = ({
             quantity: step,
             measurementUnit: normalizedItem.measurement_unit,
             isBuyer: user?.role === "buyer",
+            t
           });
         } else if (operation === "fastDecrease") {
           showCartMessage(CartMessageTypes.REMOVE_FAST, {
@@ -273,6 +279,7 @@ const CategoriesGrid = ({
             measurementUnit: normalizedItem.measurement_unit,
             remainingQuantity: Math.max(0, (item.cartQuantity || 0) - step),
             isBuyer: user?.role === "buyer",
+            t
           });
         }
 
@@ -307,7 +314,8 @@ const CategoriesGrid = ({
               showMaxStockMessage(
                 translatedItemName,
                 item.quantity || 0,
-                normalizedItem.measurement_unit
+                normalizedItem.measurement_unit,
+                t
               );
             }
           }
@@ -318,6 +326,7 @@ const CategoriesGrid = ({
           itemName: translatedItemName,
           measurementUnit: normalizedItem.measurement_unit,
           isBuyer: user?.role === "buyer",
+          t
         });
       } finally {
         clearTimeout(timeoutId);

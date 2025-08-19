@@ -98,7 +98,8 @@
     "comingSoon": "قريباً",
     "item": "عنصر",
     "tierLevel": "المستوي",
-    "recycled": "معاد تدويره"
+    "recycled": "معاد تدويره",
+    "goBack": "العودة"
   },
   "app": {
     "name": {
@@ -211,7 +212,9 @@
     "darkMode": "الوضع المظلم",
     "deleteAccount": "حذف الحساب",
     "confirmDelete": "هل أنت متأكد من أنك تريد حذف حسابك؟",
-    "cannotUndo": "لا يمكن التراجع عن هذا الإجراء."
+    "cannotUndo": "لا يمكن التراجع عن هذا الإجراء.",
+    "member": "عضو",
+    "noEmailAvailable": "لا يوجد بريد إلكتروني متاح"
   },
   "cart": {
     "title": {
@@ -343,7 +346,10 @@
     },
     "addressPhase": {
       "deleteAddress": "حذف العنوان",
-      "deleteMessage": "هل أنت متأكد أنك تريد حذف هذا العنوان؟"
+      "deleteMessage": "هل أنت متأكد أنك تريد حذف هذا العنوان؟",
+      "building": "مبنى {{building}} , ",
+      "near": "بالقرب من {{landmark}}",
+      "floor": "طابق {{floor}}"
     }
   },
   "settings": {
@@ -481,7 +487,7 @@
     "pointsEarned": "النقاط المكتسبة",
     "pointsSpent": "النقاط المنفقة"
   },
-"achievements": {
+  "achievements": {
     "title": "الإنجازات",
     "pleaseLogin": "الرجاء تسجيل الدخول لعرض الإنجازات",
     "ordersCompleted": "تم إكمال {{count}} طلب إعادة تدوير",
@@ -532,7 +538,14 @@
     "bronze": "برونزي",
     "silver": "فضي",
     "gold": "ذهبي",
-    "platinum": "بلاتيني"
+    "platinum": "بلاتيني",
+    "Eco Beginner": "مبتدئ بيئي",
+    "Eco Starter": "بادئ بيئي",
+    "Green Helper": "مساعد أخضر",
+    "Silver Recycler": "معيد التدوير الفضي",
+    "Gold Guardian": "حارس ذهبي",
+    "Platinum Pioneer": "رائد بلاتيني",
+    "Diamond Elite": "نخبة الماس"
   },
   "errors": {
     "networkError": "خطأ في الاتصال بالشبكة",
@@ -997,12 +1010,12 @@
   },
   "minimumOrder": {
     "message": {
-      "customer": "أضف {amount} جنيه مصري أكثر لجدولة الاستلام",
-      "buyer": "أضف {amount} جنيه مصري أكثر لتقديم الطلب"
+      "customer": "أضف {{amount}} جنيه أكثر لجدولة الاستلام",
+      "buyer": "أضف {{amount}} جنيه أكثر لتقديم الطلب"
     },
     "button": {
-      "customer": "مطلوب 100 جنيه مصري كحد أدنى",
-      "buyer": "مطلوب 100 جنيه مصري كحد أدنى"
+      "customer": "مطلوب 100 جنيه كحد أدنى",
+      "buyer": "مطلوب 100 جنيه كحد أدنى"
     }
   },
   "aiResults": {
@@ -1047,42 +1060,51 @@
   },
   "units": {
     "kg": "كيلو",
+    "per": "لكل",
     "piece": "قطعة",
-    "pieces": "قطع"
+    "pieces": "قطع",
+    "egp": "جنيه",
+    "ptsEach": "{{points}} نقطة لكل قطعة",
+    "quantity": "الكمية: {{quantity}}",
+    "points": "النقاط: {{points}}",
+    "price": "السعر: {{price}}",
+    "pointsPerOrder": "نقطة/طلب",
+    "pointsBonus": "نقاط إضافية",
+    "orders": "طلبات"
   },
   "menu": {
     "switch_to_english": "Switch to English"
   },
   "recyclingModal": {
-  "yourBalance": "رصيدك",
-  "vouchers": "القسائم",
-  "cashOut": "سحب نقدي",
-  "availableVouchers": "القسائم المتاحة",
-  "redeemed": "تم الاستبدال",
-  "notEnoughPoints": "النقاط غير كافية",
-  "enterAmount": "أدخل المبلغ",
-  "requiredPoints": "النقاط المطلوبة:",
-  "remainingPoints": "النقاط المتبقية:",
-  "yourVoucher": "قسيمتك",
-  "qrInstructions": "اعرض رمز الاستجابة السريعة هذا للتاجر للاستبدال",
-  "cashbackRedeemed": "تم استرداد النقود!",
-  "cashbackInstructions": "ستصلك النقود المستردة قريباً.",
-  "processing": "جاري المعالجة...",
-  "redeemVoucher": "استبدال قسيمة",
-  "redeemCash": "استبدال نقدي",
-  "done": "تم",
-  "amountLabel": "المبلغ المراد استبداله (جنيه مصري)",
-  "points": "نقطة",
-  "egp" : "جنيه مصري",
-  "alerts": {
-    "invalidAmount": "مبلغ غير صالح",
-    "notEnoughPointsAlert": "ليس لديك نقاط كافية",
-    "selectVoucher": "اختر قسيمة",
-    "error": "خطأ",
-    "couldNotDeduct": "تعذر خصم النقاط"
-  }
-},
-"eWallet": {
+    "yourBalance": "رصيدك",
+    "vouchers": "القسائم",
+    "cashOut": "سحب نقدي",
+    "availableVouchers": "القسائم المتاحة",
+    "redeemed": "تم الاستبدال",
+    "notEnoughPoints": "النقاط غير كافية",
+    "enterAmount": "أدخل المبلغ",
+    "requiredPoints": "النقاط المطلوبة:",
+    "remainingPoints": "النقاط المتبقية:",
+    "yourVoucher": "قسيمتك",
+    "qrInstructions": "اعرض رمز الاستجابة السريعة هذا للتاجر للاستبدال",
+    "cashbackRedeemed": "تم استرداد النقود!",
+    "cashbackInstructions": "ستصلك النقود المستردة قريباً.",
+    "processing": "جاري المعالجة...",
+    "redeemVoucher": "استبدال قسيمة",
+    "redeemCash": "استبدال نقدي",
+    "done": "تم",
+    "amountLabel": "المبلغ المراد استبداله (جنيه مصري)",
+    "points": "نقطة",
+    "egp": "جنيه مصري",
+    "alerts": {
+      "invalidAmount": "مبلغ غير صالح",
+      "notEnoughPointsAlert": "ليس لديك نقاط كافية",
+      "selectVoucher": "اختر قسيمة",
+      "error": "خطأ",
+      "couldNotDeduct": "تعذر خصم النقاط"
+    }
+  },
+  "eWallet": {
     "title": "المحفظة الإلكترونية",
     "subtitle": "إدارة محفظتك الرقمية",
     "balance": "الرصيد الحالي",
@@ -1115,6 +1137,46 @@
       "default": "معاملة عبر {{gateway}}",
       "fallback": "معاملة"
     }
+  },
+  "recyclingHistory": {
+    "title": "سجل إعادة التدوير",
+    "subtitle": "جميع طلبات إعادة التدوير في مكان واحد",
+    "noOrdersFound": "لم يتم العثور على طلبات.",
+    "downloadPdf": {
+      "button": "تحميل PDF",
+      "alertTitle": "تحميل PDF",
+      "alertMessage": "هل تريد معاينة تقرير الطلب كملف PDF؟",
+      "preview": "معاينة",
+      "errorTitle": "خطأ",
+      "errorMessage": "فشل في إنشاء ملف PDF.",
+      "missingDataTitle": "بيانات مفقودة",
+      "missingDataMessage": "معلومات الطلب أو المستخدم مفقودة."
+    },
+    "cancelOrder": {
+      "button": "إلغاء الطلب",
+      "alertTitle": "إلغاء الطلب",
+      "alertMessage": "هل أنت متأكد من أنك تريد إلغاء هذا الطلب؟",
+      "failedMessage": "فشل في إلغاء الطلب"
+    },
+    "review": {
+      "leaveReview": "ترك تقييم",
+      "updateReview": "تحديث التقييم",
+      "deleteReview": "حذف التقييم",
+      "deleting": "جاري الحذف...",
+      "deleteAlertTitle": "حذف التقييم",
+      "deleteAlertMessage": "هل أنت متأكد من أنك تريد حذف تقييمك؟",
+      "deleteFailedMessage": "فشل في حذف التقييم"
+    },
+    "orderStatus": {
+      "status": "الحالة",
+      "pending": "قيد الانتظار",
+      "accepted": "مقبول",
+      "collected": "تم الاستلام",
+      "completed": "مكتمل",
+      "cancelled": "ملغي"
+    },
+    "collectedBadge": "تم الاستلام",
+    "unknownItem": "عنصر غير معروف"
   },
   "redeemHistory": {
     "title": "سجل الاسترداد",
@@ -1164,5 +1226,70 @@
     "howToDisposeMedications": "كيف أتخلص من الأدوية؟",
     "whatToDoWithBrokenGlass": "ماذا أفعل بالزجاج المكسور؟",
     "canRecycleFurniture": "هل يمكنني إعادة تدوير الأثاث؟"
+  },
+  "toast": {
+    "labels": {
+      "success": "نجح!",
+      "error": "خطأ!",
+      "warning": "تحذير!",
+      "info": "معلومات"
+    },
+    "fallback": {
+      "success": "تمت العملية بنجاح!",
+      "error": "حدث خطأ ما.",
+      "warning": "يرجى مراجعة المدخلات.",
+      "info": "هنا بعض المعلومات.",
+      "default": "إشعار."
+    },
+    "cart": {
+      "addSingle": "تمت إضافة {{quantity}} {{unit}} من {{itemName}}",
+      "addFast": "تمت إضافة {{quantity}} {{unit}} من {{itemName}}",
+      "removeSingle": "تم حذف {{quantity}} {{unit}} من {{itemName}}",
+      "removeSingleComplete": "تم حذف {{itemName}} من السلة",
+      "removeFast": "تم حذف {{quantity}} {{unit}} من {{itemName}}",
+      "removeFastComplete": "تم حذف {{itemName}} من السلة",
+      "removeAll": "تم حذف {{itemName}} من السلة",
+      "itemRemoved": "تم حذف {{itemName}} من السلة",
+      "notInCart": "{{itemName}} غير موجود في سلتك",
+      "invalidQuantityKg": "يرجى إدخال كمية صحيحة (الحد الأدنى 0.25 كيلو)",
+      "invalidQuantityPieces": "يرجى إدخال كمية صحيحة (الحد الأدنى قطعة واحدة)",
+      "manualSet": "تم تعيين كمية {{itemName}} إلى {{quantity}} {{unit}}",
+      "manualRemoved": "تم حذف العنصر من السلة",
+      "stockErrorOutOfStock": "{{itemName}} غير متوفر في المخزون",
+      "stockErrorLimited": "المخزون غير كافي. متوفر فقط {{maxStock}} {{unit}}",
+      "addToCartSuccessSingle": "تمت إضافة {{totalItems}} عنصر إلى السلة",
+      "addToCartSuccessMultiple": "تمت إضافة {{totalItems}} عنصر إلى السلة",
+      "operationFailed": "فشل في تحديث السلة",
+      "stockWarningSingle": "{{itemName}} غير متوفر في المخزون",
+      "stockWarningLimited": "متوفر فقط {{stock}} {{unit}} من {{itemName}} في المخزون",
+      "maxStockReached": "لا يمكن إضافة المزيد. متوفر فقط {{maxStock}} {{unit}}"
+    },
+    "auth": {
+      "sessionExpired": "انتهت الجلسة، يرجى تسجيل الدخول مرة أخرى."
+    },
+    "wallet": {
+      "fetchBalanceFailed": "فشل في جلب الرصيد",
+      "fetchTransactionsFailed": "فشل في جلب المعاملات",
+      "withdrawalSuccess": "تم إرسال طلب السحب بنجاح",
+      "withdrawalFailed": "فشل في إرسال طلب السحب"
+    },
+    "delivery": {
+      "missingOrderId": "رقم الطلب مفقود",
+      "selectRating": "يرجى اختيار تقييم",
+      "reviewUpdated": "تم تحديث التقييم بنجاح!",
+      "reviewSubmitted": "تم إرسال التقييم بنجاح!",
+      "reviewFailed": "فشل في إرسال التقييم",
+      "reviewDeleted": "تم حذف التقييم بنجاح"
+    },
+    "ai": {
+      "outOfStockNotAdded": "{{itemName}} غير متوفر في المخزون ولم يتم إضافته إلى السلة.",
+      "limitedStockReduced": "{{itemName}}: متوفر فقط {{availableToAdd}} {{unit}}. تم تجاهل {{discarded}} {{unit}}.",
+      "multipleItemsAdded": "تمت إضافة {{addedCount}} عنصر{{s}} إلى السلة.",
+      "multipleItemsWithOutOfStock": " {{outOfStockCount}} عنصر{{s}} غير متوفر في المخزون.",
+      "multipleItemsWithLimits": " {{limitCount}} عنصر{{s}} تم تقليل كميتها بسبب حدود المخزون.",
+      "singleItemAdded": "تمت إضافة {{addedCount}} عنصر{{s}} إلى السلة",
+      "noItemsStockLimitations": "لا يمكن إضافة عناصر بسبب قيود المخزون",
+      "noItemsAdded": "لا يمكن إضافة عناصر"
+    }
   }
 }

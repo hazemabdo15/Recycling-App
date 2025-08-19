@@ -21,6 +21,7 @@ import { showGlobalToast } from "../components/common/GlobalToast";
 import ReviewManager from "../components/profile/ReviewManager";
 import { useAuth } from "../context/AuthContext";
 import { useLocalization } from "../context/LocalizationContext";
+import i18next from "../localization/i18n";
 import { orderService } from "../services/api/orders";
 import { colors } from "../styles";
 import { generateOrderReportHTML } from "../utils/orderReportPDF";
@@ -41,9 +42,9 @@ export default function RecyclingHistory() {
 
   // Helper function to get translated item name
   const getTranslatedItemName = useCallback((item) => {
-    if (!item || !t) return item?.itemName || item?.name || "Unknown Item";
+    if (!item || !t) return item?.itemName || item?.name || t("recyclingHistory.unknownItem");
     
-    const originalName = item.itemName || item.name || "Unknown Item";
+    const originalName = item.itemName || item.name || t("recyclingHistory.unknownItem");
     const categoryName = item.categoryName || item.category || null;
     
     // Safely extract category name from multilingual structure
@@ -89,10 +90,10 @@ export default function RecyclingHistory() {
   ).current;
 
   function handleCancelOrder(orderId) {
-    Alert.alert("Cancel Order", "Are you sure you want to cancel this order?", [
-      { text: "No", style: "cancel" },
+    Alert.alert(t("recyclingHistory.cancelOrder.alertTitle"), t("recyclingHistory.cancelOrder.alertMessage"), [
+      { text: t("common.no"), style: "cancel" },
       {
-        text: "Yes",
+        text: t("common.yes"),
         onPress: async () => {
           try {
             await orderService.cancelOrder(orderId);
@@ -104,7 +105,7 @@ export default function RecyclingHistory() {
               )
             );
           } catch {
-            Alert.alert("Failed to cancel order");
+            Alert.alert(t("recyclingHistory.cancelOrder.failedMessage"));
           }
         },
       },
@@ -217,7 +218,7 @@ export default function RecyclingHistory() {
               },
             ]}
           >
-            Status: {order.status}
+            {t("recyclingHistory.orderStatus.status")}: {t(`recyclingHistory.orderStatus.${order.status}`) || order.status}
           </Text>
         </View>
       </View>
@@ -227,7 +228,7 @@ export default function RecyclingHistory() {
         <View style={styles.collectedBadgeContainer}>
           <View style={styles.collectedBadge}>
             <Feather name="truck" size={scaleSize(12)} color="#fff" />
-            <Text style={styles.collectedBadgeText}>Collected</Text>
+            <Text style={styles.collectedBadgeText}>{t("recyclingHistory.collectedBadge")}</Text>
           </View>
         </View>
       )}
@@ -244,16 +245,16 @@ export default function RecyclingHistory() {
                 {getTranslatedItemName(item)}
               </Text>
               <Text style={styles.itemInfoModern}>
-                Qty: {item.quantity}{" "}
-                {item.measurement_unit === 1 ? "kg" : "pcs"}
+                {t("units.quantity", { quantity: item.quantity })}{" "}
+                {item.measurement_unit === 1 ? t("units.kg") : t("units.pieces")}
               </Text>
               {!isBuyer(user) && (
                 <Text style={styles.itemInfoModern}>
-                  Points: {item.points}
+                  {t("units.points", { points: item.points })}
                 </Text>
               )}
               <Text style={styles.itemInfoModern}>
-                Price: {item.price} EGP
+                {t("units.price", { price: item.price })} {t("units.egp")}
               </Text>
             </View>
           </View>
@@ -262,7 +263,7 @@ export default function RecyclingHistory() {
       
 
       <Text style={styles.addressTextModern}>
-        {order.address.street}, Bldg {order.address.building}, Floor {order.address.floor}, {order.address.area}, {order.address.city}
+        {order.address.street}, {t("pickup.addressPhase.building", {building: order.address.building})} {t("pickup.addressPhase.floor", {floor: order.address.floor})}, {order.address.area}, {order.address.city}
       </Text>
 
       {/* Download PDF button for pending orders - for both customers and buyers */}
@@ -273,18 +274,18 @@ export default function RecyclingHistory() {
             style={styles.downloadPdfButton}
             onPress={async () => {
               Alert.alert(
-                "Download PDF",
-                "Do you want to preview the order report as PDF?",
+                t("recyclingHistory.downloadPdf.alertTitle"),
+                t("recyclingHistory.downloadPdf.alertMessage"),
                 [
-                  { text: "Cancel", style: "cancel" },
+                  { text: t("common.cancel"), style: "cancel" },
                   {
-                    text: "Preview",
+                    text: t("recyclingHistory.downloadPdf.preview"),
                     onPress: async () => {
                       try {
                         if (!order || !user) {
                           Alert.alert(
-                            "Missing data",
-                            "Order or user info is missing."
+                            t("recyclingHistory.downloadPdf.missingDataTitle"),
+                            t("recyclingHistory.downloadPdf.missingDataMessage")
                           );
                           return;
                         }
@@ -295,8 +296,8 @@ export default function RecyclingHistory() {
                         await Print.printAsync({ html });
                       } catch (_err) {
                         Alert.alert(
-                          "Error",
-                          "Failed to generate PDF."
+                          t("recyclingHistory.downloadPdf.errorTitle"),
+                          t("recyclingHistory.downloadPdf.errorMessage")
                         );
                       }
                     },
@@ -304,7 +305,7 @@ export default function RecyclingHistory() {
                 ]
               );
             }}
-            accessibilityLabel="Download PDF"
+            accessibilityLabel={t("recyclingHistory.downloadPdf.button")}
           >
             <View style={styles.buttonContentRow}>
               <Feather
@@ -314,7 +315,7 @@ export default function RecyclingHistory() {
                 style={{ marginRight: 6 }}
               />
               <Text style={styles.downloadPdfButtonText}>
-                Download PDF
+                {t("recyclingHistory.downloadPdf.button")}
               </Text>
             </View>
           </TouchableOpacity>
@@ -343,7 +344,7 @@ export default function RecyclingHistory() {
                   hasReview(order._id, userReviews) && styles.reviewButtonTextUpdated
                 ]}
               >
-                {hasReview(order._id, userReviews) ? "Update Review" : "Leave Review"}
+                {hasReview(order._id, userReviews) ? t("recyclingHistory.review.updateReview") : t("recyclingHistory.review.leaveReview")}
               </Text>
             </View>
           </TouchableOpacity>
@@ -353,19 +354,20 @@ export default function RecyclingHistory() {
               style={styles.deleteReviewButton}
               onPress={() => {
                 Alert.alert(
-                  "Delete Review",
-                  "Are you sure you want to delete your review?",
+                  t("recyclingHistory.review.deleteAlertTitle"),
+                  t("recyclingHistory.review.deleteAlertMessage"),
                   [
-                    { text: "Cancel", style: "cancel" },
+                    { text: t("common.cancel"), style: "cancel" },
                     {
-                      text: "Delete",
+                      text: t("common.delete"),
                       style: "destructive",
                       onPress: async () => {
                         try {
                           await deleteReview(order._id);
-                          showGlobalToast("Review deleted successfully", 1500)
+                          const message = i18next.t ? i18next.t('toast.delivery.reviewDeleted') : "Review deleted successfully";
+                          showGlobalToast(message, 1500, 'success');
                         } catch (_error) {
-                          Alert.alert("Failed to delete review");
+                          Alert.alert(t("recyclingHistory.review.deleteFailedMessage"));
                         }
                       }
                     }
@@ -384,7 +386,7 @@ export default function RecyclingHistory() {
                   styles.deleteReviewButtonText,
                   isDeleting && { color: "#9ca3af" }
                 ]}>
-                  {isDeleting ? "Deleting..." : "Delete Review"}
+                  {isDeleting ? t("recyclingHistory.review.deleting") : t("recyclingHistory.review.deleteReview")}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -408,7 +410,7 @@ export default function RecyclingHistory() {
                 style={{ marginRight: 6 }}
               />
               <Text style={styles.cancelOrderButtonText}>
-                Cancel Order
+                {t("recyclingHistory.cancelOrder.button")}
               </Text>
             </View>
           </TouchableOpacity>
@@ -442,8 +444,8 @@ export default function RecyclingHistory() {
                 />
               </TouchableOpacity>
               <View style={styles.headerTextFlex}>
-                <Text style={styles.heroTitleText}>Recycling History</Text>
-                <Text style={styles.heroSubtitleText}>All your recycling orders in one place</Text>
+                <Text style={styles.heroTitleText}>{t("recyclingHistory.title")}</Text>
+                <Text style={styles.heroSubtitleText}>{t("recyclingHistory.subtitle")}</Text>
               </View>
             </View>
           </LinearGradient>
@@ -514,7 +516,7 @@ export default function RecyclingHistory() {
                     color={colors.gray}
                     style={{ marginBottom: 10 }}
                   />
-                  <Text style={styles.emptyTextModern}>No orders found.</Text>
+                                    <Text style={styles.emptyTextModern}>{t("recyclingHistory.noOrdersFound")}</Text>
                 </View>
               )
             }

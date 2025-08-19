@@ -36,7 +36,10 @@ import {
 } from "../../utils/cartUtils";
 import { isBuyer } from "../../utils/roleUtils";
 import { scaleSize } from "../../utils/scale";
-import { extractNameFromMultilingual, getTranslatedName } from "../../utils/translationHelpers";
+import {
+  extractNameFromMultilingual,
+  getTranslatedName,
+} from "../../utils/translationHelpers";
 
 const getRoleBasedIcon = (iconType, userRole = "customer") => {
   const iconMappings = {
@@ -91,17 +94,17 @@ const Cart = () => {
   const getTranslatedItemName = (item) => {
     const originalName = item.name || item.material || "Unknown Item";
     const categoryName = item.categoryName || item.category || null;
-    
+
     // Safely extract category name from multilingual structure
-    const categoryNameForTranslation = categoryName 
-      ? extractNameFromMultilingual(categoryName, currentLanguage) 
+    const categoryNameForTranslation = categoryName
+      ? extractNameFromMultilingual(categoryName, currentLanguage)
       : null;
-    
+
     const translatedName = getTranslatedName(t, originalName, "subcategories", {
       categoryName: categoryNameForTranslation
         ? categoryNameForTranslation.toLowerCase().replace(/\s+/g, "-")
         : null,
-      currentLanguage
+      currentLanguage,
     });
     return translatedName || originalName;
   };
@@ -503,8 +506,8 @@ const Cart = () => {
   const renderCartItem = ({ item, index }) => {
     const name = getTranslatedItemName(item);
     let unit = item.unit || item.measurement_unit || "";
-    if (unit === 1 || unit === "1") unit = "KG";
-    if (unit === 2 || unit === "2") unit = "Piece";
+    if (unit === 1 || unit === "1") unit = t("units.kg");
+    if (unit === 2 || unit === "2") unit = t("units.piece");
     const points = typeof item.points === "number" ? item.points : null;
     const value =
       typeof item.value === "number"
@@ -530,6 +533,16 @@ const Cart = () => {
           },
         ]}
       >
+        <TouchableOpacity
+          style={styles.cartDeleteBtn}
+          onPress={() => handleDelete(item)}
+        >
+          <MaterialCommunityIcons
+            name="delete-outline"
+            size={20}
+            color={colors.error}
+          />
+        </TouchableOpacity>
         <View style={styles.cartImageContainer}>
           {item.image ? (
             <Image
@@ -559,28 +572,30 @@ const Cart = () => {
               {quantity} {unit ? unit : ""}
             </Text>
           </View>
-          <View style={styles.itemDetailsRow}>
-            {!isBuyer(user) && points !== null ? (
+          {!isBuyer(user) && points !== null ? (
+            <View style={styles.itemDetailsRow}>
               <Text
                 style={[
                   styles.cartUnit,
                   { color: colors.accent, fontWeight: "bold", marginRight: 8 },
                 ]}
               >
-                {points} pts each
+                {t("units.ptsEach", { points })}
               </Text>
-            ) : null}
-            {totalValue !== null ? (
+            </View>
+          ) : null}
+          {totalValue !== null ? (
+            <View style={styles.itemDetailsRow}>
               <Text
                 style={[
                   styles.cartUnit,
                   { color: colors.secondary, fontWeight: "bold" },
                 ]}
               >
-                {totalValue.toFixed(2)} EGP
+                {totalValue.toFixed(2)} {t("units.egp")}
               </Text>
-            ) : null}
-          </View>
+            </View>
+          ) : null}
           <View style={styles.cartQuantityRow}>
             {/* Get the proper minimum quantity based on measurement unit */}
             {(() => {
@@ -653,18 +668,6 @@ const Cart = () => {
               );
             })()}
           </View>
-        </View>
-        <View style={styles.cartActionsContainer}>
-          <TouchableOpacity
-            style={styles.cartDeleteBtn}
-            onPress={() => handleDelete(item)}
-          >
-            <MaterialCommunityIcons
-              name="delete-outline"
-              size={24}
-              color={colors.error}
-            />
-          </TouchableOpacity>
         </View>
       </AnimatedListItem>
     );
@@ -822,7 +825,7 @@ const Cart = () => {
                   {tRole("money", user?.role)}
                 </Text>
                 <Text style={styles.checkoutSummaryValueHero}>
-                  {totalValue.toFixed(2)} EGP
+                  {totalValue.toFixed(2)} {t("units.egp")}
                 </Text>
               </View>
             </View>
@@ -1110,22 +1113,19 @@ const styles = StyleSheet.create({
     minWidth: scaleSize(36),
     textAlign: "center",
   },
-  cartActionsContainer: {
-    justifyContent: "center",
-    alignItems: "center",
-    marginLeft: scaleSize(spacing.lg),
-    gap: scaleSize(8),
-  },
   cartDeleteBtn: {
-    width: scaleSize(36),
-    height: scaleSize(36),
-    borderRadius: scaleSize(18),
+    position: "absolute",
+    top: scaleSize(8),
+    right: scaleSize(8),
+    width: scaleSize(32),
+    height: scaleSize(32),
+    borderRadius: scaleSize(16),
     backgroundColor: colors.base100,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: scaleSize(4),
     borderWidth: 1,
     borderColor: colors.base200,
+    zIndex: 1,
   },
   itemDetailsRow: {
     flexDirection: "row",

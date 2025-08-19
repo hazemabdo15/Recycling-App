@@ -1,9 +1,11 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useLocalization } from '../../context/LocalizationContext';
 import { getTierColors, getTierIcon } from '../../utils/tiers';
 
 const TierCard = ({ tier, isCurrentTier = false, isUnlocked = false, onPress }) => {
+  const { t } = useLocalization();
   const colors = getTierColors(tier.name);
   const icon = getTierIcon(tier.name);
 
@@ -41,7 +43,7 @@ const TierCard = ({ tier, isCurrentTier = false, isUnlocked = false, onPress }) 
           styles.tierName,
           { color: isUnlocked ? 'white' : '#6B7280' }
         ]}>
-          {tier.name}
+          {t(`tiers.${tier.name}`, tier.name)}
         </Text>
         
         <View style={styles.benefitsContainer}>
@@ -55,7 +57,7 @@ const TierCard = ({ tier, isCurrentTier = false, isUnlocked = false, onPress }) 
               styles.benefitText,
               { color: isUnlocked ? 'rgba(255,255,255,0.8)' : '#9CA3AF' }
             ]}>
-              +{tier.bonusPerOrder} pts/order
+              +{tier.bonusPerOrder} {t("units.pointsPerOrder")}
             </Text>
           </View>
           
@@ -69,7 +71,7 @@ const TierCard = ({ tier, isCurrentTier = false, isUnlocked = false, onPress }) 
               styles.benefitText,
               { color: isUnlocked ? 'rgba(255,255,255,0.8)' : '#9CA3AF' }
             ]}>
-              {tier.bonusPerReachedTier} pts bonus
+              {tier.bonusPerReachedTier} {t("units.pointsBonus")}
             </Text>
           </View>
         </View>
@@ -79,8 +81,8 @@ const TierCard = ({ tier, isCurrentTier = false, isUnlocked = false, onPress }) 
           { color: isUnlocked ? 'rgba(255,255,255,0.6)' : '#9CA3AF' }
         ]}>
           {tier.minRecycles === 0 
-            ? `${tier.maxRecycles + 1} orders` 
-            : `${tier.minRecycles}+ orders`}
+            ? `${tier.maxRecycles + 1} ${t("units.orders")}` 
+            : `${tier.minRecycles}+ ${t("units.orders")}`}
         </Text>
         
         {!isUnlocked && (

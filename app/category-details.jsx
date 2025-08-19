@@ -160,6 +160,7 @@ const CategoryDetails = () => {
           itemName: itemDisplayName,
           measurementUnit: measurementUnit,
           isBuyer: user?.role === "buyer",
+          t
         });
         return;
       } else if (measurementUnit === 2 && value < 1) {
@@ -167,6 +168,7 @@ const CategoryDetails = () => {
           itemName: itemDisplayName,
           measurementUnit: measurementUnit,
           isBuyer: user?.role === "buyer",
+          t
         });
         return;
       }
@@ -179,6 +181,7 @@ const CategoryDetails = () => {
         maxStock: item.quantity,
         measurementUnit: item.measurement_unit,
         isBuyer: true,
+        t
       });
       return;
     }
@@ -198,6 +201,7 @@ const CategoryDetails = () => {
           itemName: itemDisplayName,
           measurementUnit: item.measurement_unit,
           isBuyer: user?.role === "buyer",
+          t
         });
       }
     } catch (_err) {
@@ -206,6 +210,7 @@ const CategoryDetails = () => {
         itemName: itemDisplayName,
         measurementUnit: item.measurement_unit,
         isBuyer: user?.role === "buyer",
+        t
       });
     } finally {
       setPendingOperations((prev) => {
@@ -264,7 +269,8 @@ const CategoryDetails = () => {
               showMaxStockMessage(
                 itemDisplayName,
                 item.quantity,
-                item.measurement_unit
+                item.measurement_unit,
+                t
               );
             }
             if (outOfStock) {
@@ -273,6 +279,7 @@ const CategoryDetails = () => {
                 maxStock: 0,
                 measurementUnit: item.measurement_unit,
                 isBuyer: true,
+                t
               });
             }
             return;
@@ -286,6 +293,7 @@ const CategoryDetails = () => {
             quantity: step,
             measurementUnit: normalizedItem.measurement_unit,
             isBuyer: user?.role === "buyer",
+            t
           });
 
           const timeoutId = setTimeout(() => {
@@ -307,7 +315,8 @@ const CategoryDetails = () => {
               showMaxStockMessage(
                 itemDisplayName,
                 item.quantity,
-                item.measurement_unit
+                item.measurement_unit,
+                t
               );
             }
           } catch (err) {
@@ -316,6 +325,7 @@ const CategoryDetails = () => {
               itemName: itemDisplayName,
               measurementUnit: item.measurement_unit,
               isBuyer: user?.role === "buyer",
+              t
             });
           } finally {
             clearTimeout(timeoutId);
@@ -340,12 +350,14 @@ const CategoryDetails = () => {
               measurementUnit: normalizedItem.measurement_unit,
               remainingQuantity: remainingQuantity,
               isBuyer: user?.role === "buyer",
+              t
             });
           } else {
             showCartMessage(CartMessageTypes.ITEM_REMOVED, {
               itemName: itemDisplayName,
               measurementUnit: normalizedItem.measurement_unit,
               isBuyer: user?.role === "buyer",
+              t
             });
           }
 
@@ -369,6 +381,7 @@ const CategoryDetails = () => {
               itemName: itemDisplayName,
               measurementUnit: item.measurement_unit,
               isBuyer: user?.role === "buyer",
+              t
             });
           } finally {
             clearTimeout(timeoutId);
@@ -390,7 +403,8 @@ const CategoryDetails = () => {
             showMaxStockMessage(
               itemDisplayName,
               item.quantity,
-              item.measurement_unit
+              item.measurement_unit,
+              t
             );
             return;
           }
@@ -402,6 +416,7 @@ const CategoryDetails = () => {
             quantity: fastStep,
             measurementUnit: normalizedItem.measurement_unit,
             isBuyer: user?.role === "buyer",
+            t
           });
 
           const timeoutId = setTimeout(() => {
@@ -426,6 +441,7 @@ const CategoryDetails = () => {
               itemName: itemDisplayName,
               measurementUnit: item.measurement_unit,
               isBuyer: user?.role === "buyer",
+              t
             });
           } finally {
             clearTimeout(timeoutId);
@@ -450,12 +466,14 @@ const CategoryDetails = () => {
               measurementUnit: normalizedItem.measurement_unit,
               remainingQuantity: remainingQuantity,
               isBuyer: user?.role === "buyer",
+              t
             });
           } else {
             showCartMessage(CartMessageTypes.ITEM_REMOVED, {
               itemName: itemDisplayName,
               measurementUnit: normalizedItem.measurement_unit,
               isBuyer: user?.role === "buyer",
+              t
             });
           }
 
@@ -481,6 +499,7 @@ const CategoryDetails = () => {
               itemName: itemDisplayName,
               measurementUnit: item.measurement_unit,
               isBuyer: user?.role === "buyer",
+              t
             });
           } finally {
             clearTimeout(timeoutId);
@@ -560,7 +579,7 @@ const CategoryDetails = () => {
               size={20}
               color={colors.white}
             />
-            <Text style={heroStyles.statValue}>{totalValue} EGP</Text>
+            <Text style={heroStyles.statValue}>{totalValue} {t("units.egp")}</Text>
             <Text style={heroStyles.statLabel}>
               {tRole("money", user?.role)}
             </Text>

@@ -441,14 +441,19 @@ export default function AIResultsModal() {
           const warning = stockWarnings[0];
           if (warning.reason === 'out_of_stock') {
             showGlobalToast(
-              `${warning.name} is out of stock and was not added to cart.`,
+              t('toast.ai.outOfStockNotAdded', { itemName: warning.name }),
               1200,
               'error'
             );
           } else {
             const availableToAdd = warning.availableStock - warning.currentInCart;
             showGlobalToast(
-              `${warning.name}: Only ${availableToAdd} ${warning.unit} available. ${warning.discarded} ${warning.unit} discarded.`,
+              t('toast.ai.limitedStockReduced', { 
+                itemName: warning.name, 
+                availableToAdd: availableToAdd, 
+                unit: warning.unit, 
+                discarded: warning.discarded 
+              }),
               1200,
               'warning'
             );
@@ -456,14 +461,23 @@ export default function AIResultsModal() {
         } else {
           // Multiple items with stock issues
           const addedCount = processedItems.length;
-          let message = `${addedCount} item${addedCount > 1 ? 's' : ''} added to cart.`;
+          let message = t('toast.ai.multipleItemsAdded', { 
+            addedCount, 
+            s: addedCount > 1 ? 's' : '' 
+          });
           
           if (outOfStockWarnings.length > 0) {
-            message += ` ${outOfStockWarnings.length} item${outOfStockWarnings.length > 1 ? 's were' : ' was'} out of stock.`;
+            message += t('toast.ai.multipleItemsWithOutOfStock', { 
+              outOfStockCount: outOfStockWarnings.length, 
+              s: outOfStockWarnings.length > 1 ? 's were' : ' was' 
+            });
           }
           
           if (limitWarnings.length > 0) {
-            message += ` ${limitWarnings.length} item${limitWarnings.length > 1 ? 's had' : ' had'} quantities reduced due to stock limits.`;
+            message += t('toast.ai.multipleItemsWithLimits', { 
+              limitCount: limitWarnings.length, 
+              s: limitWarnings.length > 1 ? 's had' : ' had' 
+            });
           }
           
           showGlobalToast(message, 1200, 'warning');
@@ -472,17 +486,20 @@ export default function AIResultsModal() {
         // No stock issues or customer user, show regular success message
         const addedCount = processedItems.length;
         showGlobalToast(
-          `${addedCount} item${addedCount > 1 ? 's' : ''} added to cart`,
+          t('toast.ai.singleItemAdded', { 
+            addedCount, 
+            s: addedCount > 1 ? 's' : '' 
+          }),
           1200,
           'success'
         );
       }
     } else if (stockWarnings.length > 0) {
       // No items added but we have warnings (all items were out of stock or limited)
-      showGlobalToast('No items could be added due to stock limitations', 1200, 'error');
+      showGlobalToast(t('toast.ai.noItemsStockLimitations'), 1200, 'error');
     } else {
       // No items and no warnings - shouldn't happen but just in case
-      showGlobalToast('No items could be added', 1200, 'error');
+      showGlobalToast(t('toast.ai.noItemsAdded'), 1200, 'error');
     }
 
     router.dismissAll();

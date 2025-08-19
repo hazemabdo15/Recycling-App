@@ -133,7 +133,7 @@ const ReviewPhase = ({
               quantity,
               itemName: translatedItemName,
               measurement_unit:
-                normalizedItem.measurement_unit === 1 ? "KG" : "Piece",
+                normalizedItem.measurement_unit === 1 ? t("units.kg") : t("units.piece"),
               points: normalizedItem.points || 10,
               price: normalizedItem.price || 5.0,
               image: normalizedItem.image,
@@ -448,7 +448,7 @@ const ReviewPhase = ({
               </View>
             )}
           </View>
-          <Text style={styles.price}>{item.totalPrice.toFixed(2)} EGP</Text>
+          <Text style={styles.price}>{item.totalPrice.toFixed(2)} {t("units.egp")}</Text>
         </View>
 
         <View style={styles.quantityBadge}>
@@ -636,7 +636,7 @@ const ReviewPhase = ({
                   {isBuyerRole(user) ? t("pickup.reviewPhase.itemsSubtotal") : t("pickup.reviewPhase.totalValue")}
                 </Text>
                 <Text style={styles.summaryValue}>
-                  {itemsTotalPrice.toFixed(2)} EGP
+                  {itemsTotalPrice.toFixed(2)} {t("units.egp")}
                 </Text>
               </View>
               
