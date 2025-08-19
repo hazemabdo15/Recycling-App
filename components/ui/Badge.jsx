@@ -1,7 +1,7 @@
 ﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
-import { badgeStyles } from '../../styles/components/commonStyles';
-import { colors } from '../../styles/theme';
+import { getBadgeStyles } from '../../styles/components/commonStyles';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 const Badge = ({
     text,
     count,
@@ -10,6 +10,9 @@ const Badge = ({
     size = 'medium',
     ...props
 }) => {
+    const { colors, isDarkMode } = useThemedStyles();
+    const badgeStyles = getBadgeStyles(isDarkMode);
+    
     const getBadgeStyle = () => {
         switch (variant) {
             case 'secondary':

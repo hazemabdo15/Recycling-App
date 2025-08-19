@@ -1,8 +1,8 @@
 ﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useRef } from 'react';
 import { Dimensions, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { quantityControlsStyles } from '../../styles/components/categoryStyles';
-import { colors } from '../../styles/theme';
+import { getQuantityControlsStyles } from '../../styles/components/categoryStyles';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const scale = (size) => (SCREEN_WIDTH / 375) * size;
@@ -22,6 +22,8 @@ const QuantityControls = ({
     maxQuantity, // stock quantity for validation
     itemName = 'Item', // item name for toast messages
 }) => {
+    const { colors, isDarkMode } = useThemedStyles();
+    const quantityControlsStyles = getQuantityControlsStyles(isDarkMode);
     const [inputValue, setInputValue] = React.useState(quantity?.toString() || '');
     const inputRef = useRef(null);
     const lastValidValue = useRef(quantity?.toString() || '');

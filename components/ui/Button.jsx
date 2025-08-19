@@ -1,7 +1,7 @@
 ﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text, TouchableOpacity } from 'react-native';
-import { buttonStyles } from '../../styles/components/commonStyles';
-import { colors } from '../../styles/theme';
+import { getButtonStyles } from '../../styles/components/commonStyles';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 const Button = ({
     title,
     onPress,
@@ -11,6 +11,9 @@ const Button = ({
     size = 'medium',
     ...props
 }) => {
+    const { colors, isDarkMode } = useThemedStyles();
+    const buttonStyles = getButtonStyles(isDarkMode);
+    
     const getButtonStyle = () => {
         switch (variant) {
             case 'secondary':

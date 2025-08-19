@@ -1,5 +1,6 @@
 ﻿import { Text, View } from 'react-native';
-import { cardStyles } from '../../styles/components/commonStyles';
+import { getCardStyles } from '../../styles/components/commonStyles';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 const Card = ({
     title,
     subtitle,
@@ -7,6 +8,9 @@ const Card = ({
     headerRight,
     ...props
 }) => {
+    const { isDarkMode } = useThemedStyles();
+    const cardStyles = getCardStyles(isDarkMode);
+    
     return (
         <View style={[cardStyles.card, props.style]}>
             {(title || subtitle || headerRight) && (

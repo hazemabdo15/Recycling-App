@@ -1,7 +1,7 @@
 ﻿import { StyleSheet, Text, View } from "react-native";
 import { useLocalization } from "../../context/LocalizationContext";
-import { itemCardStyles } from "../../styles/components/categoryStyles";
-import { colors } from "../../styles/theme";
+import { getItemCardStyles } from "../../styles/components/categoryStyles";
+import { useThemedStyles } from "../../hooks/useThemedStyles";
 import { getUnitDisplay } from "../../utils/cartUtils";
 import { isBuyer } from "../../utils/roleUtils";
 import { isMaxStockReached, isOutOfStock } from "../../utils/stockUtils";
@@ -24,6 +24,8 @@ const ItemCard = ({
   user = null,
 }) => {
   const { t, isRTL } = useLocalization();
+  const { isDarkMode } = useThemedStyles();
+  const itemCardStyles = getItemCardStyles(isDarkMode);
   const unitDisplay = getUnitDisplay(item.measurement_unit);
   
   // Debug RTL state
@@ -141,7 +143,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 10,
     left: 250,
-    backgroundColor: colors.base200 || "#F3F4F6",
+    backgroundColor: "#F3F4F6",
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -189,7 +191,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 10,
     right: 10, // Positioned on the right side for LTR
-    backgroundColor: colors.base200 || "#F3F4F6",
+    backgroundColor: "#F3F4F6",
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -219,7 +221,7 @@ const styles = StyleSheet.create({
     alignSelf: 'left',
   },
   stockBadgeText: {
-    color: colors.primary || "#0E9F6E",
+    color: "#0E9F6E",
     fontWeight: "600",
     fontSize: 12,
     letterSpacing: 0.2,

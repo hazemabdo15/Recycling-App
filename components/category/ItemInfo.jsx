@@ -1,7 +1,7 @@
 ﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Dimensions, Text, View } from 'react-native';
-import { itemInfoStyles } from '../../styles/components/categoryStyles';
-import { colors } from '../../styles/theme';
+import { getItemInfoStyles } from '../../styles/components/categoryStyles';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { getMeasurementIcon } from '../../utils/cartUtils';
 import { t } from 'i18next';
 
@@ -9,6 +9,9 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const scale = (size) => (SCREEN_WIDTH / 375) * size;
 
 const ItemInfo = ({ name, price, measurementUnit, unitDisplay }) => {
+    const { colors, isDarkMode } = useThemedStyles();
+    const itemInfoStyles = getItemInfoStyles(isDarkMode);
+    
     return (
         <View style={itemInfoStyles.itemInfo}>
             <Text style={[itemInfoStyles.itemName, { fontSize: scale(20), marginBottom: scale(8), lineHeight: scale(24) }]} numberOfLines={2}>{name}</Text>

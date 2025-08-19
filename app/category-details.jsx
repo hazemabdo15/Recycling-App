@@ -18,8 +18,9 @@ import { useAuth } from "../context/AuthContext";
 import { useLocalization } from "../context/LocalizationContext";
 import { useCategoryItems } from "../hooks/useAPI";
 import { useCart } from "../hooks/useCart";
-import { layoutStyles } from "../styles/components/commonStyles";
-import { colors, spacing } from "../styles/theme";
+import { getLayoutStyles } from "../styles/components/commonStyles";
+import { useThemedStyles } from "../hooks/useThemedStyles";
+import { spacing } from "../styles/theme";
 import {
   CartMessageTypes,
   showCartMessage,
@@ -42,6 +43,8 @@ const CategoryDetails = () => {
   const { user } = useAuth();
   const { tRole, currentLanguage } = useLocalization();
   const { t } = useTranslation(); // Add translation hook
+  const { colors, isDarkMode } = useThemedStyles();
+  const layoutStyles = getLayoutStyles(isDarkMode);
 
   const [pendingOperations, setPendingOperations] = useState({});
   
@@ -679,7 +682,7 @@ const heroStyles = {
     paddingBottom: scaleSize(spacing.lg),
     borderBottomLeftRadius: scaleSize(32),
     borderBottomRightRadius: scaleSize(32),
-    shadowColor: colors.primary,
+    shadowColor: "#10B981",
     shadowOffset: { width: 0, height: scaleSize(8) },
     shadowOpacity: 0.3,
     shadowRadius: scaleSize(12),
@@ -699,7 +702,7 @@ const heroStyles = {
   heroTitle: {
     fontSize: scaleSize(24),
     fontWeight: "bold",
-    color: colors.white,
+    color: "#FFFFFF",
     textAlign: "center",
     letterSpacing: -0.5,
     flex: 1,
@@ -713,7 +716,7 @@ const heroStyles = {
   },
   heroSubtitle: {
     fontSize: scaleSize(14),
-    color: colors.white,
+    color: "#FFFFFF",
     textAlign: "center",
     opacity: 0.85,
     lineHeight: scaleSize(22),
@@ -736,13 +739,13 @@ const heroStyles = {
   statValue: {
     fontSize: scaleSize(18),
     fontWeight: "bold",
-    color: colors.white,
+    color: "#FFFFFF",
     marginTop: scaleSize(4),
     marginBottom: scaleSize(2),
   },
   statLabel: {
     fontSize: scaleSize(12),
-    color: colors.white,
+    color: "#FFFFFF",
     opacity: 0.8,
     textAlign: "center",
   },

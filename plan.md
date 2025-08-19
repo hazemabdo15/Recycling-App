@@ -43,11 +43,37 @@ Implement a comprehensive dark mode feature across the entire React Native app u
 ## Phase 2: High-Impact Components (User-Facing)
 
 ### 2.1 Profile Components
-**File: `components/profile/ProfileCard.jsx`** (MODIFY - 188 lines)
-- [ ] Replace hardcoded colors with theme colors
-- [ ] Update LinearGradient colors dynamically
-- [ ] Fix avatar background and text colors
-- [ ] Update stat card backgrounds
+**File: `components/profile/ProfileCard.jsx`** (MODIFY - 450 lines)
+- [x] Replace hardcoded colors with theme colors  
+- [x] Update LinearGradient colors dynamically
+- [x] Fix avatar background and text colors
+- [x] Update stat card backgrounds
+
+### 2.2 Home Screen Components  
+**File: `app/(tabs)/home.jsx`** (MODIFY - 238 lines)
+- [x] Convert hero section gradients to use theme colors
+- [x] Update notification background colors
+- [x] Fix text colors throughout the component
+
+### 2.3 Core UI Components
+**File: `components/common/Header.jsx`** (MODIFY - 85 lines)
+- [x] Update header background and text colors
+- [x] Fix button background colors
+
+**File: `components/category/CategoryHeader.jsx`** (MODIFY - 115 lines)  
+- [x] Update header and stats background colors
+- [x] Fix text colors for dark mode
+
+### 2.4 Main Tab Screens
+**File: `app/(tabs)/profile.jsx`** (MODIFY - 670 lines)
+- [x] Convert entire profile screen to use theme colors
+- [x] Update gradients, cards, and text colors
+- [x] Fix navigation and action buttons
+
+**File: `app/(tabs)/cart.jsx`** (MODIFY - 1307 lines)
+- [x] Convert massive cart component to use theme colors
+- [x] Update hero sections, cart cards, checkout UI
+- [x] Fix all hardcoded colors and gradients
 
 **File: `components/profile/ProfileMenu.jsx`** (MODIFY - 173 lines)
 - [x] Add dark mode toggle in menu items
@@ -84,16 +110,43 @@ Implement a comprehensive dark mode feature across the entire React Native app u
 ## Phase 3: Style System Consolidation
 
 ### 3.1 Create Dynamic Style Helpers
-**File: `styles/dynamicStyles.js`** (NEW)
-- [x] Create helper functions for dynamic styling
-- [x] Implement `createThemedStyles(styleFunction)` utility
-- [x] Add common dynamic style patterns
+**File: `styles/dynamicStyles.js`** (EXISTING)
+- [x] Helper functions for dynamic styling already exist
+- [x] `createThemedStyles(styleFunction)` utility available
+- [x] Common dynamic style patterns implemented
 
-### 3.2 Consolidate Category Styles
-**File: `styles/components/categoryStyles.js`** (MODIFY - 279 lines)
-- [ ] Convert to dynamic style functions
-- [ ] Remove hardcoded colors
-- [ ] Make all styles theme-aware
+### 3.2 Consolidate Category Styles  
+**File: `styles/components/categoryStyles.js`** (MODIFY - 293 lines)
+- [x] Convert to dynamic style functions
+- [x] Replace static StyleSheet exports with getStyles functions
+- [x] Update imports to use getColors from theme
+
+### 3.3 Consolidate Common Styles
+**File: `styles/components/commonStyles.js`** (MODIFY - 146 lines)  
+- [x] Convert layoutStyles, loadingStateStyles, errorStateStyles to dynamic functions
+- [x] Convert buttonStyles, cardStyles, badgeStyles to dynamic functions
+- [x] Update all color references to use getColors
+
+### 3.4 Profile-Related Styles
+**File: `styles/components/profileStyles.js`** (MODIFY - 15 lines)
+- [x] Convert profileStyles to getProfileStyles function
+- [x] Update color references
+
+**File: `styles/components/profileHeaderStyles.js`** (MODIFY - 74 lines)
+- [x] Convert profileHeaderStyles to getProfileHeaderStyles function  
+- [x] Update all hardcoded colors to theme colors
+
+### 3.5 Explore Styles
+**File: `styles/components/exploreStyles.js`** (MODIFY - 31 lines)
+- [x] Convert exploreStyles to getExploreStyles function
+- [x] Update background and text colors
+
+### 3.6 Additional Style Files
+**File: `styles/redeemHistory.js`** (MODIFY - 65 lines)
+- [x] Convert to getRedeemHistoryStyles function
+- [x] Update all hardcoded colors to dynamic theme colors
+
+**✅ Phase 3 Complete:** All shared style files now use dynamic theming functions.
 
 ### 3.3 Update Common Styles
 **File: `styles/components/commonStyles.js`** (MODIFY - 110 lines)
