@@ -25,7 +25,8 @@ const ItemCard = ({
 }) => {
   const { t, isRTL } = useLocalization();
   const { colors, isDarkMode } = useThemedStyles();
-  const itemCardStyles = getItemCardStyles(colors, isDarkMode);
+  const itemCardStyles = getItemCardStyles(isDarkMode);
+  const styles = getItemCardComponentStyles(colors);
   const unitDisplay = getUnitDisplay(item.measurement_unit);
   
   // Debug RTL state
@@ -109,7 +110,8 @@ const ItemCard = ({
   );
 };
 
-const styles = StyleSheet.create({
+// Dynamic styles function for ItemCard component
+const getItemCardComponentStyles = (colors) => StyleSheet.create({
   // ==========================================
   // RTL STYLES - TWEAK THESE FOR RTL LAYOUT
   // ==========================================
@@ -132,7 +134,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     transform: [{ rotate: '-45deg' }], // Change rotation angle here
     borderRadius: 10,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
     shadowRadius: 2,
@@ -143,7 +145,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 10,
     left: 250,
-    backgroundColor: "#F3F4F6",
+    backgroundColor: colors.surface,
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -151,7 +153,7 @@ const styles = StyleSheet.create({
     minWidth: 60,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
     shadowRadius: 2,
@@ -180,7 +182,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     transform: [{ rotate: '45deg' }],
     borderRadius: 10,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
     shadowRadius: 2,
@@ -191,7 +193,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 10,
     right: 10, // Positioned on the right side for LTR
-    backgroundColor: "#F3F4F6",
+    backgroundColor: colors.surface,
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -199,7 +201,7 @@ const styles = StyleSheet.create({
     minWidth: 60,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
     shadowRadius: 2,

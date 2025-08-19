@@ -52,7 +52,7 @@ export const getProfileHeaderStyles = (isDarkMode = false) => {
     levelBadge: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: colors.surfaceVariant,
+      backgroundColor: colors.base200,
       paddingHorizontal: spacing.md,
       paddingVertical: spacing.sm,
       borderRadius: borderRadius.xl,

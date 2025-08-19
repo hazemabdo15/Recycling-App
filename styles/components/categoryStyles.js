@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { borderRadius, shadows, spacing, getColors } from '../theme';
+import { borderRadius, getColors, shadows, spacing } from '../theme';
 
 // Dynamic style functions for category components
 export const getCategoryHeaderStyles = (isDarkMode = false) => {
@@ -86,14 +86,14 @@ export const getItemImageStyles = (isDarkMode = false) => {
             height: 80,
             borderRadius: borderRadius.md,
             marginRight: spacing.md,
-            backgroundColor: colors.surfaceVariant,
+            backgroundColor: colors.base200,
         },
         placeholderImage: {
             width: 80,
             height: 80,
             borderRadius: borderRadius.md,
             marginRight: spacing.md,
-            backgroundColor: colors.surfaceVariant,
+            backgroundColor: colors.base200,
             justifyContent: 'center',
             alignItems: 'center',
         },
@@ -120,7 +120,7 @@ export const getItemImageStyles = (isDarkMode = false) => {
             height: 80,
             borderRadius: borderRadius.md,
             marginRight: spacing.md,
-            backgroundColor: colors.surfaceVariant,
+            backgroundColor: colors.base200,
             justifyContent: 'center',
             alignItems: 'center',
         },
@@ -154,7 +154,7 @@ export const getItemInfoStyles = (isDarkMode = false) => {
         priceContainer: {
             flexDirection: 'row',
             alignItems: 'center',
-            backgroundColor: colors.surfaceVariant,
+            backgroundColor: colors.base200,
             borderRadius: borderRadius.sm,
             paddingHorizontal: spacing.sm,
             paddingVertical: spacing.xs,
@@ -164,7 +164,7 @@ export const getItemInfoStyles = (isDarkMode = false) => {
         unitContainer: {
             flexDirection: 'row',
             alignItems: 'center',
-            backgroundColor: colors.surfaceVariant,
+            backgroundColor: colors.base200,
             borderRadius: borderRadius.sm,
             paddingHorizontal: spacing.sm,
             paddingVertical: spacing.xs,
@@ -243,7 +243,7 @@ export const getQuantityControlsStyles = (isDarkMode = false) => {
         quantitySection: {
             flexDirection: 'row',
             alignItems: 'center',
-            backgroundColor: colors.surfaceVariant,
+            backgroundColor: colors.base200,
             borderRadius: borderRadius.md,
             padding: spacing.xs,
         },
@@ -256,7 +256,7 @@ export const getQuantityControlsStyles = (isDarkMode = false) => {
             alignItems: 'center',
         },
         quantityButtonDisabled: {
-            backgroundColor: colors.surfaceVariant,
+            backgroundColor: colors.base200,
         },
         quantityButtonText: {
             color: colors.white,
@@ -335,7 +335,7 @@ export const getQuantityControlsStyles = (isDarkMode = false) => {
             alignItems: 'center',
         },
         addToCartButtonDisabled: {
-            backgroundColor: colors.surfaceVariant,
+            backgroundColor: colors.base200,
         },
         addToCartText: {
             color: colors.white,
@@ -397,7 +397,7 @@ export const getGridLayoutStyles = (isDarkMode = false) => {
             height: 120,
             borderRadius: borderRadius.sm,
             marginBottom: spacing.sm,
-            backgroundColor: colors.surfaceVariant,
+            backgroundColor: colors.base200,
         },
         gridItemName: {
             fontSize: 14,
