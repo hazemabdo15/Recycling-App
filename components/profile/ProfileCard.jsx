@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { ActivityIndicator, Image, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { useLocalization } from '../../context/LocalizationContext';
-import { colors } from '../../styles/theme';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { isBuyer, isCustomer } from '../../utils/roleUtils';
 import { scaleSize } from '../../utils/scale';
 import { calculateUserTier, getTierColors } from '../../utils/tiers';
@@ -13,6 +13,7 @@ import TierBadge from '../achievements/TierBadge';
 
 export default function ProfileCard({ user, points = 0, tier = '', onLogout, onRedeem, showRedeem, onEditAvatar, style, avatarLoading }) {
   const [showImagePreview, setShowImagePreview] = useState(false);
+  const { colors } = useThemedStyles();
   const avatarUri = user?.avatarUri;
   const totalRecycles = user?.totalRecycles ?? 0;
   const userTier = calculateUserTier(totalRecycles);
@@ -20,10 +21,12 @@ export default function ProfileCard({ user, points = 0, tier = '', onLogout, onR
   const { t } = useLocalization();
   
   console.log('ProfileCard points prop:', points);
+
+  const styles = getStyles(colors);
   
   return (
     <LinearGradient
-      colors={['#ffffff', '#f8fafc']}
+      colors={colors.cardGradient}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={[styles.card, style]}
@@ -53,7 +56,7 @@ export default function ProfileCard({ user, points = 0, tier = '', onLogout, onR
                   <Image source={{ uri: avatarUri }} style={styles.avatarImage} />
                 ) : (
                   <LinearGradient
-                    colors={['#e3f2fd', '#bbdefb']}
+                    colors={colors.avatarGradient}
                     style={styles.defaultAvatarGradient}
                   >
                     <MaterialCommunityIcons name="account" size={scaleSize(40)} color={colors.primary} />
@@ -69,7 +72,7 @@ export default function ProfileCard({ user, points = 0, tier = '', onLogout, onR
             
             <TouchableOpacity style={styles.editAvatarButton} onPress={onEditAvatar} accessibilityLabel="Edit Profile Image">
               <LinearGradient
-                colors={['#ffffff', '#f8fafc']}
+                colors={colors.cardGradient}
                 style={styles.editButtonGradient}
               >
                 <MaterialCommunityIcons name="camera-plus" size={scaleSize(16)} color={colors.primary} />
@@ -95,39 +98,39 @@ export default function ProfileCard({ user, points = 0, tier = '', onLogout, onR
         {/* Stats Section */}
         <View style={styles.statsSection}>
           <View style={styles.statsGrid}>
-            <View style={styles.statCard}>
+            <View style={[styles.statCard, { backgroundColor: colors.statCardBg }]}>
               <LinearGradient
-                colors={['#e8f5e8', '#f1f8e9']}
+                colors={colors.recycleStatGradient}
                 style={styles.statIconContainer}
               >
-                <MaterialCommunityIcons name="recycle" size={scaleSize(20)} color="#2e7d32" />
+                <MaterialCommunityIcons name="recycle" size={scaleSize(20)} color={colors.recycleStatIcon} />
               </LinearGradient>
-              <Text style={styles.statNumber}>{user?.totalRecycles ?? 0}</Text>
-              <Text style={styles.statLabel}>{t("common.recycled")}</Text>
+              <Text style={[styles.statNumber, { color: colors.text }]}>{user?.totalRecycles ?? 0}</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t("common.recycled")}</Text>
             </View>
 
             {!isBuyer(user) && (
-              <View style={styles.statCard}>
+              <View style={[styles.statCard, { backgroundColor: colors.statCardBg }]}>
                 <LinearGradient
-                  colors={['#fff3e0', '#fce4ec']}
+                  colors={colors.pointsStatGradient}
                   style={styles.statIconContainer}
                 >
-                  <MaterialCommunityIcons name="diamond-stone" size={scaleSize(20)} color="#f57c00" />
+                  <MaterialCommunityIcons name="diamond-stone" size={scaleSize(20)} color={colors.pointsStatIcon} />
                 </LinearGradient>
-                <Text style={styles.statNumber}>{(points || 0).toLocaleString()}</Text>
-                <Text style={styles.statLabel}>{t("wallet.pointsEarned")}</Text>
+                <Text style={[styles.statNumber, { color: colors.text }]}>{(points || 0).toLocaleString()}</Text>
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t("wallet.pointsEarned")}</Text>
               </View>
             )}
 
-            <View style={styles.statCard}>
+            <View style={[styles.statCard, { backgroundColor: colors.statCardBg }]}>
               <LinearGradient
-                colors={tierColors.lightGradient || ['#e3f2fd', '#f3e5f5']}
+                colors={tierColors.lightGradient || colors.tierStatGradient}
                 style={styles.statIconContainer}
               >
                 <MaterialCommunityIcons name="trophy" size={scaleSize(20)} color={tierColors.primary} />
               </LinearGradient>
-              <Text style={styles.statNumber}>#{userTier.id}</Text>
-              <Text style={styles.statLabel}>{t("common.tierLevel")}</Text>
+              <Text style={[styles.statNumber, { color: colors.text }]}>#{userTier.id}</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t("common.tierLevel")}</Text>
             </View>
           </View>
         </View>
@@ -191,14 +194,14 @@ export default function ProfileCard({ user, points = 0, tier = '', onLogout, onR
 );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   card: {
     borderRadius: scaleSize(24),
     marginHorizontal: scaleSize(16),
     marginTop: scaleSize(44),
     marginBottom: scaleSize(16),
     overflow: 'hidden',
-    shadowColor: '#000',
+    shadowColor: colors.shadowColor,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.12,
     shadowRadius: 24,
@@ -233,7 +236,7 @@ const styles = StyleSheet.create({
   circle3: {
     width: scaleSize(60),
     height: scaleSize(60),
-    backgroundColor: '#f59e0b',
+    backgroundColor: colors.warning,
     top: scaleSize(80),
     right: scaleSize(20),
   },
@@ -260,7 +263,7 @@ const styles = StyleSheet.create({
     height: scaleSize(58),
     borderRadius: scaleSize(29),
     overflow: 'hidden',
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.cardBackground,
   },
   defaultAvatarGradient: {
     width: '100%',
@@ -279,7 +282,7 @@ const styles = StyleSheet.create({
     left: 0,
     width: '100%',
     height: '100%',
-    backgroundColor: 'rgba(255,255,255,0.7)',
+    backgroundColor: colors.overlayBg,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: scaleSize(29),
@@ -289,7 +292,7 @@ const styles = StyleSheet.create({
     bottom: -scaleSize(2),
     right: -scaleSize(2),
     borderRadius: scaleSize(14),
-    shadowColor: '#000',
+    shadowColor: colors.shadowColor,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -302,7 +305,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.8)',
+    borderColor: colors.cardBorder,
   },
   userInfo: {
     flex: 1,
@@ -316,12 +319,12 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: scaleSize(20),
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: colors.text,
     marginRight: scaleSize(8),
   },
   userEmail: {
     fontSize: scaleSize(14),
-    color: '#6b7280',
+    color: colors.textSecondary,
     marginBottom: scaleSize(6),
   },
   tierInfo: {
@@ -345,13 +348,12 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.7)',
     marginHorizontal: scaleSize(4),
     paddingVertical: scaleSize(12),
     paddingHorizontal: scaleSize(8),
     borderRadius: scaleSize(16),
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.5)',
+    borderColor: colors.cardBorder,
   },
   statIconContainer: {
     width: scaleSize(36),
@@ -364,18 +366,16 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: scaleSize(16),
     fontWeight: '700',
-    color: '#1a1a1a',
     marginBottom: scaleSize(2),
   },
   statLabel: {
     fontSize: scaleSize(10),
-    color: '#6b7280',
     fontWeight: '500',
     textAlign: 'center',
   },
   actionButton: {
     borderRadius: scaleSize(14),
-    shadowColor: '#000',
+    shadowColor: colors.shadowColor,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
@@ -397,7 +397,7 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    backgroundColor: colors.modalOverlay,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
     top: -scaleSize(50),
     right: scaleSize(10),
     zIndex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: colors.modalButtonBg,
     borderRadius: scaleSize(20),
     width: scaleSize(40),
     height: scaleSize(40),
@@ -429,20 +429,20 @@ const styles = StyleSheet.create({
     width: scaleSize(300),
     height: scaleSize(300),
     borderRadius: scaleSize(20),
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: colors.modalImageBg,
   },
   previewInfo: {
     marginTop: scaleSize(20),
     alignItems: 'center',
   },
   previewTitle: {
-    color: 'white',
+    color: colors.modalText,
     fontSize: scaleSize(18),
     fontWeight: '600',
     marginBottom: scaleSize(4),
   },
   previewSubtitle: {
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: colors.modalSubText,
     fontSize: scaleSize(14),
     textAlign: 'center',
   },

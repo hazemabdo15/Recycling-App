@@ -48,7 +48,70 @@ export const darkColors = {
 
 // Function to get colors based on theme
 export const getColors = (isDarkMode = false) => {
-  return isDarkMode ? darkColors : lightColors;
+  const baseColors = isDarkMode ? darkColors : lightColors;
+  
+  return {
+    ...baseColors,
+    // Card specific colors
+    cardBackground: baseColors.white,
+    cardGradient: isDarkMode 
+      ? [baseColors.base100, baseColors.base200] 
+      : [baseColors.white, '#f8fafc'],
+    cardBorder: isDarkMode 
+      ? 'rgba(148, 163, 184, 0.2)' 
+      : 'rgba(255,255,255,0.5)',
+    shadowColor: baseColors.shadow,
+    
+    // Avatar specific colors
+    avatarGradient: isDarkMode 
+      ? ['#1e40af', '#3b82f6'] 
+      : ['#e3f2fd', '#bbdefb'],
+    overlayBg: isDarkMode 
+      ? 'rgba(30, 41, 91, 0.7)' 
+      : 'rgba(255,255,255,0.7)',
+    
+    // Stats card colors
+    statCardBg: isDarkMode 
+      ? 'rgba(30, 41, 91, 0.4)' 
+      : 'rgba(255,255,255,0.7)',
+    
+    // Stat specific gradients
+    recycleStatGradient: isDarkMode 
+      ? ['#047857', '#065f46'] 
+      : ['#e8f5e8', '#f1f8e9'],
+    recycleStatIcon: isDarkMode ? '#10b981' : '#2e7d32',
+    
+    pointsStatGradient: isDarkMode 
+      ? ['#b45309', '#92400e'] 
+      : ['#fff3e0', '#fce4ec'],
+    pointsStatIcon: isDarkMode ? '#fbbf24' : '#f57c00',
+    
+    tierStatGradient: isDarkMode 
+      ? ['#1e40af', '#7c3aed'] 
+      : ['#e3f2fd', '#f3e5f5'],
+    
+    // Modal specific colors
+    modalOverlay: isDarkMode 
+      ? 'rgba(0, 0, 0, 0.95)' 
+      : 'rgba(0, 0, 0, 0.9)',
+    modalButtonBg: isDarkMode 
+      ? 'rgba(55, 65, 81, 0.8)' 
+      : 'rgba(0, 0, 0, 0.5)',
+    modalImageBg: isDarkMode 
+      ? 'rgba(55, 65, 81, 0.2)' 
+      : 'rgba(255, 255, 255, 0.1)',
+    modalText: isDarkMode ? baseColors.white : 'white',
+    modalSubText: isDarkMode 
+      ? 'rgba(209, 213, 219, 0.8)' 
+      : 'rgba(255, 255, 255, 0.7)',
+    
+    // Home screen specific colors
+    heroGradient: [baseColors.primary, baseColors.neutral],
+    notificationButtonBg: isDarkMode 
+      ? 'rgba(148, 163, 184, 0.15)' 
+      : 'rgba(255, 255, 255, 0.15)',
+    textLight: baseColors.textSecondary,
+  };
 };
 
 // Backward compatibility - keep existing export
