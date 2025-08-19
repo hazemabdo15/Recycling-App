@@ -13,8 +13,8 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useLocalization } from '../../context/LocalizationContext';
 import { useCart } from '../../hooks/useCart';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { borderRadius, spacing, typography } from '../../styles';
-import { colors } from '../../styles/theme';
 import { isBuyer as isBuyerRole, shouldShowDeliveryFee, shouldShowTotalValue } from '../../utils/roleUtils';
 
 import { getDeliveryFeeForCity } from '../../utils/deliveryFees';
@@ -23,6 +23,8 @@ import { AnimatedButton } from '../common';
 const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
   const { user } = useAuth();
   const { t, tRole } = useLocalization();
+  const { colors } = useThemedStyles();
+  const styles = getConfirmationPhaseStyles(colors);
   const { handleClearCart } = useCart(user);
   const [copied, setCopied] = useState(false);
   const rotateValue = useRef(new Animated.Value(0)).current;
@@ -265,10 +267,11 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
   );
 };
 
-const styles = StyleSheet.create({
+// Dynamic styles function for ConfirmationPhase
+const getConfirmationPhaseStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.base100,
+    backgroundColor: colors.background,
   },
   scrollView: {
     flex: 1,
@@ -307,7 +310,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     ...typography.body,
-    color: colors.neutral,
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: spacing.xxl,
@@ -315,12 +318,12 @@ const styles = StyleSheet.create({
   },
 
   trackingCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.xl,
     padding: spacing.lg,
     marginBottom: spacing.lg,
     width: '100%',
-    shadowColor: colors.black,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -346,11 +349,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: colors.base100,
+    borderBottomColor: colors.surfaceVariant,
   },
   trackingLabel: {
     ...typography.body,
-    color: colors.neutral,
+    color: colors.textSecondary,
     fontWeight: '500',
     flex: 0,
     marginRight: spacing.md,
@@ -381,7 +384,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     ...typography.body,
-    color: colors.neutral,
+    color: colors.textSecondary,
     fontStyle: 'italic',
   },
   statusContainer: {
@@ -401,16 +404,16 @@ const styles = StyleSheet.create({
   },
   trackingValue: {
     ...typography.body,
-    color: colors.neutral,
+    color: colors.textSecondary,
   },
 
   orderCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.xl,
     padding: spacing.lg,
     marginBottom: spacing.lg,
     width: '100%',
-    shadowColor: colors.black,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -428,25 +431,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: colors.base100,
+    borderBottomColor: colors.surfaceVariant,
   },
   orderLabel: {
     ...typography.body,
-    color: colors.neutral,
+    color: colors.textSecondary,
     fontWeight: '500',
   },
   orderValue: {
     ...typography.subtitle,
     fontWeight: 'bold',
-    color: colors.black,
+    color: colors.text,
   },
 
   stepsCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.xl,
     padding: spacing.lg,
     width: '100%',
-    shadowColor: colors.black,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -480,15 +483,15 @@ const styles = StyleSheet.create({
   },
   stepText: {
     ...typography.body,
-    color: colors.neutral,
+    color: colors.textSecondary,
     flex: 1,
   },
 
   footer: {
     padding: spacing.xl,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: colors.base200,
+    borderTopColor: colors.border,
   },
   newRequestButton: {
     flexDirection: 'row',

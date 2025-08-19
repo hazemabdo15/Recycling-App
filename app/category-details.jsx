@@ -18,8 +18,8 @@ import { useAuth } from "../context/AuthContext";
 import { useLocalization } from "../context/LocalizationContext";
 import { useCategoryItems } from "../hooks/useAPI";
 import { useCart } from "../hooks/useCart";
-import { getLayoutStyles } from "../styles/components/commonStyles";
 import { useThemedStyles } from "../hooks/useThemedStyles";
+import { getLayoutStyles } from "../styles/components/commonStyles";
 import { spacing } from "../styles/theme";
 import {
   CartMessageTypes,
@@ -541,13 +541,13 @@ const CategoryDetails = () => {
           />
         </TouchableOpacity>
 
-        <Text style={heroStyles.heroTitle}>{translatedCategoryName}</Text>
+        <Text style={[heroStyles.heroTitle, { color: colors.white }]}>{translatedCategoryName}</Text>
 
         <View style={heroStyles.spacer} />
       </View>
 
       <View style={heroStyles.heroContent}>
-        <Text style={heroStyles.heroSubtitle}>
+        <Text style={[heroStyles.heroSubtitle, { color: colors.white }]}>
           {t("categories.subtitle", {
             categoryName: translatedCategoryName.toLowerCase(),
           })}
@@ -560,8 +560,8 @@ const CategoryDetails = () => {
               size={20}
               color={colors.white}
             />
-            <Text style={heroStyles.statValue}>{totalItems}</Text>
-            <Text style={heroStyles.statLabel}>{t("common.items")}</Text>
+            <Text style={[heroStyles.statValue, { color: colors.white }]}>{totalItems}</Text>
+            <Text style={[heroStyles.statLabel, { color: colors.white }]}>{t("common.items")}</Text>
           </View>
 
           {!isBuyer(user) && (
@@ -571,8 +571,8 @@ const CategoryDetails = () => {
                 size={20}
                 color={colors.white}
               />
-              <Text style={heroStyles.statValue}>{totalPoints}</Text>
-              <Text style={heroStyles.statLabel}>{t("common.points")}</Text>
+              <Text style={[heroStyles.statValue, { color: colors.white }]}>{totalPoints}</Text>
+              <Text style={[heroStyles.statLabel, { color: colors.white }]}>{t("common.points")}</Text>
             </View>
           )}
 
@@ -582,8 +582,8 @@ const CategoryDetails = () => {
               size={20}
               color={colors.white}
             />
-            <Text style={heroStyles.statValue}>{totalValue} {t("units.egp")}</Text>
-            <Text style={heroStyles.statLabel}>
+            <Text style={[heroStyles.statValue, { color: colors.white }]}>{totalValue} {t("units.egp")}</Text>
+            <Text style={[heroStyles.statLabel, { color: colors.white }]}>
               {tRole("money", user?.role)}
             </Text>
           </View>

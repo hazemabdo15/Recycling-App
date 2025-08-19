@@ -1,6 +1,6 @@
 ﻿import { ActivityIndicator, Text, View } from 'react-native';
-import { getErrorStateStyles, getLoadingStateStyles } from '../../styles/components/commonStyles';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { getErrorStateStyles, getLoadingStateStyles } from '../../styles/components/commonStyles';
 
 const LoadingState = ({ message = "Loading..." }) => {
     const { colors, isDarkMode } = useThemedStyles();

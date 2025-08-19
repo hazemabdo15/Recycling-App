@@ -1,12 +1,12 @@
 ﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Dimensions, Text, View, StyleSheet } from 'react-native';
+import { t } from 'i18next';
+import { Dimensions, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { useLocalization } from '../../context/LocalizationContext';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { borderRadius, shadows, spacing } from '../../styles/theme';
 import { isBuyer } from '../../utils/roleUtils';
 import { scaleSize } from '../../utils/scale';
-import { t } from 'i18next';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const scale = (size) => (SCREEN_WIDTH / 375) * size;

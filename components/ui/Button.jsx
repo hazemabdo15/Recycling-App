@@ -1,7 +1,7 @@
 ﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text, TouchableOpacity } from 'react-native';
-import { getButtonStyles } from '../../styles/components/commonStyles';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { getButtonStyles } from '../../styles/components/commonStyles';
 const Button = ({
     title,
     onPress,

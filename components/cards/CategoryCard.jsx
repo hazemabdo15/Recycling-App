@@ -1,6 +1,7 @@
 ﻿import { memo, useCallback } from 'react';
 import { Dimensions, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useLocalization } from '../../context/LocalizationContext';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { getCategoryImageProps } from '../../utils/categoryUtils';
 import { extractNameFromMultilingual } from '../../utils/translationHelpers';
 import { CategoryImage } from '../ui';
@@ -28,8 +29,34 @@ try {
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const scaleSize = (size) => (SCREEN_WIDTH / 375) * size;
 
+// Dynamic styles function for CategoryCard
+const getCategoryCardStyles = (colors) => StyleSheet.create({
+    categoryCard: {
+        width: '48%',
+        backgroundColor: colors.surface,
+        borderColor: colors.border,
+    },
+    touchableArea: {
+        width: '100%',
+        overflow: 'hidden',
+        backgroundColor: colors.surface,
+    },
+    cardContent: {
+        alignItems: 'center',
+        width: '100%',
+        backgroundColor: 'transparent',
+    },
+    categoryIcon: {},
+    categoryText: {
+        fontWeight: '600',
+        color: colors.text,
+        textAlign: 'center',
+    },
+});
+
 const CategoryCard = memo(({ category, onPress }) => {
     const { currentLanguage } = useLocalization();
+    const { colors } = useThemedStyles();
     const scale = useSharedValue(1);
     
     // Get category image props with multilingual support
@@ -49,6 +76,8 @@ const CategoryCard = memo(({ category, onPress }) => {
     const animatedStyle = useAnimatedStyle(() => ({
         transform: [{ scale: scale.value }],
     }));
+
+    const styles = getCategoryCardStyles(colors);
 
     return (
         <Animated.View style={[styles.categoryCard, {
@@ -85,29 +114,5 @@ const CategoryCard = memo(({ category, onPress }) => {
 });
 
 CategoryCard.displayName = 'CategoryCard';
-
-const styles = StyleSheet.create({
-    categoryCard: {
-        width: '48%',
-        backgroundColor: '#FFFFFF',
-        borderColor: '#F3F4F6',
-    },
-    touchableArea: {
-        width: '100%',
-        overflow: 'hidden',
-        backgroundColor: '#FFFFFF',
-    },
-    cardContent: {
-        alignItems: 'center',
-        width: '100%',
-        backgroundColor: 'transparent',
-    },
-    categoryIcon: {},
-    categoryText: {
-        fontWeight: '600',
-        color: '#5F4B1E',
-        textAlign: 'center',
-    },
-});
 
 export default CategoryCard;

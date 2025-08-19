@@ -1,8 +1,8 @@
 ﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image, Text, View } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
-import { getItemImageStyles } from '../../styles/components/categoryStyles';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { getItemImageStyles } from '../../styles/components/categoryStyles';
 import { isBuyer } from '../../utils/roleUtils';
 
 const ItemImage = ({ imageUri, points, placeholder = "recycle" }) => {

@@ -1,7 +1,7 @@
 ﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { getEmptyStateStyles } from '../../styles/components/categoryStyles';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { getEmptyStateStyles } from '../../styles/components/categoryStyles';
 const EmptyState = ({
     categoryName,
     onAddItem,

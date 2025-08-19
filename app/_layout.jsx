@@ -1,7 +1,7 @@
 ﻿import { Stack } from "expo-router";
+import DynamicStatusBar from '../components/common/DynamicStatusBar';
 import GlobalToast from '../components/common/GlobalToast';
 import SplashController from '../components/common/SplashController';
-import DynamicStatusBar from '../components/common/DynamicStatusBar';
 import { AuthProvider } from '../context/AuthContext';
 import { CartProvider } from '../context/CartContext';
 import { ChatProvider } from "../context/ChatContext";

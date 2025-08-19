@@ -1,7 +1,7 @@
 ﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
-import { getBadgeStyles } from '../../styles/components/commonStyles';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { getBadgeStyles } from '../../styles/components/commonStyles';
 const Badge = ({
     text,
     count,

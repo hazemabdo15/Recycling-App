@@ -8,9 +8,160 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../../context/AuthContext";
 import { useLocalization } from "../../context/LocalizationContext";
 import { useCart } from "../../hooks/useCart";
+import { useThemedStyles } from "../../hooks/useThemedStyles";
 import { useVoiceModal } from "../../hooks/useVoiceModal";
-import { colors, shadows } from "../../styles/theme";
 import { scaleSize } from '../../utils/scale';
+
+const getTabBarStyles = (colors) => StyleSheet.create({
+  container: {
+    position: "absolute",
+    bottom: scaleSize(5),
+    left: scaleSize(20),
+    right: scaleSize(20),
+    height: scaleSize(95),
+    backgroundColor: 'transparent',
+  },
+  blurContainer: {
+    flex: 1,
+    borderRadius: scaleSize(28),
+    overflow: "hidden",
+    backgroundColor: colors.white,
+    shadowColor: colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: scaleSize(4),
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: scaleSize(12),
+    elevation: 22,
+    position: 'relative',
+  },
+  notchIndicatorLeft: {
+    position: 'absolute',
+    top: scaleSize(-8),
+    left: '50%',
+    marginLeft: scaleSize(-45),
+    width: scaleSize(20),
+    height: scaleSize(20),
+    backgroundColor: 'transparent',
+    borderBottomRightRadius: scaleSize(20),
+    borderBottomWidth: scaleSize(3),
+    borderRightWidth: scaleSize(3),
+    borderColor: colors.primary + "20",
+    zIndex: 1,
+  },
+  notchIndicatorRight: {
+    position: 'absolute',
+    top: scaleSize(-8),
+    left: '50%',
+    marginLeft: scaleSize(25),
+    width: scaleSize(20),
+    height: scaleSize(20),
+    backgroundColor: 'transparent',
+    borderBottomLeftRadius: scaleSize(20),
+    borderBottomWidth: scaleSize(3),
+    borderLeftWidth: scaleSize(3),
+    borderColor: colors.primary + "20",
+    zIndex: 1,
+  },
+  tabContainer: {
+    flexDirection: "row",
+    paddingVertical: scaleSize(10),
+    paddingHorizontal: scaleSize(10),
+    alignItems: 'center',
+    height: '100%',
+    zIndex: 2,
+  },
+  sideTabsContainer: {
+    flexDirection: "row",
+    flex: 1,
+  },
+  indicator: {
+    position: "absolute",
+    top: scaleSize(12),
+    bottom: scaleSize(12),
+    backgroundColor: 'transparent',
+    borderRadius: scaleSize(20),
+    zIndex: 0,
+  },
+  tabItem: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: scaleSize(6),
+    borderRadius: scaleSize(20),
+    zIndex: 1,
+  },
+  iconContainer: {
+    marginBottom: scaleSize(4),
+    position: 'relative',
+  },
+  badge: {
+    position: 'absolute',
+    top: scaleSize(-8),
+    right: scaleSize(-8),
+    backgroundColor: colors.primary,
+    borderRadius: scaleSize(10),
+    minWidth: scaleSize(20),
+    height: scaleSize(20),
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: scaleSize(2),
+    borderColor: colors.white,
+  },
+  badgeText: {
+    color: colors.white,
+    fontSize: scaleSize(11),
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  tabLabel: {
+    fontSize: scaleSize(12),
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  voiceButtonWrapper: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 30,
+    pointerEvents: 'box-none',
+  },
+  mainActionButtonContainer: {
+    position: 'absolute',
+    top: scaleSize(-20),
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 31,
+    width: scaleSize(56),
+    height: scaleSize(56),
+  },
+  mainActionButton: {
+    width: scaleSize(56),
+    height: scaleSize(56),
+    borderRadius: scaleSize(28),
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: scaleSize(4),
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: scaleSize(12),
+    elevation: 22,
+    borderWidth: scaleSize(4),
+    borderColor: colors.cardBackground,
+  },
+  centerSpacer: {
+    width: scaleSize(70),
+  },
+});
 
 let Animated, useSharedValue, useAnimatedStyle, withTiming, withSpring, withRepeat, withSequence;
 
@@ -65,6 +216,8 @@ export function TabBar({ state, descriptors, navigation }) {
   const { user } = useAuth();
   const { t, tRole } = useLocalization();
   const { cartItems } = useCart(user);
+  const { colors, isDarkMode } = useThemedStyles();
+  const styles = getTabBarStyles(colors);
 
   const getTabLabel = (routeName) => {
     // Map route names to translation keys
@@ -179,7 +332,7 @@ export function TabBar({ state, descriptors, navigation }) {
           </TouchableOpacity>
         </View>
       )}
-      <BlurView intensity={90} tint="light" style={styles.blurContainer}>
+      <BlurView intensity={100} tint={isDarkMode ? "dark" : "light"} style={styles.blurContainer}>
           {/* ...existing code... */}
           <View style={styles.notchIndicatorLeft} />
           <View style={styles.notchIndicatorRight} />
@@ -237,6 +390,8 @@ export function TabBar({ state, descriptors, navigation }) {
   );
 }
 function TabBarItem({ route, label, isFocused, index, onPress, onLongPress, buildHref, options, badgeCount = 0, userRole = 'customer' }) {
+  const { colors, isDarkMode } = useThemedStyles();
+  const styles = getTabBarStyles(colors);
   const scale = useSharedValue(1);
   const opacity = useSharedValue(isFocused ? 1 : 0.6);
   const badgeScale = useSharedValue(1);
@@ -268,8 +423,18 @@ function TabBarItem({ route, label, isFocused, index, onPress, onLongPress, buil
     };
   });
   
-  const iconColor = isFocused ? colors.primary : colors.neutral;
-  const textColor = isFocused ? colors.primary : colors.neutral;
+  // Different colors for light and dark modes
+  const iconColor = isFocused 
+    ? colors.primary 
+    : isDarkMode 
+      ? colors.text      // Bright white in dark mode
+      : colors.neutral;  // Gray in light mode
+      
+  const textColor = isFocused 
+    ? colors.primary 
+    : isDarkMode 
+      ? colors.text      // Bright white in dark mode
+      : colors.neutral;  // Gray in light mode
   
   return (
     <TouchableWithoutFeedback 
@@ -303,139 +468,3 @@ function TabBarItem({ route, label, isFocused, index, onPress, onLongPress, buil
     </TouchableWithoutFeedback>
   );
 }
-const styles = StyleSheet.create({
-  container: {
-    position: "absolute",
-    bottom: scaleSize(5),
-    left: scaleSize(20),
-    right: scaleSize(20),
-    height: scaleSize(95),
-    backgroundColor: 'transparent',
-  },
-  blurContainer: {
-    flex: 1,
-    borderRadius: scaleSize(28),
-    overflow: "hidden",
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    ...shadows.large,
-    position: 'relative',
-  },
-  notchIndicatorLeft: {
-    position: 'absolute',
-    top: scaleSize(-8),
-    left: '50%',
-    marginLeft: scaleSize(-45),
-    width: scaleSize(20),
-    height: scaleSize(20),
-    backgroundColor: 'transparent',
-    borderBottomRightRadius: scaleSize(20),
-    borderBottomWidth: scaleSize(3),
-    borderRightWidth: scaleSize(3),
-    borderColor: colors.primary + "20",
-    zIndex: 1,
-  },
-  notchIndicatorRight: {
-    position: 'absolute',
-    top: scaleSize(-8),
-    left: '50%',
-    marginLeft: scaleSize(25),
-    width: scaleSize(20),
-    height: scaleSize(20),
-    backgroundColor: 'transparent',
-    borderBottomLeftRadius: scaleSize(20),
-    borderBottomWidth: scaleSize(3),
-    borderLeftWidth: scaleSize(3),
-    borderColor: colors.primary + "20",
-    zIndex: 1,
-  },
-  tabContainer: {
-    flexDirection: "row",
-    paddingVertical: scaleSize(10),
-    paddingHorizontal: scaleSize(10),
-    alignItems: 'center',
-    height: '100%',
-    zIndex: 2,
-  },
-  sideTabsContainer: {
-    flexDirection: "row",
-    flex: 1,
-  },
-  indicator: {
-    position: "absolute",
-    top: scaleSize(12),
-    bottom: scaleSize(12),
-    backgroundColor: 'transparent',
-    borderRadius: scaleSize(20),
-    zIndex: 0,
-  },
-  tabItem: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: scaleSize(6),
-    borderRadius: scaleSize(20),
-    zIndex: 1,
-  },
-  iconContainer: {
-    marginBottom: scaleSize(4),
-    position: 'relative',
-  },
-  badge: {
-    position: 'absolute',
-    top: scaleSize(-8),
-    right: scaleSize(-8),
-    backgroundColor: colors.primary,
-    borderRadius: scaleSize(10),
-    minWidth: scaleSize(20),
-    height: scaleSize(20),
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: scaleSize(2),
-    borderColor: colors.white,
-  },
-  badgeText: {
-    color: colors.white,
-    fontSize: scaleSize(11),
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  tabLabel: {
-    fontSize: scaleSize(12),
-    fontWeight: "600",
-    textAlign: "center",
-  },
-  voiceButtonWrapper: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 30,
-    pointerEvents: 'box-none',
-  },
-  mainActionButtonContainer: {
-    position: 'absolute',
-    top: scaleSize(-20),
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 31,
-    width: scaleSize(56),
-    height: scaleSize(56),
-  },
-  mainActionButton: {
-    width: scaleSize(56),
-    height: scaleSize(56),
-    borderRadius: scaleSize(28),
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...shadows.large,
-    borderWidth: scaleSize(4),
-    borderColor: colors.white,
-  },
-  centerSpacer: {
-    width: scaleSize(70),
-  },
-});

@@ -1,6 +1,6 @@
 ﻿import { StyleSheet } from 'react-native';
 import { scaleSize } from '../../utils/scale';
-import { borderRadius, shadows, spacing, getColors } from '../theme';
+import { borderRadius, getColors, shadows, spacing } from '../theme';
 export const getLayoutStyles = (isDarkMode = false) => {
     const colors = getColors(isDarkMode);
     return StyleSheet.create({

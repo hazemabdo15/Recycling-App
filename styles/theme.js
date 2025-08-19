@@ -20,6 +20,7 @@ export const lightColors = {
   textSecondary: "#607D8B",
   textTertiary: "#9CA3AF",
   shadow: "#000000",
+  disabled: "#9CA3AF",
 };
 
 // Dark theme colors (new)
@@ -44,6 +45,7 @@ export const darkColors = {
   textSecondary: "#94A3B8",
   textTertiary: "#64748B",
   shadow: "#000000",
+  disabled: "#64748B",
 };
 
 // Function to get colors based on theme

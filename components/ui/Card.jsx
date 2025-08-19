@@ -1,6 +1,6 @@
 ﻿import { Text, View } from 'react-native';
-import { getCardStyles } from '../../styles/components/commonStyles';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { getCardStyles } from '../../styles/components/commonStyles';
 const Card = ({
     title,
     subtitle,

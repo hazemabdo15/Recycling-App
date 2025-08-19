@@ -1,7 +1,7 @@
 ﻿import { StyleSheet, Text, View } from "react-native";
 import { useLocalization } from "../../context/LocalizationContext";
-import { getItemCardStyles } from "../../styles/components/categoryStyles";
 import { useThemedStyles } from "../../hooks/useThemedStyles";
+import { getItemCardStyles } from "../../styles/components/categoryStyles";
 import { getUnitDisplay } from "../../utils/cartUtils";
 import { isBuyer } from "../../utils/roleUtils";
 import { isMaxStockReached, isOutOfStock } from "../../utils/stockUtils";
@@ -24,8 +24,8 @@ const ItemCard = ({
   user = null,
 }) => {
   const { t, isRTL } = useLocalization();
-  const { isDarkMode } = useThemedStyles();
-  const itemCardStyles = getItemCardStyles(isDarkMode);
+  const { colors, isDarkMode } = useThemedStyles();
+  const itemCardStyles = getItemCardStyles(colors, isDarkMode);
   const unitDisplay = getUnitDisplay(item.measurement_unit);
   
   // Debug RTL state
@@ -67,7 +67,7 @@ const ItemCard = ({
       {/* Show badge with stock quantity only if in stock, hide if out of stock */}
       {showStockLogic && !outOfStock && (
         <View style={isRTL ? styles.stockBadgeRTL_Custom : styles.stockBadgeLTR_Custom}>
-          <Text style={styles.stockBadgeText}>
+          <Text style={[styles.stockBadgeText, { color: colors.primary }]}>
             {typeof item.quantity === "number"
               ? `${t('categories.itemCard.stock')}: ${item.quantity} ${unitDisplay}`
               : `${t('categories.itemCard.stock')}: N/A`}
@@ -221,7 +221,6 @@ const styles = StyleSheet.create({
     alignSelf: 'left',
   },
   stockBadgeText: {
-    color: "#0E9F6E",
     fontWeight: "600",
     fontSize: 12,
     letterSpacing: 0.2,

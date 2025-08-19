@@ -1,5 +1,5 @@
 ﻿import { StyleSheet } from 'react-native';
-import { spacing, getColors } from '../theme';
+import { getColors, spacing } from '../theme';
 
 export const getProfileStyles = (isDarkMode = false) => {
   const colors = getColors(isDarkMode);

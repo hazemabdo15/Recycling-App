@@ -1,5 +1,5 @@
 ﻿import { StyleSheet } from 'react-native';
-import { borderRadius, shadows, spacing, getColors } from '../theme';
+import { borderRadius, getColors, shadows, spacing } from '../theme';
 
 export const getProfileHeaderStyles = (isDarkMode = false) => {
   const colors = getColors(isDarkMode);

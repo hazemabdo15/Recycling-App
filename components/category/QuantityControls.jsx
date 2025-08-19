@@ -1,8 +1,8 @@
 ﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useRef } from 'react';
 import { Dimensions, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { getQuantityControlsStyles } from '../../styles/components/categoryStyles';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { getQuantityControlsStyles } from '../../styles/components/categoryStyles';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const scale = (size) => (SCREEN_WIDTH / 375) * size;

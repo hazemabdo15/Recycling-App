@@ -1,5 +1,5 @@
 import { useTheme } from '../context/ThemeContext';
-import { getColors, getTypography, shadows, borderRadius, spacing } from '../styles/theme';
+import { borderRadius, getColors, getTypography, shadows, spacing } from '../styles/theme';
 
 export const useThemedStyles = () => {
   const { isDarkMode } = useTheme();

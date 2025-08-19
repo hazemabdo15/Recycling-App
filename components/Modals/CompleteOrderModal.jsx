@@ -1,13 +1,385 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View, Text, TouchableOpacity, Image, TextInput, ScrollView, Modal, ActivityIndicator,
-  StyleSheet, Alert
-} from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
-import apiService from '../../services/api/apiService';
-import { colors } from '../../styles/theme';
+import * as ImagePicker from 'expo-image-picker';
+import { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from 'react-native';
 import { useLocalization } from '../../context/LocalizationContext';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
+import apiService from '../../services/api/apiService';
+
+// Dynamic styles function for CompleteOrderModal
+const getCompleteOrderModalStyles = (colors) => StyleSheet.create({
+  modalContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  rtlContainer: {
+    direction: 'rtl',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  rtlHeader: {
+    flexDirection: 'row-reverse',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  closeButton: {
+    padding: 8,
+  },
+  modalContent: {
+    flex: 1,
+    padding: 16,
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 12,
+  },
+  infoText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 16,
+  },
+  quantityItem: {
+    backgroundColor: colors.surface,
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  quantityHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  itemName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+    flex: 1,
+  },
+  quantityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  quantityLabel: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginRight: 8,
+    minWidth: 80,
+  },
+  quantityInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 6,
+    padding: 8,
+    fontSize: 14,
+    color: colors.text,
+    backgroundColor: colors.surface,
+  },
+  pointsInfo: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontStyle: 'italic',
+  },
+  footer: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    padding: 16,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  button: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: colors.surfaceVariant,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  cancelButtonText: {
+    color: colors.textSecondary,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  confirmButton: {
+    backgroundColor: colors.primary,
+  },
+  confirmButtonText: {
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    marginLeft: 8,
+    color: colors.white,
+  },
+  notesInput: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    padding: 12,
+    textAlignVertical: 'top',
+    minHeight: 100,
+    color: colors.text,
+    backgroundColor: colors.surface,
+  },
+  photoSection: {
+    alignItems: 'center',
+  },
+  photoContainer: {
+    width: 200,
+    height: 200,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.surfaceVariant,
+  },
+  photo: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 6,
+  },
+  photoText: {
+    marginTop: 8,
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  addPhotoButton: {
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: colors.primary,
+    borderRadius: 8,
+  },
+  addPhotoButtonText: {
+    color: colors.white,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  quantityFormContainer: {
+    backgroundColor: colors.warning + '15',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.warning,
+  },
+  quantityFormTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.warning,
+    marginBottom: 8,
+  },
+  quantityFormText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 12,
+  },
+  toggleButton: {
+    backgroundColor: colors.primary,
+    padding: 12,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  toggleButtonText: {
+    color: colors.white,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  orderSummary: {
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+  },
+  orderSummaryTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  orderSummaryCustomer: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  quantitySection: {
+    backgroundColor: colors.warning + '15',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+  },
+  quantitySectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+  },
+  rtlRow: {
+    flexDirection: 'row-reverse',
+  },
+  quantitySectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.warning,
+  },
+  quantityItemName: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  quantityInputs: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  quantityInputGroup: {
+    flex: 1,
+  },
+  quantityInputDisabled: {
+    backgroundColor: colors.surfaceVariant,
+    color: colors.textSecondary,
+  },
+  quantityDiff: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  quantityDiffText: {
+    fontSize: 12,
+    color: colors.error,
+    fontWeight: '500',
+  },
+  quantityNotesSection: {
+    marginTop: 16,
+  },
+  quantityNotesLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  quantityNotesInput: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 14,
+    backgroundColor: colors.surface,
+    textAlignVertical: 'top',
+    color: colors.text,
+  },
+  notesLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  photoPreview: {
+    width: '100%',
+    height: 200,
+    borderRadius: 8,
+  },
+  removePhotoButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 20,
+    padding: 8,
+  },
+  photoPlaceholder: {
+    height: 120,
+    backgroundColor: colors.surfaceVariant,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderStyle: 'dashed',
+  },
+  placeholderText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginTop: 8,
+  },
+  cameraButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: colors.primary,
+    borderRadius: 8,
+    paddingVertical: 12,
+    marginBottom: 24,
+  },
+  buttonIcon: {
+    marginRight: 4,
+  },
+  rtlButtonIcon: {
+    marginRight: 0,
+    marginLeft: 4,
+  },
+  buttonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.white,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  submitButton: {
+    backgroundColor: colors.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+});
 
 const CompleteOrderModal = ({ 
   visible, 
@@ -16,6 +388,8 @@ const CompleteOrderModal = ({
   onOrderCompleted 
 }) => {
   const { t, currentLanguage, isRTL } = useLocalization();
+  const { colors } = useThemedStyles();
+  const styles = getCompleteOrderModalStyles(colors);
   const [photo, setPhoto] = useState(null);
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
@@ -30,7 +404,7 @@ const CompleteOrderModal = ({
       setUserRole(selectedOrder.user.role);
       
       // Only show quantity form for non-customer orders
-      if (selectedOrder.user.role == 'customer' && selectedOrder.items) {
+      if (selectedOrder.user.role === 'customer' && selectedOrder.items) {
         const initialQuantities = {};
         
         selectedOrder.items.forEach((item) => {
@@ -141,7 +515,7 @@ const CompleteOrderModal = ({
     }
 
     // Validate quantities for non-customer orders only
-    if (userRole == 'customer' && showQuantityForm) {
+    if (userRole === 'customer' && showQuantityForm) {
       const hasChanges = Object.values(quantities).some((item) => {
         const actualQty = item.actualQuantity === '' ? 0 : Number(item.actualQuantity);
         return item.originalQuantity !== actualQty;
@@ -178,7 +552,7 @@ const CompleteOrderModal = ({
     formData.append('notes', notes);
 
     // Add quantity data for non-customer orders only
-    if (userRole == 'customer') {
+    if (userRole === 'customer') {
       formData.append('updatedQuantities', JSON.stringify(quantities));
       formData.append('quantityNotes', quantityNotes);
     }
@@ -251,10 +625,10 @@ const CompleteOrderModal = ({
           </View>
 
           {/* Quantity Review Form for Non-Customer Orders Only */}
-          {userRole == 'customer' && showQuantityForm && (
+          {userRole === 'customer' && showQuantityForm && (
             <View style={styles.quantitySection}>
               <View style={dynamicStyles.quantitySectionHeader}>
-                <Ionicons name="create-outline" size={20} color="#d97706" />
+                <Ionicons name="create-outline" size={20} color={colors.warning} />
                 <Text style={styles.quantitySectionTitle}>{t('delivery.verify_quantities')}</Text>
               </View>
               
@@ -270,6 +644,7 @@ const CompleteOrderModal = ({
                         value={item.originalQuantity.toString()}
                         editable={false}
                         style={[styles.quantityInput, styles.quantityInputDisabled]}
+                        placeholderTextColor={colors.textSecondary}
                       />
                     </View>
                     <View style={styles.quantityInputGroup}>
@@ -279,6 +654,7 @@ const CompleteOrderModal = ({
                         onChangeText={(value) => handleQuantityChange(itemId, value, item.measurement_unit)}
                         keyboardType="numeric"
                         style={styles.quantityInput}
+                        placeholderTextColor={colors.textSecondary}
                       />
                     </View>
                   </View>
@@ -306,7 +682,7 @@ const CompleteOrderModal = ({
                     value={quantityNotes}
                     onChangeText={setQuantityNotes}
                     placeholder={t('delivery.explain_quantity_differences')}
-                    placeholderTextColor={colors.placeholder}
+                    placeholderTextColor={colors.textSecondary}
                     style={styles.quantityNotesInput}
                     multiline
                     numberOfLines={3}
@@ -324,7 +700,7 @@ const CompleteOrderModal = ({
             value={notes}
             onChangeText={setNotes}
             placeholder={userRole === 'customer' ? t('delivery.weight_placeholder') : t('delivery.order_weight')}
-            placeholderTextColor={colors.placeholder}
+            placeholderTextColor={colors.textSecondary}
             style={styles.notesInput}
             keyboardType={userRole === 'customer' ? "numeric" : "default"}
             multiline={userRole !== 'customer'}
@@ -347,7 +723,7 @@ const CompleteOrderModal = ({
             </View>
           ) : (
             <View style={styles.photoPlaceholder}>
-              <Ionicons name="camera" size={48} color={colors.placeholder} />
+              <Ionicons name="camera" size={48} color={colors.textSecondary} />
               <Text style={styles.placeholderText}>{t('camera.no_photo_taken')}</Text>
             </View>
           )}
@@ -402,237 +778,5 @@ const CompleteOrderModal = ({
     </Modal>
   );
 };
-
-const styles = StyleSheet.create({
-  modalContainer: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  rtlContainer: {
-    direction: 'rtl',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    backgroundColor: 'white',
-  },
-  rtlHeader: {
-    flexDirection: 'row-reverse',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  modalContent: {
-    padding: 16,
-  },
-  orderSummary: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-  },
-  orderSummaryTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 4,
-  },
-  orderSummaryCustomer: {
-    fontSize: 14,
-    color: colors.textSecondary,
-  },
-  quantitySection: {
-    backgroundColor: '#fef3c7',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-  },
-  quantitySectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 16,
-  },
-  rtlRow: {
-    flexDirection: 'row-reverse',
-  },
-  quantitySectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#d97706',
-  },
-  quantityItem: {
-    backgroundColor: 'white',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-  },
-  quantityItemName: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.text,
-    marginBottom: 8,
-  },
-  quantityInputs: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  quantityInputGroup: {
-    flex: 1,
-  },
-  quantityLabel: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginBottom: 4,
-  },
-  quantityInput: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 14,
-    backgroundColor: 'white',
-  },
-  quantityInputDisabled: {
-    backgroundColor: '#f9fafb',
-    color: colors.textSecondary,
-  },
-  quantityDiff: {
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  quantityDiffText: {
-    fontSize: 12,
-    color: '#dc2626',
-    fontWeight: '500',
-  },
-  quantityNotesSection: {
-    marginTop: 16,
-  },
-  quantityNotesLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.text,
-    marginBottom: 8,
-  },
-  quantityNotesInput: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 14,
-    backgroundColor: 'white',
-    textAlignVertical: 'top',
-  },
-  notesLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.text,
-    marginBottom: 8,
-  },
-  notesInput: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 14,
-    backgroundColor: 'white',
-    marginBottom: 16,
-    textAlignVertical: 'top',
-  },
-  photoContainer: {
-    position: 'relative',
-    marginBottom: 16,
-  },
-  photoPreview: {
-    width: '100%',
-    height: 200,
-    borderRadius: 8,
-  },
-  removePhotoButton: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    borderRadius: 20,
-    padding: 8,
-  },
-  photoPlaceholder: {
-    height: 120,
-    backgroundColor: '#f9fafb',
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderStyle: 'dashed',
-  },
-  placeholderText: {
-    fontSize: 14,
-    color: colors.placeholder,
-    marginTop: 8,
-  },
-  cameraButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: colors.primary,
-    borderRadius: 8,
-    paddingVertical: 12,
-    marginBottom: 24,
-  },
-  buttonIcon: {
-    marginRight: 4,
-  },
-  rtlButtonIcon: {
-    marginRight: 0,
-    marginLeft: 4,
-  },
-  buttonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: 'white',
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  button: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelButton: {
-    backgroundColor: '#f9fafb',
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  cancelButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  submitButton: {
-    backgroundColor: colors.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-});
 
 export default CompleteOrderModal;

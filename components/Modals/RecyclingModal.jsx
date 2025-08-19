@@ -1,21 +1,279 @@
 ﻿import { MaterialIcons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import {
-    Alert,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { useAuth } from "../../context/AuthContext";
+import { useLocalization } from '../../context/LocalizationContext';
+import { useThemedStyles } from "../../hooks/useThemedStyles";
 import apiService from "../../services/api/apiService";
-import { colors } from "../../styles/theme";
 import { isBuyer } from "../../utils/roleUtils";
-import { useLocalization } from '../../context/LocalizationContext'
+
+// Dynamic styles function for RecyclingModal
+const getRecyclingModalStyles = (colors) => StyleSheet.create({
+  modalContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  container: {
+    padding: 20,
+    paddingBottom: 40,
+    flexGrow: 1,
+  },
+  header: {
+    backgroundColor: colors.primary,
+    padding: 20,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: colors.white,
+  },
+  closeButton: {
+    padding: 5,
+  },
+  pointsContainer: {
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+    alignItems: "center",
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  pointsLabel: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    marginBottom: 5,
+  },
+  pointsValue: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: colors.primary,
+  },
+  optionContainer: {
+    flexDirection: "row",
+    marginVertical: 16,
+    justifyContent: "space-between",
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    padding: 8,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  option: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "center",
+  },
+  activeOption: {
+    backgroundColor: colors.primary + '15',
+  },
+  optionText: {
+    marginLeft: 8,
+    color: colors.textSecondary,
+    fontWeight: "500",
+  },
+  activeOptionText: {
+    color: colors.primary,
+    fontWeight: "600",
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 15,
+    color: colors.text,
+  },
+  voucherContainer: {
+    marginTop: 10,
+  },
+  voucherCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 12,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  selectedVoucherCard: {
+    borderWidth: 2,
+    borderColor: colors.primary,
+    backgroundColor: colors.primary + '15',
+  },
+  disabledVoucherCard: {
+    opacity: 0.6,
+  },
+  voucherIcon: {
+    backgroundColor: colors.primary + '15',
+    borderRadius: 8,
+    padding: 10,
+    marginRight: 15,
+  },
+  voucherDetails: {
+    flex: 1,
+  },
+  voucherName: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 3,
+    color: colors.text,
+  },
+  voucherValue: {
+    fontSize: 14,
+    color: colors.primary,
+    fontWeight: "500",
+  },
+  voucherPoints: {
+    alignItems: "flex-end",
+  },
+  voucherPointsText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: colors.text,
+  },
+  voucherUnavailable: {
+    fontSize: 12,
+    color: colors.error,
+    marginTop: 3,
+  },
+  moneyContainer: {
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    padding: 20,
+    marginTop: 10,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  inputLabel: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: colors.surfaceVariant,
+    padding: 15,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    fontSize: 16,
+    marginBottom: 15,
+    color: colors.text,
+  },
+  pointsInfo: {
+    backgroundColor: colors.surfaceVariant,
+    borderRadius: 8,
+    padding: 15,
+  },
+  pointsInfoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  pointsInfoLabel: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  pointsInfoValue: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: colors.text,
+  },
+  qrContainer: {
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    padding: 25,
+    alignItems: "center",
+    marginTop: 20,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  qrTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 15,
+    color: colors.text,
+  },
+  qrCodeWrapper: {
+    padding: 15,
+    backgroundColor: colors.white,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 15,
+  },
+  qrText: {
+    fontSize: 14,
+    fontWeight: "500",
+    textAlign: "center",
+    marginBottom: 5,
+    color: colors.text,
+  },
+  qrInstructions: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    textAlign: "center",
+  },
+  redeemButton: {
+    marginTop: 25,
+    padding: 16,
+    borderRadius: 8,
+    alignItems: "center",
+    backgroundColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  redeemButtonText: {
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  doneButton: {
+    marginTop: 25,
+    padding: 16,
+    borderRadius: 8,
+    alignItems: "center",
+    backgroundColor: colors.primary,
+  },
+  doneButtonText: {
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+});
 
 const vouchers = [
   {
@@ -36,6 +294,9 @@ const vouchers = [
 ];
 
 const RecyclingModal = ({ visible, onClose, totalPoints, onPointsUpdated }) => {
+  const { t } = useLocalization();
+  const { colors } = useThemedStyles();
+  const styles = getRecyclingModalStyles(colors);
   const [activeOption, setActiveOption] = useState("voucher");
   const [amount, setAmount] = useState("");
   const [selectedVoucher, setSelectedVoucher] = useState(null);
@@ -46,7 +307,6 @@ const RecyclingModal = ({ visible, onClose, totalPoints, onPointsUpdated }) => {
   const [isRedemptionInProgress, setIsRedemptionInProgress] = useState(false);
   const [pointsChanged, setPointsChanged] = useState(false);
   const [redeemedType, setRedeemedType] = useState(null); // Track what was actually redeemed
-  const { t } = useLocalization();
 
   const { user } = useAuth();
 
@@ -199,14 +459,15 @@ const RecyclingModal = ({ visible, onClose, totalPoints, onPointsUpdated }) => {
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={handleClose}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{t("common.redeemPoints")}</Text>
-        <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-          <MaterialIcons name="close" size={24} color="#fff" />
-        </TouchableOpacity>
-      </View>
+      <View style={styles.modalContainer}>
+        <View style={styles.header}>
+          <Text style={styles.title}>{t("common.redeemPoints")}</Text>
+          <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+            <MaterialIcons name="close" size={24} color={colors.white} />
+          </TouchableOpacity>
+        </View>
 
-      <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.pointsContainer}>
           <Text style={styles.pointsLabel}>{t("recyclingModal.yourBalance")}</Text>
           <Text style={styles.pointsValue}>
@@ -228,7 +489,7 @@ const RecyclingModal = ({ visible, onClose, totalPoints, onPointsUpdated }) => {
             <MaterialIcons
               name="card-giftcard"
               size={20}
-              color={activeOption === "voucher" ? colors.primary : "#666"}
+              color={activeOption === "voucher" ? colors.primary : colors.textSecondary}
             />
             <Text
               style={[
@@ -253,7 +514,7 @@ const RecyclingModal = ({ visible, onClose, totalPoints, onPointsUpdated }) => {
             <MaterialIcons
               name="attach-money"
               size={20}
-              color={activeOption === "money" ? colors.primary : "#666"}
+              color={activeOption === "money" ? colors.primary : colors.textSecondary}
             />
             <Text
               style={[
@@ -390,7 +651,7 @@ const RecyclingModal = ({ visible, onClose, totalPoints, onPointsUpdated }) => {
                 backgroundColor:
                   (activeOption === "voucher" && !selectedVoucher) ||
                   isRedemptionInProgress
-                    ? "#BDBDBD"
+                    ? colors.disabled
                     : colors.primary,
               },
             ]}
@@ -415,256 +676,9 @@ const RecyclingModal = ({ visible, onClose, totalPoints, onPointsUpdated }) => {
           </TouchableOpacity>
         )}
       </ScrollView>
+      </View>
     </Modal>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-    paddingBottom: 40,
-    backgroundColor: "#f5f5f5",
-  },
-  header: {
-    backgroundColor: colors.primary,
-    padding: 20,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#fff",
-  },
-  closeButton: {
-    padding: 5,
-  },
-  pointsContainer: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 20,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  pointsLabel: {
-    fontSize: 16,
-    color: "#666",
-    marginBottom: 5,
-  },
-  pointsValue: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: colors.primary,
-  },
-  optionContainer: {
-    flexDirection: "row",
-    marginVertical: 16,
-    justifyContent: "space-between",
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  option: {
-    flex: 1,
-    padding: 12,
-    borderRadius: 8,
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "center",
-  },
-  activeOption: {
-    backgroundColor: "#E8F5E9",
-  },
-  optionText: {
-    marginLeft: 8,
-    color: "#666",
-    fontWeight: "500",
-  },
-  activeOptionText: {
-    color: colors.primary,
-    fontWeight: "600",
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    marginBottom: 15,
-    color: "#333",
-  },
-  voucherContainer: {
-    marginTop: 10,
-  },
-  voucherCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  selectedVoucherCard: {
-    borderWidth: 2,
-    borderColor: colors.primary,
-    backgroundColor: "#E8F5E9",
-  },
-  disabledVoucherCard: {
-    opacity: 0.6,
-  },
-  voucherIcon: {
-    backgroundColor: "#E8F5E9",
-    borderRadius: 8,
-    padding: 10,
-    marginRight: 15,
-  },
-  voucherDetails: {
-    flex: 1,
-  },
-  voucherName: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 3,
-  },
-  voucherValue: {
-    fontSize: 14,
-    color: colors.primary,
-    fontWeight: "500",
-  },
-  voucherPoints: {
-    alignItems: "flex-end",
-  },
-  voucherPointsText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  voucherUnavailable: {
-    fontSize: 12,
-    color: colors.error,
-    marginTop: 3,
-  },
-  moneyContainer: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 20,
-    marginTop: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  inputLabel: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 8,
-  },
-  input: {
-    backgroundColor: "#f9f9f9",
-    padding: 15,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-    fontSize: 16,
-    marginBottom: 15,
-  },
-  pointsInfo: {
-    backgroundColor: "#f5f5f5",
-    borderRadius: 8,
-    padding: 15,
-  },
-  pointsInfoRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-  pointsInfoLabel: {
-    fontSize: 14,
-    color: "#666",
-  },
-  pointsInfoValue: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  qrContainer: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 25,
-    alignItems: "center",
-    marginTop: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  qrTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    marginBottom: 15,
-    color: "#333",
-  },
-  qrCodeWrapper: {
-    padding: 15,
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-    marginBottom: 15,
-  },
-  qrText: {
-    fontSize: 14,
-    fontWeight: "500",
-    textAlign: "center",
-    marginBottom: 5,
-  },
-  qrInstructions: {
-    fontSize: 12,
-    color: "#666",
-    textAlign: "center",
-  },
-  redeemButton: {
-    marginTop: 25,
-    padding: 16,
-    borderRadius: 8,
-    alignItems: "center",
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  redeemButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  doneButton: {
-    marginTop: 25,
-    padding: 16,
-    borderRadius: 8,
-    alignItems: "center",
-    backgroundColor: colors.primary,
-  },
-  doneButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-});
 
 export default RecyclingModal;

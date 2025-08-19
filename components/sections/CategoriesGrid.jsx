@@ -13,8 +13,8 @@ import { useAuth } from "../../context/AuthContext";
 import { useLocalization } from "../../context/LocalizationContext";
 import { useAllItems, useCategories } from "../../hooks/useAPI";
 import { useCart } from "../../hooks/useCart";
+import { useThemedStyles } from "../../hooks/useThemedStyles";
 import { spacing } from "../../styles";
-import { colors } from "../../styles/theme";
 import {
   CartMessageTypes,
   showCartMessage,
@@ -34,6 +34,73 @@ import { ItemCard } from "../category";
 import { FadeInView } from "../common";
 import { showGlobalToast } from "../common/GlobalToast";
 
+// Dynamic styles function for CategoriesGrid
+const getCategoriesGridStyles = (colors) => StyleSheet.create({
+  scrollContainer: {
+    paddingBottom: scaleSize(40),
+    paddingHorizontal: scaleSize(5),
+    backgroundColor: "transparent",
+  },
+  itemsScrollContainer: {
+    paddingHorizontal: scaleSize(spacing.sm),
+    backgroundColor: "transparent",
+  },
+  categoriesGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    backgroundColor: "transparent",
+  },
+  itemsList: {
+    gap: scaleSize(16),
+    backgroundColor: "transparent",
+  },
+  categoryCard: {
+    width: "48%",
+    marginBottom: scaleSize(15),
+    backgroundColor: colors.background,
+    borderRadius: scaleSize(18),
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: scaleSize(3) },
+    shadowOpacity: 0.1,
+    shadowRadius: scaleSize(30),
+    elevation: 5,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: scaleSize(50),
+  },
+  loadingText: {
+    marginTop: scaleSize(16),
+    fontSize: scaleSize(16),
+    color: colors.textSecondary,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: scaleSize(50),
+  },
+  errorText: {
+    fontSize: scaleSize(16),
+    color: colors.error,
+    textAlign: "center",
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: scaleSize(50),
+  },
+  emptyText: {
+    fontSize: scaleSize(16),
+    color: colors.textSecondary,
+    textAlign: "center",
+  },
+});
+
 const CategoriesGrid = ({
   searchText = "",
   onCategoryPress,
@@ -43,6 +110,8 @@ const CategoriesGrid = ({
 }) => {
   const { t } = useTranslation(); // Add translation hook
   const { currentLanguage } = useLocalization(); // Add localization hook for current language
+  const { colors } = useThemedStyles(); // Add themed styles hook
+  const styles = getCategoriesGridStyles(colors); // Generate dynamic styles
   const [refreshing, setRefreshing] = useState(false);
   
   const { user } = useAuth();
@@ -375,7 +444,7 @@ const CategoriesGrid = ({
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0E9F6E" />
+        <ActivityIndicator size="large" color={colors.primary} />
         <Text style={styles.loadingText}>{t('common.loading', 'Loading categories...')}</Text>
       </View>
     );
@@ -593,71 +662,5 @@ const CategoriesGrid = ({
     </FadeInView>
   );
 };
-
-const styles = StyleSheet.create({
-  scrollContainer: {
-    paddingBottom: scaleSize(40),
-    paddingHorizontal: scaleSize(5),
-    backgroundColor: "transparent",
-  },
-  itemsScrollContainer: {
-    paddingHorizontal: scaleSize(spacing.sm),
-    backgroundColor: "transparent",
-  },
-  categoriesGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    backgroundColor: "transparent",
-  },
-  itemsList: {
-    gap: scaleSize(16),
-    backgroundColor: "transparent",
-  },
-  categoryCard: {
-    width: "48%",
-    marginBottom: scaleSize(15),
-    backgroundColor: "#fff",
-    borderRadius: scaleSize(18),
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: scaleSize(3) },
-    shadowOpacity: 0.1,
-    shadowRadius: scaleSize(30),
-    elevation: 5,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: scaleSize(50),
-  },
-  loadingText: {
-    marginTop: scaleSize(16),
-    fontSize: scaleSize(16),
-    color: "#666",
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: scaleSize(50),
-  },
-  errorText: {
-    fontSize: scaleSize(16),
-    color: "#F44336",
-    textAlign: "center",
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: scaleSize(50),
-  },
-  emptyText: {
-    fontSize: scaleSize(16),
-    color: "#666",
-    textAlign: "center",
-  },
-});
 
 export default CategoriesGrid;

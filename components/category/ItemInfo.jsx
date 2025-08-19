@@ -1,9 +1,9 @@
 ﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Dimensions, Text, View } from 'react-native';
-import { getItemInfoStyles } from '../../styles/components/categoryStyles';
-import { useThemedStyles } from '../../hooks/useThemedStyles';
-import { getMeasurementIcon } from '../../utils/cartUtils';
 import { t } from 'i18next';
+import { Dimensions, Text, View } from 'react-native';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { getItemInfoStyles } from '../../styles/components/categoryStyles';
+import { getMeasurementIcon } from '../../utils/cartUtils';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const scale = (size) => (SCREEN_WIDTH / 375) * size;
