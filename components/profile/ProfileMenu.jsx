@@ -205,7 +205,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 4,
-    // Do NOT add flex: 1 or height: '100%'. Let it wrap content only.
   },
   menuItem: {
     flexDirection: "row",

@@ -96,6 +96,7 @@
   },
   "auth": {
     "login": "Login",
+    "logoutConfirmation" : "Are you sure you want to logout?",
     "logout": "Logout",
     "register": "Register",
     "email": "Email",

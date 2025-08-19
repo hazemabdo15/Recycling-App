@@ -134,9 +134,9 @@ function ProfileContent() {
   };
 
   const confirmLogout = () => {
-    Alert.alert("Logout", "Are you sure you want to logout?", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Yes", style: "destructive", onPress: handleLogout },
+    Alert.alert(t("auth.logout"), t("auth.logoutConfirmation"), [
+      { text: t("common.cancel"), style: "cancel" },
+      { text: t("common.yes"), style: "destructive", onPress: handleLogout },
     ]);
   };
 
