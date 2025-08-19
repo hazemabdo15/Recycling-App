@@ -255,6 +255,7 @@ export const usePickupWorkflow = () => {
     currentPhase,
     selectedAddress,
     orderData,
+    cartItemDetails,
 
     nextPhase,
     previousPhase,
@@ -276,6 +277,7 @@ export const usePickupWorkflow = () => {
     currentPhase,
     selectedAddress,
     orderData,
+    cartItemDetails,
     nextPhase,
     previousPhase,
     reset,

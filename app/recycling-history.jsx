@@ -292,6 +292,8 @@ export default function RecyclingHistory() {
                         const html = generateOrderReportHTML({
                           order,
                           user,
+                          currentLanguage,
+                          t,
                         });
                         await Print.printAsync({ html });
                       } catch (_err) {

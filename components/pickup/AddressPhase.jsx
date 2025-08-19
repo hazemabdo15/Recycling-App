@@ -138,7 +138,12 @@ const AddressPhase = ({ onNext, onAddressSelect, onBack, pickupWorkflow }) => {
       if (editingAddress) {
         await pickupWorkflow.updateAddress(editingAddress._id, formData);
       } else {
-        await pickupWorkflow.createAddress(formData);
+        const newAddress = await pickupWorkflow.createAddress(formData);
+        // ✅ Auto-select the newly created address
+        if (newAddress && onAddressSelect && typeof onAddressSelect === 'function') {
+          console.log('[AddressPhase] Auto-selecting newly created address:', newAddress);
+          onAddressSelect(newAddress);
+        }
       }
       setShowForm(false);
       setEditingAddress(null);

@@ -4,12 +4,12 @@ import * as Linking from "expo-linking";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Alert,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Alert,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -110,6 +110,7 @@ export default function Pickup() {
     createOrder = () => {},
     reset = () => {},
     setCurrentPhase = () => {},
+    cartItemDetails = {},
   } = workflowHook || {};
 
   const handleDeepLink = useCallback(
@@ -153,7 +154,15 @@ export default function Pickup() {
               setSelectedAddress(savedState.selectedAddress);
             } else {
               console.error("No address found in workflow state either");
-              throw new Error("Please select an address first");
+              // ✅ Fallback: Try to get the most recently created address
+              if (workflowHook && workflowHook.addresses && workflowHook.addresses.length > 0) {
+                const mostRecentAddress = workflowHook.addresses[workflowHook.addresses.length - 1];
+                console.log("Using most recent address as fallback:", mostRecentAddress);
+                addressToUse = mostRecentAddress;
+                setSelectedAddress(mostRecentAddress);
+              } else {
+                throw new Error("Please select your delivery address and try again");
+              }
             }
           }
 
@@ -224,7 +233,7 @@ export default function Pickup() {
         }
       }
     },
-    [selectedAddress, user, createOrder, setCurrentPhase, setSelectedAddress]
+    [selectedAddress, user, createOrder, setCurrentPhase, setSelectedAddress, workflowHook]
   );
 
   useEffect(() => {
@@ -281,11 +290,23 @@ export default function Pickup() {
   }, [currentPhase, selectedAddress]);
 
   const handleAddressSelect = useCallback(
-    (address) => {
+    async (address) => {
       console.log("[Pickup] handleAddressSelect called with:", address);
       setSelectedAddress(address);
+      
+      // ✅ Automatically save workflow state when address is selected
+      try {
+        await workflowStateUtils.saveWorkflowState({
+          selectedAddress: address,
+          currentPhase,
+          cartItemDetails: cartItemDetails || {}
+        });
+        console.log("💾 [Pickup] Workflow state saved after address selection");
+      } catch (error) {
+        console.warn("⚠️ [Pickup] Failed to save workflow state after address selection:", error);
+      }
     },
-    [setSelectedAddress]
+    [setSelectedAddress, currentPhase, cartItemDetails]
   );
 
   const handleNextPhase = useCallback(() => {

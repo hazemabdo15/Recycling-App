@@ -1153,6 +1153,28 @@
       "missingDataTitle": "بيانات مفقودة",
       "missingDataMessage": "معلومات الطلب أو المستخدم مفقودة."
     },
+    "pdfReport": {
+      "title": "تقرير الطلب",
+      "subtitle": "تم إنشاؤه بواسطة تطبيق إعادة التدوير",
+      "userInformation": "معلومات المستخدم",
+      "orderInformation": "معلومات الطلب",
+      "orderItems": "عناصر الطلب",
+      "name": "الاسم",
+      "email": "البريد الإلكتروني",
+      "phone": "الهاتف",
+      "orderId": "رقم الطلب",
+      "date": "التاريخ",
+      "status": "الحالة",
+      "address": "العنوان",
+      "building": "المبنى",
+      "floor": "الطابق",
+      "itemNumber": "#",
+      "item": "العنصر",
+      "quantity": "الكمية",
+      "points": "النقاط",
+      "price": "السعر",
+      "footer": "تطبيق إعادة التدوير © 2025 | للتواصل: support@recyclingapp.com"
+    },
     "cancelOrder": {
       "button": "إلغاء الطلب",
       "alertTitle": "إلغاء الطلب",

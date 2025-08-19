@@ -586,7 +586,7 @@ const ReviewPhase = ({
                         {t('pickup.reviewPhase.creditCard')}
                       </Text>
                       <Text style={styles.paymentMethodDescription}>
-                        Pay securely online with your card
+                        {t("pickup.reviewPhase.cardDescription")}
                       </Text>
                     </View>
                     <View style={styles.radioButton}>
@@ -643,9 +643,9 @@ const ReviewPhase = ({
               {/* ✅ Only show delivery fee for buyers */}
               {shouldShowDeliveryFee(user) && (
                 <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>Delivery Fee:</Text>
+                  <Text style={styles.summaryLabel}>{t("pickup.reviewPhase.deliveryFee")}</Text>
                   <Text style={styles.summaryValue}>
-                    {deliveryFee.toFixed(2)} EGP
+                    {deliveryFee.toFixed(2)} {t("units.egp")}
                   </Text>
                 </View>
               )}
@@ -653,9 +653,9 @@ const ReviewPhase = ({
               {/* ✅ Only show total value for buyers */}
               {shouldShowTotalValue(user) && (
                 <View style={[styles.summaryRow, styles.totalRow]}>
-                  <Text style={styles.totalLabel}>Total Value:</Text>
+                  <Text style={styles.totalLabel}>{t("pickup.reviewPhase.totalValue")}</Text>
                   <Text style={styles.totalValue}>
-                    {totalPrice.toFixed(2)} EGP
+                    {totalPrice.toFixed(2)} {t("units.egp")}
                   </Text>
                 </View>
               )}
