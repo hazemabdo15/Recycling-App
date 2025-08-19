@@ -25,8 +25,8 @@ export const lightColors = {
 
 // Dark theme colors (new)
 export const darkColors = {
-  primary: "#10B981",
-  secondary: "#34D399",
+  primary: "#50917bff",
+  secondary: "#4c8d75ff",
   accent: "#FBBF24",
   neutral: "#94A3B8",
   base50: "#0F172A",
