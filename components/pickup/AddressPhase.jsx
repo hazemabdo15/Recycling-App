@@ -509,7 +509,7 @@ const getAddressPhaseStyles = (colors) => StyleSheet.create({
   actionButton: {
     padding: spacing.sm,
     borderRadius: borderRadius.md,
-    backgroundColor: colors.surfaceVariant,
+    backgroundColor: colors.base200,
   },
   footer: {
     padding: spacing.xl,
@@ -583,7 +583,7 @@ const getAddressPhaseStyles = (colors) => StyleSheet.create({
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.xl,
     borderRadius: borderRadius.lg,
-    backgroundColor: colors.surfaceVariant,
+    backgroundColor: colors.base200,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.border,

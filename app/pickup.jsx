@@ -20,8 +20,9 @@ import { useAuth } from "../context/AuthContext";
 import { useLocalization } from "../context/LocalizationContext";
 import { useCart } from "../hooks/useCart";
 import { usePickupWorkflow } from "../hooks/usePickupWorkflow";
+import { useThemedStyles } from "../hooks/useThemedStyles";
 import { isAuthenticated } from "../services/auth";
-import { colors, spacing, typography } from "../styles/theme";
+import { spacing, typography } from "../styles/theme";
 import { isBuyer } from "../utils/roleUtils";
 import { scaleSize } from "../utils/scale";
 import { workflowStateUtils } from "../utils/workflowStateUtils";
@@ -29,6 +30,8 @@ import { workflowStateUtils } from "../utils/workflowStateUtils";
 export default function Pickup() {
   const insets = useSafeAreaInsets();
   const { tRole } = useLocalization();
+  const { colors } = useThemedStyles();
+  const styles = getPickupStyles(colors);
   const {
     user,
     isLoggedIn,
@@ -669,7 +672,8 @@ export default function Pickup() {
   );
 }
 
-const styles = StyleSheet.create({
+// Dynamic styles function for Pickup
+const getPickupStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -679,6 +683,7 @@ const styles = StyleSheet.create({
     paddingBottom: scaleSize(spacing.xl),
     borderBottomLeftRadius: scaleSize(24),
     borderBottomRightRadius: scaleSize(24),
+    backgroundColor: 'transparent',
   },
   headerTitle: {
     ...typography.title,
@@ -690,7 +695,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    backgroundColor: colors.base100,
+    backgroundColor: colors.background,
   },
   messageContainer: {
     flex: 1,

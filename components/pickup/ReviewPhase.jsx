@@ -1,13 +1,13 @@
 ﻿import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useCallback, useEffect, useState } from "react";
 import {
-    Alert,
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useAuth } from "../../context/AuthContext";
 import { useLocalization } from "../../context/LocalizationContext";
@@ -1067,7 +1067,7 @@ const getReviewPhaseStyles = (colors) => StyleSheet.create({
     fontWeight: "700",
   },
   disabledButton: {
-    backgroundColor: colors.surfaceVariant,
+    backgroundColor: colors.disabled,
   },
 });
 
