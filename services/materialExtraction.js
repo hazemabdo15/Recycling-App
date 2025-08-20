@@ -30,24 +30,65 @@ function fuzzyMatch(input, candidates, threshold = 80) {
   let bestMatch = null;
   let bestScore = 0;
 
+  // Group candidates by similarity for better matching
+  const matches = [];
+
   for (const candidate of candidates) {
     const candidateLower = candidate.toLowerCase();
 
+    // Exact match
     if (input === candidateLower) {
       return { match: candidate, score: 100 };
     }
 
-    if (candidateLower.includes(input) || input.includes(candidateLower)) {
-      const score = Math.max(
-        (input.length / candidateLower.length) * 90,
-        (candidateLower.length / input.length) * 90
-      );
-      if (score > bestScore) {
-        bestMatch = candidate;
-        bestScore = score;
+    // Calculate word-based similarity for better multi-word matching
+    const inputWords = input.split(/\s+/);
+    const candidateWords = candidateLower.split(/\s+/);
+    
+    let exactWordMatches = 0;
+    inputWords.forEach(inputWord => {
+      if (candidateWords.includes(inputWord)) {
+        exactWordMatches++;
       }
+    });
+
+    // Prioritize exact word matches
+    if (exactWordMatches > 0) {
+      const wordMatchRatio = exactWordMatches / Math.max(inputWords.length, candidateWords.length);
+      let wordScore = wordMatchRatio * 95;
+      
+      // Bonus for complete word matches
+      if (exactWordMatches === Math.min(inputWords.length, candidateWords.length)) {
+        wordScore += 5;
+      }
+      
+      // Penalty for length mismatch (avoid matching "ورق" with "ورق متقطع")
+      const lengthDiff = Math.abs(inputWords.length - candidateWords.length);
+      if (lengthDiff > 0) {
+        wordScore -= lengthDiff * 15; // Reduce score for each extra word
+      }
+      
+      matches.push({ candidate, score: Math.max(60, wordScore) });
+      continue;
     }
 
+    // Substring matching with length considerations
+    if (candidateLower.includes(input) || input.includes(candidateLower)) {
+      const maxLen = Math.max(input.length, candidateLower.length);
+      const minLen = Math.min(input.length, candidateLower.length);
+      const lengthRatio = minLen / maxLen;
+      
+      // Penalize very different lengths
+      const score = Math.max(
+        (input.length / candidateLower.length) * 75 * lengthRatio,
+        (candidateLower.length / input.length) * 75 * lengthRatio
+      );
+      
+      matches.push({ candidate, score: Math.max(50, score) });
+      continue;
+    }
+
+    // Character-based similarity for very fuzzy matches
     const maxLen = Math.max(input.length, candidateLower.length);
     const minLen = Math.min(input.length, candidateLower.length);
     const ratio = (minLen / maxLen) * 100;
@@ -57,13 +98,18 @@ function fuzzyMatch(input, candidates, threshold = 80) {
       for (let i = 0; i < minLen; i++) {
         if (input[i] === candidateLower[i]) commonChars++;
       }
-      const score = (commonChars / maxLen) * 100;
-      if (score > bestScore) {
-        bestMatch = candidate;
-        bestScore = score;
-      }
+      const score = (commonChars / maxLen) * 80;
+      matches.push({ candidate, score });
     }
   }
+
+  // Find the best match
+  matches.forEach(match => {
+    if (match.score > bestScore && match.score >= threshold) {
+      bestScore = match.score;
+      bestMatch = match.candidate;
+    }
+  });
 
   return bestScore >= threshold ? { match: bestMatch, score: bestScore } : null;
 }

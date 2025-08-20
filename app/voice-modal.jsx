@@ -542,7 +542,7 @@ export default function VoiceModal() {
                           color={colors.white}
                         />
                       </Reanimated.View>
-                      <Text style={styles.sendButtonText}>Processing...</Text>
+                      <Text style={styles.sendButtonText}>{t("voice.processing")}</Text>
                     </>
                   ) : (
                     <>

@@ -157,44 +157,82 @@ function calculateSimilarity(str1, str2) {
   const normalized1 = normalizeName(str1);
   const normalized2 = normalizeName(str2);
 
+  // Exact match
   if (normalized1 === normalized2) return 100;
 
-  if (normalized1.includes(normalized2) || normalized2.includes(normalized1)) {
-    return 85;
-  }
+  // Calculate length ratio to avoid unfair matches between very different lengths
+  const maxLen = Math.max(normalized1.length, normalized2.length);
+  const minLen = Math.min(normalized1.length, normalized2.length);
+  const lengthRatio = minLen / maxLen;
 
+  // Word-based matching (more accurate for multi-word terms)
   const words1 = normalized1.split(' ');
   const words2 = normalized2.split(' ');
-  let matchingWords = 0;
   
+  // Calculate exact word matches
+  let exactWordMatches = 0;
+  words1.forEach(word1 => {
+    if (words2.includes(word1)) {
+      exactWordMatches++;
+    }
+  });
+  
+  // If we have exact word matches, calculate score based on that
+  if (exactWordMatches > 0) {
+    const wordMatchRatio = exactWordMatches / Math.max(words1.length, words2.length);
+    let wordScore = wordMatchRatio * 90;
+    
+    // Bonus for longer, more specific matches
+    if (words1.length > words2.length && exactWordMatches === words2.length) {
+      // All words of the shorter term are contained in the longer term
+      // Reduce score based on how much longer the first term is
+      const specificityPenalty = (words1.length - words2.length) * 10;
+      wordScore = Math.max(60, wordScore - specificityPenalty);
+    } else if (words2.length > words1.length && exactWordMatches === words1.length) {
+      // All words of the shorter term are contained in the longer term
+      const specificityPenalty = (words2.length - words1.length) * 10;
+      wordScore = Math.max(60, wordScore - specificityPenalty);
+    }
+    
+    return wordScore;
+  }
+
+  // Fallback to substring matching, but with length consideration
+  if (normalized1.includes(normalized2) || normalized2.includes(normalized1)) {
+    // Penalize matches where one string is much shorter than the other
+    const substringScore = 85 * lengthRatio;
+    return Math.max(60, substringScore);
+  }
+
+  // Calculate partial word matches for fuzzy matching
+  let partialWordMatches = 0;
   words1.forEach(word1 => {
     words2.forEach(word2 => {
-      if (word1 === word2 || word1.includes(word2) || word2.includes(word1)) {
-        matchingWords++;
+      if (word1.includes(word2) || word2.includes(word1)) {
+        partialWordMatches++;
       }
     });
   });
   
-  const wordScore = (matchingWords / Math.max(words1.length, words2.length)) * 70;
+  const partialWordScore = (partialWordMatches / Math.max(words1.length, words2.length)) * 60;
 
-  const maxLen = Math.max(normalized1.length, normalized2.length);
-  const minLen = Math.min(normalized1.length, normalized2.length);
+  // Character-based similarity for very fuzzy matches
   let commonChars = 0;
-  
   for (let i = 0; i < minLen; i++) {
     if (normalized1[i] === normalized2[i]) {
       commonChars++;
     }
   }
   
-  const charScore = (commonChars / maxLen) * 50;
+  const charScore = (commonChars / maxLen) * 40;
   
-  return Math.max(wordScore, charScore);
+  return Math.max(partialWordScore, charScore);
 }
 
 function findBestMatch(materialName, databaseItems) {
   const normalizedMaterial = normalizeName(materialName);
 
+  // Check for exact matches first
   if (databaseItems.index.has(normalizedMaterial)) {
     return {
       item: databaseItems.index.get(normalizedMaterial),
@@ -212,29 +250,68 @@ function findBestMatch(materialName, databaseItems) {
     };
   }
 
-  let bestMatch = null;
-  let bestScore = 0;
+  // Find all potential matches and sort them
+  let potentialMatches = [];
   const SIMILARITY_THRESHOLD = 70;
   
   databaseItems.items.forEach(item => {
-    // Extract name from multilingual object safely
-    const itemNameExtracted = extractNameFromMultilingual(item.name, 'en');
-    const score = calculateSimilarity(materialName, itemNameExtracted);
-    if (score > bestScore && score >= SIMILARITY_THRESHOLD) {
-      bestScore = score;
-      bestMatch = item;
+    // Extract names from multilingual object safely
+    const itemNameEnglish = extractNameFromMultilingual(item.name, 'en');
+    const itemNameArabic = extractNameFromMultilingual(item.name, 'ar');
+    
+    // Calculate similarity against both English and Arabic names
+    const scoreEnglish = calculateSimilarity(materialName, itemNameEnglish);
+    const scoreArabic = calculateSimilarity(materialName, itemNameArabic);
+    
+    // Use the higher score
+    const bestScore = Math.max(scoreEnglish, scoreArabic);
+    const matchedLanguage = scoreArabic > scoreEnglish ? 'Arabic' : 'English';
+    const matchedName = scoreArabic > scoreEnglish ? itemNameArabic : itemNameEnglish;
+    
+    console.log(`🔍 [Similarity] "${materialName}" vs "${itemNameEnglish}" (EN): ${scoreEnglish}%`);
+    console.log(`🔍 [Similarity] "${materialName}" vs "${itemNameArabic}" (AR): ${scoreArabic}%`);
+    console.log(`🎯 [Best Score] "${materialName}" -> "${matchedName}" (${matchedLanguage}): ${bestScore}%`);
+    
+    if (bestScore >= SIMILARITY_THRESHOLD) {
+      potentialMatches.push({
+        item,
+        score: bestScore,
+        nameLength: matchedName.length,
+        wordCount: matchedName.split(' ').length,
+        itemName: itemNameEnglish,
+        matchedName: matchedName,
+        matchedLanguage: matchedLanguage
+      });
     }
   });
   
-  if (bestMatch) {
-    return {
-      item: bestMatch,
-      similarity: bestScore,
-      available: true
-    };
+  if (potentialMatches.length === 0) {
+    console.log(`❌ [Match] No matches found for "${materialName}" above ${SIMILARITY_THRESHOLD}% threshold`);
+    return null;
   }
+
+  console.log(`🎯 [Match] Found ${potentialMatches.length} potential matches for "${materialName}":`, 
+    potentialMatches.map(m => `${m.itemName} via ${m.matchedLanguage} "${m.matchedName}" (${m.score}%)`));
+
+  // Sort matches by:
+  // 1. Similarity score (descending)
+  // 2. Word count (prefer more specific terms - descending)
+  // 3. Name length (prefer longer, more specific names - descending)
+  potentialMatches.sort((a, b) => {
+    if (a.score !== b.score) return b.score - a.score;
+    if (a.wordCount !== b.wordCount) return b.wordCount - a.wordCount;
+    return b.nameLength - a.nameLength;
+  });
+
+  const bestMatch = potentialMatches[0];
   
-  return null;
+  console.log(`✅ [Match] Best match for "${materialName}": ${bestMatch.itemName} via ${bestMatch.matchedLanguage} "${bestMatch.matchedName}" (${bestMatch.score}%)`);
+  
+  return {
+    item: bestMatch.item,
+    similarity: bestMatch.score,
+    available: true
+  };
 }
 
 function convertMeasurementUnit(measurementUnit) {
