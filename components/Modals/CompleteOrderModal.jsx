@@ -11,13 +11,16 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
+  Dimensions
 } from 'react-native';
 import { useLocalization } from '../../context/LocalizationContext';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 import apiService from '../../services/api/apiService';
 
-// Dynamic styles function for CompleteOrderModal
+const { width: screenWidth } = Dimensions.get('window');
+
+// Enhanced dynamic styles function for CompleteOrderModal
 const getCompleteOrderModalStyles = (colors) => StyleSheet.create({
   modalContainer: {
     flex: 1,
@@ -26,336 +29,358 @@ const getCompleteOrderModalStyles = (colors) => StyleSheet.create({
   rtlContainer: {
     direction: 'rtl',
   },
+  
+  // Header Styles - Enhanced
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border + '30',
+    shadowColor: colors.text,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   rtlHeader: {
     flexDirection: 'row-reverse',
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: '700',
     color: colors.text,
+    letterSpacing: 0.3,
   },
   closeButton: {
-    padding: 8,
+    padding: 12,
+    borderRadius: 20,
+    backgroundColor: colors.surfaceVariant + '40',
   },
+  
+  // Content Styles - Enhanced
   modalContent: {
-    flex: 1,
-    padding: 16,
+    padding: 20,
+    paddingBottom: 40,
   },
-  section: {
+  
+  // Order Summary - Redesigned
+  orderSummary: {
+    backgroundColor: colors.primary + '15',
+    borderRadius: 16,
+    padding: 20,
     marginBottom: 24,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  orderSummaryTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.primary,
+    marginBottom: 6,
+  },
+  orderSummaryCustomer: {
+    fontSize: 15,
+    color: colors.text,
+    fontWeight: '500',
+  },
+  
+  // Section Styles - Enhanced
+  section: {
+    marginBottom: 28,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '700',
     color: colors.text,
-    marginBottom: 12,
+    marginBottom: 16,
+    letterSpacing: 0.2,
   },
   infoText: {
     fontSize: 14,
     color: colors.textSecondary,
     marginBottom: 16,
+    lineHeight: 20,
   },
-  quantityItem: {
-    backgroundColor: colors.surface,
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  quantityHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  itemName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-    flex: 1,
-  },
-  quantityRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  quantityLabel: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginRight: 8,
-    minWidth: 80,
-  },
-  quantityInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 6,
-    padding: 8,
-    fontSize: 14,
-    color: colors.text,
-    backgroundColor: colors.surface,
-  },
-  pointsInfo: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    fontStyle: 'italic',
-  },
-  footer: {
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    padding: 16,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  button: {
-    flex: 1,
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  cancelButton: {
-    backgroundColor: colors.surfaceVariant,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  cancelButtonText: {
-    color: colors.textSecondary,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  confirmButton: {
-    backgroundColor: colors.primary,
-  },
-  confirmButtonText: {
-    color: colors.white,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  loadingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loadingText: {
-    marginLeft: 8,
-    color: colors.white,
-  },
-  notesInput: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    padding: 12,
-    textAlignVertical: 'top',
-    minHeight: 100,
-    color: colors.text,
-    backgroundColor: colors.surface,
-  },
-  photoSection: {
-    alignItems: 'center',
-  },
-  photoContainer: {
-    width: 200,
-    height: 200,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderStyle: 'dashed',
-    borderColor: colors.border,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.surfaceVariant,
-  },
-  photo: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 6,
-  },
-  photoText: {
-    marginTop: 8,
-    fontSize: 14,
-    color: colors.textSecondary,
-    textAlign: 'center',
-  },
-  addPhotoButton: {
-    marginTop: 12,
-    padding: 12,
-    backgroundColor: colors.primary,
-    borderRadius: 8,
-  },
-  addPhotoButtonText: {
-    color: colors.white,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  quantityFormContainer: {
-    backgroundColor: colors.warning + '15',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.warning,
-  },
-  quantityFormTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.warning,
-    marginBottom: 8,
-  },
-  quantityFormText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginBottom: 12,
-  },
-  toggleButton: {
-    backgroundColor: colors.primary,
-    padding: 12,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  toggleButtonText: {
-    color: colors.white,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  orderSummary: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-  },
-  orderSummaryTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 4,
-  },
-  orderSummaryCustomer: {
-    fontSize: 14,
-    color: colors.textSecondary,
-  },
+  
+  // Quantity Section - Redesigned
   quantitySection: {
-    backgroundColor: colors.warning + '15',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
+    backgroundColor: colors.warning + '12',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: colors.warning + '30',
   },
   quantitySectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 16,
+    gap: 12,
+    marginBottom: 20,
   },
   rtlRow: {
     flexDirection: 'row-reverse',
   },
   quantitySectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '700',
     color: colors.warning,
+    flex: 1,
+  },
+  quantitySectionIcon: {
+    backgroundColor: colors.warning + '20',
+    padding: 8,
+    borderRadius: 12,
+  },
+  
+  // Quantity Items - Enhanced
+  quantityItem: {
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.border + '40',
+    shadowColor: colors.text,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
   },
   quantityItemName: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 16,
+    fontWeight: '600',
     color: colors.text,
-    marginBottom: 8,
+    marginBottom: 14,
+    letterSpacing: 0.1,
   },
   quantityInputs: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 16,
   },
   quantityInputGroup: {
     flex: 1,
   },
-  quantityInputDisabled: {
-    backgroundColor: colors.surfaceVariant,
+  quantityLabel: {
+    fontSize: 13,
+    fontWeight: '600',
     color: colors.textSecondary,
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  quantityDiff: {
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  quantityDiffText: {
-    fontSize: 12,
-    color: colors.error,
+  quantityInput: {
+    borderWidth: 2,
+    borderColor: colors.border + '60',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    color: colors.text,
+    backgroundColor: colors.surface,
     fontWeight: '500',
   },
+  quantityInputDisabled: {
+    backgroundColor: colors.surfaceVariant + '60',
+    color: colors.textSecondary,
+    borderColor: colors.border + '30',
+  },
+  quantityDiff: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: colors.border + '40',
+  },
+  quantityDiffText: {
+    fontSize: 13,
+    color: colors.error,
+    fontWeight: '600',
+    backgroundColor: colors.error + '15',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    textAlign: 'center',
+  },
+  
+  // Notes Section - Enhanced
   quantityNotesSection: {
-    marginTop: 16,
+    marginTop: 20,
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.border + '40',
   },
   quantityNotesLabel: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
     color: colors.text,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   quantityNotesInput: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    borderWidth: 2,
+    borderColor: colors.border + '60',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     fontSize: 14,
     backgroundColor: colors.surface,
     textAlignVertical: 'top',
     color: colors.text,
+    minHeight: 80,
   },
   notesLabel: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 16,
+    fontWeight: '600',
     color: colors.text,
-    marginBottom: 8,
+    marginBottom: 12,
+    letterSpacing: 0.1,
+  },
+  notesInput: {
+    borderWidth: 2,
+    borderColor: colors.border + '60',
+    borderRadius: 16,
+    padding: 16,
+    textAlignVertical: 'top',
+    minHeight: 100,
+    color: colors.text,
+    backgroundColor: colors.surface,
+    fontSize: 15,
+    marginBottom: 24,
+    shadowColor: colors.text,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  
+  // Photo Section - Redesigned
+  photoContainer: {
+    width: '100%',
+    height: 240,
+    borderRadius: 20,
+    marginBottom: 20,
+    position: 'relative',
+    overflow: 'hidden',
+    shadowColor: colors.text,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
   },
   photoPreview: {
     width: '100%',
-    height: 200,
-    borderRadius: 8,
+    height: '100%',
   },
   removePhotoButton: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    top: 12,
+    right: 12,
+    backgroundColor: 'rgba(0,0,0,0.7)',
     borderRadius: 20,
-    padding: 8,
+    padding: 10,
   },
   photoPlaceholder: {
-    height: 120,
-    backgroundColor: colors.surfaceVariant,
-    borderRadius: 8,
+    height: 160,
+    backgroundColor: colors.surfaceVariant + '60',
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
+    marginBottom: 20,
+    borderWidth: 2,
+    borderColor: colors.border + '40',
     borderStyle: 'dashed',
   },
   placeholderText: {
-    fontSize: 14,
+    fontSize: 15,
     color: colors.textSecondary,
-    marginTop: 8,
+    marginTop: 12,
+    fontWeight: '500',
   },
+  
+  // Camera Button - Enhanced
   cameraButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 12,
     backgroundColor: colors.primary,
-    borderRadius: 8,
-    paddingVertical: 12,
-    marginBottom: 24,
+    borderRadius: 20,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    marginBottom: 32,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  cameraButtonPressed: {
+    transform: [{ scale: 0.98 }],
+    shadowOpacity: 0.2,
+    elevation: 2,
+  },
+  
+  // Button Styles - Enhanced
+  button: {
+    flex: 1,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 54,
+  },
+  cancelButton: {
+    backgroundColor: colors.surface,
+    borderWidth: 2,
+    borderColor: colors.border + '60',
+  },
+  cancelButtonText: {
+    color: colors.textSecondary,
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+  },
+  confirmButton: {
+    backgroundColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  confirmButtonText: {
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  buttonDisabled: {
+    backgroundColor: colors.surfaceVariant,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  
+  // Loading and Icon Styles
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  loadingText: {
+    color: colors.white,
+    fontSize: 15,
+    fontWeight: '600',
   },
   buttonIcon: {
     marginRight: 4,
@@ -365,19 +390,77 @@ const getCompleteOrderModalStyles = (colors) => StyleSheet.create({
     marginLeft: 4,
   },
   buttonText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
     color: colors.white,
+    letterSpacing: 0.2,
+  },
+  
+  // Footer Styles - Enhanced
+  footer: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border + '30',
+    padding: 20,
+    backgroundColor: colors.surface,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 16,
   },
   modalButtons: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 16,
+    marginTop: 8,
   },
   submitButton: {
     backgroundColor: colors.primary,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  rtlButton: {
+    flexDirection: 'row-reverse',
+  },
+  
+  // Additional Utility Styles
+  quantityItemContainer: {
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.border + '40',
+    shadowColor: colors.text,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  
+  // Focus States
+  inputFocused: {
+    borderColor: colors.primary,
+    borderWidth: 2,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  
+  // New Gradient-like Effects (using backgroundColor with opacity)
+  headerGradient: {
+    backgroundColor: colors.primary + '05',
+  },
+  sectionDivider: {
+    height: 1,
+    backgroundColor: colors.border + '20',
+    marginVertical: 20,
   },
 });
 
@@ -397,11 +480,13 @@ const CompleteOrderModal = ({
   const [showQuantityForm, setShowQuantityForm] = useState(false);
   const [quantityNotes, setQuantityNotes] = useState('');
   const [userRole, setUserRole] = useState(null);
+  const [focusedInput, setFocusedInput] = useState(null);
 
   // Initialize modal data when order changes
   useEffect(() => {
     if (selectedOrder && visible) {
-      setUserRole(selectedOrder.user.role);
+      const role = selectedOrder.user?.role;
+      setUserRole(role);
       
       // Only show quantity form for non-customer orders
       if (selectedOrder.user.role === 'customer' && selectedOrder.items) {
@@ -494,9 +579,9 @@ const CompleteOrderModal = ({
 
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: 'images',
-        quality: 0.7,
+        quality: 0.8,
         allowsEditing: true,
-        aspect: [4, 3],
+        aspect: [16, 9],
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
@@ -572,8 +657,8 @@ const CompleteOrderModal = ({
       console.error('Error submitting proof', err);
       Alert.alert(t('common.error'), t('delivery.failed_to_complete'));
     } finally {
-      setLoading(false);
       resetModal();
+      setLoading(false);
     }
   };
 
@@ -585,6 +670,7 @@ const CompleteOrderModal = ({
     setShowQuantityForm(false);
     setQuantityNotes('');
     setUserRole(null);
+    setFocusedInput(null);
     onClose?.();
   };
 
@@ -592,12 +678,18 @@ const CompleteOrderModal = ({
 
   const dynamicStyles = {
     modalContainer: [styles.modalContainer, isRTL && styles.rtlContainer],
-    modalHeader: [styles.modalHeader, isRTL && styles.rtlHeader],
+    modalHeader: [styles.modalHeader, isRTL && styles.rtlHeader, styles.headerGradient],
     quantitySectionHeader: [styles.quantitySectionHeader, isRTL && styles.rtlRow],
     quantityInputs: [styles.quantityInputs, isRTL && styles.rtlRow],
     cameraButton: [styles.cameraButton, isRTL && styles.rtlRow],
     modalButtons: [styles.modalButtons, isRTL && styles.rtlRow],
-    submitButton: [styles.button, styles.submitButton, isRTL && styles.rtlRow],
+    submitButton: [
+      styles.button, 
+      styles.submitButton, 
+      isRTL && styles.rtlRow,
+      (!photo || loading) && styles.buttonDisabled
+    ],
+    closeButton: [styles.closeButton, isRTL && styles.rtlButton],
   };
 
   return (
@@ -609,12 +701,15 @@ const CompleteOrderModal = ({
       <View style={dynamicStyles.modalContainer}>
         <View style={dynamicStyles.modalHeader}>
           <Text style={styles.modalTitle}>{t('delivery.complete_delivery')}</Text>
-          <TouchableOpacity onPress={resetModal}>
+          <TouchableOpacity onPress={resetModal} style={dynamicStyles.closeButton}>
             <Ionicons name="close" size={24} color={colors.text} />
           </TouchableOpacity>
         </View>
 
-        <ScrollView contentContainerStyle={styles.modalContent}>
+        <ScrollView 
+          contentContainerStyle={styles.modalContent}
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.orderSummary}>
             <Text style={styles.orderSummaryTitle}>
               {t('order.order_number', { id: selectedOrder._id?.slice(-8) })}
@@ -628,7 +723,9 @@ const CompleteOrderModal = ({
           {userRole === 'customer' && showQuantityForm && (
             <View style={styles.quantitySection}>
               <View style={dynamicStyles.quantitySectionHeader}>
-                <Ionicons name="create-outline" size={20} color={colors.warning} />
+                <View style={styles.quantitySectionIcon}>
+                  <Ionicons name="create-outline" size={20} color={colors.warning} />
+                </View>
                 <Text style={styles.quantitySectionTitle}>{t('delivery.verify_quantities')}</Text>
               </View>
               
@@ -652,8 +749,13 @@ const CompleteOrderModal = ({
                       <TextInput
                         value={item.actualQuantity.toString()}
                         onChangeText={(value) => handleQuantityChange(itemId, value, item.measurement_unit)}
+                        onFocus={() => setFocusedInput(`quantity-${itemId}`)}
+                        onBlur={() => setFocusedInput(null)}
                         keyboardType="numeric"
-                        style={styles.quantityInput}
+                        style={[
+                          styles.quantityInput,
+                          focusedInput === `quantity-${itemId}` && styles.inputFocused
+                        ]}
                         placeholderTextColor={colors.textSecondary}
                       />
                     </View>
@@ -681,9 +783,14 @@ const CompleteOrderModal = ({
                   <TextInput
                     value={quantityNotes}
                     onChangeText={setQuantityNotes}
+                    onFocus={() => setFocusedInput('quantity-notes')}
+                    onBlur={() => setFocusedInput(null)}
                     placeholder={t('delivery.explain_quantity_differences')}
                     placeholderTextColor={colors.textSecondary}
-                    style={styles.quantityNotesInput}
+                    style={[
+                      styles.quantityNotesInput,
+                      focusedInput === 'quantity-notes' && styles.inputFocused
+                    ]}
                     multiline
                     numberOfLines={3}
                   />
@@ -692,61 +799,81 @@ const CompleteOrderModal = ({
             </View>
           )}
 
+          <View style={styles.sectionDivider} />
+
           {/* Weight/Notes Input */}
-          <Text style={styles.notesLabel}>
-            {userRole === 'customer' ? t('delivery.estimated_weight_required') : t('delivery.estimated_weight')}
-          </Text>
-          <TextInput
-            value={notes}
-            onChangeText={setNotes}
-            placeholder={userRole === 'customer' ? t('delivery.weight_placeholder') : t('delivery.order_weight')}
-            placeholderTextColor={colors.textSecondary}
-            style={styles.notesInput}
-            keyboardType={userRole === 'customer' ? "numeric" : "default"}
-            multiline={userRole !== 'customer'}
-            numberOfLines={userRole === 'customer' ? 1 : 3}
-          />
+          <View style={styles.section}>
+            <Text style={styles.notesLabel}>
+              {userRole === 'customer' ? t('delivery.estimated_weight_required') : t('delivery.estimated_weight')}
+            </Text>
+            <TextInput
+              value={notes}
+              onChangeText={setNotes}
+              onFocus={() => setFocusedInput('notes')}
+              onBlur={() => setFocusedInput(null)}
+              placeholder={userRole === 'customer' ? t('delivery.weight_placeholder') : t('delivery.order_weight')}
+              placeholderTextColor={colors.textSecondary}
+              style={[
+                styles.notesInput,
+                focusedInput === 'notes' && styles.inputFocused
+              ]}
+              keyboardType={userRole === 'customer' ? "numeric" : "default"}
+              multiline={userRole !== 'customer'}
+              numberOfLines={userRole === 'customer' ? 1 : 3}
+            />
+          </View>
 
           {/* Photo Section */}
-          {photo ? (
-            <View style={styles.photoContainer}>
-              <Image
-                source={{ uri: photo.uri }}
-                style={styles.photoPreview}
-              />
-              <TouchableOpacity
-                onPress={() => setPhoto(null)}
-                style={styles.removePhotoButton}
-              >
-                <Ionicons name="close" size={20} color="white" />
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={styles.photoPlaceholder}>
-              <Ionicons name="camera" size={48} color={colors.textSecondary} />
-              <Text style={styles.placeholderText}>{t('camera.no_photo_taken')}</Text>
-            </View>
-          )}
-
-          <TouchableOpacity
-            onPress={pickImage}
-            style={dynamicStyles.cameraButton}
-          >
-            <Ionicons
-              name="camera"
-              size={20}
-              color="white"
-              style={[styles.buttonIcon, isRTL && styles.rtlButtonIcon]}
-            />
-            <Text style={styles.buttonText}>
-              {photo ? t('camera.retake_photo') : userRole === 'customer' ? t('camera.take_collection_photo') : t('camera.take_delivery_photo')}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>
+              {userRole === 'customer' ? t('camera.collection_photo') : t('camera.delivery_photo')}
             </Text>
-          </TouchableOpacity>
+            
+            {photo ? (
+              <View style={styles.photoContainer}>
+                <Image
+                  source={{ uri: photo.uri }}
+                  style={styles.photoPreview}
+                />
+                <TouchableOpacity
+                  onPress={() => setPhoto(null)}
+                  style={styles.removePhotoButton}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="close" size={20} color="white" />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.photoPlaceholder}>
+                <Ionicons name="camera" size={56} color={colors.textSecondary} />
+                <Text style={styles.placeholderText}>{t('camera.no_photo_taken')}</Text>
+              </View>
+            )}
 
+            <TouchableOpacity
+              onPress={pickImage}
+              style={dynamicStyles.cameraButton}
+              activeOpacity={0.8}
+            >
+              <Ionicons
+                name="camera"
+                size={22}
+                color="white"
+                style={[styles.buttonIcon, isRTL && styles.rtlButtonIcon]}
+              />
+              <Text style={styles.buttonText}>
+                {photo ? t('camera.retake_photo') : userRole === 'customer' ? t('camera.take_collection_photo') : t('camera.take_delivery_photo')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+
+        <View style={styles.footer}>
           <View style={dynamicStyles.modalButtons}>
             <TouchableOpacity
               onPress={resetModal}
               style={[styles.button, styles.cancelButton]}
+              activeOpacity={0.8}
             >
               <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
@@ -754,15 +881,19 @@ const CompleteOrderModal = ({
             <TouchableOpacity
               onPress={completeOrder}
               style={dynamicStyles.submitButton}
-              disabled={loading || !photo }
+              disabled={loading || !photo}
+              activeOpacity={0.8}
             >
               {loading ? (
-                <ActivityIndicator color="white" />
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="small" color="white" />
+                  <Text style={styles.loadingText}>{t('common.processing')}</Text>
+                </View>
               ) : (
                 <>
                   <Ionicons
                     name="checkmark-circle"
-                    size={20}
+                    size={22}
                     color="white"
                     style={[styles.buttonIcon, isRTL && styles.rtlButtonIcon]}
                   />
@@ -773,7 +904,7 @@ const CompleteOrderModal = ({
               )}
             </TouchableOpacity>
           </View>
-        </ScrollView>
+        </View>
       </View>
     </Modal>
   );

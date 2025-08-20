@@ -5,7 +5,6 @@ import {
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../../styles/theme';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import useOrders from '../../hooks/useOrders';
@@ -13,6 +12,8 @@ import OrderCard from '../../components/cards/OrderCardDelivery';
 import OrderDetailsModal from '../../components/Modals/OrderDetailsModal';
 import CompleteOrderModal from '../../components/Modals/CompleteOrderModal';
 import { useLocalization } from '../../context/LocalizationContext';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function DeliveryDashboard() {
   const { orders, getAssignedOrders, refreshing, fetchingOrders } = useOrders();
@@ -23,6 +24,8 @@ export default function DeliveryDashboard() {
   const [showOrderDetailsModal, setShowOrderDetailsModal] = useState(false);
   const { currentLanguage, changeLanguage, t, isRTL } = useLocalization(); 
   const [showMenu, setShowMenu] = useState(false);
+  const { colors, isDarkMode } = useThemedStyles();
+  const { toggleTheme } = useTheme();
   
   const { logout } = useAuth();
   const router = useRouter();
@@ -67,30 +70,339 @@ export default function DeliveryDashboard() {
     changeLanguage(newLanguage);
   };
 
-  // Dynamic styles for RTL
-  const dynamicStyles = {
-    container: [styles.container, isRTL && styles.rtlContainer],
-    header: [styles.header, isRTL && styles.rtlHeader],
-    headerLeft: [styles.headerLeft, isRTL && styles.rtlHeaderLeft],
-    headerRight: [styles.headerRight, isRTL && styles.rtlHeaderRight],
-    orderCount: [styles.orderCount, isRTL && styles.rtlOrderCount],
-    menuOverlay: [styles.menuOverlay, isRTL && styles.rtlMenuOverlay],
-    menuItem: [styles.menuItem, isRTL && styles.rtlMenuItem],
+  const handleThemeToggle = () => {
+    toggleTheme();
+    setShowMenu(false);
   };
+
+  // Dynamic styles for RTL and theming
+  const dynamicStyles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+      paddingTop: 35,
+      ...(isRTL && { direction: 'rtl' }),
+    },
+    header: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      backgroundColor: colors.surface || colors.white,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border + '40',
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 4,
+      elevation: 3,
+      minHeight: 56,
+    },
+    headerLeft: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
+      alignItems: 'center',
+      flex: 1,
+      marginRight: isRTL ? 0 : 12,
+      marginLeft: isRTL ? 12 : 0,
+    },
+    headerIcon: {
+      width: 36,
+      height: 36,
+      backgroundColor: colors.primary,
+      borderRadius: 10,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: isRTL ? 0 : 10,
+      marginLeft: isRTL ? 10 : 0,
+      shadowColor: colors.primary,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.2,
+      shadowRadius: 4,
+      elevation: 2,
+    },
+    titleContainer: {
+      flex: 1,
+    },
+    title: {
+      fontSize: 14,
+      fontWeight: '500',
+      color: colors.text,
+      letterSpacing: 0.2,
+    },
+    headerRight: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    orderCount: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
+      alignItems: 'center',
+      backgroundColor: colors.primary + '20',
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 16,
+      minWidth: 45,
+      justifyContent: 'center',
+      borderWidth: 1,
+      borderColor: colors.primary + '30',
+    },
+    orderCountIcon: {
+      marginRight: isRTL ? 0 : 4,
+      marginLeft: isRTL ? 4 : 0,
+    },
+    orderCountText: {
+      fontSize: 13,
+      fontWeight: '700',
+      color: colors.primary,
+    },
+    actionButton: {
+      width: 36,
+      height: 36,
+      borderRadius: 10,
+      justifyContent: 'center',
+      alignItems: 'center',
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.1,
+      shadowRadius: 2,
+      elevation: 1,
+    },
+    refreshButton: {
+      backgroundColor: colors.white,
+      borderWidth: 1,
+      borderColor: colors.primary + '25',
+    },
+    refreshButtonDisabled: {
+      backgroundColor: colors.disabled + '40',
+      borderColor: colors.disabled + '50',
+    },
+    menuButton: {
+      backgroundColor: colors.surface || colors.base200,
+      borderWidth: 1,
+      borderColor: colors.border + '40',
+    },
+    emptyState: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 32,
+    },
+    emptyTitle: {
+      fontSize: 22,
+      fontWeight: '700',
+      color: colors.text,
+      marginTop: 20,
+      marginBottom: 10,
+      textAlign: 'center',
+      letterSpacing: 0.3,
+    },
+    emptyText: {
+      fontSize: 15,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      maxWidth: 300,
+      lineHeight: 22,
+    },
+    listContainer: {
+      padding: 16,
+      paddingBottom: 40,
+    },
+    modalContainer: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    modalHeader: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 20,
+      paddingVertical: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border + '30',
+      backgroundColor: colors.surface || colors.white,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    modalTitle: {
+      fontSize: 20,
+      fontWeight: '700',
+      color: colors.text,
+      letterSpacing: 0.2,
+    },
+    orderDetailsContent: {
+      flex: 1,
+      padding: 16,
+    },
+    orderDetailsCard: {
+      backgroundColor: colors.surface || colors.white,
+      borderRadius: 16,
+      padding: 20,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      elevation: 3,
+    },
+    orderDetailTitle: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: colors.text,
+      marginBottom: 10,
+      letterSpacing: 0.2,
+    },
+    orderDetailCustomer: {
+      fontSize: 15,
+      color: colors.textSecondary,
+      marginBottom: 20,
+      fontWeight: '500',
+    },
+    itemsList: {
+      marginBottom: 20,
+    },
+    itemsTitle: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.text,
+      marginBottom: 12,
+      letterSpacing: 0.1,
+    },
+    itemRow: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border + '30',
+    },
+    itemName: {
+      fontSize: 14,
+      color: colors.text,
+      flex: 1,
+      fontWeight: '500',
+    },
+    itemQuantity: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      fontWeight: '600',
+    },
+    orderMeta: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border + '30',
+    },
+    orderMetaLabel: {
+      fontSize: 15,
+      color: colors.textSecondary,
+      fontWeight: '600',
+    },
+    orderMetaValue: {
+      fontSize: 15,
+      color: colors.text,
+      fontWeight: '600',
+    },
+    menuOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.6)',
+      justifyContent: 'flex-start',
+      alignItems: isRTL ? 'flex-start' : 'flex-end',
+      paddingTop: 105,
+      paddingHorizontal: 16,
+    },
+    menuContainer: {
+      backgroundColor: colors.surface || colors.white,
+      borderRadius: 16,
+      padding: 8,
+      minWidth: 200,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.25,
+      shadowRadius: 16,
+      elevation: 12,
+      borderWidth: 1,
+      borderColor: colors.border + '20',
+    },
+    menuItem: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      borderRadius: 12,
+      marginVertical: 2,
+    },
+    menuItemActive: {
+      backgroundColor: colors.primary + '10',
+    },
+    menuIcon: {
+      marginRight: isRTL ? 0 : 12,
+      marginLeft: isRTL ? 12 : 0,
+    },
+    menuText: {
+      fontSize: 13,
+      color: colors.text,
+      fontWeight: '500',
+      flex: 1,
+    },
+    menuTextDanger: {
+      color: colors.error,
+    },
+    menuDivider: {
+      height: 1,
+      backgroundColor: colors.border + '40',
+      marginVertical: 8,
+      marginHorizontal: 12,
+    },
+    themeToggle: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      borderRadius: 12,
+      marginVertical: 2,
+    },
+    themeToggleSwitch: {
+      width: 44,
+      height: 24,
+      borderRadius: 12,
+      backgroundColor: isDarkMode ? colors.primary : colors.base300,
+      padding: 2,
+      justifyContent: isDarkMode ? 'flex-end' : 'flex-start',
+      alignItems: 'center',
+      flexDirection: 'row',
+    },
+    themeToggleThumb: {
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      backgroundColor: colors.white,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.2,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+  });
 
   return (
     <SafeAreaView style={dynamicStyles.container}>
-      <StatusBar style="dark" backgroundColor="#ffffff" />
+      <StatusBar style={isDarkMode ? "light" : "dark"} backgroundColor={colors.background} />
       
       {/* Fixed Header */}
       <View style={dynamicStyles.header}>
         {/* Left Side - Title and Icon */}
         <View style={dynamicStyles.headerLeft}>
-          <View style={styles.headerIcon}>
+          <View style={dynamicStyles.headerIcon}>
             <Ionicons name="car" size={20} color="white" />
           </View>
-          <View style={styles.titleContainer}>
-            <Text style={styles.title} numberOfLines={1}>
+          <View style={dynamicStyles.titleContainer}>
+            <Text style={dynamicStyles.title} numberOfLines={1}>
               {t('dashboard.delivery_dashboard')}
             </Text>
           </View>
@@ -104,9 +416,9 @@ export default function DeliveryDashboard() {
               name="cube" 
               size={14} 
               color={colors.primary}
-              style={[styles.orderCountIcon, isRTL && styles.rtlIcon]}
+              style={dynamicStyles.orderCountIcon}
             />
-            <Text style={styles.orderCountText}>
+            <Text style={dynamicStyles.orderCountText}>
               {orders.length}
             </Text>
           </View>
@@ -114,8 +426,12 @@ export default function DeliveryDashboard() {
           {/* Refresh Button */}
           <TouchableOpacity 
             onPress={handleManualRefresh} 
-            style={[styles.actionButton, styles.refreshButton, fetchingOrders && styles.refreshButtonDisabled]}
+            style={[
+              dynamicStyles.actionButton, 
+              fetchingOrders ? dynamicStyles.refreshButtonDisabled : dynamicStyles.refreshButton
+            ]}
             disabled={fetchingOrders}
+            activeOpacity={0.8}
           >
             {fetchingOrders ? (
               <ActivityIndicator size="small" color={colors.primary} />
@@ -131,7 +447,8 @@ export default function DeliveryDashboard() {
           {/* Menu Button */}
           <TouchableOpacity 
             onPress={() => setShowMenu(true)} 
-            style={[styles.actionButton, styles.menuButton]}
+            style={[dynamicStyles.actionButton, dynamicStyles.menuButton]}
+            activeOpacity={0.8}
           >
             <Ionicons name="ellipsis-vertical" size={18} color={colors.text} />
           </TouchableOpacity>
@@ -140,10 +457,10 @@ export default function DeliveryDashboard() {
 
       {/* Orders List */}
       {orders.length === 0 ? (
-        <View style={styles.emptyState}>
-          <Ionicons name="car-outline" size={64} color={colors.primary} />
-          <Text style={styles.emptyTitle}>{t('orders.no_orders_assigned')}</Text>
-          <Text style={styles.emptyText}>{t('orders.orders_will_appear_here')}</Text>
+        <View style={dynamicStyles.emptyState}>
+          <Ionicons name="car-outline" size={72} color={colors.primary} />
+          <Text style={dynamicStyles.emptyTitle}>{t('orders.no_orders_assigned')}</Text>
+          <Text style={dynamicStyles.emptyText}>{t('orders.orders_will_appear_here')}</Text>
         </View>
       ) : (
         <FlatList
@@ -158,7 +475,8 @@ export default function DeliveryDashboard() {
               onComplete={openComplete}
             />
           )}
-          contentContainerStyle={styles.listContainer}
+          contentContainerStyle={dynamicStyles.listContainer}
+          showsVerticalScrollIndicator={false}
         />
       )}
 
@@ -175,48 +493,51 @@ export default function DeliveryDashboard() {
         animationType="slide"
         presentationStyle="pageSheet"
       >
-        <View style={styles.modalContainer}>
-          <View style={[styles.modalHeader, isRTL && styles.rtlModalHeader]}>
-            <Text style={styles.modalTitle}>{t('orders.order_details')}</Text>
-            <TouchableOpacity onPress={() => setShowOrderDetailsModal(false)}>
+        <View style={dynamicStyles.modalContainer}>
+          <View style={dynamicStyles.modalHeader}>
+            <Text style={dynamicStyles.modalTitle}>{t('orders.order_details')}</Text>
+            <TouchableOpacity 
+              onPress={() => setShowOrderDetailsModal(false)}
+              style={{ padding: 8, borderRadius: 20, backgroundColor: colors.base200 }}
+            >
               <Ionicons name="close" size={24} color={colors.text} />
             </TouchableOpacity>
           </View>
-          <ScrollView style={styles.orderDetailsContent}>
+          <ScrollView style={dynamicStyles.orderDetailsContent}>
             {selectedOrderDetails && (
-              <View style={styles.orderDetailsCard}>
-                <Text style={styles.orderDetailTitle}>
+              <View style={dynamicStyles.orderDetailsCard}>
+                <Text style={dynamicStyles.orderDetailTitle}>
                   {t('order.order_number', { id: selectedOrderDetails._id?.slice(-8) })}
                 </Text>
-                <Text style={styles.orderDetailCustomer}>
+                <Text style={dynamicStyles.orderDetailCustomer}>
                   {t('order.customer')}: {selectedOrderDetails.user?.userName}
                 </Text>
                 {/* Add more order details here as needed */}
                 {selectedOrderDetails.items && selectedOrderDetails.items.length > 0 && (
-                  <View style={styles.itemsList}>
-                    <Text style={styles.itemsTitle}>{t('orders.items')}:</Text>
+                  <View style={dynamicStyles.itemsList}>
+                    <Text style={dynamicStyles.itemsTitle}>{t('orders.items')}:</Text>
                     {selectedOrderDetails.items.map((item, index) => (
-                      <View key={index} style={styles.itemRow}>
-                        <Text style={styles.itemName}>
+                      <View key={index} style={dynamicStyles.itemRow}>
+                        <Text style={dynamicStyles.itemName}>
                           {item.name?.[currentLanguage] || item.itemName || item.name || item.productName || t('common.item')}
                         </Text>
-                        <Text style={styles.itemQuantity}>
+                        <Text style={dynamicStyles.itemQuantity}>
                           {item.quantity} {item.measurement_unit === 1 ? t('units.kg') : t('units.piece')}
                         </Text>
                       </View>
                     ))}
                   </View>
                 )}
-                <View style={styles.orderMeta}>
-                  <Text style={styles.orderMetaLabel}>{t('orders.status')}:</Text>
-                  <Text style={styles.orderMetaValue}>
+                <View style={dynamicStyles.orderMeta}>
+                  <Text style={dynamicStyles.orderMetaLabel}>{t('orders.status')}:</Text>
+                  <Text style={dynamicStyles.orderMetaValue}>
                     {selectedOrderDetails.status === 'assigntocourier' ? t('orders.ready_for_delivery') : 
                      selectedOrderDetails.status.charAt(0).toUpperCase() + selectedOrderDetails.status.slice(1)}
                   </Text>
                 </View>
-                <View style={styles.orderMeta}>
-                  <Text style={styles.orderMetaLabel}>{t('orders.created')}:</Text>
-                  <Text style={styles.orderMetaValue}>
+                <View style={dynamicStyles.orderMeta}>
+                  <Text style={dynamicStyles.orderMetaLabel}>{t('orders.created')}:</Text>
+                  <Text style={dynamicStyles.orderMetaValue}>
                     {new Date(selectedOrderDetails.createdAt).toLocaleDateString(currentLanguage === 'ar' ? 'ar-EG' : 'en-GB', {
                       day: '2-digit',
                       month: 'short',
@@ -240,7 +561,7 @@ export default function DeliveryDashboard() {
         onOrderCompleted={handleOrderCompleted}
       />
 
-      {/* Menu Modal */}
+      {/* Enhanced Menu Modal */}
       <Modal
         visible={showMenu}
         transparent={true}
@@ -251,7 +572,31 @@ export default function DeliveryDashboard() {
           style={dynamicStyles.menuOverlay} 
           onPress={() => setShowMenu(false)}
         >
-          <View style={styles.menuContainer}>
+          <View style={dynamicStyles.menuContainer}>
+            {/* Theme Toggle */}
+            <View style={dynamicStyles.themeToggle}>
+              <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', flex: 1 }}>
+                <Ionicons 
+                  name={isDarkMode ? "moon" : "sunny"} 
+                  size={20} 
+                  color={colors.text}
+                  style={dynamicStyles.menuIcon}
+                />
+                <Text style={dynamicStyles.menuText}>
+                  {isDarkMode ? t('settings.lightMode') : t('settings.darkMode')}
+                </Text>
+              </View>
+              <TouchableOpacity 
+                style={dynamicStyles.themeToggleSwitch}
+                onPress={handleThemeToggle}
+                activeOpacity={0.8}
+              >
+                <View style={dynamicStyles.themeToggleThumb} />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={dynamicStyles.menuDivider} />
+            
             {/* Language Option */}
             <TouchableOpacity 
               style={dynamicStyles.menuItem}
@@ -259,17 +604,20 @@ export default function DeliveryDashboard() {
                 toggleLanguage();
                 setShowMenu(false);
               }}
+              activeOpacity={0.7}
             >
               <Ionicons 
                 name="language" 
                 size={20} 
                 color={colors.text}
-                style={[styles.menuIcon, isRTL && styles.rtlMenuIcon]}
+                style={dynamicStyles.menuIcon}
               />
-              <Text style={styles.menuText}>
+              <Text style={dynamicStyles.menuText}>
                 {currentLanguage === 'en' ? t('menu.switch_to_arabic') : t('menu.switch_to_english')}
               </Text>
             </TouchableOpacity>
+            
+            <View style={dynamicStyles.menuDivider} />
             
             {/* Logout Option */}
             <TouchableOpacity 
@@ -278,14 +626,15 @@ export default function DeliveryDashboard() {
                 setShowMenu(false);
                 handleLogout();
               }}
+              activeOpacity={0.7}
             >
               <Ionicons 
                 name="log-out-outline" 
                 size={20} 
-                color={colors.danger}
-                style={[styles.menuIcon, isRTL && styles.rtlMenuIcon]}
+                color={colors.error}
+                style={dynamicStyles.menuIcon}
               />
-              <Text style={[styles.menuText, { color: colors.danger }]}>
+              <Text style={[dynamicStyles.menuText, dynamicStyles.menuTextDanger]}>
                 {t('auth.logout')}
               </Text>
             </TouchableOpacity>
@@ -295,270 +644,3 @@ export default function DeliveryDashboard() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-    paddingTop: 35,
-  },
-  rtlContainer: {
-    direction: 'rtl',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    minHeight: 56,
-  },
-  rtlHeader: {
-    flexDirection: 'row-reverse',
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    marginRight: 12,
-  },
-  rtlHeaderLeft: {
-    flexDirection: 'row-reverse',
-    marginRight: 0,
-    marginLeft: 12,
-  },
-  headerIcon: {
-    width: 32,
-    height: 32,
-    backgroundColor: colors.primary,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 8,
-  },
-  titleContainer: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  rtlHeaderRight: {
-    flexDirection: 'row-reverse',
-  },
-  orderCount: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#dbeafe',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    minWidth: 40,
-    justifyContent: 'center',
-  },
-  rtlOrderCount: {
-    flexDirection: 'row-reverse',
-  },
-  orderCountIcon: {
-    marginRight: 4,
-  },
-  rtlIcon: {
-    marginRight: 0,
-    marginLeft: 4,
-  },
-  orderCountText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.primary,
-  },
-  actionButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  refreshButton: {
-    backgroundColor: '#dbeafe',
-    borderWidth: 1,
-    borderColor: '#bfdbfe',
-  },
-  refreshButtonDisabled: {
-    backgroundColor: '#f3f4f6',
-    borderColor: '#d1d5db',
-  },
-  menuButton: {
-    backgroundColor: '#f8fafc',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  listContainer: {
-    padding: 16,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 32,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: colors.text,
-    marginTop: 16,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  emptyText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    maxWidth: 280,
-    lineHeight: 20,
-  },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    backgroundColor: 'white',
-  },
-  rtlModalHeader: {
-    flexDirection: 'row-reverse',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  orderDetailsContent: {
-    flex: 1,
-    padding: 16,
-  },
-  orderDetailsCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-  },
-  orderDetailTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 8,
-  },
-  orderDetailCustomer: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginBottom: 16,
-  },
-  itemsList: {
-    marginBottom: 16,
-  },
-  itemsTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 8,
-  },
-  itemRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
-  },
-  itemName: {
-    fontSize: 13,
-    color: colors.text,
-    flex: 1,
-  },
-  itemQuantity: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    fontWeight: '500',
-  },
-  orderMeta: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
-  },
-  orderMetaLabel: {
-    fontSize: 14,
-    color: colors.textSecondary,
-  },
-  orderMetaValue: {
-    fontSize: 14,
-    color: colors.text,
-    fontWeight: '500',
-  },
-  menuOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-start',
-    alignItems: 'flex-end',
-    paddingTop: 100,
-    paddingRight: 16,
-  },
-  rtlMenuOverlay: {
-    alignItems: 'flex-start',
-    paddingRight: 0,
-    paddingLeft: 16,
-  },
-  menuContainer: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 8,
-    minWidth: 180,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  rtlMenuItem: {
-    flexDirection: 'row-reverse',
-  },
-  menuIcon: {
-    marginRight: 10,
-  },
-  rtlMenuIcon: {
-    marginRight: 0,
-    marginLeft: 10,
-  },
-  menuText: {
-    fontSize: 14,
-    color: colors.text,
-    fontWeight: '500',
-  },
-});

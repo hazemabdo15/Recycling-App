@@ -156,7 +156,7 @@ const Explore = () => {
           onCategoryPress={handleCategoryPress}
           onFilteredCountChange={handleFilteredCountChange}
           showItemsMode={showItemsMode}
-          flatListBottomPadding={tabBarHeight + 24} // Pass extra bottom padding for FlatList
+          flatListBottomPadding={tabBarHeight + 100} // Pass extra bottom padding for FlatList
         />
       </View>
     </View>

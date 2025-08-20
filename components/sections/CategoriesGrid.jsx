@@ -37,7 +37,7 @@ import { showGlobalToast } from "../common/GlobalToast";
 // Dynamic styles function for CategoriesGrid
 const getCategoriesGridStyles = (colors) => StyleSheet.create({
   scrollContainer: {
-    paddingBottom: scaleSize(40),
+    paddingBottom: scaleSize(100),
     paddingHorizontal: scaleSize(5),
     backgroundColor: "transparent",
   },

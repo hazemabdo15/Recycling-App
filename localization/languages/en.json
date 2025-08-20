@@ -15,6 +15,7 @@
     "saving": "Saving...",
     "edit": "Edit",
     "delete": "Delete",
+    "processing": "processing",
     "unknownDate": "Unknown date",
     "search": "Search",
     "filter": "Filter",
@@ -385,6 +386,8 @@
     "cancelled": "Cancelled",
     "orderDetails": "Order Details",
     "trackOrder": "Track Order",
+    "no_orders_assigned": "No Assigned Orders Yet",
+    "orders_will_appear_here":"Assigned orders will appear here",
     "reorder": "Reorder",
     "cancelOrder": "Cancel Order",
     "orderNumber": "Order Number",
@@ -997,7 +1000,8 @@
     "no_photo_taken": "No photo taken",
     "retake_photo": "Retake Photo",
     "take_collection_photo": "Take Collection Photo",
-    "take_delivery_photo": "Take Delivery Photo"
+    "take_delivery_photo": "Take Delivery Photo",
+    "collection_photo": "Take order photo"
   },
   "order": {
     "order_number": "Order #{{id}}",

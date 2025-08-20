@@ -23,29 +23,33 @@ export const lightColors = {
   disabled: "#9CA3AF",
 };
 
-// Dark theme colors (new) - Enhanced for better contrast
+// Dark theme colors
 export const darkColors = {
-  primary: "#22c55e", // Brighter green for better visibility
-  secondary: "#65a30d", // Enhanced green
-  accent: "#fbbf24", // Bright yellow
-  neutral: "#94a3b8",
-  base50: "#0f172a", // Very dark blue-gray
-  base100: "#1e293b", // Dark blue-gray
-  base200: "#334155", // Medium dark blue-gray
-  base300: "#475569", // Medium blue-gray
-  base400: "#64748b", // Light blue-gray
-  white: "#1e293b", // Card backgrounds in dark mode
-  black: "#f8fafc", // Text color in dark mode
-  error: "#f87171", // Bright red
-  warning: "#fbbf24", // Bright yellow
-  success: "#22c55e", // Bright green
-  info: "#60a5fa", // Bright blue
-  background: "#0f172a", // Main background
-  text: "#f8fafc", // Primary text
-  textSecondary: "#cbd5e1", // Secondary text - brighter for better contrast
-  textTertiary: "#94a3b8", // Tertiary text
-  shadow: "#000000",
-  disabled: "#64748b",
+  primary: "#1DB588",
+  secondary: "#7CB342",
+  accent: "#FFB300",
+
+  neutral: "#78909C",
+  base50: "#121212",
+  base100: "#1E1E1E",
+  base200: "#2D2D2D",
+  base300: "#424242",
+  base400: "#616161",
+
+  white: "#171717",
+  black: "#ffffff",
+
+  error: "#F87171",
+  warning: "#FBBF24",
+  success: "#34D399",
+  info: "#60A5FA",
+
+  background: "#121212",
+  text: "#E5E5E5",
+  textSecondary: "#A1A1AA",
+  textTertiary: "#71717A",
+  shadow: "#00000060",
+  disabled: "#4B5563",
 };
 
 // Function to get colors based on theme

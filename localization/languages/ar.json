@@ -75,6 +75,7 @@
     "offline": "غير متصل",
     "connected": "متصل",
     "disconnected": "منقطع",
+    "processing": "جاري التسجيل..",
     "success": "نجح",
     "warning": "تحذير",
     "info": "معلومات",
@@ -398,6 +399,8 @@
     "confirmed": "مؤكد",
     "inProgress": "قيد التنفيذ",
     "completed": "مكتمل",
+    "no_orders_assigned": "لا توجد طلبات حتى الآن",
+    "orders_will_appear_here":"ستظهر الطلبات المطلوبه هنا",
     "cancelled": "ملغي",
     "orderDetails": "تفاصيل الطلب",
     "trackOrder": "تتبع الطلب",
@@ -1055,7 +1058,8 @@
     "no_photo_taken": "لم يتم التقاط صورة",
     "retake_photo": "إعادة التقاط الصورة",
     "take_collection_photo": "التقاط صورة التحصيل",
-    "take_delivery_photo": "التقاط صورة التوصيل"
+    "take_delivery_photo": "التقاط صورة التوصيل",
+    "collection_photo": "التقط صورة الطلب"
   },
   "order": {
     "order_number": "الطلب رقم {{id}}",
