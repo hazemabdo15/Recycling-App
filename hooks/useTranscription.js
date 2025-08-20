@@ -32,7 +32,7 @@ export const useTranscription = () => {
       formData.append('response_format', 'json');
       formData.append(
         'prompt',
-        'المتحدث يسرد مواد قابلة لإعادة التدوير باللغة العربية المصرية. يجب كتابة النص بالعربية فقط. مواد شائعة تشمل: كرسي، مكواة، بلاستيك، حديد، كولمان مياه، ورق متقطع، كتب، جرايد، كرتون، مراوح، موبايل، لابتوب، طابعة، نحاس، ألومنيوم، ستانلس. يرجى النسخ بدقة مع الكميات والوحدات مثل كيلو وقطعة.'
+        'List all recyclable materials and their quantities mentioned. Focus on clear extraction of item names and numbers. Ignore unrelated words'
       );
 
       console.log('📡 Making API request to Groq...');

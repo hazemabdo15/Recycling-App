@@ -14,7 +14,7 @@ const ItemInfo = ({ name, price, measurementUnit, unitDisplay }) => {
     
     return (
         <View style={itemInfoStyles.itemInfo}>
-            <Text style={[itemInfoStyles.itemName, { fontSize: scale(20), marginBottom: scale(8), lineHeight: scale(24) }]} numberOfLines={2}>{name}</Text>
+            <Text style={[itemInfoStyles.itemName, { fontSize: scale(20), marginBottom: scale(8), lineHeight: scale(24), height: 30, paddingTop: 5 }]} numberOfLines={2}>{name}</Text>
             <View style={itemInfoStyles.itemDetails}>
                 <View style={[itemInfoStyles.priceContainer, { paddingHorizontal: scale(8), paddingVertical: scale(4), borderRadius: scale(8), marginRight: scale(8) }]}> 
                     <MaterialCommunityIcons

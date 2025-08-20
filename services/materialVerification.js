@@ -176,32 +176,59 @@ function calculateSimilarity(str1, str2) {
   }
 
   // Prioritize longer, more specific matches
-  // If one string is significantly longer and contains the other, consider carefully
   const lengthRatio = Math.min(normalized1.length, normalized2.length) / Math.max(normalized1.length, normalized2.length);
   
-  // Check substring relationships with improved length consideration
+  // Enhanced substring checking to avoid false matches
   if (normalized1.includes(normalized2)) {
-    // If str2 is much shorter than str1, it might be a generic match
-    // But we should be more lenient for legitimate matches
-    if (lengthRatio < 0.4) {
-      return Math.max(65, lengthRatio * 85); // Slightly higher minimum score
-    } else if (lengthRatio < 0.7) {
-      return Math.max(75, lengthRatio * 90); // Better score for reasonable differences
+    // If str2 is much shorter and str1 has additional descriptive words, lower the score
+    const word1Count = words1.length;
+    const word2Count = words2.length;
+    
+    // If the longer string has significantly more words, it's likely more specific
+    if (word1Count > word2Count && word1Count - word2Count >= 1) {
+      // Check if all words from shorter string are in longer string
+      const shorterWords = words2;
+      const longerWords = words1;
+      const matchedWords = shorterWords.filter(word => longerWords.includes(word));
+      
+      if (matchedWords.length === shorterWords.length) {
+        // All words match but longer string is more specific
+        return Math.max(60, lengthRatio * 70); // Lower score for partial matches
+      }
     }
-    return 88; // Good substring match when lengths are similar
+    
+    if (lengthRatio < 0.4) {
+      return Math.max(50, lengthRatio * 70); // Further reduced for very different lengths
+    } else if (lengthRatio < 0.7) {
+      return Math.max(65, lengthRatio * 80);
+    }
+    return 85; // Reduced from 88
   }
   
   if (normalized2.includes(normalized1)) {
-    // If str1 is much shorter than str2, it might be a generic match
-    if (lengthRatio < 0.4) {
-      return Math.max(65, lengthRatio * 85); // Slightly higher minimum score
-    } else if (lengthRatio < 0.7) {
-      return Math.max(75, lengthRatio * 90); // Better score for reasonable differences
+    // Same logic for reverse case
+    const word1Count = words1.length;
+    const word2Count = words2.length;
+    
+    if (word2Count > word1Count && word2Count - word1Count >= 1) {
+      const shorterWords = words1;
+      const longerWords = words2;
+      const matchedWords = shorterWords.filter(word => longerWords.includes(word));
+      
+      if (matchedWords.length === shorterWords.length) {
+        return Math.max(60, lengthRatio * 70);
+      }
     }
-    return 88; // Good substring match when lengths are similar
+    
+    if (lengthRatio < 0.4) {
+      return Math.max(50, lengthRatio * 70);
+    } else if (lengthRatio < 0.7) {
+      return Math.max(65, lengthRatio * 80);
+    }
+    return 85;
   }
 
-  // Word-based matching with position consideration
+  // Word-based matching with stricter criteria
   let matchingWords = 0;
   let positionScore = 0;
   
@@ -209,20 +236,18 @@ function calculateSimilarity(str1, str2) {
     words2.forEach((word2, index2) => {
       if (word1 === word2) {
         matchingWords++;
-        // Bonus for words in similar positions
         const positionDiff = Math.abs(index1 - index2);
         const maxIndex = Math.max(words1.length, words2.length);
         positionScore += Math.max(0, 1 - (positionDiff / maxIndex));
       } else if (word1.includes(word2) || word2.includes(word1)) {
-        // Partial word matches get lower scores but not too low
         const wordLengthRatio = Math.min(word1.length, word2.length) / Math.max(word1.length, word2.length);
-        matchingWords += wordLengthRatio * 0.8; // Slightly higher score for partial matches
+        matchingWords += wordLengthRatio * 0.6; // Reduced from 0.8
       }
     });
   });
   
-  const wordScore = (matchingWords / Math.max(words1.length, words2.length)) * 75; // Increased base score
-  const positionBonus = (positionScore / Math.max(words1.length, words2.length)) * 10;
+  const wordScore = (matchingWords / Math.max(words1.length, words2.length)) * 70; // Reduced from 75
+  const positionBonus = (positionScore / Math.max(words1.length, words2.length)) * 8; // Reduced from 10
 
   // Character-level similarity (for typos and variations)
   const maxLen = Math.max(normalized1.length, normalized2.length);
@@ -235,7 +260,7 @@ function calculateSimilarity(str1, str2) {
     }
   }
   
-  const charScore = (commonChars / maxLen) * 60; // Increased character score
+  const charScore = (commonChars / maxLen) * 50; // Reduced from 60
   
   return Math.max(wordScore + positionBonus, charScore);
 }
@@ -264,10 +289,9 @@ function findBestMatch(materialName, databaseItems) {
 
   // Find all potential matches with their scores
   const candidates = [];
-  const SIMILARITY_THRESHOLD = 65; // Reduced from 70 to be more lenient
+  const SIMILARITY_THRESHOLD = 75; // Increased from 65 to be more strict
   
   databaseItems.items.forEach(item => {
-    // Extract name from multilingual object safely
     const itemNameExtracted = extractNameFromMultilingual(item.name, 'en');
     const score = calculateSimilarity(materialName, itemNameExtracted);
     if (score >= SIMILARITY_THRESHOLD) {
@@ -275,7 +299,8 @@ function findBestMatch(materialName, databaseItems) {
         item,
         similarity: score,
         itemName: itemNameExtracted,
-        nameLength: itemNameExtracted.length
+        nameLength: itemNameExtracted.length,
+        wordCount: itemNameExtracted.split(' ').length
       });
     }
   });
@@ -285,29 +310,22 @@ function findBestMatch(materialName, databaseItems) {
     return null;
   }
 
-  // Sort candidates by multiple criteria:
-  // 1. Higher similarity score
-  // 2. For similar scores, prefer longer/more specific names, but be less aggressive
+  // Enhanced sorting to prefer more specific matches
   candidates.sort((a, b) => {
-    // If scores are close (within 8 points), consider specificity
-    if (Math.abs(a.similarity - b.similarity) <= 8) {
-      // Check if one is a substring of the input and the other is more specific
+    // If scores are very close (within 5 points), prefer more specific items
+    if (Math.abs(a.similarity - b.similarity) <= 5) {
       const normalizedInput = normalizeName(materialName);
-      const aIsSubstring = normalizedInput.includes(normalizeName(a.itemName)) || normalizeName(a.itemName).includes(normalizedInput);
-      const bIsSubstring = normalizedInput.includes(normalizeName(b.itemName)) || normalizeName(b.itemName).includes(normalizedInput);
+      const inputWordCount = normalizedInput.split(' ').length;
       
-      if (aIsSubstring && bIsSubstring) {
-        // Both are substrings, prefer the longer/more specific one, but less aggressively
-        const aSpecificity = a.nameLength + (a.itemName.split(' ').length * 1.5); // Reduced bonus
-        const bSpecificity = b.nameLength + (b.itemName.split(' ').length * 1.5);
-        return bSpecificity - aSpecificity;
+      // Prefer items with similar word count to input
+      const aWordDiff = Math.abs(a.wordCount - inputWordCount);
+      const bWordDiff = Math.abs(b.wordCount - inputWordCount);
+      
+      if (aWordDiff !== bWordDiff) {
+        return aWordDiff - bWordDiff;
       }
       
-      // Only prefer non-substring matches if the score difference is significant
-      if (aIsSubstring && !bIsSubstring && (b.similarity - a.similarity) >= 3) return 1;
-      if (!aIsSubstring && bIsSubstring && (a.similarity - b.similarity) >= 3) return -1;
-      
-      // Otherwise, prefer longer names but less aggressively
+      // If word counts are similar, prefer longer names (more specific)
       return b.nameLength - a.nameLength;
     }
     

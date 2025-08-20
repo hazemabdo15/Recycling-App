@@ -176,7 +176,7 @@ export async function extractMaterialsFromTranscription(transcription) {
     if (!apiKey) {
       throw new Error('No API key found. Please check your environment configuration.');
     }
-    
+
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -184,8 +184,8 @@ export async function extractMaterialsFromTranscription(transcription) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
-        temperature: 0,
+        model: 'llama-3.3-70b-versatile',
+        temperature: 1,
         response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
