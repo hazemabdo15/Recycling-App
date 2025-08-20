@@ -32,7 +32,7 @@ export const useTranscription = () => {
       formData.append('response_format', 'json');
       formData.append(
         'prompt',
-        'List all recyclable materials and their quantities mentioned. Focus on clear extraction of item names and numbers. Ignore unrelated words'
+        'هذا التسجيل يحتوي على متحدث يذكر مواد قابلة لإعادة التدوير وكمياتها باللغة العربية المصرية. يرجى النسخ بدقة مع كتابة الأرقام والوحدات مثل كيلو أو قطعة، واتباع الإملاء الصحيح.'
       );
 
       console.log('📡 Making API request to Groq...');
