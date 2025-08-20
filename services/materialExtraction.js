@@ -27,91 +27,81 @@ function normalizeUnit(unit) {
 
 function fuzzyMatch(input, candidates, threshold = 80) {
   input = input.toLowerCase().trim();
-  let bestMatch = null;
-  let bestScore = 0;
 
-  // Group candidates by similarity for better matching
-  const matches = [];
+  // Create candidates with their scores and metadata
+  const scoredCandidates = [];
 
   for (const candidate of candidates) {
     const candidateLower = candidate.toLowerCase();
 
-    // Exact match
+    // Exact match gets highest priority
     if (input === candidateLower) {
       return { match: candidate, score: 100 };
     }
 
-    // Calculate word-based similarity for better multi-word matching
-    const inputWords = input.split(/\s+/);
-    const candidateWords = candidateLower.split(/\s+/);
-    
-    let exactWordMatches = 0;
-    inputWords.forEach(inputWord => {
-      if (candidateWords.includes(inputWord)) {
-        exactWordMatches++;
-      }
-    });
+    let score = 0;
+    const lengthRatio = Math.min(input.length, candidateLower.length) / Math.max(input.length, candidateLower.length);
 
-    // Prioritize exact word matches
-    if (exactWordMatches > 0) {
-      const wordMatchRatio = exactWordMatches / Math.max(inputWords.length, candidateWords.length);
-      let wordScore = wordMatchRatio * 95;
-      
-      // Bonus for complete word matches
-      if (exactWordMatches === Math.min(inputWords.length, candidateWords.length)) {
-        wordScore += 5;
+    // Check substring relationships with length consideration
+    if (candidateLower.includes(input)) {
+      // If input is much shorter than candidate, it might be a generic match
+      if (lengthRatio < 0.6) {
+        score = Math.max(70, lengthRatio * 85); // Lower score for generic matches
+      } else {
+        score = 90; // Good substring match when lengths are similar
       }
-      
-      // Penalty for length mismatch (avoid matching "ورق" with "ورق متقطع")
-      const lengthDiff = Math.abs(inputWords.length - candidateWords.length);
-      if (lengthDiff > 0) {
-        wordScore -= lengthDiff * 15; // Reduce score for each extra word
+    } else if (input.includes(candidateLower)) {
+      // If candidate is much shorter than input, it might be a generic match
+      if (lengthRatio < 0.6) {
+        score = Math.max(70, lengthRatio * 85); // Lower score for generic matches
+      } else {
+        score = 90; // Good substring match when lengths are similar
       }
-      
-      matches.push({ candidate, score: Math.max(60, wordScore) });
-      continue;
-    }
-
-    // Substring matching with length considerations
-    if (candidateLower.includes(input) || input.includes(candidateLower)) {
+    } else {
+      // Character-level similarity for typos and variations
       const maxLen = Math.max(input.length, candidateLower.length);
       const minLen = Math.min(input.length, candidateLower.length);
-      const lengthRatio = minLen / maxLen;
+      const ratio = (minLen / maxLen) * 100;
       
-      // Penalize very different lengths
-      const score = Math.max(
-        (input.length / candidateLower.length) * 75 * lengthRatio,
-        (candidateLower.length / input.length) * 75 * lengthRatio
-      );
-      
-      matches.push({ candidate, score: Math.max(50, score) });
-      continue;
+      if (ratio > 60) {
+        let commonChars = 0;
+        for (let i = 0; i < minLen; i++) {
+          if (input[i] === candidateLower[i]) commonChars++;
+        }
+        score = (commonChars / maxLen) * 100;
+      }
     }
 
-    // Character-based similarity for very fuzzy matches
-    const maxLen = Math.max(input.length, candidateLower.length);
-    const minLen = Math.min(input.length, candidateLower.length);
-    const ratio = (minLen / maxLen) * 100;
-    
-    if (ratio > 60) {
-      let commonChars = 0;
-      for (let i = 0; i < minLen; i++) {
-        if (input[i] === candidateLower[i]) commonChars++;
-      }
-      const score = (commonChars / maxLen) * 80;
-      matches.push({ candidate, score });
+    if (score >= threshold) {
+      scoredCandidates.push({
+        candidate,
+        score,
+        length: candidateLower.length,
+        isSubstring: candidateLower.includes(input) || input.includes(candidateLower)
+      });
     }
   }
 
-  // Find the best match
-  matches.forEach(match => {
-    if (match.score > bestScore && match.score >= threshold) {
-      bestScore = match.score;
-      bestMatch = match.candidate;
+  if (scoredCandidates.length === 0) {
+    return null;
+  }
+
+  // Sort by score and specificity
+  scoredCandidates.sort((a, b) => {
+    // If scores are close, prefer longer/more specific terms
+    if (Math.abs(a.score - b.score) <= 5) {
+      // For substring matches, prefer longer terms (more specific)
+      if (a.isSubstring && b.isSubstring) {
+        return b.length - a.length;
+      }
+      // Prefer non-substring matches over substring matches
+      if (a.isSubstring && !b.isSubstring) return 1;
+      if (!a.isSubstring && b.isSubstring) return -1;
     }
+    return b.score - a.score;
   });
 
-  return bestScore >= threshold ? { match: bestMatch, score: bestScore } : null;
+  return { match: scoredCandidates[0].candidate, score: scoredCandidates[0].score };
 }
 
 function mapToCanonicalMaterial(input) {
