@@ -222,7 +222,9 @@ const getStyles = (colors) => StyleSheet.create({
     paddingBottom: 24,
     paddingTop: 40,
     minHeight: 90,
-    justifyContent: "flex-end"
+    justifyContent: "flex-end",
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
   headerRow: {
     flexDirection: 'row',

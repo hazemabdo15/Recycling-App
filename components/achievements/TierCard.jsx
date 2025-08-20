@@ -108,6 +108,14 @@ const getStyles = (colors) => StyleSheet.create({
     margin: 8,
     borderRadius: 16,
     overflow: 'hidden',
+    shadowColor: colors.text,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   currentTierContainer: {
     shadowColor: colors.text,
@@ -128,6 +136,8 @@ const getStyles = (colors) => StyleSheet.create({
     minHeight: 160,
     justifyContent: 'space-between',
     position: 'relative',
+    borderWidth: 1,
+    borderColor: colors.isDark ? 'transparent' : 'rgba(0,0,0,0.05)',
   },
   currentBadge: {
     position: 'absolute',
