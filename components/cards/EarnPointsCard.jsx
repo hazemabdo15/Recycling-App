@@ -71,7 +71,9 @@ const getEarnPointsCardStyles = (colors) => StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: scaleSize(12),
     elevation: 8,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.earnPointsCardBg,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   cardGradient: {
     padding: scaleSize(spacing.lg),
@@ -185,7 +187,7 @@ const EarnPointsCard = () => {
   return (
     <Animated.View style={[styles.earnPointsCard, cardAnimatedStyle]}>
       <LinearGradient
-        colors={[colors.surface, colors.base100]}
+        colors={[colors.earnPointsCardBg, colors.cardBackground]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.cardGradient}

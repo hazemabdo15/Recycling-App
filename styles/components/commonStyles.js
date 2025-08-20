@@ -109,11 +109,13 @@ export const getCardStyles = (isDarkMode = false) => {
     const colors = getColors(isDarkMode);
     return StyleSheet.create({
         card: {
-            backgroundColor: colors.surface,
+            backgroundColor: colors.itemCardBg,
             borderRadius: scaleSize(borderRadius.md),
             padding: scaleSize(spacing.md),
             ...shadows.medium,
             elevation: 6,
+            borderWidth: 1,
+            borderColor: colors.border,
         },
         cardHeader: {
             flexDirection: 'row',

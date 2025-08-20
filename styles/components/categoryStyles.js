@@ -59,13 +59,15 @@ export const getItemCardStyles = (isDarkMode = false) => {
     const colors = getColors(isDarkMode);
     return StyleSheet.create({
         itemCard: {
-            backgroundColor: colors.surface,
+            backgroundColor: colors.itemCardBg,
             marginVertical: spacing.sm,
             borderRadius: borderRadius.md,
             overflow: 'hidden',
             ...shadows.large,
             elevation: 8,
             padding: spacing.md,
+            borderWidth: 1,
+            borderColor: colors.border,
         },
         itemContent: {
             flexDirection: 'row',

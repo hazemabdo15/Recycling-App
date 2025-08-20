@@ -7,7 +7,7 @@ import { formatDate, formatTime, getStatusBadgeStyle, getStatusText } from '../.
 // Dynamic styles function for OrderCardDelivery
 const getOrderCardDeliveryStyles = (colors) => StyleSheet.create({
   orderCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.itemCardBg,
     borderRadius: 16,
     padding: 16,
     margin: 8,
@@ -16,6 +16,8 @@ const getOrderCardDeliveryStyles = (colors) => StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   customerInfo: {
     flexDirection: 'row',

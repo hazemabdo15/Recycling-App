@@ -913,7 +913,7 @@ const Cart = () => {
         </View>
       </LinearGradient>
       <View
-        style={[styles.contentContainer, { backgroundColor: colors.base100 }]}
+        style={[styles.contentContainer, { backgroundColor: colors.background }]}
       >
         <KeyboardAwareFlatList
           data={cartArray}
@@ -995,7 +995,7 @@ const getStyles = (colors) => StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: spacing.xl,
-    backgroundColor: colors.cardBackground,
+    backgroundColor: colors.background,
   },
   emptyCartIconWrapper: {
     marginBottom: spacing.lg,
@@ -1047,7 +1047,7 @@ const getStyles = (colors) => StyleSheet.create({
   cartCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.surface,
+    backgroundColor: colors.cardBackground,
     marginHorizontal: scaleSize(spacing.xl),
     marginBottom: scaleSize(spacing.md),
     padding: scaleSize(spacing.lg),
@@ -1058,6 +1058,8 @@ const getStyles = (colors) => StyleSheet.create({
     shadowRadius: scaleSize(6),
     elevation: 3,
     minHeight: scaleSize(100),
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   cartImageContainer: {
     width: scaleSize(64),

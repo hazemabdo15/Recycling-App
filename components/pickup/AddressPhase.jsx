@@ -2,14 +2,14 @@
 import { Picker } from '@react-native-picker/picker';
 import { useEffect, useRef, useState } from 'react';
 import {
-    Alert,
-    FlatList,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  FlatList,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 import { useAuth } from '../../context/AuthContext';
@@ -472,7 +472,7 @@ const getAddressPhaseStyles = (colors) => StyleSheet.create({
   },
   addressCard: {
     flexDirection: 'row',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.addressCardBg,
     padding: spacing.lg,
     borderRadius: borderRadius.lg,
     marginBottom: spacing.md,
@@ -481,6 +481,8 @@ const getAddressPhaseStyles = (colors) => StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   addressInfo: {
     flex: 1,
@@ -551,7 +553,7 @@ const getAddressPhaseStyles = (colors) => StyleSheet.create({
     marginBottom: spacing.sm,
   },
   pickerContainer: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.addressCardBg,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
     borderColor: colors.border,
@@ -560,7 +562,7 @@ const getAddressPhaseStyles = (colors) => StyleSheet.create({
     height: 50,
   },
   textInput: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.addressCardBg,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: borderRadius.lg,

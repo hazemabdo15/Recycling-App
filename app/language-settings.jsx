@@ -176,10 +176,12 @@ const getStyles = (colors) => StyleSheet.create({
     textAlign: 'center',
   },
   languageList: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.itemCardBg,
     borderRadius: scaleSize(12),
     overflow: 'hidden',
     marginBottom: scaleSize(24),
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   languageItem: {
     flexDirection: 'row',
@@ -218,9 +220,11 @@ const getStyles = (colors) => StyleSheet.create({
     marginTop: scaleSize(24),
     paddingHorizontal: scaleSize(16),
     paddingVertical: scaleSize(16),
-    backgroundColor: colors.surface,
+    backgroundColor: colors.itemCardBg,
     borderRadius: scaleSize(12),
     marginBottom: scaleSize(24),
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   infoText: {
     flex: 1,

@@ -912,7 +912,7 @@ const getReviewPhaseStyles = (colors) => StyleSheet.create({
   },
 
   summaryCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.itemCardBg,
     marginHorizontal: spacing.xl,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
@@ -921,6 +921,8 @@ const getReviewPhaseStyles = (colors) => StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   summaryRow: {
     flexDirection: "row",

@@ -33,13 +33,13 @@ const scaleSize = (size) => (SCREEN_WIDTH / 375) * size;
 const getCategoryCardStyles = (colors) => StyleSheet.create({
     categoryCard: {
         width: '48%',
-        backgroundColor: colors.surface,
+        backgroundColor: colors.categoryCardBg,
         borderColor: colors.border,
     },
     touchableArea: {
         width: '100%',
         overflow: 'hidden',
-        backgroundColor: colors.surface,
+        backgroundColor: colors.categoryCardBg,
     },
     cardContent: {
         alignItems: 'center',

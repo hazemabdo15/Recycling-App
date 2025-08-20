@@ -145,7 +145,7 @@ const getItemCardComponentStyles = (colors) => StyleSheet.create({
     position: "absolute",
     top: 10,
     left: 250,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.itemCardBg,
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -193,7 +193,7 @@ const getItemCardComponentStyles = (colors) => StyleSheet.create({
     position: "absolute",
     top: 10,
     right: 10, // Positioned on the right side for LTR
-    backgroundColor: colors.surface,
+    backgroundColor: colors.itemCardBg,
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 4,

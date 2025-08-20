@@ -54,14 +54,16 @@ export const getColors = (isDarkMode = false) => {
   
   return {
     ...baseColors,
-    // Card specific colors
-    cardBackground: baseColors.white,
+    // Override background with primarySurface for consistent, better-looking background
+    background: isDarkMode ? baseColors.base100 : '#f0fdf4',
+    // Card specific colors - updated for better contrast with new background
+    cardBackground: isDarkMode ? baseColors.base200 : baseColors.white,
     cardGradient: isDarkMode 
-      ? [baseColors.base100, baseColors.base200] 
+      ? [baseColors.base200, baseColors.base300] 
       : [baseColors.white, '#f8fafc'],
     cardBorder: isDarkMode 
-      ? 'rgba(148, 163, 184, 0.2)' 
-      : 'rgba(255,255,255,0.5)',
+      ? 'rgba(148, 163, 184, 0.3)' 
+      : 'rgba(0,0,0,0.1)',
     shadowColor: baseColors.shadow,
     
     // Avatar specific colors
@@ -133,7 +135,7 @@ export const getColors = (isDarkMode = false) => {
     headerButtonBg: isDarkMode ? baseColors.base200 : '#F5F5F5',
     
     // Category specific colors
-    surface: baseColors.white,
+    surface: isDarkMode ? baseColors.base200 : baseColors.white,
     
     // Profile specific colors
     border: isDarkMode ? baseColors.base300 : '#e2e8f0',
@@ -144,6 +146,12 @@ export const getColors = (isDarkMode = false) => {
     errorBorder: isDarkMode ? '#b91c1c' : '#fecaca',
     infoLight: isDarkMode ? '#1e3a8a' : '#e0f2fe',
     infoBorder: isDarkMode ? '#3b82f6' : '#bae6fd',
+    
+    // Enhanced card backgrounds for different component types
+    itemCardBg: isDarkMode ? baseColors.base200 : '#ffffff',
+    categoryCardBg: isDarkMode ? baseColors.base200 : '#ffffff',
+    earnPointsCardBg: isDarkMode ? baseColors.base200 : '#ffffff',
+    addressCardBg: isDarkMode ? baseColors.base200 : '#ffffff',
     
     // StatusBar style
     statusBarStyle: isDarkMode ? 'light' : 'dark',

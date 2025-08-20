@@ -74,7 +74,7 @@ const getTopRecycledSectionStyles = (colors) => StyleSheet.create({
     alignSelf: "center",
     marginTop: scaleSize(8),
     marginBottom: scaleSize(4),
-    backgroundColor: colors.surface,
+    backgroundColor: colors.itemCardBg,
   },
   iconContainer: {
     alignItems: "center",
