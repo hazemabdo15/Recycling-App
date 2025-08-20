@@ -1,12 +1,14 @@
 ﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image, Text, View } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
-import { itemImageStyles } from '../../styles/components/categoryStyles';
-import { colors } from '../../styles/theme';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { getItemImageStyles } from '../../styles/components/categoryStyles';
 import { isBuyer } from '../../utils/roleUtils';
 
 const ItemImage = ({ imageUri, points, placeholder = "recycle" }) => {
     const { user } = useAuth();
+    const { colors, isDarkMode } = useThemedStyles();
+    const itemImageStyles = getItemImageStyles(isDarkMode);
     
     return (
         <View style={itemImageStyles.itemImageContainer}>

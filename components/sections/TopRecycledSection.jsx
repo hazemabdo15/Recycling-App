@@ -3,30 +3,124 @@ import { useRouter } from "expo-router";
 import { memo, useCallback, useEffect, useState } from "react";
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useLocalization } from "../../context/LocalizationContext";
+import { useThemedStyles } from "../../hooks/useThemedStyles";
 import { orderService } from "../../services/api/orders";
 import { scaleSize } from '../../utils/scale';
 import { extractNameFromMultilingual } from "../../utils/translationHelpers";
-const colors = {
-  primary: "#0E9F6E",
-  secondary: "#8BC34A",
-  accent: "#FFC107",
-  neutral: "#607D8B",
-  base100: "#F8F9FA",
-  base300: "#E0E0E0",
-  white: "#ffffff",
-  black: "#171717",
-};
-const borderRadius = {
-  xs: 6,
-  sm: 12,
-  md: 18,
-  lg: 24,
-  xl: 32,
-};
+
+const getTopRecycledSectionStyles = (colors) => StyleSheet.create({
+  section: {
+    marginBottom: scaleSize(15),
+    paddingBottom: scaleSize(8),
+    marginHorizontal: scaleSize(-20),
+    paddingHorizontal: scaleSize(20),
+  },
+  headerContainer: {
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    alignItems: "center",
+    marginBottom: scaleSize(12),
+    paddingHorizontal: 0,
+  },
+  sectionTitle: {
+    fontSize: scaleSize(16),
+    fontWeight: "700",
+    color: colors.primary,
+    letterSpacing: -0.3,
+    lineHeight: scaleSize(22),
+    marginBottom: 0,
+  },
+  scrollContainer: {
+    paddingLeft: scaleSize(20),
+    paddingRight: scaleSize(20),
+    paddingBottom: scaleSize(10),
+  },
+  itemCard: {
+    backgroundColor: colors.cardBackground,
+    borderRadius: scaleSize(18),
+    padding: scaleSize(10),
+    marginRight: scaleSize(12),
+    width: scaleSize(120),
+    minHeight: scaleSize(120),
+    shadowColor: colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: scaleSize(2),
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: scaleSize(6),
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  rankBadge: {
+    position: "absolute",
+    top: scaleSize(8),
+    right: scaleSize(8),
+    backgroundColor: colors.primary,
+    borderRadius: scaleSize(6),
+    paddingHorizontal: scaleSize(6),
+    paddingVertical: scaleSize(2),
+  },
+  rankText: {
+    color: colors.white,
+    fontSize: scaleSize(10),
+    fontWeight: "bold",
+  },
+  itemImage: {
+    width: scaleSize(56),
+    height: scaleSize(56),
+    borderRadius: scaleSize(10),
+    alignSelf: "center",
+    marginTop: scaleSize(8),
+    marginBottom: scaleSize(4),
+    backgroundColor: colors.itemCardBg,
+  },
+  iconContainer: {
+    alignItems: "center",
+    marginVertical: scaleSize(6),
+  },
+  itemName: {
+    fontSize: scaleSize(14),
+    fontWeight: "600",
+    color: colors.text,
+    textAlign: "center",
+    marginBottom: scaleSize(12),
+    lineHeight: scaleSize(18),
+  },
+  statsContainer: {
+    gap: scaleSize(8),
+  },
+  statItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: scaleSize(4),
+  },
+  recycleCount: {
+    fontSize: scaleSize(12),
+    color: colors.textSecondary,
+    fontWeight: "500",
+  },
+  pointsBadge: {
+    backgroundColor: colors.warning + "20",
+    borderRadius: scaleSize(12),
+    paddingHorizontal: scaleSize(8),
+    paddingVertical: scaleSize(4),
+    alignItems: "center",
+  },
+  pointsText: {
+    fontSize: scaleSize(11),
+    color: colors.warning,
+    fontWeight: "bold",
+  },
+});
 
 const TopRecycledSection = memo(() => {
   const router = useRouter();
   const { t, currentLanguage } = useLocalization();
+  const { colors } = useThemedStyles();
+  const styles = getTopRecycledSectionStyles(colors);
   const [topItems, setTopItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -121,13 +215,6 @@ const TopRecycledSection = memo(() => {
                     resizeMode="cover"
                   />
                 ) : null}
-                <View style={styles.iconContainer}>
-                  <MaterialCommunityIcons
-                    name="recycle"
-                    size={28}
-                    color={colors.primary}
-                  />
-                </View>
                 <Text style={styles.itemName}>{getTranslatedItemName(item)}</Text>
                 <View style={styles.statsContainer}>
                   <View style={styles.statItem}>
@@ -149,111 +236,5 @@ const TopRecycledSection = memo(() => {
 });
 
 TopRecycledSection.displayName = "TopRecycledSection";
-const styles = StyleSheet.create({
-  section: {
-    marginBottom: scaleSize(15),
-    paddingBottom: scaleSize(8),
-    marginHorizontal: scaleSize(-20),
-    paddingHorizontal: scaleSize(20),
-  },
-  headerContainer: {
-    flexDirection: "row",
-    justifyContent: "flex-start",
-    alignItems: "center",
-    marginBottom: scaleSize(12),
-    paddingHorizontal: 0,
-  },
-  sectionTitle: {
-    fontSize: scaleSize(16),
-    fontWeight: "700",
-    color: colors.primary,
-    letterSpacing: -0.3,
-    lineHeight: scaleSize(22),
-    marginBottom: 0,
-  },
-  scrollContainer: {
-    paddingLeft: scaleSize(20),
-    paddingRight: scaleSize(20),
-    paddingBottom: scaleSize(10),
-  },
-  itemCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: scaleSize(borderRadius.lg),
-    padding: scaleSize(10),
-    marginRight: scaleSize(12),
-    width: scaleSize(120),
-    minHeight: scaleSize(120),
-    shadowColor: colors.black,
-    shadowOffset: {
-      width: 0,
-      height: scaleSize(2),
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: scaleSize(6),
-    elevation: 3,
-    borderWidth: 1,
-    borderColor: "#f0f0f0",
-  },
-  rankBadge: {
-    position: "absolute",
-    top: scaleSize(8),
-    right: scaleSize(8),
-    backgroundColor: colors.primary,
-    borderRadius: scaleSize(borderRadius.xs),
-    paddingHorizontal: scaleSize(6),
-    paddingVertical: scaleSize(2),
-  },
-  rankText: {
-    color: colors.white,
-    fontSize: scaleSize(10),
-    fontWeight: "bold",
-  },
-  itemImage: {
-    width: scaleSize(56),
-    height: scaleSize(56),
-    borderRadius: scaleSize(10),
-    alignSelf: "center",
-    marginTop: scaleSize(8),
-    marginBottom: scaleSize(4),
-    backgroundColor: colors.base100,
-  },
-  iconContainer: {
-    alignItems: "center",
-    marginVertical: scaleSize(6),
-  },
-  itemName: {
-    fontSize: scaleSize(14),
-    fontWeight: "600",
-    color: colors.black,
-    textAlign: "center",
-    marginBottom: scaleSize(12),
-    lineHeight: scaleSize(18),
-  },
-  statsContainer: {
-    gap: scaleSize(8),
-  },
-  statItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: scaleSize(4),
-  },
-  recycleCount: {
-    fontSize: scaleSize(12),
-    color: colors.neutral,
-    fontWeight: "500",
-  },
-  pointsBadge: {
-    backgroundColor: colors.accent + "20",
-    borderRadius: scaleSize(borderRadius.sm),
-    paddingHorizontal: scaleSize(8),
-    paddingVertical: scaleSize(4),
-    alignItems: "center",
-  },
-  pointsText: {
-    fontSize: scaleSize(11),
-    color: colors.accent,
-    fontWeight: "bold",
-  },
-});
+
 export default TopRecycledSection;

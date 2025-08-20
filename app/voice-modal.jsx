@@ -2,6 +2,7 @@
 import { Audio } from "expo-av";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
+import { t } from "i18next";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Animated,
@@ -19,14 +20,13 @@ import {
 } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAIWorkflow } from "../hooks/useAIWorkflow";
+import { useThemedStyles } from "../hooks/useThemedStyles";
 import {
   borderRadius,
-  colors,
   shadows,
   spacing,
   typography,
 } from "../styles/theme";
-import { t } from "i18next";
 
 let Reanimated,
   interpolate,
@@ -63,6 +63,7 @@ const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 const MODAL_HEIGHT = SCREEN_HEIGHT * 0.75;
 const DISMISS_THRESHOLD = 150;
 export default function VoiceModal() {
+  const { colors } = useThemedStyles();
   const insets = useSafeAreaInsets();
   const translateY = useSharedValue(0);
   const opacity = useSharedValue(1);
@@ -337,6 +338,9 @@ export default function VoiceModal() {
   const recordButtonSize = SCREEN_HEIGHT < 700 ? 64 : 88;
   const recordButtonMargin = SCREEN_HEIGHT < 700 ? 18 : spacing.xl;
 
+  // Generate dynamic styles
+  const styles = getVoiceModalStyles(colors);
+
   return (
     <GestureHandlerRootView style={styles.container}>
       <StatusBar
@@ -559,7 +563,9 @@ export default function VoiceModal() {
     </GestureHandlerRootView>
   );
 }
-const styles = StyleSheet.create({
+
+// Dynamic styles function for VoiceModal
+const getVoiceModalStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "transparent",

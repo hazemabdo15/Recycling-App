@@ -1,9 +1,88 @@
 import { format } from 'date-fns';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useContext, useMemo } from 'react';
-import { FlatList, Text, View, StyleSheet } from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
 import { useLocalization } from '../context/LocalizationContext';
+import { useThemedStyles } from '../hooks/useThemedStyles';
+
+const getRedeemHistoryStyles = (colors) => StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background
+  },
+  heroSection: {
+    padding: 20,
+    paddingTop: 50,
+    paddingBottom: 30
+  },
+  heroTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.white,
+    marginBottom: 8,
+    textAlign: 'center'
+  },
+  heroSubtitle: {
+    fontSize: 16,
+    color: colors.white,
+    textAlign: 'center',
+    opacity: 0.9
+  },
+  content: {
+    flex: 1,
+    padding: 16
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 16
+  },
+  headerRow: {
+    flexDirection: 'row',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border
+  },
+  headerText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.text
+  },
+  row: {
+    flexDirection: 'row',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border
+  },
+  cell: {
+    fontSize: 16,
+    color: colors.text
+  },
+  rtlText: {
+    textAlign: 'right'
+  },
+  points: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.error
+  },
+  date: {
+    flex: 2,
+    textAlign: 'right',
+    fontSize: 14,
+    color: colors.textSecondary
+  },
+  emptyText: {
+    textAlign: 'center',
+    marginTop: 32,
+    fontSize: 16,
+    color: colors.textSecondary
+  }
+});
 
 // Arabic month names for RTL support
 const arabicMonths = {
@@ -37,6 +116,8 @@ const filterRedeemHistory = (pointsHistory = []) => {
 export default function RedeemHistoryScreen() {
   const { user } = useContext(AuthContext);
   const { t, language } = useLocalization();
+  const { colors } = useThemedStyles();
+  const styles = getRedeemHistoryStyles(colors);
 
   const redeemHistory = useMemo(() => filterRedeemHistory(user?.pointsHistory), [user]);
 
@@ -115,66 +196,3 @@ export default function RedeemHistoryScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff'
-  },
-  heroSection: {
-    padding: 20,
-    paddingTop: 50,
-    paddingBottom: 30
-  },
-  heroTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 8,
-    textAlign: 'center'
-  },
-  heroSubtitle: {
-    fontSize: 16,
-    color: '#fff',
-    textAlign: 'center'
-  },
-  listContent: {
-    padding: 16
-  },
-  itemContainer: {
-    flexDirection: 'row',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    justifyContent: 'space-between'
-  },
-  rtlContainer: {
-    flexDirection: 'row-reverse'
-  },
-  reason: {
-    flex: 2,
-    fontSize: 16
-  },
-  rtlText: {
-    textAlign: 'right'
-  },
-  points: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#f44336'
-  },
-  date: {
-    flex: 2,
-    textAlign: 'right',
-    fontSize: 14,
-    color: '#666'
-  },
-  emptyText: {
-    textAlign: 'center',
-    marginTop: 32,
-    fontSize: 16,
-    color: '#666'
-  }
-});

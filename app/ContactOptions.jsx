@@ -1,9 +1,12 @@
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
-import { Linking, StyleSheet, Text, TouchableOpacity, View, I18nManager } from 'react-native';
+import { I18nManager, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useLocalization } from '../context/LocalizationContext';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 
 const ContactOptions = () => {
   const { t, language } = useLocalization();
+  const { colors } = useThemedStyles();
+  const styles = getStyles(colors);
   
   const EMAIL = 'support@recyclingapp.com';
   const PHONE = '+1234567890';
@@ -27,7 +30,7 @@ const ContactOptions = () => {
         ]} 
         onPress={() => Linking.openURL(`mailto:${EMAIL}`)}
       >
-        <MaterialIcons name="email" size={22} color="#388e3c" />
+        <MaterialIcons name="email" size={22} color={colors.primary} />
         <Text style={[
           styles.optionText,
           language === 'ar' && styles.rtlText
@@ -43,7 +46,7 @@ const ContactOptions = () => {
         ]} 
         onPress={() => Linking.openURL(`tel:${PHONE}`)}
       >
-        <FontAwesome name="phone" size={22} color="#388e3c" />
+        <FontAwesome name="phone" size={22} color={colors.primary} />
         <Text style={[
           styles.optionText,
           language === 'ar' && styles.rtlText
@@ -55,7 +58,7 @@ const ContactOptions = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     marginHorizontal: 16,
     marginBottom: 24,
@@ -68,11 +71,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 12,
     textAlign: I18nManager.isRTL ? 'right' : 'left',
+    color: colors.text,
   },
   option: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#e8f5e9',
+    backgroundColor: colors.primaryLight,
     borderRadius: 10,
     padding: 14,
     marginBottom: 10,
@@ -83,7 +87,7 @@ const styles = StyleSheet.create({
   optionText: {
     marginLeft: 12,
     fontSize: 16,
-    color: '#222',
+    color: colors.text,
     textAlign: I18nManager.isRTL ? 'right' : 'left',
   },
   rtlText: {

@@ -10,7 +10,8 @@ import { TopRecycledSection } from "../../components/sections";
 import { useAuth } from "../../context/AuthContext";
 import { useLocalization } from "../../context/LocalizationContext";
 import { useNotifications } from "../../context/NotificationContext";
-import { colors, spacing } from "../../styles/theme";
+import { useThemedStyles } from "../../hooks/useThemedStyles";
+import { spacing } from "../../styles/theme";
 import { scaleSize } from "../../utils/scale";
 
 const Index = () => {
@@ -19,6 +20,7 @@ const Index = () => {
   const { user, isLoggedIn, loading: authLoading } = useAuth();
   const { t, tRole } = useLocalization();
   const { unreadCount, refreshNotifications, isConnected } = useNotifications();
+  const { colors } = useThemedStyles();
   const refreshNotificationsRef = useRef(refreshNotifications);
 
   useEffect(() => {
@@ -30,11 +32,13 @@ const Index = () => {
     router.push("/notifications");
   };
 
+  const styles = getStyles(colors);
+
   return (
     <View style={styles.container}>
       <ErrorBoundary>
         <LinearGradient
-          colors={[colors.primary, colors.neutral]}
+          colors={colors.heroGradient}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[styles.heroSection, { paddingTop: insets.top + 20 }]}
@@ -58,7 +62,7 @@ const Index = () => {
                   style={[
                     styles.connectionDot,
                     {
-                      backgroundColor: isConnected ? "#10B981" : "#EF4444",
+                      backgroundColor: isConnected ? colors.success : colors.error,
                     },
                   ]}
                 />
@@ -108,7 +112,7 @@ const Index = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   lastSection: {
 
   },
@@ -138,7 +142,7 @@ const styles = StyleSheet.create({
     position: "relative",
     padding: scaleSize(spacing.sm),
     borderRadius: scaleSize(20),
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    backgroundColor: colors.notificationButtonBg,
   },
   connectionDot: {
     position: "absolute",

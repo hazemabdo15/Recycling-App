@@ -22,8 +22,8 @@ import { useAuth } from "../../context/AuthContext";
 import { useLocalization } from "../../context/LocalizationContext";
 import { useAllItems } from "../../hooks/useAPI";
 import { useCart } from "../../hooks/useCart";
+import { useThemedStyles } from "../../hooks/useThemedStyles";
 import { borderRadius, spacing, typography } from "../../styles";
-import { colors } from "../../styles/theme";
 import {
   CartMessageTypes,
   showCartMessage,
@@ -75,6 +75,8 @@ const Cart = () => {
   const insets = useSafeAreaInsets();
   const { user, isLoggedIn } = useAuth();
   const { t, tRole, currentLanguage } = useLocalization();
+  const { colors } = useThemedStyles();
+  const styles = getStyles(colors);
   const {
     cartItems,
     cartItemDetails,
@@ -911,7 +913,7 @@ const Cart = () => {
         </View>
       </LinearGradient>
       <View
-        style={[styles.contentContainer, { backgroundColor: colors.base100 }]}
+        style={[styles.contentContainer, { backgroundColor: colors.background }]}
       >
         <KeyboardAwareFlatList
           data={cartArray}
@@ -930,7 +932,7 @@ const Cart = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -993,7 +995,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: spacing.xl,
-    backgroundColor: colors.base100,
+    backgroundColor: colors.background,
   },
   emptyCartIconWrapper: {
     marginBottom: spacing.lg,
@@ -1012,7 +1014,7 @@ const styles = StyleSheet.create({
   },
   emptyCartSubtitle: {
     ...typography.subtitle,
-    color: colors.neutral,
+    color: colors.textSecondary,
     textAlign: "center",
     marginBottom: spacing.md,
   },
@@ -1045,17 +1047,19 @@ const styles = StyleSheet.create({
   cartCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.white,
+    backgroundColor: colors.cardBackground,
     marginHorizontal: scaleSize(spacing.xl),
     marginBottom: scaleSize(spacing.md),
     padding: scaleSize(spacing.lg),
     borderRadius: scaleSize(18),
-    shadowColor: colors.black,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: scaleSize(2) },
     shadowOpacity: 0.12,
     shadowRadius: scaleSize(6),
     elevation: 3,
     minHeight: scaleSize(100),
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   cartImageContainer: {
     width: scaleSize(64),
@@ -1063,7 +1067,7 @@ const styles = StyleSheet.create({
     borderRadius: scaleSize(14),
     overflow: "hidden",
     marginRight: scaleSize(spacing.lg),
-    backgroundColor: colors.base100,
+    backgroundColor: colors.cardBackground,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -1076,7 +1080,7 @@ const styles = StyleSheet.create({
     width: scaleSize(48),
     height: scaleSize(48),
     borderRadius: scaleSize(10),
-    backgroundColor: colors.base200,
+    backgroundColor: colors.border,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -1089,12 +1093,12 @@ const styles = StyleSheet.create({
     ...typography.subtitle,
     fontSize: scaleSize(17),
     fontWeight: "700",
-    color: colors.black,
+    color: colors.text,
     marginBottom: scaleSize(2),
   },
   cartUnit: {
     ...typography.caption,
-    color: colors.neutral,
+    color: colors.textSecondary,
     textTransform: "uppercase",
     fontWeight: "600",
     fontSize: scaleSize(13),
@@ -1110,11 +1114,11 @@ const styles = StyleSheet.create({
     width: scaleSize(32),
     height: scaleSize(32),
     borderRadius: scaleSize(16),
-    backgroundColor: colors.base100,
+    backgroundColor: colors.cardBackground,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: colors.base200,
+    borderColor: colors.border,
   },
   cartQtyText: {
     ...typography.title,
@@ -1131,11 +1135,11 @@ const styles = StyleSheet.create({
     width: scaleSize(32),
     height: scaleSize(32),
     borderRadius: scaleSize(16),
-    backgroundColor: colors.base100,
+    backgroundColor: colors.cardBackground,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: colors.base200,
+    borderColor: colors.border,
     zIndex: 1,
   },
   itemDetailsRow: {
@@ -1145,17 +1149,17 @@ const styles = StyleSheet.create({
   },
   filledContainer: {
     flex: 1,
-    backgroundColor: colors.base100,
+    backgroundColor: colors.cardBackground,
     paddingBottom: spacing.xxl + 16,
   },
   headerMerged: {
     paddingHorizontal: spacing.xl,
     paddingTop: 0,
     paddingBottom: spacing.md,
-    backgroundColor: colors.base100,
+    backgroundColor: colors.cardBackground,
     alignItems: "flex-start",
     borderBottomWidth: 1,
-    borderBottomColor: colors.base200,
+    borderBottomColor: colors.border,
   },
   headerRowMerged: {
     flexDirection: "row",
@@ -1172,12 +1176,12 @@ const styles = StyleSheet.create({
   clearCartBtn: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.base100,
+    backgroundColor: colors.cardBackground,
     borderRadius: borderRadius.md,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
     borderWidth: 1,
-    borderColor: colors.base200,
+    borderColor: colors.border,
   },
   clearCartText: {
     ...typography.caption,
@@ -1195,7 +1199,7 @@ const styles = StyleSheet.create({
   },
   headerSubtitleMerged: {
     ...typography.subtitle,
-    color: colors.neutral,
+    color: colors.textSecondary,
     fontSize: 16,
     marginBottom: 2,
   },

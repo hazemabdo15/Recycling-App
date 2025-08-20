@@ -1,8 +1,7 @@
-import { Modal, View, Text, TouchableOpacity, ScrollView, Image, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { formatDate, formatTime, getStatusBadgeStyle, getStatusText } from '../../utils/deliveryHelpers';
-import { colors } from '../../styles/theme';
+import { Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useLocalization } from '../../context/LocalizationContext';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 
 const getInitials = (name) => {
   if (!name) return '';
@@ -11,6 +10,8 @@ const getInitials = (name) => {
 
 export default function OrderDetailsModal({ visible, onClose, order }) {
   const { currentLanguage, t } = useLocalization();
+  const { colors } = useThemedStyles();
+  const styles = getOrderDetailsModalStyles(colors);
   if (!order) return null;
 
   const getLocalizedText = (textObject, fallback = '') => {
@@ -117,7 +118,8 @@ export default function OrderDetailsModal({ visible, onClose, order }) {
   );
 }
 
-const styles = StyleSheet.create({
+// Dynamic styles function for OrderDetailsModal
+const getOrderDetailsModalStyles = (colors) => StyleSheet.create({
   modalContainer: {
     flex: 1,
     backgroundColor: colors.background,
@@ -129,7 +131,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
   },
   modalTitle: {
     fontSize: 18,
@@ -144,11 +146,11 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   detailCard: {
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -214,7 +216,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
   },
   avatarPlaceholder: {
-    backgroundColor: '#e5e7eb',
+    backgroundColor: colors.surfaceVariant,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -244,7 +246,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   addressContainer: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: colors.surfaceVariant,
     padding: 12,
     borderRadius: 8,
     borderLeftWidth: 4,
@@ -263,12 +265,12 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   itemContainer: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: colors.surfaceVariant,
     padding: 12,
     borderRadius: 8,
     marginBottom: 8,
     borderLeftWidth: 3,
-    borderLeftColor: '#22c55e',
+    borderLeftColor: colors.success,
   },
   itemHeader: {
     flexDirection: 'row',

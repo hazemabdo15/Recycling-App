@@ -2,8 +2,9 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { scaleSize } from "../../utils/scale";
 import { useLocalization } from "../../context/LocalizationContext";
+import { useThemedStyles } from "../../hooks/useThemedStyles";
+import { scaleSize } from "../../utils/scale";
 
 let Animated,
   useAnimatedStyle,
@@ -42,16 +43,6 @@ try {
   };
 }
 
-const colors = {
-  primary: "#0E9F6E",
-  secondary: "#8BC34A",
-  accent: "#FFC107",
-  white: "#ffffff",
-  background: "#FAFAFA",
-  text: "#171717",
-  textSecondary: "#607D8B",
-};
-
 const spacing = {
   xs: 4,
   sm: 8,
@@ -69,8 +60,60 @@ const borderRadius = {
   xl: 32,
 };
 
+// Dynamic styles function for EarnPointsCard
+const getEarnPointsCardStyles = (colors) => StyleSheet.create({
+  earnPointsCard: {
+    marginVertical: scaleSize(spacing.xs),
+    borderRadius: scaleSize(borderRadius.lg),
+    overflow: "hidden",
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: scaleSize(4) },
+    shadowOpacity: 0.15,
+    shadowRadius: scaleSize(12),
+    elevation: 8,
+    backgroundColor: colors.earnPointsCardBg,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  cardGradient: {
+    padding: scaleSize(spacing.lg),
+  },
+  cardContent: {
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  factHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: scaleSize(spacing.xs),
+  },
+  factIcon: {
+    width: scaleSize(40),
+    height: scaleSize(40),
+    borderRadius: scaleSize(20),
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: scaleSize(spacing.md),
+    backgroundColor: colors.primary,
+  },
+  factTitle: {
+    fontSize: scaleSize(18),
+    fontWeight: "bold",
+    color: colors.text,
+  },
+  factText: {
+    fontSize: scaleSize(15),
+    color: colors.textSecondary,
+    textAlign: "center",
+    fontWeight: "500",
+  },
+});
+
 const EarnPointsCard = () => {
   const { t } = useLocalization();
+  const { colors } = useThemedStyles();
+  const styles = getEarnPointsCardStyles(colors);
   const cardScale = useSharedValue(0.9);
   const cardOpacity = useSharedValue(0);
   const iconScale = useSharedValue(0.8);
@@ -144,7 +187,7 @@ const EarnPointsCard = () => {
   return (
     <Animated.View style={[styles.earnPointsCard, cardAnimatedStyle]}>
       <LinearGradient
-        colors={[colors.white, "#F8FFFE"]}
+        colors={[colors.earnPointsCardBg, colors.cardBackground]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.cardGradient}
@@ -167,52 +210,5 @@ const EarnPointsCard = () => {
     </Animated.View>
   );
 };
-
-const styles = StyleSheet.create({
-  earnPointsCard: {
-    marginVertical: scaleSize(spacing.xs),
-    borderRadius: scaleSize(borderRadius.lg),
-    overflow: "hidden",
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: scaleSize(4) },
-    shadowOpacity: 0.15,
-    shadowRadius: scaleSize(12),
-    elevation: 8,
-    backgroundColor: colors.white,
-  },
-  cardGradient: {
-    padding: scaleSize(spacing.lg),
-  },
-  cardContent: {
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  factHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: scaleSize(spacing.md),
-  },
-  factIcon: {
-    width: scaleSize(40),
-    height: scaleSize(40),
-    borderRadius: scaleSize(20),
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: scaleSize(spacing.md),
-    backgroundColor: colors.primary,
-  },
-  factTitle: {
-    fontSize: scaleSize(18),
-    fontWeight: "bold",
-    color: colors.text,
-  },
-  factText: {
-    fontSize: scaleSize(15),
-    color: colors.textSecondary,
-    textAlign: "center",
-    fontWeight: "500",
-  },
-});
 
 export default EarnPointsCard;

@@ -2,12 +2,59 @@
 import { memo, useCallback } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useCategories } from '../../hooks/useAPI';
-import { colors } from '../../styles/theme';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { scaleSize } from '../../utils/scale';
 import { CategoryCard } from '../cards';
 import { CategoriesGridSkeleton } from '../ui';
+
+const getCategoriesSectionStyles = (colors) => StyleSheet.create({
+    categoriesSection: {
+        marginBottom: scaleSize(30),
+    },
+    categoriesHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: scaleSize(20),
+    },
+    categoriesTitle: {
+        fontSize: scaleSize(18),
+        fontWeight: '700',
+        color: colors.primary,
+        letterSpacing: -0.5,
+        lineHeight: scaleSize(34),
+        marginBottom: scaleSize(8),
+        textTransform: 'uppercase',
+        includeFontPadding: false,
+    },
+    viewAllText: {
+        fontSize: scaleSize(16),
+        color: colors.primary,
+        fontWeight: '700',
+        lineHeight: scaleSize(34),
+    },
+    categoriesGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+    },
+    loadingText: {
+        fontSize: scaleSize(16),
+        color: colors.textSecondary,
+        textAlign: 'center',
+        marginTop: scaleSize(20),
+    },
+    errorText: {
+        fontSize: scaleSize(16),
+        color: colors.error,
+        textAlign: 'center',
+        marginTop: scaleSize(20),
+    },
+});
 const CategoriesSection = memo(() => {
     const { categories, loading, error } = useCategories();
+    const { colors } = useThemedStyles();
+    const styles = getCategoriesSectionStyles(colors);
 
     const handleCategoryPress = useCallback((category) => {
         router.push({
@@ -72,48 +119,5 @@ const CategoriesSection = memo(() => {
 });
 
 CategoriesSection.displayName = 'CategoriesSection';
-const styles = StyleSheet.create({
-    categoriesSection: {
-        marginBottom: scaleSize(30),
-    },
-    categoriesHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: scaleSize(20),
-    },
-    categoriesTitle: {
-        fontSize: scaleSize(18),
-        fontWeight: '700',
-        color: colors.primary,
-        letterSpacing: -0.5,
-        lineHeight: scaleSize(34),
-        marginBottom: scaleSize(8),
-        textTransform: 'uppercase',
-        includeFontPadding: false,
-    },
-    viewAllText: {
-        fontSize: scaleSize(16),
-        color: colors.primary,
-        fontWeight: '700',
-        lineHeight: scaleSize(34),
-    },
-    categoriesGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
-    },
-    loadingText: {
-        fontSize: scaleSize(16),
-        color: '#666',
-        textAlign: 'center',
-        marginTop: scaleSize(20),
-    },
-    errorText: {
-        fontSize: scaleSize(16),
-        color: '#F44336',
-        textAlign: 'center',
-        marginTop: scaleSize(20),
-    },
-});
+
 export default CategoriesSection;

@@ -4,19 +4,20 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
-    Alert,
-    FlatList,
-    RefreshControl,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  FlatList,
+  RefreshControl,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocalization } from "../context/LocalizationContext";
 import { useNotifications } from "../context/NotificationContext";
-import { colors, spacing } from "../styles/theme";
+import { useThemedStyles } from "../hooks/useThemedStyles";
+import { spacing } from "../styles/theme";
 import { scaleSize } from '../utils/scale';
 import { extractNameFromMultilingual } from '../utils/translationHelpers';
 
@@ -33,6 +34,8 @@ const NotificationsScreen = () => {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { t, currentLanguage } = useLocalization();
+  const { colors } = useThemedStyles();
+  const styles = getStyles(colors);
   const [isRefreshing, setIsRefreshing] = useState(false);
   
   const {
@@ -209,8 +212,8 @@ const NotificationsScreen = () => {
             styles.notificationItem,
             {
               backgroundColor: isRead
-                ? colors.background
-                : colors.primary + "08",
+                ? colors.cardBackground
+                : colors.primaryLight + "15",
               borderLeftColor: notificationColor,
               borderLeftWidth: isRead ? 0 : 4,
             },
@@ -238,7 +241,7 @@ const NotificationsScreen = () => {
                   {!isRead && <View style={styles.unreadDot} />}
                 </View>
                 
-                <Text style={[styles.notificationBody, { color: isRead ? colors.textTertiary : colors.textSecondary }]}>
+                <Text style={[styles.notificationBody, { color: isRead ? colors.textSecondary : colors.textSecondary }]}>
                   {body}
                 </Text>
                 
@@ -381,7 +384,7 @@ const NotificationsScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -487,7 +490,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   unreadBanner: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.cardBackground,
     marginHorizontal: scaleSize(spacing.md),
     marginTop: scaleSize(spacing.md),
     paddingHorizontal: scaleSize(spacing.lg),
@@ -504,6 +507,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: scaleSize(3.84),
     elevation: 3,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   unreadBannerText: {
     fontSize: scaleSize(14),
@@ -532,7 +537,7 @@ const styles = StyleSheet.create({
   notificationWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.white,
+    backgroundColor: colors.cardBackground,
     borderRadius: scaleSize(12),
     shadowColor: colors.shadow,
     shadowOffset: {
@@ -542,6 +547,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: scaleSize(3.84),
     elevation: 3,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   notificationItem: {
     flex: 1,
@@ -601,7 +608,7 @@ const styles = StyleSheet.create({
   },
   notificationDate: {
     fontSize: scaleSize(12),
-    color: colors.textTertiary,
+    color: colors.textSecondary,
     fontWeight: "500",
   },
   deleteButton: {
@@ -619,7 +626,7 @@ const styles = StyleSheet.create({
     width: scaleSize(100),
     height: scaleSize(100),
     borderRadius: scaleSize(50),
-    backgroundColor: colors.base100,
+    backgroundColor: colors.helpCardBg,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: scaleSize(spacing.lg),

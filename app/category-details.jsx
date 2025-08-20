@@ -18,8 +18,9 @@ import { useAuth } from "../context/AuthContext";
 import { useLocalization } from "../context/LocalizationContext";
 import { useCategoryItems } from "../hooks/useAPI";
 import { useCart } from "../hooks/useCart";
-import { layoutStyles } from "../styles/components/commonStyles";
-import { colors, spacing } from "../styles/theme";
+import { useThemedStyles } from "../hooks/useThemedStyles";
+import { getLayoutStyles } from "../styles/components/commonStyles";
+import { spacing } from "../styles/theme";
 import {
   CartMessageTypes,
   showCartMessage,
@@ -42,6 +43,8 @@ const CategoryDetails = () => {
   const { user } = useAuth();
   const { tRole, currentLanguage } = useLocalization();
   const { t } = useTranslation(); // Add translation hook
+  const { colors, isDarkMode } = useThemedStyles();
+  const layoutStyles = getLayoutStyles(isDarkMode);
 
   const [pendingOperations, setPendingOperations] = useState({});
   
@@ -538,13 +541,13 @@ const CategoryDetails = () => {
           />
         </TouchableOpacity>
 
-        <Text style={heroStyles.heroTitle}>{translatedCategoryName}</Text>
+        <Text style={[heroStyles.heroTitle, { color: colors.white }]}>{translatedCategoryName}</Text>
 
         <View style={heroStyles.spacer} />
       </View>
 
       <View style={heroStyles.heroContent}>
-        <Text style={heroStyles.heroSubtitle}>
+        <Text style={[heroStyles.heroSubtitle, { color: colors.white }]}>
           {t("categories.subtitle", {
             categoryName: translatedCategoryName.toLowerCase(),
           })}
@@ -557,8 +560,8 @@ const CategoryDetails = () => {
               size={20}
               color={colors.white}
             />
-            <Text style={heroStyles.statValue}>{totalItems}</Text>
-            <Text style={heroStyles.statLabel}>{t("common.items")}</Text>
+            <Text style={[heroStyles.statValue, { color: colors.white }]}>{totalItems}</Text>
+            <Text style={[heroStyles.statLabel, { color: colors.white }]}>{t("common.items")}</Text>
           </View>
 
           {!isBuyer(user) && (
@@ -568,8 +571,8 @@ const CategoryDetails = () => {
                 size={20}
                 color={colors.white}
               />
-              <Text style={heroStyles.statValue}>{totalPoints}</Text>
-              <Text style={heroStyles.statLabel}>{t("common.points")}</Text>
+              <Text style={[heroStyles.statValue, { color: colors.white }]}>{totalPoints}</Text>
+              <Text style={[heroStyles.statLabel, { color: colors.white }]}>{t("common.points")}</Text>
             </View>
           )}
 
@@ -579,8 +582,8 @@ const CategoryDetails = () => {
               size={20}
               color={colors.white}
             />
-            <Text style={heroStyles.statValue}>{totalValue} {t("units.egp")}</Text>
-            <Text style={heroStyles.statLabel}>
+            <Text style={[heroStyles.statValue, { color: colors.white }]}>{totalValue} {t("units.egp")}</Text>
+            <Text style={[heroStyles.statLabel, { color: colors.white }]}>
               {tRole("money", user?.role)}
             </Text>
           </View>
@@ -679,7 +682,7 @@ const heroStyles = {
     paddingBottom: scaleSize(spacing.lg),
     borderBottomLeftRadius: scaleSize(32),
     borderBottomRightRadius: scaleSize(32),
-    shadowColor: colors.primary,
+    shadowColor: "#10B981",
     shadowOffset: { width: 0, height: scaleSize(8) },
     shadowOpacity: 0.3,
     shadowRadius: scaleSize(12),
@@ -699,7 +702,7 @@ const heroStyles = {
   heroTitle: {
     fontSize: scaleSize(24),
     fontWeight: "bold",
-    color: colors.white,
+    color: "#FFFFFF",
     textAlign: "center",
     letterSpacing: -0.5,
     flex: 1,
@@ -713,7 +716,7 @@ const heroStyles = {
   },
   heroSubtitle: {
     fontSize: scaleSize(14),
-    color: colors.white,
+    color: "#FFFFFF",
     textAlign: "center",
     opacity: 0.85,
     lineHeight: scaleSize(22),
@@ -736,13 +739,13 @@ const heroStyles = {
   statValue: {
     fontSize: scaleSize(18),
     fontWeight: "bold",
-    color: colors.white,
+    color: "#FFFFFF",
     marginTop: scaleSize(4),
     marginBottom: scaleSize(2),
   },
   statLabel: {
     fontSize: scaleSize(12),
-    color: colors.white,
+    color: "#FFFFFF",
     opacity: 0.8,
     textAlign: "center",
   },

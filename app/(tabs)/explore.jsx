@@ -8,11 +8,68 @@ import { CategoriesGrid } from "../../components/sections";
 import { SearchBar } from "../../components/ui";
 import { useAuth } from "../../context/AuthContext";
 import { useLocalization } from "../../context/LocalizationContext";
-import { colors, spacing } from "../../styles/theme";
+import { useThemedStyles } from "../../hooks/useThemedStyles";
+import { spacing } from "../../styles/theme";
 import { scaleSize } from "../../utils/scale";
+
+const getExploreStyles = (colors) => StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  heroSection: {
+    paddingHorizontal: scaleSize(spacing.lg),
+    paddingBottom: scaleSize(spacing.lg),
+    borderBottomLeftRadius: scaleSize(32),
+    borderBottomRightRadius: scaleSize(32),
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: scaleSize(4) },
+    shadowOpacity: 0.18,
+    shadowRadius: scaleSize(16),
+    elevation: 12,
+    backgroundColor: colors.primary + "10",
+  },
+  heroSectionBg: {
+    borderBottomLeftRadius: scaleSize(32),
+    borderBottomRightRadius: scaleSize(32),
+    overflow: "hidden",
+  },
+  heroContent: {
+    alignItems: "center",
+    paddingTop: scaleSize(spacing.sm),
+  },
+  heroTitle: {
+    fontSize: scaleSize(24),
+    fontWeight: "bold",
+    color: colors.white,
+    textAlign: "center",
+    marginBottom: scaleSize(spacing.sm),
+    letterSpacing: -0.5,
+  },
+  heroSubtitle: {
+    fontSize: scaleSize(14),
+    color: colors.white,
+    textAlign: "center",
+    opacity: 0.85,
+    lineHeight: scaleSize(22),
+    maxWidth: scaleSize(280),
+  },
+  contentContainer: {
+    flex: 1,
+    paddingTop: 0,
+    marginTop: scaleSize(spacing.lg),
+  },
+  searchBarWrapper: {
+    marginTop: scaleSize(spacing.md),
+    marginBottom: 0,
+    zIndex: 11,
+  },
+});
 
 const Explore = () => {
   const { t, tRole } = useLocalization();
+  const { colors } = useThemedStyles();
+  const styles = getExploreStyles(colors);
   const [searchText, setSearchText] = useState("");
   const [filteredCount, setFilteredCount] = useState(0);
   const [showItemsMode, setShowItemsMode] = useState(false);
@@ -105,58 +162,5 @@ const Explore = () => {
     </View>
   );
 };
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  heroSection: {
-    paddingHorizontal: scaleSize(spacing.lg),
-    paddingBottom: scaleSize(spacing.lg),
-    borderBottomLeftRadius: scaleSize(32),
-    borderBottomRightRadius: scaleSize(32),
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: scaleSize(4) },
-    shadowOpacity: 0.18,
-    shadowRadius: scaleSize(16),
-    elevation: 12,
-    backgroundColor: colors.primary + "10",
-  },
-  heroSectionBg: {
-    borderBottomLeftRadius: scaleSize(32),
-    borderBottomRightRadius: scaleSize(32),
-    overflow: "hidden",
-  },
-  heroContent: {
-    alignItems: "center",
-    paddingTop: scaleSize(spacing.sm),
-  },
-  heroTitle: {
-    fontSize: scaleSize(24),
-    fontWeight: "bold",
-    color: colors.white,
-    textAlign: "center",
-    marginBottom: scaleSize(spacing.sm),
-    letterSpacing: -0.5,
-  },
-  heroSubtitle: {
-    fontSize: scaleSize(14),
-    color: colors.white,
-    textAlign: "center",
-    opacity: 0.85,
-    lineHeight: scaleSize(22),
-    maxWidth: scaleSize(280),
-  },
-  contentContainer: {
-    flex: 1,
-    paddingTop: 0,
-    marginTop: scaleSize(spacing.lg),
-  },
-  searchBarWrapper: {
-    marginTop: scaleSize(spacing.md),
-    marginBottom: 0,
-    zIndex: 11,
-  },
-});
 
 export default Explore;

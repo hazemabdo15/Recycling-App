@@ -14,8 +14,8 @@ import {
 
 import { useAuth } from '../../context/AuthContext';
 import { useLocalization } from '../../context/LocalizationContext';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { borderRadius, spacing, typography } from '../../styles';
-import { colors } from '../../styles/theme';
 
 import { t } from 'i18next';
 import { CITIES } from '../../utils/deliveryFees';
@@ -30,6 +30,8 @@ const AREAS = {
 const AddressPhase = ({ onNext, onAddressSelect, onBack, pickupWorkflow }) => {
   const { isLoggedIn, user } = useAuth();
   const { tRole } = useLocalization();
+  const { colors } = useThemedStyles();
+  const styles = getAddressPhaseStyles(colors);
   const hasFetchedAddresses = useRef(false);
   const [showForm, setShowForm] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
@@ -403,16 +405,17 @@ const AddressPhase = ({ onNext, onAddressSelect, onBack, pickupWorkflow }) => {
   );
 };
 
-const styles = StyleSheet.create({
+// Dynamic styles function for AddressPhase
+const getAddressPhaseStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.base100,
+    backgroundColor: colors.background,
   },
   header: {
     padding: spacing.xl,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: colors.base200,
+    borderBottomColor: colors.border,
   },
   title: {
     ...typography.title,
@@ -443,7 +446,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     ...typography.body,
-    color: colors.neutral,
+    color: colors.textSecondary,
   },
   emptyContainer: {
     flex: 1,
@@ -461,7 +464,7 @@ const styles = StyleSheet.create({
   },
   emptySubtitle: {
     ...typography.body,
-    color: colors.neutral,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   listContainer: {
@@ -469,15 +472,17 @@ const styles = StyleSheet.create({
   },
   addressCard: {
     flexDirection: 'row',
-    backgroundColor: colors.white,
+    backgroundColor: colors.addressCardBg,
     padding: spacing.lg,
     borderRadius: borderRadius.lg,
     marginBottom: spacing.md,
-    shadowColor: colors.black,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   addressInfo: {
     flex: 1,
@@ -485,12 +490,12 @@ const styles = StyleSheet.create({
   addressTitle: {
     ...typography.subtitle,
     fontWeight: 'bold',
-    color: colors.black,
+    color: colors.text,
     marginBottom: spacing.xs,
   },
   addressDetails: {
     ...typography.body,
-    color: colors.neutral,
+    color: colors.textSecondary,
     marginBottom: spacing.xs,
   },
   addressLandmark: {
@@ -506,13 +511,13 @@ const styles = StyleSheet.create({
   actionButton: {
     padding: spacing.sm,
     borderRadius: borderRadius.md,
-    backgroundColor: colors.base100,
+    backgroundColor: colors.base200,
   },
   footer: {
     padding: spacing.xl,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: colors.base200,
+    borderTopColor: colors.border,
   },
   backButton: {
     paddingVertical: spacing.lg,
@@ -548,23 +553,23 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   pickerContainer: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.addressCardBg,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: colors.base200,
+    borderColor: colors.border,
   },
   picker: {
     height: 50,
   },
   textInput: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.addressCardBg,
     borderWidth: 1,
-    borderColor: colors.base200,
+    borderColor: colors.border,
     borderRadius: borderRadius.lg,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     ...typography.body,
-    color: colors.black,
+    color: colors.text,
   },
   row: {
     flexDirection: 'row',
@@ -580,14 +585,14 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.xl,
     borderRadius: borderRadius.lg,
-    backgroundColor: colors.base100,
+    backgroundColor: colors.base200,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: colors.base200,
+    borderColor: colors.border,
   },
   cancelButtonText: {
     ...typography.subtitle,
-    color: colors.neutral,
+    color: colors.textSecondary,
     fontWeight: '600',
   },
   saveButton: {

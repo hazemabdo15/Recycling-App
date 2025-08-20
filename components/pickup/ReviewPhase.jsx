@@ -15,8 +15,8 @@ import { useCart } from "../../hooks/useCart";
 import { usePayment } from "../../hooks/usePayment";
 // import { orderService } from "../../services/api/orders"; // Removed - using unified flow
 
+import { useThemedStyles } from "../../hooks/useThemedStyles";
 import { borderRadius, spacing, typography } from "../../styles";
-import { colors } from "../../styles/theme";
 import { normalizeItemData } from "../../utils/cartUtils";
 import { isBuyer, isBuyer as isBuyerRole, shouldShowDeliveryFee, shouldShowTotalValue } from "../../utils/roleUtils";
 import { extractNameFromMultilingual, getTranslatedName } from "../../utils/translationHelpers";
@@ -35,6 +35,8 @@ const ReviewPhase = ({
   accessToken,
 }) => {
   const { t, currentLanguage } = useLocalization();
+  const { colors } = useThemedStyles();
+  const styles = getReviewPhaseStyles(colors);
   const [allItems, setAllItems] = useState([]);
   const [itemsLoaded, setItemsLoaded] = useState(false);
   const [cartItemsDisplay, setCartItemsDisplay] = useState([]);
@@ -214,7 +216,7 @@ const ReviewPhase = ({
 
       setCartItemsDisplay(displayItems);
     }
-  }, [itemsLoaded, cartItems, allItems, getTranslatedItemName]);
+  }, [itemsLoaded, cartItems, allItems, getTranslatedItemName, t]);
 
   const handlePaymentFlow = async (cartItemsArray, userData) => {
     if (selectedPaymentMethod === 'cash') {
@@ -717,17 +719,18 @@ const ReviewPhase = ({
   );
 };
 
-const styles = StyleSheet.create({
+// Dynamic styles function for ReviewPhase
+const getReviewPhaseStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.base100,
+    backgroundColor: colors.background,
   },
 
   header: {
     padding: spacing.xl,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: colors.base200,
+    borderBottomColor: colors.border,
   },
   title: {
     ...typography.title,
@@ -738,7 +741,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     ...typography.body,
-    color: colors.neutral,
+    color: colors.textSecondary,
     lineHeight: 20,
   },
 
@@ -750,7 +753,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     ...typography.body,
-    color: colors.neutral,
+    color: colors.textSecondary,
   },
 
   content: {
@@ -779,7 +782,7 @@ const styles = StyleSheet.create({
   },
   warningBannerSubtitle: {
     ...typography.body,
-    color: colors.neutral,
+    color: colors.textSecondary,
     fontSize: 13,
     lineHeight: 18,
   },
@@ -801,11 +804,11 @@ const styles = StyleSheet.create({
   },
 
   itemCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     marginHorizontal: spacing.xl,
     marginBottom: spacing.md,
     borderRadius: borderRadius.lg,
-    shadowColor: colors.black,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -820,13 +823,13 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: borderRadius.md,
-    backgroundColor: colors.base100,
+    backgroundColor: colors.base200,
   },
   placeholderImage: {
     width: 60,
     height: 60,
     borderRadius: borderRadius.md,
-    backgroundColor: colors.base100,
+    backgroundColor: colors.base200,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -843,7 +846,7 @@ const styles = StyleSheet.create({
   itemName: {
     ...typography.subtitle,
     fontWeight: "bold",
-    color: colors.black,
+    color: colors.text,
     flex: 1,
   },
   warningBadge: {
@@ -868,13 +871,13 @@ const styles = StyleSheet.create({
   },
   itemUnit: {
     ...typography.body,
-    color: colors.neutral,
+    color: colors.textSecondary,
     fontSize: 13,
   },
   separator: {
     width: 1,
     height: 12,
-    backgroundColor: colors.base200,
+    backgroundColor: colors.border,
     marginHorizontal: spacing.sm,
   },
   pointsRow: {
@@ -909,15 +912,17 @@ const styles = StyleSheet.create({
   },
 
   summaryCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.itemCardBg,
     marginHorizontal: spacing.xl,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
-    shadowColor: colors.black,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   summaryRow: {
     flexDirection: "row",
@@ -925,17 +930,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: colors.base100,
+    borderBottomColor: colors.border,
   },
   summaryLabel: {
     ...typography.body,
-    color: colors.neutral,
+    color: colors.textSecondary,
     fontWeight: "500",
   },
   summaryValue: {
     ...typography.subtitle,
     fontWeight: "bold",
-    color: colors.black,
+    color: colors.text,
   },
   pointsContainer: {
     flexDirection: "row",
@@ -948,7 +953,7 @@ const styles = StyleSheet.create({
   totalRow: {
     borderBottomWidth: 0,
     borderTopWidth: 1,
-    borderTopColor: colors.base200,
+    borderTopColor: colors.border,
     paddingTop: spacing.md,
     marginTop: spacing.sm,
   },
@@ -971,12 +976,12 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   paymentMethodCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     borderWidth: 2,
-    borderColor: colors.base200,
-    shadowColor: colors.black,
+    borderColor: colors.border,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -997,7 +1002,7 @@ const styles = StyleSheet.create({
   paymentMethodTitle: {
     ...typography.subtitle,
     fontWeight: "bold",
-    color: colors.black,
+    color: colors.text,
     marginBottom: spacing.xs,
   },
   selectedPaymentMethodTitle: {
@@ -1005,7 +1010,7 @@ const styles = StyleSheet.create({
   },
   paymentMethodDescription: {
     ...typography.body,
-    color: colors.neutral,
+    color: colors.textSecondary,
     fontSize: 13,
   },
   radioButton: {
@@ -1013,7 +1018,7 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: colors.base300,
+    borderColor: colors.border,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -1027,9 +1032,9 @@ const styles = StyleSheet.create({
   footer: {
     flexDirection: "row",
     padding: spacing.xl,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: colors.base200,
+    borderTopColor: colors.border,
     gap: spacing.md,
   },
   backButton: {
@@ -1040,7 +1045,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.error,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: colors.base200,
+    borderColor: colors.border,
   },
   backButtonText: {
     ...typography.subtitle,
@@ -1064,7 +1069,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   disabledButton: {
-    backgroundColor: colors.base300,
+    backgroundColor: colors.disabled,
   },
 });
 

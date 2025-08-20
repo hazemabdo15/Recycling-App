@@ -1,15 +1,16 @@
 import { useState } from 'react';
-import { 
-  LayoutAnimation, 
-  Platform, 
-  StyleSheet, 
-  Text, 
-  TouchableOpacity, 
-  UIManager, 
-  View,
-  I18nManager 
+import {
+    I18nManager,
+    LayoutAnimation,
+    Platform,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    UIManager,
+    View
 } from 'react-native';
 import { useLocalization } from '../context/LocalizationContext';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 
 // Enable layout animations on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -18,6 +19,8 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 const FAQList = () => {
   const { t, language } = useLocalization();
+  const { colors } = useThemedStyles();
+  const styles = getStyles(colors);
   const [openIndex, setOpenIndex] = useState(null);
 
   const toggle = (idx) => {
@@ -77,7 +80,7 @@ const FAQList = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     marginHorizontal: 16,
     marginBottom: 24,
@@ -90,16 +93,19 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 12,
     textAlign: I18nManager.isRTL ? 'right' : 'left',
+    color: colors.text,
   },
   card: {
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.helpCardBg,
     borderRadius: 12,
     padding: 16,
     marginBottom: 10,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: colors.helpBorderColor,
   },
   rtlCard: {
     textAlign: 'right'
@@ -108,6 +114,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     textAlign: I18nManager.isRTL ? 'right' : 'left',
+    color: colors.text,
   },
   rtlText: {
     textAlign: 'right',
@@ -116,7 +123,7 @@ const styles = StyleSheet.create({
   answer: {
     marginTop: 8,
     fontSize: 15,
-    color: '#555',
+    color: colors.textSecondary,
     textAlign: I18nManager.isRTL ? 'right' : 'left',
   },
 });

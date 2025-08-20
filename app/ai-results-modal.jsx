@@ -18,7 +18,8 @@ import { useLocalization } from '../context/LocalizationContext';
 import itemsData from '../data/items.json'; // Import items data for Arabic name lookup
 import { useAllItems } from '../hooks/useAPI';
 import { useCart } from '../hooks/useCart';
-import { borderRadius, colors, spacing, typography } from '../styles/theme';
+import { useThemedStyles } from '../hooks/useThemedStyles';
+import { borderRadius, spacing, typography } from '../styles/theme';
 import { isBuyer } from '../utils/roleUtils';
 import { extractNameFromMultilingual, getTranslatedName } from '../utils/translationHelpers';
 
@@ -51,6 +52,7 @@ const DISMISS_THRESHOLD = 150;
 export default function AIResultsModal() {
   const { user } = useAuth();
   const { t, currentLanguage } = useLocalization();
+  const { colors } = useThemedStyles();
   const { handleAddToCart, cartItems } = useCart(user);
   const { items: allItems } = useAllItems();
   const params = useLocalSearchParams();
@@ -217,6 +219,7 @@ export default function AIResultsModal() {
   }, [safeMaterials]);
 
   const hasMaterials = materials && materials.length > 0;
+  const styles = getAIResultsModalStyles(colors);
 
   const dismissModal = useCallback(() => {
     translateY.value = withTiming(MODAL_HEIGHT, { duration: 300 });
@@ -783,7 +786,7 @@ export default function AIResultsModal() {
   );
 }
 
-const styles = StyleSheet.create({
+const getAIResultsModalStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -853,13 +856,13 @@ const styles = StyleSheet.create({
     ...typography.title,
     fontSize: 24,
     fontWeight: '800',
-    color: colors.black,
+    color: colors.textPrimary,
     marginBottom: spacing.xs,
     textAlign: 'center',
   },
   subtitle: {
     ...typography.subtitle,
-    color: colors.neutral,
+    color: colors.textSecondary,
     textAlign: 'center',
     fontSize: 16,
     fontWeight: '500',
@@ -874,12 +877,12 @@ const styles = StyleSheet.create({
     ...typography.subtitle,
     fontSize: 14,
     fontWeight: '600',
-    color: colors.neutral,
+    color: colors.textSecondary,
     marginBottom: spacing.xs,
   },
   transcriptionText: {
     ...typography.body,
-    color: colors.black,
+    color: colors.textPrimary,
     fontStyle: 'italic',
   },
   materialsContainer: {
@@ -896,7 +899,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
   },
   materialItem: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.xl,
     padding: spacing.lg,
     marginBottom: spacing.lg,
@@ -911,11 +914,11 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 3,
     borderWidth: 1,
-    borderColor: colors.base200,
+    borderColor: colors.border,
   },
 
   materialItemUnavailableRefined: {
-    borderColor: colors.base200,
+    borderColor: colors.border,
     backgroundColor: colors.base100,
     opacity: 1,
   },
@@ -925,7 +928,7 @@ const styles = StyleSheet.create({
   },
   materialUnitUnavailableRefined: {
     backgroundColor: colors.base200,
-    color: colors.neutral + '80',
+    color: colors.textSecondary + '80',
     opacity: 0.7,
   },
   availabilityIndicatorUnavailableRefined: {
@@ -934,7 +937,7 @@ const styles = StyleSheet.create({
   },
   matchInfoUnavailableRefined: {
     backgroundColor: colors.base200,
-    color: colors.neutral + '80',
+    color: colors.textSecondary + '80',
     opacity: 0.7,
   },
   unavailableLabelRefined: {
@@ -969,7 +972,7 @@ const styles = StyleSheet.create({
     ...typography.subtitle,
     fontSize: 18,
     fontWeight: '700',
-    color: colors.black,
+    color: colors.textPrimary,
     letterSpacing: 0.3,
     lineHeight: 24,
 
@@ -986,7 +989,7 @@ const styles = StyleSheet.create({
   materialUnit: {
     ...typography.caption,
     fontSize: 12,
-    color: colors.neutral,
+    color: colors.textSecondary,
     textTransform: 'uppercase',
     fontWeight: '600',
     backgroundColor: colors.base100,
@@ -1011,7 +1014,7 @@ const styles = StyleSheet.create({
   matchInfo: {
     ...typography.caption,
     fontSize: 10,
-    color: colors.neutral,
+    color: colors.textSecondary,
     fontWeight: '500',
     backgroundColor: colors.base200,
     paddingHorizontal: spacing.xs,
@@ -1034,7 +1037,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingTop: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: colors.base200,
+    borderTopColor: colors.border,
   },
   quantityLabel: {
     flex: 1,
@@ -1042,7 +1045,7 @@ const styles = StyleSheet.create({
   quantityLabelText: {
     ...typography.caption,
     fontSize: 14,
-    color: colors.neutral,
+    color: colors.textSecondary,
     fontWeight: '600',
   },
   quantityControls: {
@@ -1070,7 +1073,7 @@ const styles = StyleSheet.create({
     ...typography.title,
     fontSize: 18,
     fontWeight: '700',
-    color: colors.black,
+    color: colors.textPrimary,
     marginHorizontal: spacing.lg,
     minWidth: 50,
     textAlign: 'center',
@@ -1102,13 +1105,13 @@ const styles = StyleSheet.create({
     ...typography.title,
     fontSize: 20,
     fontWeight: '600',
-    color: colors.neutral,
+    color: colors.textSecondary,
     marginTop: spacing.lg,
     marginBottom: spacing.xs,
   },
   emptySubtitle: {
     ...typography.subtitle,
-    color: colors.neutral,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   actionsContainer: {
@@ -1120,7 +1123,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderWidth: 2,
     borderColor: colors.primary,
     borderRadius: borderRadius.lg,
@@ -1206,7 +1209,7 @@ const styles = StyleSheet.create({
   materialItemValidationError: {
     borderColor: colors.warning + '60',
     borderWidth: 1,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
 
     shadowColor: 'transparent',
     shadowOffset: { width: 0, height: 0 },
@@ -1252,7 +1255,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   addToCartButtonTextDisabled: {
-    color: colors.neutral,
+    color: colors.textSecondary,
     fontWeight: '600',
   },
 });

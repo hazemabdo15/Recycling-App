@@ -1,8 +1,8 @@
 ﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useRef } from 'react';
 import { Dimensions, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { quantityControlsStyles } from '../../styles/components/categoryStyles';
-import { colors } from '../../styles/theme';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { getQuantityControlsStyles } from '../../styles/components/categoryStyles';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const scale = (size) => (SCREEN_WIDTH / 375) * size;
@@ -22,6 +22,8 @@ const QuantityControls = ({
     maxQuantity, // stock quantity for validation
     itemName = 'Item', // item name for toast messages
 }) => {
+    const { colors, isDarkMode } = useThemedStyles();
+    const quantityControlsStyles = getQuantityControlsStyles(isDarkMode);
     const [inputValue, setInputValue] = React.useState(quantity?.toString() || '');
     const inputRef = useRef(null);
     const lastValidValue = useRef(quantity?.toString() || '');
@@ -185,7 +187,7 @@ const QuantityControls = ({
                     />
                     <Text style={[
                         quantityControlsStyles.unitText,
-                        { fontSize: scale(11), marginTop: scale(-2), color: colors.primary, marginLeft: 2 },
+                        { fontSize: scale(11), marginTop: scale(-2), color: colors.primary, marginLeft: 6, paddingRight: 8, paddingLeft: 4 },
                     ]}>
                         {unitDisplay}
                     </Text>

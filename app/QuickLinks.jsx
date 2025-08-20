@@ -1,9 +1,12 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Linking, StyleSheet, Text, TouchableOpacity, View, I18nManager } from 'react-native';
+import { I18nManager, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useLocalization } from '../context/LocalizationContext';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 
 const QuickLinks = () => {
   const { t, language } = useLocalization();
+  const { colors } = useThemedStyles();
+  const styles = getStyles(colors);
 
   const LINKS = [
     { 
@@ -44,7 +47,7 @@ const QuickLinks = () => {
           ]} 
           onPress={() => Linking.openURL(link.url)}
         >
-          <MaterialCommunityIcons name={link.icon} size={22} color="#1976d2" />
+          <MaterialCommunityIcons name={link.icon} size={22} color={colors.info} />
           <Text style={[
             styles.linkText,
             language === 'ar' && styles.rtlText
@@ -57,7 +60,7 @@ const QuickLinks = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     marginHorizontal: 16,
     marginBottom: 24,
@@ -70,14 +73,17 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 12,
     textAlign: I18nManager.isRTL ? 'right' : 'left',
+    color: colors.text,
   },
   link: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#e3f2fd',
+    backgroundColor: colors.infoLight,
     borderRadius: 10,
     padding: 14,
     marginBottom: 10,
+    borderWidth: 1,
+    borderColor: colors.infoBorder,
   },
   rtlLink: {
     flexDirection: 'row-reverse'
@@ -86,7 +92,7 @@ const styles = StyleSheet.create({
     marginLeft: I18nManager.isRTL ? 0 : 12,
     marginRight: I18nManager.isRTL ? 12 : 0,
     fontSize: 16,
-    color: '#1976d2',
+    color: colors.info,
     textAlign: I18nManager.isRTL ? 'right' : 'left',
   },
   rtlText: {

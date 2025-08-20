@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View, I18nManager } from 'react-native';
+import { Alert, I18nManager, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useLocalization } from '../context/LocalizationContext';
-import { colors } from '../styles';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 
 const FeedbackForm = () => {
   const { t, language } = useLocalization();
+  const { colors } = useThemedStyles();
+  const styles = getStyles(colors);
   const [feedback, setFeedback] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -65,7 +67,7 @@ const FeedbackForm = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     marginHorizontal: 16,
     marginBottom: 32,
@@ -78,17 +80,19 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 12,
     textAlign: I18nManager.isRTL ? 'right' : 'left',
+    color: colors.text,
   },
   input: {
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.helpCardBg,
     borderRadius: 10,
     padding: 14,
     minHeight: 80,
     fontSize: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#c8e6c9',
+    borderColor: colors.helpBorderColor,
     writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
+    color: colors.text,
   },
   rtlText: {
     textAlign: I18nManager.isRTL ? 'right' : 'left',

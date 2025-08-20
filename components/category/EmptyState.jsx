@@ -1,7 +1,7 @@
 ﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { emptyStateStyles } from '../../styles/components/categoryStyles';
-import { colors } from '../../styles/theme';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { getEmptyStateStyles } from '../../styles/components/categoryStyles';
 const EmptyState = ({
     categoryName,
     onAddItem,
@@ -9,6 +9,9 @@ const EmptyState = ({
     title = "No Items Yet",
     showAddButton = true
 }) => {
+    const { colors, isDarkMode } = useThemedStyles();
+    const emptyStateStyles = getEmptyStateStyles(isDarkMode);
+    
     return (
         <View style={emptyStateStyles.emptyState}>
             <MaterialCommunityIcons

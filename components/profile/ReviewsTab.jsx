@@ -1,16 +1,46 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  Alert,
   ActivityIndicator,
+  Alert,
+  FlatList,
   StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
+
+// Dynamic styles function for ReviewsTab
+const getReviewsTabStyles = (colors) => StyleSheet.create({
+  container: { padding: 16 },
+  header: { fontSize: 18, fontWeight: '600', marginBottom: 12, color: colors.text },
+  emptyContainer: { alignItems: 'center', paddingVertical: 32 },
+  emptyText: { fontSize: 16, color: colors.textSecondary, marginTop: 8 },
+  emptySubText: { fontSize: 14, color: colors.textTertiary, textAlign: 'center', marginTop: 4 },
+  reviewCard: {
+    backgroundColor: colors.infoLight,
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.infoBorder,
+    marginBottom: 12,
+  },
+  reviewHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
+  orderText: { fontWeight: '500', fontSize: 15, color: colors.text },
+  courierText: { fontSize: 13, color: colors.textSecondary },
+  dateRow: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
+  dateText: { fontSize: 12, color: colors.textSecondary, marginLeft: 4 },
+  actionsRow: { flexDirection: 'row', alignItems: 'center' },
+  iconButton: { padding: 4 },
+  starsRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
+  starsText: { fontSize: 12, color: colors.textSecondary, marginLeft: 4 },
+  commentText: { fontSize: 14, color: colors.text, fontStyle: 'italic' },
+});
 
 export default function ReviewsTab({ userReviews, onEditReview, onDeleteReview }) {
+  const { colors } = useThemedStyles();
+  const styles = getReviewsTabStyles(colors);
   const [deletingReviewId, setDeletingReviewId] = useState(null);
 
   const createMockOrderFromReview = (review) => {
@@ -134,29 +164,3 @@ export default function ReviewsTab({ userReviews, onEditReview, onDeleteReview }
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { padding: 16 },
-  header: { fontSize: 18, fontWeight: '600', marginBottom: 12, color: '#1f2937' },
-  emptyContainer: { alignItems: 'center', paddingVertical: 32 },
-  emptyText: { fontSize: 16, color: '#6b7280', marginTop: 8 },
-  emptySubText: { fontSize: 14, color: '#9ca3af', textAlign: 'center', marginTop: 4 },
-  reviewCard: {
-    backgroundColor: '#f0f9ff',
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#bfdbfe',
-    marginBottom: 12,
-  },
-  reviewHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  orderText: { fontWeight: '500', fontSize: 15, color: '#1f2937' },
-  courierText: { fontSize: 13, color: '#4b5563' },
-  dateRow: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
-  dateText: { fontSize: 12, color: '#6b7280', marginLeft: 4 },
-  actionsRow: { flexDirection: 'row', alignItems: 'center' },
-  iconButton: { padding: 4 },
-  starsRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
-  starsText: { fontSize: 12, color: '#4b5563', marginLeft: 4 },
-  commentText: { fontSize: 14, color: '#374151', fontStyle: 'italic' },
-});

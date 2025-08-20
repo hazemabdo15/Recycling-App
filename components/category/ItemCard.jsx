@@ -1,7 +1,7 @@
 ﻿import { StyleSheet, Text, View } from "react-native";
 import { useLocalization } from "../../context/LocalizationContext";
-import { itemCardStyles } from "../../styles/components/categoryStyles";
-import { colors } from "../../styles/theme";
+import { useThemedStyles } from "../../hooks/useThemedStyles";
+import { getItemCardStyles } from "../../styles/components/categoryStyles";
 import { getUnitDisplay } from "../../utils/cartUtils";
 import { isBuyer } from "../../utils/roleUtils";
 import { isMaxStockReached, isOutOfStock } from "../../utils/stockUtils";
@@ -24,6 +24,9 @@ const ItemCard = ({
   user = null,
 }) => {
   const { t, isRTL } = useLocalization();
+  const { colors, isDarkMode } = useThemedStyles();
+  const itemCardStyles = getItemCardStyles(isDarkMode);
+  const styles = getItemCardComponentStyles(colors);
   const unitDisplay = getUnitDisplay(item.measurement_unit);
   
   // Debug RTL state
@@ -65,7 +68,7 @@ const ItemCard = ({
       {/* Show badge with stock quantity only if in stock, hide if out of stock */}
       {showStockLogic && !outOfStock && (
         <View style={isRTL ? styles.stockBadgeRTL_Custom : styles.stockBadgeLTR_Custom}>
-          <Text style={styles.stockBadgeText}>
+          <Text style={[styles.stockBadgeText, { color: colors.primary }]}>
             {typeof item.quantity === "number"
               ? `${t('categories.itemCard.stock')}: ${item.quantity} ${unitDisplay}`
               : `${t('categories.itemCard.stock')}: N/A`}
@@ -107,7 +110,8 @@ const ItemCard = ({
   );
 };
 
-const styles = StyleSheet.create({
+// Dynamic styles function for ItemCard component
+const getItemCardComponentStyles = (colors) => StyleSheet.create({
   // ==========================================
   // RTL STYLES - TWEAK THESE FOR RTL LAYOUT
   // ==========================================
@@ -130,7 +134,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     transform: [{ rotate: '-45deg' }], // Change rotation angle here
     borderRadius: 10,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
     shadowRadius: 2,
@@ -141,7 +145,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 10,
     left: 250,
-    backgroundColor: colors.base200 || "#F3F4F6",
+    backgroundColor: colors.itemCardBg,
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -149,7 +153,7 @@ const styles = StyleSheet.create({
     minWidth: 60,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
     shadowRadius: 2,
@@ -178,7 +182,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     transform: [{ rotate: '45deg' }],
     borderRadius: 10,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
     shadowRadius: 2,
@@ -189,7 +193,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 10,
     right: 10, // Positioned on the right side for LTR
-    backgroundColor: colors.base200 || "#F3F4F6",
+    backgroundColor: colors.itemCardBg,
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -197,7 +201,7 @@ const styles = StyleSheet.create({
     minWidth: 60,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
     shadowRadius: 2,
@@ -219,7 +223,6 @@ const styles = StyleSheet.create({
     alignSelf: 'left',
   },
   stockBadgeText: {
-    color: colors.primary || "#0E9F6E",
     fontWeight: "600",
     fontSize: 12,
     letterSpacing: 0.2,

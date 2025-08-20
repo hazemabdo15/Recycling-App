@@ -9,9 +9,9 @@ import ProfileCard from "../../components/profile/ProfileCard";
 import ProfileMenu from "../../components/profile/ProfileMenu";
 import { useAuth } from "../../context/AuthContext";
 import { useLocalization } from "../../context/LocalizationContext";
+import { useThemedStyles } from "../../hooks/useThemedStyles";
 import { useUserPoints } from "../../hooks/useUserPoints";
 import apiService from "../../services/api/apiService";
-import { colors } from "../../styles";
 import { isCustomer } from "../../utils/roleUtils";
 import { scaleSize } from "../../utils/scale";
 
@@ -27,6 +27,8 @@ function ProfileContent() {
   const insets = useSafeAreaInsets();
   const { user, logout, isLoggedIn } = useAuth();
   const { t } = useLocalization();
+  const { colors } = useThemedStyles();
+  const styles = getStyles(colors);
   const router = useRouter();
   // const [allOrders, setAllOrders] = useState([]); // No longer used
   const [avatarUri, setAvatarUri] = useState(null);
@@ -237,8 +239,8 @@ function ProfileContent() {
   const handleRedeemHistory = () => router.push("/redeem-history");
 
   return (
-  <View style={{ flex: 1, backgroundColor: "#f0fdf4"}}>
-      <StatusBar style="dark" backgroundColor="#ffffff" />
+  <View style={{ flex: 1, backgroundColor: colors.primarySurface}}>
+      <StatusBar style={colors.statusBarStyle} backgroundColor={colors.background} />
       <ProfileCard
         user={{
           ...user,
@@ -288,10 +290,10 @@ function ProfileContent() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     padding: scaleSize(35),
-    backgroundColor: "#f8fafc", // very light neutral background
+    backgroundColor: colors.background,
     paddingBottom: scaleSize(40),
     flexGrow: 1,
   },
@@ -302,33 +304,33 @@ const styles = StyleSheet.create({
     marginBottom: scaleSize(16),
     gap: scaleSize(12),
   },
-  userName: { fontSize: scaleSize(20), fontWeight: "600", color: "#1e293b" },
-  userInfo: { fontSize: scaleSize(14), color: "#64748b" },
-  userInfoSmall: { fontSize: scaleSize(12), color: "#a7f3d0" },
+  userName: { fontSize: scaleSize(20), fontWeight: "600", color: colors.text },
+  userInfo: { fontSize: scaleSize(14), color: colors.textSecondary },
+  userInfoSmall: { fontSize: scaleSize(12), color: colors.accent },
   statsContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginVertical: scaleSize(16),
   },
   statBox: {
-    backgroundColor: "#f1f5f9", // very light gray
+    backgroundColor: colors.cardBackground,
     padding: scaleSize(12),
     borderRadius: scaleSize(12),
     alignItems: "center",
     flex: 1,
     marginHorizontal: scaleSize(4),
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: colors.border,
   },
-  statValue: { fontSize: scaleSize(20), fontWeight: "700", color: "#059669" },
-  statLabel: { fontSize: scaleSize(12), color: "#64748b" },
+  statValue: { fontSize: scaleSize(20), fontWeight: "700", color: colors.primary },
+  statLabel: { fontSize: scaleSize(12), color: colors.textSecondary },
   tabsContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     borderBottomWidth: 1,
-    borderColor: "#bbf7d0",
+    borderColor: colors.primaryLight,
     marginBottom: scaleSize(16),
-    backgroundColor: "#f0fdf4",
+    backgroundColor: colors.primarySurface,
     borderRadius: scaleSize(12),
     marginHorizontal: scaleSize(4),
     paddingHorizontal: scaleSize(4),
@@ -347,8 +349,8 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: scaleSize(10),
     borderBottomWidth: 3,
-    borderColor: "#059669",
-    backgroundColor: "#bbf7d0",
+    borderColor: colors.primary,
+    backgroundColor: colors.primaryLight,
     borderRadius: scaleSize(8),
     alignItems: "center",
     justifyContent: "center",
@@ -356,7 +358,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   tabText: {
-    color: "#059669",
+    color: colors.primary,
     fontWeight: "500",
     fontSize: scaleSize(15),
     textAlign: "center",
@@ -367,7 +369,7 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
   },
   activeTabText: {
-    color: "#065f46",
+    color: colors.primaryDark,
     fontWeight: "700",
     fontSize: scaleSize(15),
     textAlign: "center",
@@ -379,14 +381,14 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     textAlign: "center",
-    color: "#64748b",
+    color: colors.textSecondary,
     marginTop: scaleSize(20),
     fontWeight: "600",
   },
   emptyStateContainer: { alignItems: "center", marginTop: scaleSize(20) },
   emptySubtext: {
     textAlign: "center",
-    color: "#94a3b8",
+    color: colors.textTertiary,
     marginTop: scaleSize(8),
     fontSize: scaleSize(14),
   },
@@ -394,56 +396,56 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: scaleSize(30),
     paddingHorizontal: scaleSize(20),
-    backgroundColor: "#f1f5f9",
+    backgroundColor: colors.cardBackground,
     borderRadius: scaleSize(12),
     padding: scaleSize(20),
     marginBottom: scaleSize(20),
     borderWidth: 1,
-    borderColor: "#e0e7ef",
+    borderColor: colors.border,
   },
   buyerMessageTitle: {
     textAlign: "center",
-    color: "#334155",
+    color: colors.text,
     fontSize: scaleSize(16),
     fontWeight: "600",
     marginBottom: scaleSize(8),
   },
   buyerMessageSubtitle: {
     textAlign: "center",
-    color: "#64748b",
+    color: colors.textSecondary,
     fontSize: scaleSize(14),
     marginBottom: scaleSize(16),
   },
   startShoppingButton: {
-    backgroundColor: "#a7f3d0",
+    backgroundColor: colors.primaryLight,
     paddingHorizontal: scaleSize(20),
     paddingVertical: scaleSize(10),
     borderRadius: scaleSize(8),
     marginTop: scaleSize(8),
   },
   startShoppingButtonText: {
-    color: "#059669",
+    color: colors.primary,
     fontSize: scaleSize(14),
     fontWeight: "600",
   },
   orderCard: {
-    backgroundColor: "#fff",
+    backgroundColor: colors.surface,
     padding: scaleSize(12),
     borderRadius: scaleSize(12),
     marginBottom: scaleSize(12),
     borderWidth: 1,
-    borderColor: "#e2e8f0",
-    shadowColor: "#64748b",
+    borderColor: colors.border,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 4,
   },
-  orderText: { fontSize: scaleSize(12), color: "#64748b" },
-  orderStatus: { fontSize: scaleSize(14), fontWeight: "600", color: "#059669" },
+  orderText: { fontSize: scaleSize(12), color: colors.textSecondary },
+  orderStatus: { fontSize: scaleSize(14), fontWeight: "600", color: colors.primary },
   orderItem: {
     flexDirection: "row",
     gap: scaleSize(10),
-    backgroundColor: "#f8fafc",
+    backgroundColor: colors.cardBackground,
     padding: scaleSize(8),
     borderRadius: scaleSize(8),
     marginVertical: scaleSize(4),
@@ -453,34 +455,34 @@ const styles = StyleSheet.create({
     height: scaleSize(64),
     borderRadius: scaleSize(6),
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: colors.border,
   },
   itemDetails: { flex: 1 },
-  itemName: { fontWeight: "600", color: "#334155" },
-  itemInfo: { fontSize: scaleSize(12), color: "#64748b" },
+  itemName: { fontWeight: "600", color: colors.text },
+  itemInfo: { fontSize: scaleSize(12), color: colors.textSecondary },
   addressText: {
     fontSize: scaleSize(12),
-    color: "#64748b",
+    color: colors.textSecondary,
     marginTop: scaleSize(6),
   },
   cancelButton: {
     marginTop: scaleSize(12),
     marginBottom: scaleSize(8),
-    backgroundColor: "#fee2e2",
+    backgroundColor: colors.errorLight,
     padding: scaleSize(12),
     borderRadius: scaleSize(6),
     alignSelf: "stretch",
     borderWidth: 1,
-    borderColor: "#fecaca",
+    borderColor: colors.errorBorder,
   },
   cancelButtonText: {
-    color: "#dc2626",
+    color: colors.error,
     textAlign: "center",
     fontSize: scaleSize(12),
     fontWeight: "700",
   },
   guestContainer: {
-    backgroundColor: "#f8fafc", // match main container
+    backgroundColor: colors.background,
     paddingHorizontal: scaleSize(30),
     paddingVertical: scaleSize(10),
     paddingBottom: scaleSize(40),
@@ -495,12 +497,12 @@ const styles = StyleSheet.create({
     width: scaleSize(80),
     height: scaleSize(80),
     borderRadius: scaleSize(40),
-    backgroundColor: "#e0f2fe",
+    backgroundColor: colors.infoLight,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: scaleSize(24),
     borderWidth: 2,
-    borderColor: "#bae6fd",
+    borderColor: colors.infoBorder,
   },
   guestIconText: {
     fontSize: scaleSize(40),
@@ -508,34 +510,34 @@ const styles = StyleSheet.create({
   guestTitle: {
     fontSize: scaleSize(28),
     fontWeight: "700",
-    color: "#334155",
+    color: colors.text,
     marginBottom: scaleSize(8),
     textAlign: "center",
   },
   guestSubtitle: {
     fontSize: scaleSize(16),
-    color: "#64748b",
+    color: colors.textSecondary,
     marginBottom: scaleSize(32),
     textAlign: "center",
   },
   benefitsContainer: {
     width: "100%",
-    backgroundColor: "#f1f5f9",
+    backgroundColor: colors.cardBackground,
     borderRadius: scaleSize(16),
     padding: scaleSize(24),
     marginBottom: scaleSize(32),
     elevation: 2,
-    shadowColor: "#64748b",
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: scaleSize(2) },
     shadowOpacity: 0.06,
     shadowRadius: scaleSize(4),
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: colors.border,
   },
   benefitsTitle: {
     fontSize: scaleSize(18),
     fontWeight: "600",
-    color: "#334155",
+    color: colors.text,
     marginBottom: scaleSize(16),
     textAlign: "center",
   },
@@ -552,7 +554,7 @@ const styles = StyleSheet.create({
   },
   benefitText: {
     fontSize: scaleSize(15),
-    color: "#64748b",
+    color: colors.textSecondary,
     flex: 1,
   },
   guestActions: {
@@ -561,32 +563,32 @@ const styles = StyleSheet.create({
     marginBottom: scaleSize(24),
   },
   loginButton: {
-    backgroundColor: "#34d399",
+    backgroundColor: colors.secondary,
     paddingVertical: scaleSize(16),
     paddingHorizontal: scaleSize(32),
     borderRadius: scaleSize(12),
     elevation: 2,
-    shadowColor: "#a7f3d0",
+    shadowColor: colors.primaryLight,
     shadowOffset: { width: 0, height: scaleSize(2) },
     shadowOpacity: 0.08,
     shadowRadius: scaleSize(4),
   },
   loginButtonText: {
-    color: "#065f46",
+    color: colors.primaryDark,
     fontSize: scaleSize(16),
     fontWeight: "600",
     textAlign: "center",
   },
   signupButton: {
-    backgroundColor: "#e0f2fe",
+    backgroundColor: colors.infoLight,
     paddingVertical: scaleSize(16),
     paddingHorizontal: scaleSize(32),
     borderRadius: scaleSize(12),
     borderWidth: 2,
-    borderColor: "#bae6fd",
+    borderColor: colors.infoBorder,
   },
   signupButtonText: {
-    color: "#0284c7",
+    color: colors.info,
     fontSize: scaleSize(16),
     fontWeight: "600",
     textAlign: "center",
@@ -595,12 +597,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingTop: scaleSize(16),
     borderTopWidth: 1,
-    borderTopColor: "#e5e7eb",
+    borderTopColor: colors.border,
     width: "100%",
   },
   guestBrowseText: {
     fontSize: scaleSize(14),
-    color: "#64748b",
+    color: colors.textSecondary,
     marginBottom: scaleSize(12),
     textAlign: "center",
   },
@@ -609,7 +611,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: scaleSize(16),
   },
   browseButtonText: {
-    color: "#059669",
+    color: colors.primary,
     fontSize: scaleSize(14),
     fontWeight: "600",
     textDecorationLine: "underline",
@@ -620,16 +622,16 @@ const styles = StyleSheet.create({
   },
   menuIcon: {
     fontSize: scaleSize(20),
-    color: "#64748b",
+    color: colors.textSecondary,
   },
   menuDropdown: {
     position: "absolute",
     top: scaleSize(35),
     right: 0,
-    backgroundColor: "#fff",
+    backgroundColor: colors.surface,
     borderRadius: scaleSize(6),
     elevation: 4,
-    shadowColor: "#64748b",
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: scaleSize(2) },
     shadowOpacity: 0.08,
     shadowRadius: scaleSize(4),
@@ -638,14 +640,14 @@ const styles = StyleSheet.create({
     zIndex: 1000,
     minWidth: scaleSize(80),
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: colors.border,
   },
   menuItemButton: {
     paddingVertical: scaleSize(8),
   },
   menuItem: {
     fontSize: scaleSize(14),
-    color: "#dc2626",
+    color: colors.error,
     fontWeight: "700",
   },
   redeemButton: {
@@ -655,13 +657,13 @@ const styles = StyleSheet.create({
     marginVertical: scaleSize(16),
     alignItems: "center",
     elevation: 2,
-    shadowColor: "#a7f3d0",
+    shadowColor: colors.primaryLight,
     shadowOffset: { width: 0, height: scaleSize(2) },
     shadowOpacity: 0.08,
     shadowRadius: scaleSize(4),
   },
   redeemButtonText: {
-    color: "#059669",
+    color: colors.primaryDark,
     fontSize: scaleSize(16),
     fontWeight: "700",
   },

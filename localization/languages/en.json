@@ -833,6 +833,11 @@
       "error": "Failed to submit feedback."
     }
   },
+  "darkMode":{
+    "title-dark": "Dark Mode",
+    "title-light": "Light Mode",
+    "description": "Change app appearance"
+  },
   "earnPointsCard": {
     "title": "Did You Know?",
     "fact_0": "Recycling one aluminum can saves enough energy to run a TV for 3 hours!",
