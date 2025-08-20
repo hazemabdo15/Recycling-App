@@ -4,16 +4,16 @@ import * as Print from "expo-print";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Alert,
-  FlatList,
-  Image,
-  PanResponder,
-  RefreshControl,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    Alert,
+    FlatList,
+    Image,
+    PanResponder,
+    RefreshControl,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Loader } from "../components/common";
@@ -21,9 +21,9 @@ import { showGlobalToast } from "../components/common/GlobalToast";
 import ReviewManager from "../components/profile/ReviewManager";
 import { useAuth } from "../context/AuthContext";
 import { useLocalization } from "../context/LocalizationContext";
+import { useThemedStyles } from "../hooks/useThemedStyles";
 import i18next from "../localization/i18n";
 import { orderService } from "../services/api/orders";
-import { colors } from "../styles";
 import { generateOrderReportHTML } from "../utils/orderReportPDF";
 import { isBuyer, isCustomer } from "../utils/roleUtils";
 import { scaleSize } from "../utils/scale";
@@ -35,6 +35,8 @@ export default function RecyclingHistory() {
   const { user, isLoggedIn } = useAuth();
   const { tRole, t, currentLanguage } = useLocalization();
   const router = useRouter();
+  const { colors } = useThemedStyles();
+  const styles = getStyles(colors);
   const [allOrders, setAllOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("incoming");
@@ -423,10 +425,10 @@ export default function RecyclingHistory() {
   return (
     <ReviewManager>
       {({ openReviewModal, userReviews, isReviewsLoading, deleteReview, isDeleting }) => (
-        <SafeAreaView style={{ flex: 1, backgroundColor: "#F7F8FA" }} {...panResponder.panHandlers}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} {...panResponder.panHandlers}>
           {/* Modern Card Header */}
           <LinearGradient
-            colors={[colors.primary, colors.neutral]}
+            colors={colors.heroGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={[
@@ -530,7 +532,7 @@ export default function RecyclingHistory() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   heroSection: {
     borderBottomLeftRadius: scaleSize(32),
     borderBottomRightRadius: scaleSize(32),
@@ -622,13 +624,13 @@ const styles = StyleSheet.create({
     borderRadius: scaleSize(18),
     padding: scaleSize(16),
     marginBottom: scaleSize(14),
-    shadowColor: "#000",
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 4,
     borderWidth: 1,
-    borderColor: "#f1f5f9",
+    borderColor: colors.base200,
   },
   orderCardHeader: {
     flexDirection: "row",
@@ -653,7 +655,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 6,
-    backgroundColor: "#f8fafc",
+    backgroundColor: colors.base100,
     borderRadius: scaleSize(10),
     padding: scaleSize(8),
   },
@@ -662,7 +664,7 @@ const styles = StyleSheet.create({
     height: scaleSize(40),
     borderRadius: scaleSize(10),
     marginRight: scaleSize(10),
-    backgroundColor: "#e5e7eb",
+    backgroundColor: colors.base200,
   },
   itemDetailsModern: {
     flex: 1,
@@ -675,12 +677,12 @@ const styles = StyleSheet.create({
   },
   itemInfoModern: {
     fontSize: scaleSize(11),
-    color: colors.gray,
+    color: colors.textSecondary,
     marginBottom: 1,
   },
   addressTextModern: {
     fontSize: scaleSize(11),
-    color: colors.gray,
+    color: colors.textSecondary,
     marginTop: 6,
     marginBottom: 2,
   },
@@ -760,7 +762,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   emptyTextModern: {
-    color: colors.gray,
+    color: colors.textSecondary,
     fontSize: scaleSize(15),
     fontWeight: "600",
     marginTop: 2,

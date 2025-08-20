@@ -100,7 +100,6 @@ export const getItemImageStyles = (isDarkMode = false) => {
         pointsBadge: {
             position: 'absolute',
             top: -8,
-            right: spacing.md - 8,
             backgroundColor: colors.primary,
             borderRadius: borderRadius.sm,
             flexDirection: 'row',

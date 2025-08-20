@@ -2,22 +2,25 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import {
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalization } from '../context/LocalizationContext';
-import { colors, spacing } from '../styles/theme';
+import { useThemedStyles } from '../hooks/useThemedStyles';
+import { spacing } from '../styles/theme';
 import { scaleSize } from '../utils/scale';
 
 export default function LanguageSettings() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { t, currentLanguage, changeLanguage, isRTL } = useLocalization();
+  const { colors } = useThemedStyles();
+  const styles = getStyles(colors);
 
   const languages = [
     { code: 'en', name: 'English', nativeName: 'English' },
@@ -34,7 +37,7 @@ export default function LanguageSettings() {
     <SafeAreaView style={styles.container}>
       {/* Hero Section with Gradient */}
       <LinearGradient
-        colors={[colors.primary, colors.neutral]}
+        colors={colors.heroGradient}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[
@@ -119,7 +122,7 @@ export default function LanguageSettings() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

@@ -23,29 +23,29 @@ export const lightColors = {
   disabled: "#9CA3AF",
 };
 
-// Dark theme colors (new)
+// Dark theme colors (new) - Enhanced for better contrast
 export const darkColors = {
-  primary: "#48ae6fff",
-  secondary: "#57b141ff",
-  accent: "#FBBF24",
-  neutral: "#94A3B8",
-  base50: "#0F172A",
-  base100: "#1E293B",
-  base200: "#334155",
-  base300: "#475569",
-  base400: "#64748B",
-  white: "#1E293B",
-  black: "#F8FAFC",
-  error: "#F87171",
-  warning: "#FBBF24",
-  success: "#34D399",
-  info: "#60A5FA",
-  background: "#0F172A",
-  text: "#F8FAFC",
-  textSecondary: "#94A3B8",
-  textTertiary: "#64748B",
+  primary: "#22c55e", // Brighter green for better visibility
+  secondary: "#65a30d", // Enhanced green
+  accent: "#fbbf24", // Bright yellow
+  neutral: "#94a3b8",
+  base50: "#0f172a", // Very dark blue-gray
+  base100: "#1e293b", // Dark blue-gray
+  base200: "#334155", // Medium dark blue-gray
+  base300: "#475569", // Medium blue-gray
+  base400: "#64748b", // Light blue-gray
+  white: "#1e293b", // Card backgrounds in dark mode
+  black: "#f8fafc", // Text color in dark mode
+  error: "#f87171", // Bright red
+  warning: "#fbbf24", // Bright yellow
+  success: "#22c55e", // Bright green
+  info: "#60a5fa", // Bright blue
+  background: "#0f172a", // Main background
+  text: "#f8fafc", // Primary text
+  textSecondary: "#cbd5e1", // Secondary text - brighter for better contrast
+  textTertiary: "#94a3b8", // Tertiary text
   shadow: "#000000",
-  disabled: "#64748B",
+  disabled: "#64748b",
 };
 
 // Function to get colors based on theme
@@ -94,8 +94,8 @@ export const getColors = (isDarkMode = false) => {
     
     // Modal specific colors
     modalOverlay: isDarkMode 
-      ? 'rgba(0, 0, 0, 0.95)' 
-      : 'rgba(0, 0, 0, 0.9)',
+      ? 'rgba(0, 0, 0, 0.85)' 
+      : 'rgba(0, 0, 0, 0.7)',
     modalButtonBg: isDarkMode 
       ? 'rgba(55, 65, 81, 0.8)' 
       : 'rgba(0, 0, 0, 0.5)',
@@ -104,8 +104,23 @@ export const getColors = (isDarkMode = false) => {
       : 'rgba(255, 255, 255, 0.1)',
     modalText: isDarkMode ? baseColors.white : 'white',
     modalSubText: isDarkMode 
-      ? 'rgba(209, 213, 219, 0.8)' 
+      ? 'rgba(203, 213, 225, 0.9)' 
       : 'rgba(255, 255, 255, 0.7)',
+    
+    // Achievement specific colors
+    achievementCardBg: isDarkMode ? baseColors.base100 : baseColors.white,
+    achievementCompletedBorder: isDarkMode ? baseColors.success : '#10b981',
+    achievementIconBg: isDarkMode 
+      ? [baseColors.base200, baseColors.base300] 
+      : ['#e5e7eb', '#f3f4f6'],
+    achievementIconCompleted: isDarkMode 
+      ? [baseColors.success, '#16a34a'] 
+      : ['#10b981', '#34d399'],
+    
+    // Help & Support specific colors
+    helpCardBg: isDarkMode ? baseColors.base100 : baseColors.white,
+    helpSectionBg: isDarkMode ? baseColors.base50 : '#f8fafc',
+    helpBorderColor: isDarkMode ? baseColors.base300 : '#e2e8f0',
     
     // Home screen specific colors
     heroGradient: [baseColors.primary, baseColors.neutral],

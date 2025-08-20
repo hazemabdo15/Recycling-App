@@ -19,6 +19,7 @@ import TierCard from '../components/achievements/TierCard';
 import Loader from '../components/common/Loader';
 import { useAuth } from '../context/AuthContext';
 import { useLocalization } from '../context/LocalizationContext';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useUserPoints } from '../hooks/useUserPoints';
 import {
   achievementMilestones,
@@ -36,6 +37,8 @@ import {
 const AchievementsScreen = () => {
   const { user, isLoggedIn } = useAuth();
   const { t, isRTL } = useLocalization();
+  const { colors } = useThemedStyles();
+  const styles = getStyles(colors);
   const [selectedTier, setSelectedTier] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -142,13 +145,13 @@ const AchievementsScreen = () => {
         isRTL && styles.achievementItemRTL
       ]}>
         <LinearGradient
-          colors={isCompleted ? ['#10B981', '#34D399'] : ['#E5E7EB', '#F3F4F6']}
+          colors={isCompleted ? [colors.success, colors.success] : [colors.base200, colors.base100]}
           style={[styles.achievementIcon, isRTL && styles.achievementIconRTL]}
         >
           <MaterialCommunityIcons
             name={item.icon}
             size={24}
-            color={isCompleted ? 'white' : '#9CA3AF'}
+            color={isCompleted ? 'white' : colors.textTertiary}
           />
         </LinearGradient>
         <View style={[styles.achievementInfo, isRTL && styles.achievementInfoRTL]}>
@@ -375,25 +378,27 @@ const AchievementsScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: colors.background,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: colors.background,
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    backgroundColor: colors.background,
   },
   errorText: {
     fontSize: 18,
-    color: '#6B7280',
+    color: colors.textSecondary,
     marginBottom: 20,
     textAlign: 'center',
   },
@@ -401,11 +406,11 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     paddingHorizontal: 20,
     paddingVertical: 10,
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    backgroundColor: colors.primaryLight,
     borderRadius: 8,
   },
   backButtonText: {
-    color: '#10B981',
+    color: colors.primary,
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
@@ -492,12 +497,12 @@ const styles = StyleSheet.create({
   },
   statCard: {
     width: '48%',
-    backgroundColor: 'white',
+    backgroundColor: colors.white,
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
     marginBottom: 12,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -509,13 +514,13 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#111827',
+    color: colors.text,
     marginTop: 8,
     textAlign: 'center',
   },
   statLabel: {
     fontSize: 12,
-    color: '#6B7280',
+    color: colors.textSecondary,
     marginTop: 4,
     textAlign: 'center',
   },
@@ -525,17 +530,17 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#111827',
+    color: colors.text,
     marginBottom: 16,
   },
   achievementItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'white',
+    backgroundColor: colors.white,
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -549,7 +554,7 @@ const styles = StyleSheet.create({
   },
   completedAchievement: {
     borderLeftWidth: 4,
-    borderLeftColor: '#10B981',
+    borderLeftColor: colors.success,
   },
   achievementIcon: {
     width: 48,
@@ -572,40 +577,40 @@ const styles = StyleSheet.create({
   achievementName: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#111827',
+    color: colors.text,
   },
   achievementDescription: {
     fontSize: 14,
-    color: '#6B7280',
+    color: colors.textSecondary,
     marginTop: 4,
   },
   achievementPoints: {
     fontSize: 12,
-    color: '#10B981',
+    color: colors.success,
     fontWeight: '600',
     marginTop: 4,
   },
   lockedText: {
-    color: '#9CA3AF',
+    color: colors.textTertiary,
   },
   checkIconRTL: {
     marginRight: 12,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: colors.modalOverlay,
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: colors.white,
     borderRadius: 20,
     padding: 20,
     margin: 20,
     maxWidth: 350,
     width: '90%',
     // Enhanced shadow for the tier card
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.25,
     shadowRadius: 24,
@@ -619,7 +624,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#111827',
+    color: colors.text,
     marginTop: 12,
     textAlign: 'center',
   },
@@ -639,7 +644,7 @@ const styles = StyleSheet.create({
   modalSectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#111827',
+    color: colors.text,
     marginBottom: 12,
   },
   benefitsList: {
@@ -655,7 +660,7 @@ const styles = StyleSheet.create({
   },
   benefitText: {
     fontSize: 14,
-    color: '#374151',
+    color: colors.text,
     marginLeft: 12,
     flex: 1,
   },
@@ -665,7 +670,7 @@ const styles = StyleSheet.create({
   },
   requirementDescription: {
     fontSize: 14,
-    color: '#6B7280',
+    color: colors.textSecondary,
     lineHeight: 20,
   },
 });

@@ -129,7 +129,7 @@ export default function ProfileMenu({
     {
       key: "darkMode",
       icon: (
-        <View style={[styles.iconBg, { backgroundColor: isDarkMode ? "#1f2937" : "#374151" }]}>
+        <View style={[styles.iconBg, { backgroundColor: isDarkMode ? "#37371fff" : "#374151" }]}>
           <Ionicons 
             name={isDarkMode ? "sunny" : "moon"} 
             size={scaleSize(24)} 
@@ -137,8 +137,8 @@ export default function ProfileMenu({
           />
         </View>
       ),
-      label: isDarkMode ? "Light Mode" : "Dark Mode",
-      subtitle: "Change app appearance",
+      label: isDarkMode ? t("darkMode.title-light") : t("darkMode.title-dark"),
+      subtitle: t("darkMode.description"),
     },
     {
       key: "helpSupport",

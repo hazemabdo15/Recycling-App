@@ -7,15 +7,15 @@ import {
     Alert,
     FlatList,
     RefreshControl,
+    StyleSheet,
     Text,
     TouchableOpacity,
-    View,
-    StyleSheet
+    View
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { useLocalization } from "../context/LocalizationContext";
+import { useThemedStyles } from "../hooks/useThemedStyles";
 import apiService from "../services/api/apiService";
-import { colors } from "../styles";
 
 // Arabic month names for date formatting
 const arabicMonths = {
@@ -38,6 +38,8 @@ const RedeemHistoryScreen = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const router = useRouter();
   const { t, language } = useLocalization();
+  const { colors } = useThemedStyles();
+  const styles = getStyles(colors);
 
   const [localPointsHistory, setLocalPointsHistory] = useState(
     user?.pointsHistory || []
@@ -119,7 +121,7 @@ const RedeemHistoryScreen = () => {
           t("redeemHistory.errors.fetchFailed")
         );
       }
-    } catch (error) {
+    } catch (_error) {
       Alert.alert(
         t("modals.error"),
         t("redeemHistory.errors.fetchFailed")
@@ -155,7 +157,7 @@ const RedeemHistoryScreen = () => {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[colors.primary, colors.neutral]}
+        colors={colors.heroGradient}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.heroSection}
@@ -211,10 +213,10 @@ const RedeemHistoryScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff'
+    backgroundColor: colors.white
   },
   heroSection: {
     paddingBottom: 24,
@@ -260,7 +262,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: colors.base200,
     justifyContent: 'space-between'
   },
   rtlItemContainer: {
@@ -268,7 +270,8 @@ const styles = StyleSheet.create({
   },
   reason: {
     flex: 2,
-    fontSize: 16
+    fontSize: 16,
+    color: colors.text
   },
   rtlText: {
     textAlign: 'right'
@@ -284,13 +287,13 @@ const styles = StyleSheet.create({
     flex: 2,
     textAlign: 'right',
     fontSize: 14,
-    color: '#666'
+    color: colors.textSecondary
   },
   emptyText: {
     textAlign: 'center',
     marginTop: 32,
     fontSize: 16,
-    color: '#666'
+    color: colors.textSecondary
   }
 });
 

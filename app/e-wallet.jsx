@@ -16,14 +16,17 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useWallet } from "../hooks/useWallet";
-import { colors, shadows, spacing } from "../styles";
-import { scaleSize } from "../utils/scale";
 import { useLocalization } from "../context/LocalizationContext";
+import { useThemedStyles } from "../hooks/useThemedStyles";
+import { useWallet } from "../hooks/useWallet";
+import { shadows, spacing } from "../styles";
+import { scaleSize } from "../utils/scale";
 
 export default function EWallet() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { colors } = useThemedStyles();
+  const styles = getStyles(colors);
   
   const {
     balance,
@@ -41,7 +44,7 @@ export default function EWallet() {
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [selectedGateway, setSelectedGateway] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  const { t, language } = useLocalization();
+  const { t } = useLocalization();
 
   const paymentGateways = [
     { id: "paypal", name: "PayPal", icon: "logo-paypal", color: "#0070ba" },
@@ -229,11 +232,11 @@ export default function EWallet() {
 
   return (
     <View style={styles.container}>
-      <StatusBar style="light" backgroundColor="transparent" />
+      <StatusBar style={colors.statusBarStyle} backgroundColor="transparent" />
       
       {/* Header */}
       <LinearGradient
-        colors={[colors.primary, colors.neutral]}
+        colors={colors.heroGradient}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.header, { paddingTop: insets.top + 25 }]}
@@ -379,7 +382,7 @@ export default function EWallet() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -437,7 +440,7 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     borderRadius: 16,
     alignItems: "center",
-    ...shadows.medium,
+    ...shadows.medium(colors.shadowColor),
   },
   balanceLabel: {
     fontSize: scaleSize(16),
@@ -471,7 +474,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
     borderRadius: 16,
     padding: spacing.lg,
-    ...shadows.medium,
+    ...shadows.medium(colors.shadowColor),
   },
   sectionTitle: {
     fontSize: scaleSize(18),
@@ -607,6 +610,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     fontSize: scaleSize(16),
     backgroundColor: colors.base100,
+    color: colors.text,
   },
   gatewayContainer: {
     marginBottom: spacing.lg,

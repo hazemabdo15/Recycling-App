@@ -3,7 +3,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { KeyboardAwareFlatList } from 'react-native-keyboard-aware-scroll-view';
 import { useLocalization } from '../context/LocalizationContext';
-import { colors } from '../styles';
+import { useThemedStyles } from '../hooks/useThemedStyles';
+import { scaleSize } from '../utils/scale';
 import ContactOptions from './ContactOptions';
 import FAQList from './FAQList';
 import FeedbackForm from './FeedbackForm';
@@ -11,15 +12,16 @@ import QuickLinks from './QuickLinks';
 
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { scaleSize } from '../utils/scale';
 
 const HelpSupportScreen = () => {
   const router = useRouter();
   const { t } = useLocalization();
+  const { colors } = useThemedStyles();
+  const styles = getStyles(colors);
   const sections = [
     { key: 'header', render: () => (
       <LinearGradient
-        colors={[colors.primary, colors.neutral]}
+        colors={colors.heroGradient}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.header}
@@ -62,10 +64,10 @@ const HelpSupportScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
   },
   header: {
     paddingTop: 48,

@@ -2,11 +2,14 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useLocalization } from '../../context/LocalizationContext';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { getTierColors, getTierIcon } from '../../utils/tiers';
 
 const TierCard = ({ tier, isCurrentTier = false, isUnlocked = false, onPress }) => {
   const { t } = useLocalization();
-  const colors = getTierColors(tier.name);
+  const { colors } = useThemedStyles();
+  const styles = getStyles(colors);
+  const tierColors = getTierColors(tier.name);
   const icon = getTierIcon(tier.name);
 
   return (
@@ -20,7 +23,7 @@ const TierCard = ({ tier, isCurrentTier = false, isUnlocked = false, onPress }) 
       activeOpacity={0.8}
     >
       <LinearGradient
-        colors={isUnlocked ? colors.gradient : ['#E5E7EB', '#F3F4F6']}
+        colors={isUnlocked ? tierColors.gradient : [colors.achievementCardBg, colors.achievementCardBg]}
         style={styles.card}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -35,13 +38,13 @@ const TierCard = ({ tier, isCurrentTier = false, isUnlocked = false, onPress }) 
           <MaterialCommunityIcons
             name={icon}
             size={32}
-            color={isUnlocked ? 'white' : '#9CA3AF'}
+            color={isUnlocked ? 'white' : colors.textSecondary}
           />
         </View>
         
         <Text style={[
           styles.tierName,
-          { color: isUnlocked ? 'white' : '#6B7280' }
+          { color: isUnlocked ? 'white' : colors.text }
         ]}>
           {t(`tiers.${tier.name}`, tier.name)}
         </Text>
@@ -51,11 +54,11 @@ const TierCard = ({ tier, isCurrentTier = false, isUnlocked = false, onPress }) 
             <MaterialCommunityIcons
               name="gift-outline"
               size={14}
-              color={isUnlocked ? 'rgba(255,255,255,0.8)' : '#9CA3AF'}
+              color={isUnlocked ? 'rgba(255,255,255,0.8)' : colors.textSecondary}
             />
             <Text style={[
               styles.benefitText,
-              { color: isUnlocked ? 'rgba(255,255,255,0.8)' : '#9CA3AF' }
+              { color: isUnlocked ? 'rgba(255,255,255,0.8)' : colors.textSecondary }
             ]}>
               +{tier.bonusPerOrder} {t("units.pointsPerOrder")}
             </Text>
@@ -65,11 +68,11 @@ const TierCard = ({ tier, isCurrentTier = false, isUnlocked = false, onPress }) 
             <MaterialCommunityIcons
               name="star-outline"
               size={14}
-              color={isUnlocked ? 'rgba(255,255,255,0.8)' : '#9CA3AF'}
+              color={isUnlocked ? 'rgba(255,255,255,0.8)' : colors.textSecondary}
             />
             <Text style={[
               styles.benefitText,
-              { color: isUnlocked ? 'rgba(255,255,255,0.8)' : '#9CA3AF' }
+              { color: isUnlocked ? 'rgba(255,255,255,0.8)' : colors.textSecondary }
             ]}>
               {tier.bonusPerReachedTier} {t("units.pointsBonus")}
             </Text>
@@ -78,7 +81,7 @@ const TierCard = ({ tier, isCurrentTier = false, isUnlocked = false, onPress }) 
         
         <Text style={[
           styles.requirementText,
-          { color: isUnlocked ? 'rgba(255,255,255,0.6)' : '#9CA3AF' }
+          { color: isUnlocked ? 'rgba(255,255,255,0.6)' : colors.textSecondary }
         ]}>
           {tier.minRecycles === 0 
             ? `${tier.maxRecycles + 1} ${t("units.orders")}` 
@@ -90,7 +93,7 @@ const TierCard = ({ tier, isCurrentTier = false, isUnlocked = false, onPress }) 
             <MaterialCommunityIcons
               name="lock"
               size={20}
-              color="#9CA3AF"
+              color={colors.textSecondary}
             />
           </View>
         )}
@@ -99,7 +102,7 @@ const TierCard = ({ tier, isCurrentTier = false, isUnlocked = false, onPress }) 
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     margin: 8,
@@ -107,7 +110,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   currentTierContainer: {
-    shadowColor: '#000',
+    shadowColor: colors.text,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -172,7 +175,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     left: 8,
-    backgroundColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: colors.achievementCardBg,
     borderRadius: 12,
     padding: 4,
   },
