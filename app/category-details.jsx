@@ -18,6 +18,7 @@ import { useAuth } from "../context/AuthContext";
 import { useLocalization } from "../context/LocalizationContext";
 import { useCategoryItems } from "../hooks/useAPI";
 import { useCart } from "../hooks/useCart";
+import { useStockManager } from "../hooks/useStockManager";
 import { useThemedStyles } from "../hooks/useThemedStyles";
 import { getLayoutStyles } from "../styles/components/commonStyles";
 import { spacing } from "../styles/theme";
@@ -89,6 +90,19 @@ const CategoryDetails = () => {
     handleFastDecreaseQuantity,
     handleSetQuantity,
   } = useCart(user);
+  
+  const {
+    getItemStock,
+    syncItemsStock,
+    wasRecentlyUpdated,
+  } = useStockManager();
+
+  // Sync stock data when items are loaded
+  useEffect(() => {
+    if (items && items.length > 0) {
+      syncItemsStock(items);
+    }
+  }, [items, syncItemsStock]);
 
   const mergedItems = items.map((item) => {
     const needsNormalization =
@@ -99,6 +113,10 @@ const CategoryDetails = () => {
     const processedItem = needsNormalization ? normalizeItemData(item) : item;
     const itemKey = getCartKey(processedItem);
     const cartQuantity = cartItems[itemKey] || 0;
+
+    // Get real-time stock quantity
+    const realTimeStock = getItemStock(processedItem._id);
+    const stockQuantity = realTimeStock > 0 ? realTimeStock : (processedItem.quantity || 0);
 
     // Handle multilingual item name - extract from the item name structure
     const itemDisplayName = extractNameFromMultilingual(processedItem.name, currentLanguage);
@@ -113,9 +131,11 @@ const CategoryDetails = () => {
 
     return {
       ...processedItem,
+      quantity: stockQuantity, // Use real-time stock quantity
       cartQuantity, // this is the quantity in the cart
       displayName: translatedItemName, // Add translated name for display
       originalName: itemDisplayName, // Keep the original multilingual name for reference
+      stockUpdated: wasRecentlyUpdated(processedItem._id), // Flag for UI feedback
     };
   });
 
@@ -178,15 +198,21 @@ const CategoryDetails = () => {
     }
 
     // Only check stock for buyer users
-    if (isBuyer(user) && value > item.quantity) {
-      showCartMessage(CartMessageTypes.STOCK_ERROR, {
-        itemName: itemDisplayName,
-        maxStock: item.quantity,
-        measurementUnit: item.measurement_unit,
-        isBuyer: true,
-        t
-      });
-      return;
+    if (isBuyer(user)) {
+      // Get real-time stock quantity
+      const currentStock = getItemStock(item._id);
+      const stockQuantity = currentStock > 0 ? currentStock : item.quantity;
+      
+      if (value > stockQuantity) {
+        showCartMessage(CartMessageTypes.STOCK_ERROR, {
+          itemName: itemDisplayName,
+          maxStock: stockQuantity,
+          measurementUnit: item.measurement_unit,
+          isBuyer: true,
+          t
+        });
+        return;
+      }
     }
     const itemKey = getCartKey(item);
     setPendingOperations((prev) => ({ ...prev, [itemKey]: "manualInput" }));
@@ -314,10 +340,12 @@ const CategoryDetails = () => {
             const itemWithCorrectId = { ...item, _id: itemKey };
             const addResult = await handleIncreaseQuantity(itemWithCorrectId);
             if (addResult === false) {
-              // Show maxStock toast if add was blocked
+              // Show maxStock toast with real-time stock quantity
+              const currentStock = getItemStock(item._id);
+              const stockQuantity = currentStock > 0 ? currentStock : item.quantity;
               showMaxStockMessage(
                 itemDisplayName,
-                item.quantity,
+                stockQuantity,
                 item.measurement_unit,
                 t
               );

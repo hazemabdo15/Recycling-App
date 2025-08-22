@@ -115,6 +115,7 @@
     "login": "تسجيل الدخول",
     "logoutConfirmation": "هل أنت متأكد أنك تريد تسجيل الخروج؟",
     "logout": "تسجيل الخروج",
+    "logoutSub": "لا تتركنا!",
     "register": "التسجيل",
     "email": "البريد الإلكتروني",
     "password": "كلمة المرور",
@@ -395,6 +396,7 @@
   "orders": {
     "title": "الطلبات",
     "history": "تاريخ الطلبات",
+    "historySub": "عرض طلباتك السابقة وحالتها",
     "pending": "قيد الانتظار",
     "confirmed": "مؤكد",
     "inProgress": "قيد التنفيذ",
@@ -492,7 +494,7 @@
     "pointsSpent": "النقاط المنفقة"
   },
   "achievements": {
-    "title": "الإنجازات",
+    "title": "إنجازاتك ومعالمك",
     "pleaseLogin": "الرجاء تسجيل الدخول لعرض الإنجازات",
     "ordersCompleted": "تم إكمال {{count}} طلب إعادة تدوير",
     "progressTo": "التقدم نحو {{tier}}",

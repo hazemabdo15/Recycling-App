@@ -100,7 +100,7 @@ export default function ProfileMenu({
         </View>
       ),
       label: t('orders.history'),
-      subtitle: t('orders.history'),
+      subtitle: t('orders.historySub'),
     },
     {
       key: "achievements",
@@ -162,7 +162,7 @@ export default function ProfileMenu({
         </View>
       ),
       label: t('profile.logout'),
-      subtitle: t('auth.signIn'),
+      subtitle: t('auth.logoutSub'),
     },
   ];
 

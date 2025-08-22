@@ -99,6 +99,7 @@
     "login": "Login",
     "logoutConfirmation" : "Are you sure you want to logout?",
     "logout": "Logout",
+    "logoutSub": "Don't Leave Us!",
     "register": "Register",
     "email": "Email",
     "password": "Password",
@@ -379,6 +380,7 @@
   "orders": {
     "title": "Orders",
     "history": "Order History",
+    "historySub": "View past orders and their status",
     "pending": "Pending",
     "confirmed": "Confirmed",
     "inProgress": "In Progress",
@@ -1187,7 +1189,7 @@
     "tutorials": "Tutorials"
   },
   "achievements": {
-    "title": "Achievements",
+    "title": "Your Milestones and Achievements",
     "pleaseLogin": "Please log in to view achievements",
     "ordersCompleted": "{{count}} recycling orders completed",
     "progressTo": "Progress to {{tier}}",

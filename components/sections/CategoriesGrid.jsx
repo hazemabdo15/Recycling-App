@@ -13,6 +13,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useLocalization } from "../../context/LocalizationContext";
 import { useAllItems, useCategories } from "../../hooks/useAPI";
 import { useCart } from "../../hooks/useCart";
+import { useStockManager } from "../../hooks/useStockManager";
 import { useThemedStyles } from "../../hooks/useThemedStyles";
 import { spacing } from "../../styles";
 import {
@@ -142,7 +143,21 @@ const CategoriesGrid = ({
     handleFastDecreaseQuantity,
     handleSetQuantity,
   } = useCart(user);
+  
+  const {
+    getItemStock,
+    syncItemsStock,
+    wasRecentlyUpdated,
+  } = useStockManager();
+  
   const [pendingOperations, setPendingOperations] = useState({});
+
+  // Sync stock data when items are loaded
+  useEffect(() => {
+    if (allItems && allItems.length > 0) {
+      syncItemsStock(allItems);
+    }
+  }, [allItems, syncItemsStock]);
 
   const handleManualInput = async (item, value) => {
     if (!item) return;
@@ -174,13 +189,20 @@ const CategoriesGrid = ({
     }
 
     // Only check stock for buyer users
-    if (isBuyer(user) && value > item.quantity) {
-      showMaxStockMessage(
-        translatedItemName,
-        item.quantity,
-        normalizedItem.measurement_unit
-      );
-      return;
+    if (isBuyer(user)) {
+      // Get real-time stock quantity
+      const currentStock = getItemStock(item._id);
+      const stockQuantity = currentStock > 0 ? currentStock : item.quantity;
+      
+      if (value > stockQuantity) {
+        showMaxStockMessage(
+          translatedItemName,
+          stockQuantity,
+          normalizedItem.measurement_unit,
+          t
+        );
+        return;
+      }
     }
 
     const itemKey = getCartKey(item);
@@ -232,11 +254,17 @@ const CategoriesGrid = ({
             const itemKey = getCartKey(normalizedItem);
             const cartQuantity = cartItems[itemKey] || 0;
             
+            // Get real-time stock quantity
+            const realTimeStock = getItemStock(normalizedItem._id);
+            const stockQuantity = realTimeStock > 0 ? realTimeStock : (normalizedItem.quantity || 0);
+            
             return {
               ...normalizedItem,
+              quantity: stockQuantity, // Use real-time stock quantity
               displayName: translatedItemName, // Add display name for UI
               translatedCategoryName: translatedCategoryName, // Add translated category name
               cartQuantity,
+              stockUpdated: wasRecentlyUpdated(normalizedItem._id), // Flag for UI feedback
             };
           } catch (error) {
             console.warn('Error processing item:', error, item);
@@ -288,7 +316,7 @@ const CategoriesGrid = ({
         });
       return { filteredCategories: cats, filteredItems: [] };
     }
-  }, [categories, allItems, showItemsMode, searchText, cartItems, t, currentLanguage]);
+  }, [categories, allItems, showItemsMode, searchText, cartItems, t, currentLanguage, getItemStock, wasRecentlyUpdated]);
 
   const handleCartOperation = useCallback(
     async (item, operation) => {
@@ -381,10 +409,12 @@ const CategoriesGrid = ({
         if (operation.includes("increase")) {
           if (operation === "increase" || operation === "fastIncrease") {
             if (increaseResult === false) {
-              // Show unified stock error message with translated name
+              // Show unified stock error message with real-time stock quantity
+              const currentStock = getItemStock(item._id);
+              const stockQuantity = currentStock > 0 ? currentStock : (item.quantity || 0);
               showMaxStockMessage(
                 translatedItemName,
-                item.quantity || 0,
+                stockQuantity,
                 normalizedItem.measurement_unit,
                 t
               );
@@ -417,6 +447,7 @@ const CategoriesGrid = ({
       user,
       t,
       currentLanguage,
+      getItemStock,
     ]
   );
 
@@ -534,22 +565,26 @@ const CategoriesGrid = ({
                     }
                     // Check if adding would exceed stock quantity
                     const step = getIncrementStep(item.measurement_unit);
-                    const remainingStock = item.quantity - cartQuantity;
+                    // Get real-time stock quantity
+                    const currentStock = getItemStock(item._id);
+                    const stockQuantity = currentStock > 0 ? currentStock : item.quantity;
+                    const remainingStock = stockQuantity - cartQuantity;
+                    
                     console.log("[CategoriesGrid] Stock check:", {
                       itemName: item.displayName || item?.name || 'Item',
-                      totalStock: item.quantity,
+                      totalStock: stockQuantity,
                       cartQuantity,
                       remainingStock,
                       step,
                       wouldExceed:
                         remainingStock < step ||
-                        cartQuantity + step > item.quantity,
+                        cartQuantity + step > stockQuantity,
                     });
                     if (
                       remainingStock < step ||
-                      cartQuantity + step > item.quantity
+                      cartQuantity + step > stockQuantity
                     ) {
-                      const maxMsg = t('cart.maxStock', 'You cannot add more. Only {{quantity}} in stock.', { quantity: item.quantity });
+                      const maxMsg = t('cart.maxStock', 'You cannot add more. Only {{quantity}} in stock.', { quantity: stockQuantity });
                       console.log(
                         "[CategoriesGrid] Showing maxStock toast:",
                         maxMsg
@@ -580,22 +615,26 @@ const CategoriesGrid = ({
                     }
                     // Check if adding 5 would exceed stock quantity
                     const fastStep = 5;
-                    const remainingStock = item.quantity - cartQuantity;
+                    // Get real-time stock quantity
+                    const currentStock = getItemStock(item._id);
+                    const stockQuantity = currentStock > 0 ? currentStock : item.quantity;
+                    const remainingStock = stockQuantity - cartQuantity;
+                    
                     console.log("[CategoriesGrid] Fast stock check:", {
                       itemName: item.displayName || item.name,
-                      totalStock: item.quantity,
+                      totalStock: stockQuantity,
                       cartQuantity,
                       remainingStock,
                       fastStep,
                       wouldExceed:
                         remainingStock < fastStep ||
-                        cartQuantity + fastStep > item.quantity,
+                        cartQuantity + fastStep > stockQuantity,
                     });
                     if (
                       remainingStock < fastStep ||
-                      cartQuantity + fastStep > item.quantity
+                      cartQuantity + fastStep > stockQuantity
                     ) {
-                      const maxMsg = t('cart.maxStock', 'You cannot add more. Only {{quantity}} in stock.', { quantity: item.quantity });
+                      const maxMsg = t('cart.maxStock', 'You cannot add more. Only {{quantity}} in stock.', { quantity: stockQuantity });
                       console.log(
                         "[CategoriesGrid] Showing fast maxStock toast:",
                         maxMsg

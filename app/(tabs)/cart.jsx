@@ -22,6 +22,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useLocalization } from "../../context/LocalizationContext";
 import { useAllItems } from "../../hooks/useAPI";
 import { useCart } from "../../hooks/useCart";
+import { useStockManager } from "../../hooks/useStockManager";
 import { useThemedStyles } from "../../hooks/useThemedStyles";
 import { borderRadius, spacing, typography } from "../../styles";
 import {
@@ -88,6 +89,13 @@ const Cart = () => {
     removingItems,
   } = useCart(user);
   const { items: allItems, loading: itemsLoading } = useAllItems();
+  const {
+    getItemStock,
+    validateQuantity,
+    getStockStatus,
+    wasRecentlyUpdated,
+    isConnected: stockConnected,
+  } = useStockManager();
   const [loading, setLoading] = useState(true);
   const [showEmptyState, setShowEmptyState] = useState(false);
   const [inputValues, setInputValues] = useState({});
@@ -248,29 +256,31 @@ const Cart = () => {
 
       // Only apply stock validation for buyers
       if (isBuyer(user)) {
-        // Get the actual stock quantity from the original item data
-        const originalItem = safeAllItems.find(
-          (originalItem) =>
-            originalItem._id === item._id ||
-            originalItem.categoryId === item.categoryId
-        );
+        // Get real-time stock quantity from StockContext
+        const currentStock = getItemStock(item._id);
+        
+        // Fallback to original item data if stock context doesn't have the item
+        let actualStockQuantity = currentStock;
+        if (actualStockQuantity === 0) {
+          const originalItem = safeAllItems.find(
+            (originalItem) =>
+              originalItem._id === item._id ||
+              originalItem.categoryId === item.categoryId
+          );
+          actualStockQuantity =
+            originalItem?.quantity ||
+            originalItem?.available_quantity ||
+            originalItem?.stock_quantity ||
+            originalItem?.quantity_available || 0;
+        }
 
-        const actualStockQuantity =
-          originalItem?.quantity ||
-          originalItem?.available_quantity ||
-          originalItem?.stock_quantity ||
-          originalItem?.quantity_available;
-
-        // Stock validation - check against actual stock quantity
-        if (
-          actualStockQuantity !== undefined &&
-          newQuantity > actualStockQuantity
-        ) {
+        // Stock validation - check against real-time stock quantity
+        if (newQuantity > actualStockQuantity) {
           const normalizedItem = normalizeItemData(item);
           const translatedItemName = getTranslatedItemName(normalizedItem);
           showMaxStockMessage(
             translatedItemName,
-            actualStockQuantity, // Pass actual stock quantity, not cart quantity
+            actualStockQuantity, // Pass real-time stock quantity
             normalizedItem.measurement_unit,
             t // Pass translation function
           );
@@ -450,29 +460,31 @@ const Cart = () => {
 
       // Only apply stock validation for buyers
       if (isBuyer(user)) {
-        // Get the actual stock quantity from the original item data (not cart quantity)
-        const originalItem = safeAllItems.find(
-          (originalItem) =>
-            originalItem._id === item._id ||
-            originalItem.categoryId === item.categoryId
-        );
+        // Get real-time stock quantity from StockContext
+        const currentStock = getItemStock(item._id);
+        
+        // Fallback to original item data if stock context doesn't have the item
+        let actualStockQuantity = currentStock;
+        if (actualStockQuantity === 0) {
+          const originalItem = safeAllItems.find(
+            (originalItem) =>
+              originalItem._id === item._id ||
+              originalItem.categoryId === item.categoryId
+          );
+          actualStockQuantity =
+            originalItem?.quantity ||
+            originalItem?.available_quantity ||
+            originalItem?.stock_quantity ||
+            originalItem?.quantity_available || 0;
+        }
 
-        const actualStockQuantity =
-          originalItem?.quantity ||
-          originalItem?.available_quantity ||
-          originalItem?.stock_quantity ||
-          originalItem?.quantity_available;
-
-        // Stock validation - check against actual stock quantity
-        if (
-          actualStockQuantity !== undefined &&
-          parsedValue > actualStockQuantity
-        ) {
+        // Stock validation - check against real-time stock quantity
+        if (parsedValue > actualStockQuantity) {
           const normalizedItem = normalizeItemData(item);
           const translatedItemName = getTranslatedItemName(normalizedItem);
           showMaxStockMessage(
             translatedItemName,
-            actualStockQuantity, // Pass actual stock quantity, not cart quantity
+            actualStockQuantity, // Pass real-time stock quantity
             normalizedItem.measurement_unit,
             t // Pass translation function
           );
@@ -690,10 +702,16 @@ const Cart = () => {
     return <Loader />;
   }
 
-  if (!allItems.length) {
+  // Only show error state if items failed to load AND we're not still loading
+  if (!allItems.length && !itemsLoading && !loading) {
     return (
       <View style={styles.emptyCartContainer}>
-        <Loader style={{ height: 180 }} />
+        <MaterialCommunityIcons
+          name="alert-circle-outline"
+          size={64}
+          color={colors.error}
+          style={{ marginBottom: 16 }}
+        />
         <Text style={styles.emptyCartTitle}>{t("cart.loadingError")}</Text>
         <Text style={styles.emptyCartSubtitle}>
           {t("cart.loadingErrorMessage")}

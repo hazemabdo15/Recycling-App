@@ -9,4 +9,5 @@ export { default as LoginRequiredDialog } from './LoginRequiredDialog';
 export { default as RecyclingIllustration } from './RecyclingIllustration';
 export { default as SplashController } from './SplashController';
 export { default as SplashScreen } from './SplashScreen';
+export { default as StockStatusIndicator } from './StockStatusIndicator';
 

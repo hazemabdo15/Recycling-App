@@ -7,6 +7,7 @@ import { CartProvider } from '../context/CartContext';
 import { ChatProvider } from "../context/ChatContext";
 import { LocalizationProvider } from '../context/LocalizationContext';
 import { NotificationProvider } from '../context/NotificationContext';
+import { StockProvider } from '../context/StockContext';
 import { ThemeProvider } from '../context/ThemeContext';
 import '../localization/i18n'; // MUST BE THE FIRST IMPORT
 
@@ -15,12 +16,13 @@ export default function RootLayout() {
     <ThemeProvider>
       <LocalizationProvider>
         <AuthProvider>
-          <CartProvider>
-            <NotificationProvider>
-              <ChatProvider>
-                <SplashController>
-                  <DynamicStatusBar />
-                  <GlobalToast />
+          <StockProvider>
+            <CartProvider>
+              <NotificationProvider>
+                <ChatProvider>
+                  <SplashController>
+                    <DynamicStatusBar />
+                    <GlobalToast />
                 <Stack
                   screenOptions={{
                   headerShown: false,
@@ -120,6 +122,7 @@ export default function RootLayout() {
         </ChatProvider>
         </NotificationProvider>
         </CartProvider>
+        </StockProvider>
     </AuthProvider>
     </LocalizationProvider>
     </ThemeProvider>

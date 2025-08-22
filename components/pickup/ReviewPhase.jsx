@@ -13,6 +13,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useLocalization } from "../../context/LocalizationContext";
 import { useCart } from "../../hooks/useCart";
 import { usePayment } from "../../hooks/usePayment";
+import { useStockManager } from "../../hooks/useStockManager";
 // import { orderService } from "../../services/api/orders"; // Removed - using unified flow
 
 import { useThemedStyles } from "../../hooks/useThemedStyles";
@@ -76,6 +77,12 @@ const ReviewPhase = ({
   const { user: contextUser } = useAuth();
   const user = propUser || contextUser;
   const { cartItemDetails } = useCart(user);
+  
+  const {
+    getItemStock,
+    syncItemsStock,
+    validateQuantity,
+  } = useStockManager();
 
   const { isProcessing, processPayment, shouldUsePayment } = usePayment();
 
@@ -92,6 +99,10 @@ const ReviewPhase = ({
     if (itemsFromCart.length > 0) {
       setAllItems(itemsFromCart);
       setItemsLoaded(true);
+      
+      // Sync stock data for review phase items
+      syncItemsStock(itemsFromCart);
+      
       console.log(
         "[ReviewPhase] Loaded",
         itemsFromCart.length,
@@ -109,7 +120,7 @@ const ReviewPhase = ({
         setItemsLoaded(true);
       }
     }
-  }, [cartItemDetails, cartItems]);
+  }, [cartItemDetails, cartItems, syncItemsStock]);
 
   useEffect(() => {
     if (itemsLoaded && cartItems && allItems.length > 0) {
@@ -130,9 +141,19 @@ const ReviewPhase = ({
           if (realItem) {
             const normalizedItem = normalizeItemData(realItem);
             const translatedItemName = getTranslatedItemName(normalizedItem);
+            
+            // Get real-time stock quantity
+            const realTimeStock = getItemStock(normalizedItem._id);
+            const stockQuantity = realTimeStock > 0 ? realTimeStock : (normalizedItem.quantity || 0);
+            
+            // Validate quantity against real-time stock
+            const stockValidation = validateQuantity(normalizedItem._id, quantity);
+            
             return {
               categoryId,
               quantity,
+              stockQuantity, // Add real-time stock info
+              stockValidation, // Add validation info
               itemName: translatedItemName,
               measurement_unit:
                 normalizedItem.measurement_unit === 1 ? t("units.kg") : t("units.piece"),
@@ -142,6 +163,7 @@ const ReviewPhase = ({
               totalPoints: (normalizedItem.points || 10) * quantity,
               totalPrice: (normalizedItem.price || 5.0) * quantity,
               isValidItem: true,
+              hasStockIssue: !stockValidation.isValid, // Flag items with stock issues
             };
           } else {
             console.warn(
@@ -216,7 +238,7 @@ const ReviewPhase = ({
 
       setCartItemsDisplay(displayItems);
     }
-  }, [itemsLoaded, cartItems, allItems, getTranslatedItemName, t]);
+  }, [itemsLoaded, cartItems, allItems, getTranslatedItemName, t, getItemStock, validateQuantity]);
 
   const handlePaymentFlow = async (cartItemsArray, userData) => {
     if (selectedPaymentMethod === 'cash') {
@@ -431,6 +453,20 @@ const ReviewPhase = ({
                   color={colors.warning}
                 />
                 <Text style={styles.warningText}>{t('pickup.reviewPhase.unavailable')}</Text>
+              </View>
+            )}
+            {item.hasStockIssue && (
+              <View style={styles.warningBadge}>
+                <MaterialCommunityIcons
+                  name="alert-circle"
+                  size={12}
+                  color={colors.error}
+                />
+                <Text style={styles.warningText}>
+                  {t('cart.stockError', 'Only {{available}} available', { 
+                    available: item.stockQuantity 
+                  })}
+                </Text>
               </View>
             )}
           </View>
