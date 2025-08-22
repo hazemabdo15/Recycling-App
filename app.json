@@ -69,15 +69,11 @@
       "typedRoutes": true
     },
     "extra": {
-<<<<<<< HEAD
-      "EXPO_PUBLIC_GROQ_API_KEY": "your-api-key-here"
-=======
       "EXPO_PUBLIC_GROQ_API_KEY": "you_groq_api_here",
       "router": {},
       "eas": {
         "projectId": "8271f86a-0640-46da-afcb-c71c36e4d3c6"
       }
->>>>>>> e44b8fd (Anything)
     }
   }
 }
