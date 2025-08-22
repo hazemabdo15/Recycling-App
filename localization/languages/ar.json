@@ -1164,7 +1164,7 @@
     },
     "pdfReport": {
       "title": "تقرير الطلب",
-      "subtitle": "تم إنشاؤه بواسطة تطبيق إعادة التدوير",
+      "subtitle": "تم إنشاؤه بواسطة تطبيق كراكيب",
       "userInformation": "معلومات المستخدم",
       "orderInformation": "معلومات الطلب",
       "orderItems": "عناصر الطلب",
@@ -1182,7 +1182,7 @@
       "quantity": "الكمية",
       "points": "النقاط",
       "price": "السعر",
-      "footer": "تطبيق إعادة التدوير © 2025 | للتواصل: support@recyclingapp.com"
+      "footer": "تطبيق كراكيب © 2025 | للتواصل: recyclecrew7@gmail.com"
     },
     "cancelOrder": {
       "button": "إلغاء الطلب",
