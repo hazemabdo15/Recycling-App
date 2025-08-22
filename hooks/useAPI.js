@@ -40,7 +40,7 @@ export const useAllItems = () => {
       setError(null);
       const data = await categoriesAPI.getAllItems(user?.role || "customer");
 
-      const itemsArray = data.data?.items || data.data;
+      const itemsArray = data.data?.items || data.items;
       setItems(Array.isArray(itemsArray) ? itemsArray : []);
     } catch (err) {
       setError(err.message);
