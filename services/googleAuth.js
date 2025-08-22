@@ -14,16 +14,39 @@ const extractTokensFromUrl = (url) => {
   try {
     console.log('[GoogleAuth] Extracting tokens from URL:', url);
     
-    // Handle both hash (#) and query (?) parameters
-    let params;
-    if (url.includes('#')) {
-      params = new URLSearchParams(url.split('#')[1]);
-    } else if (url.includes('?')) {
-      params = new URLSearchParams(url.split('?')[1]);
+    // Handle both Expo auth proxy URLs and app scheme URLs
+    let queryString = '';
+    
+    if (url.includes('auth.expo.io')) {
+      // Expo auth proxy format: https://auth.expo.io/@user/app?id_token=...&access_token=...
+      if (url.includes('#')) {
+        queryString = url.split('#')[1];
+      } else if (url.includes('?')) {
+        queryString = url.split('?')[1];
+      }
+    } else if (url.includes('://oauth')) {
+      // App scheme format: com.recyclecrew.karakeeb://oauth?id_token=...&access_token=...
+      if (url.includes('?')) {
+        queryString = url.split('?')[1];
+      }
     } else {
-      return null;
+      // Fallback: try to extract from hash or query parameters
+      if (url.includes('#')) {
+        queryString = url.split('#')[1];
+      } else if (url.includes('?')) {
+        queryString = url.split('?')[1];
+      } else {
+        console.log('[GoogleAuth] URL format not recognized:', url);
+        return null;
+      }
     }
     
+    if (!queryString) {
+      console.log('[GoogleAuth] No query parameters found in URL');
+      return null;
+    }
+
+    const params = new URLSearchParams(queryString);
     const idToken = params.get('id_token');
     const accessToken = params.get('access_token');
     const state = params.get('state');
@@ -102,15 +125,18 @@ export const useGoogleAuth = () => {
   const [lastAuthError, setLastAuthError] = React.useState(null);
   const [isRetrying, setIsRetrying] = React.useState(false);
   
-  // Use the exact URI that was working in your previous attempt
+  // Use proper redirect URI based on environment
   let redirectUri;
   
   if (__DEV__) {
-    // Use the recyclecrew username that was working before
+    // Use Expo auth proxy for development
     redirectUri = 'https://auth.expo.io/@recyclecrew/Karakeeb';
-    console.log('🔗 [GoogleAuth] Using recyclecrew Expo auth proxy URI');
+    console.log('🔗 [GoogleAuth] Using Expo auth proxy URI for development');
   } else {
+    // For production, we still need to use the Expo auth proxy
+    // Google OAuth only accepts http/https schemes, not custom app schemes
     redirectUri = 'https://auth.expo.io/@recyclecrew/Karakeeb';
+    console.log('🔗 [GoogleAuth] Using Expo auth proxy URI for production (Google OAuth requirement)');
   }
   
   console.log('🔗 [GoogleAuth] Final redirect URI:', redirectUri);

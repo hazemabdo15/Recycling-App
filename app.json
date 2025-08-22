@@ -13,7 +13,17 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.recyclecrew.karakeeb"
+      "bundleIdentifier": "com.recyclecrew.karakeeb",
+      "infoPlist": {
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLName": "com.recyclecrew.karakeeb.oauth",
+            "CFBundleURLSchemes": [
+              "com.recyclecrew.karakeeb"
+            ]
+          }
+        ]
+      }
     },
     "android": {
       "package": "com.recyclecrew.karakeeb",
@@ -38,6 +48,19 @@
           "data": [
             {
               "scheme": "recyclingapp"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        },
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "com.recyclecrew.karakeeb"
             }
           ],
           "category": [
