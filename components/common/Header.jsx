@@ -41,7 +41,7 @@ const Header = () => {
         <View style={[styles.header, { paddingHorizontal: scale(20), paddingVertical: scale(15) }]}> 
             <View style={styles.brandContainer}>
                 <MaterialCommunityIcons name="recycle" size={scale(28)} color={colors.primary} />
-                <Text style={[styles.brandText, { fontSize: scale(20), marginLeft: scale(8) }]}>EcoPickup</Text>
+                <Text style={[styles.brandText, { fontSize: scale(20), marginLeft: scale(8) }]}>Karakeeb</Text>
             </View>
             <View style={[styles.headerRight, { gap: scale(12) }]}> 
                 <TouchableOpacity style={[styles.headerButton, { width: scale(40), height: scale(40), borderRadius: scale(12) }]}> 

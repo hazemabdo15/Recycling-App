@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "EcoRecycle",
-    "slug": "EcoRecycle",
+    "name": "Karakeeb",
+    "slug": "Karakeeb",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/logo.png",
-    "scheme": "recyclingapp",
+    "scheme": "karakeebapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "localization": {
@@ -13,10 +13,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.recyclecrew.ecorecycle"
+      "bundleIdentifier": "com.recyclecrew.karakeeb"
     },
     "android": {
-      "package": "com.recyclecrew.ecorecycle",
+      "package": "com.recyclecrew.karakeeb",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"

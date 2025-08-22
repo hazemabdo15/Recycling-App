@@ -124,7 +124,7 @@ const SplashScreen = ({ progress = 0, statusText = "Initializing..." }) => {
             },
           ]}
         >
-          <Text style={styles.title}>EcoRecycle</Text>
+          <Text style={styles.title}>Karakeeb</Text>
           <Text style={styles.subtitle}>Sustainable Living Made Simple</Text>
         </Animated.View>
 
