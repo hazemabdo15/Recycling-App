@@ -107,10 +107,10 @@ export const useGoogleAuth = () => {
   
   if (__DEV__) {
     // Use the recyclecrew username that was working before
-    redirectUri = 'https://auth.expo.io/@recyclecrew/EcoRecycle';
+    redirectUri = 'https://auth.expo.io/@recyclecrew/Karakeeb';
     console.log('🔗 [GoogleAuth] Using recyclecrew Expo auth proxy URI');
   } else {
-    redirectUri = AuthSession.makeRedirectUri({ scheme: 'recyclingapp' });
+    redirectUri = 'https://auth.expo.io/@recyclecrew/Karakeeb';
   }
   
   console.log('🔗 [GoogleAuth] Final redirect URI:', redirectUri);
