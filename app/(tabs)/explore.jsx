@@ -44,7 +44,6 @@ const getExploreStyles = (colors) => StyleSheet.create({
     color: colors.white,
     textAlign: "center",
     marginBottom: scaleSize(spacing.sm),
-    letterSpacing: -0.5,
   },
   heroSubtitle: {
     fontSize: scaleSize(14),
