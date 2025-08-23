@@ -246,18 +246,25 @@ const ReviewPhase = ({
 
   // Animation effect for loading spinner
   useEffect(() => {
+    console.log('[ReviewPhase] Animation effect triggered, isAnyProcessing:', isAnyProcessing);
     if (isAnyProcessing) {
+      console.log('[ReviewPhase] Starting spinner animation...');
       const spinAnimation = Animated.loop(
         Animated.timing(spinValue, {
           toValue: 1,
-          duration: 1000,
+          duration: 800,
           useNativeDriver: true,
-        })
+        }),
+        { iterations: -1 } // Infinite loop
       );
       spinAnimation.start();
-      return () => spinAnimation.stop();
+      return () => {
+        console.log('[ReviewPhase] Stopping spinner animation...');
+        spinAnimation.stop();
+      };
     } else {
       // Reset animation when not processing
+      console.log('[ReviewPhase] Resetting spinner animation...');
       spinValue.setValue(0);
     }
   }, [isAnyProcessing, spinValue]);
@@ -757,7 +764,7 @@ const ReviewPhase = ({
               }}
             >
               <MaterialCommunityIcons
-                name="loading"
+                name="refresh"
                 size={20}
                 color={colors.white}
               />

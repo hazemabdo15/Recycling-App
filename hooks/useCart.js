@@ -128,8 +128,8 @@ export const useCart = (user = null) => {
     const currentQuantity = getItemQuantity(_id);
     let newQuantity;
     if (currentQuantity === 0) {
-      // Calculate new quantity consistently
-      const fastStep = measurement_unit === 2 ? 5 : 1.0; // 5 pieces or 1kg
+      // Fast step should always be 5 regardless of measurement unit
+      const fastStep = 5;
       newQuantity = calculateQuantity(currentQuantity, fastStep, 'add');
       
       // Real-time stock validation for buyer users
@@ -151,10 +151,10 @@ export const useCart = (user = null) => {
         }
       }
       
-      newQuantity = measurement_unit === 2 ? 5 : 1.0; // 5 pieces or 1kg
+      newQuantity = 5; // Always add 5 for fast increase
     } else {
-      // Calculate new quantity consistently
-      const fastStep = measurement_unit === 2 ? 5 : 1.0; // 5 pieces or 1kg
+      // Fast step should always be 5 regardless of measurement unit
+      const fastStep = 5;
       newQuantity = calculateQuantity(currentQuantity, fastStep, 'add');
       
       // Real-time stock validation for buyer users
@@ -206,8 +206,8 @@ export const useCart = (user = null) => {
 
     const currentQuantity = getItemQuantity(_id);
     
-    // Calculate decrease step based on measurement unit
-    const fastStep = measurement_unit === 2 ? 5 : 1.0; // 5 pieces or 1kg
+    // Fast step should always be 5 regardless of measurement unit
+    const fastStep = 5;
     let newQuantity = currentQuantity - fastStep;
 
     // Use proper minimum quantity based on measurement unit
