@@ -652,8 +652,12 @@ export default function Pickup() {
             <ConfirmationPhase
               order={orderData}
               onFinish={() => {
-                reset();
+                // Navigate immediately for better UX
                 router.push("/(tabs)/home");
+                // Reset in background
+                setTimeout(() => {
+                  reset();
+                }, 100);
               }}
             />
           );
