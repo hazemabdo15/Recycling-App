@@ -262,7 +262,8 @@
     "placeOrder": "تقديم الطلب",
     "loadingError": "غير قادر على تحميل تفاصيل العنصر",
     "loadingErrorMessage": "كان هناك مشكلة في جلب بيانات العنصر. يرجى المحاولة مرة أخرى لاحقًا.",
-    "noItems": "لا توجد عناصر بعد"
+    "noItems": "لا توجد عناصر بعد",
+    "syncing": "مزامنة..."
   },
   "explore": {
     "title": {
@@ -1045,6 +1046,7 @@
     "noItemsSubtitle": "جرب التسجيل مرة أخرى أو تصفح الكتالوج",
     "browseItems": "تصفح العناصر",
     "addToCart": "أضف إلى السلة",
+    "addingToCart": "إضافة إلى السلة...",
     "fixItemsFirst": "أصلح {count} عنصر{s} أولاً",
     "noMaterialsFound": "لم يتم العثور على مواد",
     "noMaterialsExtracted": "لم يتم استخراج أي مواد من التسجيل.",
@@ -1076,7 +1078,7 @@
     "piece": "قطعة",
     "pieces": "قطع",
     "egp": "جنيه",
-    "ptsEach": "{{points}} نقطة لكل قطعة",
+    "ptsEach": "{{points}} نقطة  ",
     "quantity": "الكمية: {{quantity}}",
     "points": "النقاط: {{points}}",
     "price": "السعر: {{price}}",
@@ -1283,6 +1285,7 @@
       "removeFast": "تم حذف {{quantity}} {{unit}} من {{itemName}}",
       "removeFastComplete": "تم حذف {{itemName}} من السلة",
       "removeAll": "تم حذف {{itemName}} من السلة",
+      "allItems": "جميع العناصر",
       "itemRemoved": "تم حذف {{itemName}} من السلة",
       "notInCart": "{{itemName}} غير موجود في سلتك",
       "invalidQuantityKg": "يرجى إدخال كمية صحيحة (الحد الأدنى 0.25 كيلو)",
@@ -1318,12 +1321,13 @@
     "ai": {
       "outOfStockNotAdded": "{{itemName}} غير متوفر في المخزون ولم يتم إضافته إلى السلة.",
       "limitedStockReduced": "{{itemName}}: متوفر فقط {{availableToAdd}} {{unit}}. تم تجاهل {{discarded}} {{unit}}.",
-      "multipleItemsAdded": "تمت إضافة {{addedCount}} عنصر{{s}} إلى السلة.",
-      "multipleItemsWithOutOfStock": " {{outOfStockCount}} عنصر{{s}} غير متوفر في المخزون.",
-      "multipleItemsWithLimits": " {{limitCount}} عنصر{{s}} تم تقليل كميتها بسبب حدود المخزون.",
-      "singleItemAdded": "تمت إضافة {{addedCount}} عنصر{{s}} إلى السلة",
+      "multipleItemsAdded": "تمت إضافة {{addedCount}} عنصر إلى السلة.",
+      "multipleItemsWithOutOfStock": " {{outOfStockCount}} عنصر غير متوفر في المخزون.",
+      "multipleItemsWithLimits": " {{limitCount}} عنصر تم تقليل كميتها بسبب حدود المخزون.",
+      "singleItemAdded": "تمت إضافة {{addedCount}} عنصر إلى السلة",
       "noItemsStockLimitations": "لا يمكن إضافة عناصر بسبب قيود المخزون",
-      "noItemsAdded": "لا يمكن إضافة عناصر"
+      "noItemsAdded": "لا يمكن إضافة عناصر",
+      "addToCartError": "فشل في إضافة العناصر إلى السلة. يرجى المحاولة مرة أخرى."
     }
   }
 }

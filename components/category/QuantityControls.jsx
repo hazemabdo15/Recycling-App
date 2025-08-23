@@ -21,6 +21,8 @@ const QuantityControls = ({
     onQuantityInput, // new prop for direct input
     maxQuantity, // stock quantity for validation
     itemName = 'Item', // item name for toast messages
+    disabled = false, // Add disabled prop
+    pendingAction = null, // Add pendingAction prop
 }) => {
     const { colors, isDarkMode } = useThemedStyles();
     const quantityControlsStyles = getQuantityControlsStyles(isDarkMode);
@@ -75,6 +77,10 @@ const QuantityControls = ({
                 return;
             }
             
+            // Update input field to show rounded value immediately
+            setInputValue(num.toString());
+            lastValidValue.current = num.toString();
+            
             if (onQuantityInput) onQuantityInput(num);
             // Remove duplicate toast - parent will handle unified messaging
             
@@ -104,6 +110,10 @@ const QuantityControls = ({
                 return;
             }
             
+            // Update input field to show rounded value immediately
+            setInputValue(num.toString());
+            lastValidValue.current = num.toString();
+            
             if (onQuantityInput) onQuantityInput(num);
             // Remove duplicate toast - parent will handle unified messaging
         }
@@ -124,10 +134,10 @@ const QuantityControls = ({
                     quantityControlsStyles.fastButton,
                     quantityControlsStyles.fastButtonDecrease,
                     { width: scale(44), height: scale(44), borderRadius: scale(18) },
-                    disableDecrease && { opacity: 0.5 },
+                    (disableDecrease || disabled) && { opacity: 0.5 },
                 ]}
-                onPress={disableDecrease ? undefined : onFastDecrease}
-                disabled={disableDecrease}
+                onPress={(disableDecrease || disabled) ? undefined : onFastDecrease}
+                disabled={disableDecrease || disabled}
             >
                 <View style={quantityControlsStyles.fastButtonContent}>
                     <MaterialCommunityIcons
@@ -154,10 +164,10 @@ const QuantityControls = ({
                     style={[
                         quantityControlsStyles.quantityButton,
                         { width: scale(32), height: scale(32), borderRadius: scale(16) },
-                        disableDecrease && { opacity: 0.5 },
+                        (disableDecrease || disabled) && { opacity: 0.5 },
                     ]}
-                    onPress={disableDecrease ? undefined : onDecrease}
-                    disabled={disableDecrease}
+                    onPress={(disableDecrease || disabled) ? undefined : onDecrease}
+                    disabled={disableDecrease || disabled}
                 >
                     <MaterialCommunityIcons
                         name="minus"
@@ -181,7 +191,7 @@ const QuantityControls = ({
                         onChangeText={handleInputChange}
                         onEndEditing={handleEndEditing}
                         keyboardType={measurementUnit === 1 ? 'decimal-pad' : 'number-pad'}
-                        editable={!outOfStock}
+                        editable={!outOfStock && !disabled}
                         returnKeyType="done"
                         selectTextOnFocus
                     />
@@ -196,10 +206,10 @@ const QuantityControls = ({
                     style={[
                         quantityControlsStyles.quantityButton,
                         { width: scale(32), height: scale(32), borderRadius: scale(16) },
-                        (maxReached || outOfStock) && { opacity: 0.5 },
+                        (maxReached || outOfStock || disabled) && { opacity: 0.5 },
                     ]}
-                    onPress={maxReached || outOfStock ? undefined : onIncrease}
-                    disabled={maxReached || outOfStock}
+                    onPress={(maxReached || outOfStock || disabled) ? undefined : onIncrease}
+                    disabled={maxReached || outOfStock || disabled}
                 >
                     <MaterialCommunityIcons
                         name="plus"
@@ -213,10 +223,10 @@ const QuantityControls = ({
                     quantityControlsStyles.fastButton,
                     quantityControlsStyles.fastButtonIncrease,
                     { width: scale(44), height: scale(44), borderRadius: scale(18) },
-                    (maxReached || outOfStock) && { opacity: 0.5 },
+                    (maxReached || outOfStock || disabled) && { opacity: 0.5 },
                 ]}
-                onPress={maxReached || outOfStock ? undefined : onFastIncrease}
-                disabled={maxReached || outOfStock}
+                onPress={(maxReached || outOfStock || disabled) ? undefined : onFastIncrease}
+                disabled={maxReached || outOfStock || disabled}
             >
                 <View style={quantityControlsStyles.fastButtonContent}>
                     <MaterialCommunityIcons

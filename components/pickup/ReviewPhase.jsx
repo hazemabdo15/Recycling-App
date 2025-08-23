@@ -1,7 +1,8 @@
 ﻿import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
+  Animated,
   Image,
   ScrollView,
   StyleSheet,
@@ -45,6 +46,9 @@ const ReviewPhase = ({
 
   const [isCashOrderProcessing, setIsCashOrderProcessing] = useState(false);
   const [deliveryFee, setDeliveryFee] = useState(0);
+
+  // Animation for loading spinner
+  const spinValue = useRef(new Animated.Value(0)).current;
 
   // Helper function to get translated item names consistently
   const getTranslatedItemName = useCallback((item) => {
@@ -239,6 +243,27 @@ const ReviewPhase = ({
       setCartItemsDisplay(displayItems);
     }
   }, [itemsLoaded, cartItems, allItems, getTranslatedItemName, t, getItemStock, validateQuantity]);
+
+  // Animation effect for loading spinner
+  useEffect(() => {
+    if (isAnyProcessing) {
+      const spinAnimation = Animated.loop(
+        Animated.timing(spinValue, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        { iterations: -1 } // Infinite loop
+      );
+      spinAnimation.start();
+      return () => {
+        spinAnimation.stop();
+      };
+    } else {
+      // Reset animation when not processing
+      spinValue.setValue(0);
+    }
+  }, [isAnyProcessing, spinValue]);
 
   const handlePaymentFlow = async (cartItemsArray, userData) => {
     if (selectedPaymentMethod === 'cash') {
@@ -724,11 +749,22 @@ const ReviewPhase = ({
           disabled={!itemsLoaded || isAnyProcessing || (shouldUsePayment(user) && !selectedPaymentMethod)}
         >
           {isAnyProcessing ? (
-            <MaterialCommunityIcons
-              name="loading"
-              size={20}
-              color={colors.white}
-            />
+            <Animated.View 
+              style={{
+                transform: [{
+                  rotate: spinValue.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: ['0deg', '360deg'],
+                  })
+                }]
+              }}
+            >
+              <MaterialCommunityIcons
+                name="refresh"
+                size={20}
+                color={colors.title}
+              />
+            </Animated.View>
           ) : (
             <MaterialCommunityIcons
               name="check"
@@ -740,7 +776,7 @@ const ReviewPhase = ({
             {isAnyProcessing
               ? isCashOrderProcessing
                 ? t('pickup.reviewPhase.creatingOrder')
-                : "Processing..."
+                : t('pickup.reviewPhase.processing')
               : shouldUsePayment(user)
               ? selectedPaymentMethod === 'cash'
                 ? t("pickup.reviewPhase.confirmOrder")

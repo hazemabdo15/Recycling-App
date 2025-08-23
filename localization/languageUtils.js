@@ -44,7 +44,7 @@ export const changeLanguage = async (lng) => {
     
     Alert.alert(
       "Language Changed",
-      "The app will reload to apply the language and layout changes.",
+      "The app will reload to apply the language and layout changes. You will be returned to your previous screen.",
       [{
         text: "Reload Now",
         onPress: async () => {

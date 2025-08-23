@@ -165,13 +165,25 @@ export const orderService = {
         ? `/top-materials-recycled?category=${encodeURIComponent(category)}`
         : '/top-materials-recycled';
       
-      const response = await apiService.get(url);
+      // Add timeout to prevent long loading times
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Request timeout')), 5000);
+      });
+      
+      const fetchPromise = apiService.get(url);
+      const response = await Promise.race([fetchPromise, timeoutPromise]);
       
       console.log('[Order Service] Top materials retrieved successfully');
       return response;
     } catch (error) {
       console.error('[Order Service] Failed to fetch top materials:', error.message);
-      throw error;
+      
+      // Return fallback data structure for offline scenarios
+      return {
+        success: false,
+        data: [],
+        message: 'Unable to load data. Please check your internet connection.'
+      };
     }
   },
 

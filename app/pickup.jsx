@@ -4,12 +4,13 @@ import * as Linking from "expo-linking";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    Alert,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Animated,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -19,6 +20,7 @@ import ReviewPhase from "../components/pickup/ReviewPhase";
 import { useAuth } from "../context/AuthContext";
 import { useLocalization } from "../context/LocalizationContext";
 import { useCart } from "../hooks/useCart";
+import { useCartValidation } from "../hooks/useCartValidation";
 import { usePickupWorkflow } from "../hooks/usePickupWorkflow";
 import { useThemedStyles } from "../hooks/useThemedStyles";
 import { isAuthenticated } from "../services/auth";
@@ -39,11 +41,24 @@ export default function Pickup() {
     loading: authContextLoading,
   } = useAuth();
   const { cartItems } = useCart(user);
+  
+  // Add cart validation for critical pickup screen
+  const { validateCart, quickValidateCart } = useCartValidation({
+    validateOnFocus: true, // Validate when pickup screen is focused
+    validateOnAppActivation: true, // Validate when app becomes active
+    autoCorrect: true, // Automatically fix cart issues
+    showMessages: true, // Show user feedback about corrections
+    source: 'pickupScreen'
+  });
+  
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState(null);
   const [dialogShown, setDialogShown] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [, setCreatingOrder] = useState(false);
+
+  // Animation for loading spinner  
+  const orderSpinValue = useRef(new Animated.Value(0)).current;
 
   const cartItemsRef = useRef(cartItems);
 
@@ -142,6 +157,11 @@ export default function Pickup() {
       if (paymentStatus === "success" || paymentIntentId) {
         try {
           setCreatingOrder(true);
+          
+          // ✅ Immediately set to confirmation phase for better UX
+          if (setCurrentPhase) {
+            setCurrentPhase(3);
+          }
 
           // ✅ Check if we have address in workflow state, if not try to restore from previous state
           let addressToUse = selectedAddress;
@@ -194,9 +214,7 @@ export default function Pickup() {
           });
 
           // ✅ Order data should now be properly stored in workflow hook
-          if (setCurrentPhase) {
-            setCurrentPhase(3);
-          }
+          // Phase is already set to 3 at the beginning of this block
         } catch (error) {
           console.error("Deep link order failed", { error: error.message });
 
@@ -291,6 +309,27 @@ export default function Pickup() {
       selectedAddress ? "present" : "null"
     );
   }, [currentPhase, selectedAddress]);
+
+  // Animation effect for loading spinner in phase 3
+  useEffect(() => {
+    if (currentPhase === 3) {
+      const spinAnimation = Animated.loop(
+        Animated.timing(orderSpinValue, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        { iterations: -1 } // Infinite loop
+      );
+      spinAnimation.start();
+      return () => {
+        spinAnimation.stop();
+      };
+    } else {
+      // Reset animation when not in phase 3
+      orderSpinValue.setValue(0);
+    }
+  }, [currentPhase, orderSpinValue]);
 
   const handleAddressSelect = useCallback(
     async (address) => {
@@ -404,7 +443,7 @@ export default function Pickup() {
         <View style={styles.content}>
           <View style={styles.messageContainer}>
             <MaterialCommunityIcons
-              name="loading"
+              sto
               size={64}
               color={colors.primary}
             />
@@ -593,12 +632,43 @@ export default function Pickup() {
             />
           );
         case 3:
+          // Show loading state if order data is not yet available
+          if (!orderData) {
+            return (
+              <View style={styles.messageContainer}>
+                <Animated.View 
+                  style={{
+                    transform: [{
+                      rotate: orderSpinValue.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ['0deg', '360deg'],
+                      })
+                    }]
+                  }}
+                >
+                  <MaterialCommunityIcons
+                    name="refresh"
+                    size={64}
+                    color={colors.primary}
+                  />
+                </Animated.View>
+                <Text style={styles.messageTitle}>Processing Order</Text>
+                <Text style={styles.messageText}>
+                  Please wait while we finalize your order...
+                </Text>
+              </View>
+            );
+          }
           return (
             <ConfirmationPhase
               order={orderData}
               onFinish={() => {
-                reset();
+                // Navigate immediately for better UX
                 router.push("/(tabs)/home");
+                // Reset in background
+                setTimeout(() => {
+                  reset();
+                }, 100);
               }}
             />
           );
@@ -640,7 +710,7 @@ export default function Pickup() {
               }
             }}
           >
-            <Text style={{ color: colors.white, fontWeight: "bold" }}>
+            <Text style={{ color: colors.title, fontWeight: "bold" }}>
               Try Again
             </Text>
           </TouchableOpacity>
@@ -689,7 +759,7 @@ const getPickupStyles = (colors) => StyleSheet.create({
     ...typography.title,
     fontSize: scaleSize(24),
     fontWeight: "bold",
-    color: colors.white,
+    color: colors.title,
     textAlign: "center",
     marginBottom: scaleSize(spacing.lg),
   },
@@ -741,14 +811,14 @@ const getPickupStyles = (colors) => StyleSheet.create({
     borderColor: "rgba(255, 255, 255, 0.5)",
   },
   progressCircleActive: {
-    backgroundColor: colors.white,
-    borderColor: colors.white,
+    backgroundColor: colors.title,
+    borderColor: colors.title,
   },
   progressText: {
     ...typography.caption,
     fontSize: scaleSize(14),
     fontWeight: "bold",
-    color: colors.white,
+    color: colors.title,
   },
   progressTextActive: {
     color: colors.primary,
@@ -760,6 +830,6 @@ const getPickupStyles = (colors) => StyleSheet.create({
     marginHorizontal: scaleSize(spacing.sm),
   },
   progressLineActive: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.title,
   },
 });

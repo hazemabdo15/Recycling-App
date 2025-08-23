@@ -2,12 +2,12 @@
 import * as Clipboard from 'expo-clipboard';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-    Animated,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Animated,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 import { useAuth } from '../../context/AuthContext';
@@ -42,6 +42,21 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
       return () => rotateAnimation.stop();
     }
   }, [trackingNumber, rotateValue]);
+
+  // Start animation when finishing to show loading state
+  useEffect(() => {
+    if (isFinishing) {
+      const rotateAnimation = Animated.loop(
+        Animated.timing(rotateValue, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        })
+      );
+      rotateAnimation.start();
+      return () => rotateAnimation.stop();
+    }
+  }, [isFinishing, rotateValue]);
 
   // ✅ Fix tracking number generation to handle nested order structure
   const trackingNumber = useMemo(() => {
@@ -79,13 +94,19 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
     }
   };
 
+  const [isFinishing, setIsFinishing] = useState(false);
+
   const handleDone = async () => {
-    try {
-      await handleClearCart();
-      console.log('[ConfirmationPhase] Cart cleared locally after confirmation');
-    } catch (err) {
+    // Prevent multiple presses and provide immediate feedback
+    if (isFinishing) return;
+    setIsFinishing(true);
+
+    // Clear cart in the background without awaiting
+    handleClearCart().catch(err => {
       console.warn('[ConfirmationPhase] Failed to clear cart locally:', err);
-    }
+    });
+
+    // Immediate navigation without waiting for cart clearing
     if (onFinish && typeof onFinish === 'function') {
       onFinish();
     } else if (onNewRequest && typeof onNewRequest === 'function') {
@@ -258,9 +279,36 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
       </ScrollView>
 
       <View style={styles.footer}>
-        <AnimatedButton style={styles.newRequestButton} onPress={handleDone}>
-          <MaterialCommunityIcons name="check" size={20} color={colors.white} />
-          <Text style={styles.newRequestButtonText}>{t('orders.confirmation.done')}</Text>
+        <AnimatedButton 
+          style={[
+            styles.newRequestButton,
+            isFinishing && styles.newRequestButtonDisabled
+          ]} 
+          onPress={handleDone}
+          disabled={isFinishing}
+        >
+          {isFinishing ? (
+            <>
+              <Animated.View 
+                style={{
+                  transform: [{
+                    rotate: rotateValue.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ['0deg', '360deg'],
+                    })
+                  }]
+                }}
+              >
+                <MaterialCommunityIcons name="loading" size={20} color={colors.white} />
+              </Animated.View>
+              <Text style={styles.newRequestButtonText}>{t('common.redirecting', 'Redirecting...')}</Text>
+            </>
+          ) : (
+            <>
+              <MaterialCommunityIcons name="check" size={20} color={colors.white} />
+              <Text style={styles.newRequestButtonText}>{t('orders.confirmation.done')}</Text>
+            </>
+          )}
         </AnimatedButton>
       </View>
     </View>
@@ -502,6 +550,10 @@ const getConfirmationPhaseStyles = (colors) => StyleSheet.create({
     borderRadius: borderRadius.lg,
     backgroundColor: colors.primary,
     gap: spacing.sm,
+  },
+  newRequestButtonDisabled: {
+    backgroundColor: colors.primaryVariant || colors.primary,
+    opacity: 0.8,
   },
   newRequestButtonText: {
     ...typography.subtitle,

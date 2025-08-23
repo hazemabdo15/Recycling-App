@@ -3,6 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Image,
   StatusBar,
   StyleSheet,
@@ -22,6 +23,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useLocalization } from "../../context/LocalizationContext";
 import { useAllItems } from "../../hooks/useAPI";
 import { useCart } from "../../hooks/useCart";
+import { useCartValidation } from "../../hooks/useCartValidation";
 import { useStockManager } from "../../hooks/useStockManager";
 import { useThemedStyles } from "../../hooks/useThemedStyles";
 import { borderRadius, spacing, typography } from "../../styles";
@@ -87,15 +89,22 @@ const Cart = () => {
     handleClearCart,
     handleSetQuantity,
     removingItems,
+    loading: cartLoading,
   } = useCart(user);
   const { items: allItems, loading: itemsLoading } = useAllItems();
   const {
     getItemStock,
-    validateQuantity,
-    getStockStatus,
-    wasRecentlyUpdated,
-    isConnected: stockConnected,
   } = useStockManager();
+  
+  // Add cart validation for buyers
+  const { validateCart, quickValidateCart } = useCartValidation({
+    validateOnFocus: true, // Validate when cart screen is focused
+    validateOnAppActivation: true, // Validate when app becomes active
+    autoCorrect: true, // Automatically fix cart issues
+    showMessages: true, // Show user feedback
+    source: 'cartScreen'
+  });
+  
   const [loading, setLoading] = useState(true);
   const [showEmptyState, setShowEmptyState] = useState(false);
   const [inputValues, setInputValues] = useState({});
@@ -256,23 +265,37 @@ const Cart = () => {
 
       // Only apply stock validation for buyers
       if (isBuyer(user)) {
-        // Get real-time stock quantity from StockContext
-        const currentStock = getItemStock(item._id);
+        // Get API stock quantity as fallback - try multiple ID fields
+        const originalItem = safeAllItems.find(
+          (originalItem) =>
+            originalItem._id === item._id ||
+            originalItem._id === item.categoryId ||
+            originalItem.categoryId === item._id ||
+            originalItem.categoryId === item.categoryId
+        );
         
-        // Fallback to original item data if stock context doesn't have the item
-        let actualStockQuantity = currentStock;
-        if (actualStockQuantity === 0) {
-          const originalItem = safeAllItems.find(
-            (originalItem) =>
-              originalItem._id === item._id ||
-              originalItem.categoryId === item.categoryId
-          );
-          actualStockQuantity =
-            originalItem?.quantity ||
-            originalItem?.available_quantity ||
-            originalItem?.stock_quantity ||
-            originalItem?.quantity_available || 0;
-        }
+        // Get the most reliable stock value from the original item
+        const apiStockQuantity = originalItem?.quantity ??
+          originalItem?.available_quantity ??
+          originalItem?.stock_quantity ??
+          originalItem?.quantity_available ??
+          item.quantity ??
+          item.available_quantity ??
+          item.stock_quantity ??
+          item.quantity_available ?? 0;
+        
+        console.log(`🔍 [Cart Debug - Increase] Item ${item._id} search in ${safeAllItems.length} items`);
+        console.log(`🔍 [Cart Debug - Increase] Found originalItem:`, !!originalItem, originalItem ? {
+          _id: originalItem._id,
+          categoryId: originalItem.categoryId,
+          quantity: originalItem.quantity,
+          available_quantity: originalItem.available_quantity
+        } : 'not found');
+        console.log(`🔍 [Cart Debug - Increase] Final apiStockQuantity: ${apiStockQuantity}`);
+        
+        // Get real-time stock quantity from StockContext with API fallback
+        const actualStockQuantity = getItemStock(item._id, apiStockQuantity);
+        console.log(`✅ [Cart Fix - Increase] Item ${item._id} - API: ${apiStockQuantity}, Final: ${actualStockQuantity}, New Qty: ${newQuantity}`);
 
         // Stock validation - check against real-time stock quantity
         if (newQuantity > actualStockQuantity) {
@@ -370,7 +393,7 @@ const Cart = () => {
       await handleClearCart();
       // Show toast for clear cart
       showCartMessage(CartMessageTypes.REMOVE_ALL, {
-        itemName: "All items",
+        itemName: t("toast.cart.allItems"),
         measurementUnit: 2,
         isBuyer: user?.role === "buyer",
         t // Pass translation function
@@ -460,23 +483,37 @@ const Cart = () => {
 
       // Only apply stock validation for buyers
       if (isBuyer(user)) {
-        // Get real-time stock quantity from StockContext
-        const currentStock = getItemStock(item._id);
+        // Get API stock quantity as fallback - try multiple ID fields
+        const originalItem = safeAllItems.find(
+          (originalItem) =>
+            originalItem._id === item._id ||
+            originalItem._id === item.categoryId ||
+            originalItem.categoryId === item._id ||
+            originalItem.categoryId === item.categoryId
+        );
         
-        // Fallback to original item data if stock context doesn't have the item
-        let actualStockQuantity = currentStock;
-        if (actualStockQuantity === 0) {
-          const originalItem = safeAllItems.find(
-            (originalItem) =>
-              originalItem._id === item._id ||
-              originalItem.categoryId === item.categoryId
-          );
-          actualStockQuantity =
-            originalItem?.quantity ||
-            originalItem?.available_quantity ||
-            originalItem?.stock_quantity ||
-            originalItem?.quantity_available || 0;
-        }
+        // Get the most reliable stock value from the original item
+        const apiStockQuantity = originalItem?.quantity ??
+          originalItem?.available_quantity ??
+          originalItem?.stock_quantity ??
+          originalItem?.quantity_available ??
+          item.quantity ??
+          item.available_quantity ??
+          item.stock_quantity ??
+          item.quantity_available ?? 0;
+        
+        console.log(`🔍 [Cart Debug - Manual] Item ${item._id} search in ${safeAllItems.length} items`);
+        console.log(`🔍 [Cart Debug - Manual] Found originalItem:`, !!originalItem, originalItem ? {
+          _id: originalItem._id,
+          categoryId: originalItem.categoryId,
+          quantity: originalItem.quantity,
+          available_quantity: originalItem.available_quantity
+        } : 'not found');
+        console.log(`🔍 [Cart Debug - Manual] Final apiStockQuantity: ${apiStockQuantity}`);
+        
+        // Get real-time stock quantity from StockContext with API fallback
+        const actualStockQuantity = getItemStock(item._id, apiStockQuantity);
+        console.log(`✅ [Cart Fix - Manual] Item ${item._id} - API: ${apiStockQuantity}, Final: ${actualStockQuantity}, Parsed Qty: ${parsedValue}`);
 
         // Stock validation - check against real-time stock quantity
         if (parsedValue > actualStockQuantity) {
@@ -746,7 +783,7 @@ const Cart = () => {
               <MaterialCommunityIcons
                 name={getRoleBasedIcon("findItems", user?.role)}
                 size={28}
-                color={colors.white}
+                color={colors.title}
               />
               <Text style={styles.heroFindBtnText}>
                 {tRole("cart.findItemsButton", user?.role)}
@@ -836,7 +873,7 @@ const Cart = () => {
                   <MaterialCommunityIcons
                     name="star"
                     size={22}
-                    color={colors.accent}
+                    color={colors.title}
                   />
                   <Text style={styles.checkoutSummaryLabelHero}>
                     {t("common.points")}
@@ -850,7 +887,7 @@ const Cart = () => {
                 <MaterialCommunityIcons
                   name="cash"
                   size={22}
-                  color={colors.secondary}
+                  color={colors.title}
                 />
                 <Text style={styles.checkoutSummaryLabelHero}>
                   {tRole("money", user?.role)}
@@ -898,7 +935,7 @@ const Cart = () => {
                       : getRoleBasedIcon("locked", user?.role)
                   }
                   size={24}
-                  color={canProceed ? colors.white : colors.white}
+                  color={canProceed ? colors.title : colors.title}
                 />
                 <Text
                   style={[
@@ -922,7 +959,7 @@ const Cart = () => {
                   <MaterialCommunityIcons
                     name="delete-sweep"
                     size={22}
-                    color={colors.white}
+                    color={colors.title}
                   />
                 </TouchableOpacity>
               )}
@@ -946,6 +983,16 @@ const Cart = () => {
           ListFooterComponent={<View style={{ height: 100 }} />}
         />
       </View>
+      
+      {/* Loading overlay when cart is syncing */}
+      {cartLoading && cartArray.length > 0 && (
+        <View style={styles.loadingOverlay}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color={colors.primary} />
+            <Text style={styles.loadingText}>{t('cart.syncing')}</Text>
+          </View>
+        </View>
+      )}
     </View>
   );
 };
@@ -986,14 +1033,14 @@ const getStyles = (colors) => StyleSheet.create({
   heroTitle: {
     fontSize: scaleSize(24),
     fontWeight: "bold",
-    color: colors.white,
+    color: colors.title,
     textAlign: "center",
     marginBottom: scaleSize(spacing.sm),
     letterSpacing: -0.5,
   },
   heroSubtitle: {
     fontSize: scaleSize(14),
-    color: colors.white,
+    color: colors.title,
     textAlign: "center",
     opacity: 0.85,
     lineHeight: scaleSize(22),
@@ -1056,7 +1103,7 @@ const getStyles = (colors) => StyleSheet.create({
   },
   heroFindBtnText: {
     ...typography.subtitle,
-    color: colors.white,
+    color: colors.title,
     fontWeight: "700",
     fontSize: scaleSize(18),
     marginLeft: scaleSize(spacing.md),
@@ -1242,7 +1289,7 @@ const getStyles = (colors) => StyleSheet.create({
   },
   checkoutSummaryLabelHero: {
     ...typography.caption,
-    color: colors.white,
+    color: colors.title,
     marginTop: 2,
     marginBottom: 2,
     fontSize: 13,
@@ -1250,7 +1297,7 @@ const getStyles = (colors) => StyleSheet.create({
   checkoutSummaryValueHero: {
     ...typography.title,
     fontSize: 18,
-    color: colors.white,
+    color: colors.title,
     fontWeight: "700",
     marginTop: 2,
   },
@@ -1279,7 +1326,7 @@ const getStyles = (colors) => StyleSheet.create({
   },
   checkoutBtnBarTextHero: {
     ...typography.subtitle,
-    color: colors.white,
+    color: colors.title,
     fontWeight: "700",
     fontSize: 18,
     marginLeft: spacing.sm,
@@ -1320,8 +1367,38 @@ const getStyles = (colors) => StyleSheet.create({
     elevation: 0,
   },
   checkoutBtnBarTextDisabled: {
-    color: colors.white,
+    color: colors.title,
     fontWeight: "600",
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  loadingContainer: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  loadingText: {
+    ...typography.subtitle,
+    color: colors.textPrimary,
+    marginLeft: spacing.md,
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
 

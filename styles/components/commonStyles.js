@@ -55,6 +55,20 @@ export const getErrorStateStyles = (isDarkMode = false) => {
             textAlign: 'center',
             fontWeight: '500',
             lineHeight: scaleSize(24),
+            marginBottom: scaleSize(20),
+        },
+        retryButton: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: colors.primary,
+            paddingHorizontal: scaleSize(20),
+            paddingVertical: scaleSize(12),
+            borderRadius: scaleSize(8),
+        },
+        retryButtonText: {
+            color: colors.white,
+            fontSize: scaleSize(14),
+            fontWeight: '600',
         },
     });
 };

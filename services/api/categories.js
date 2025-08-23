@@ -1,5 +1,4 @@
 ﻿import itemsData from "../../data/items.json";
-import apiCache from "../../utils/apiCache";
 import logger from "../../utils/logger";
 import { measureApiCall } from "../../utils/performanceMonitor";
 import { extractNameFromMultilingual } from "../../utils/translationHelpers";
@@ -49,28 +48,25 @@ const generateFallbackItems = () => {
 export const categoriesAPI = {
   getAllCategories: async (role = "customer") => {
     return measureApiCall(async () => {
-      const cacheKey = apiCache.generateKey(`categories-${role}`);
-      const cached = apiCache.get(cacheKey);
-      if (cached) {
-        logger.debug("Categories retrieved from cache", {
-          count: cached.length,
-        });
-        return cached;
-      }
-
       try {
         console.log(
           "[Categories API] Fetching categories for role:",
           JSON.stringify({ role })
         );
-        const response = await fetch(
-          `${API_ENDPOINTS.CATEGORIES}&role=${role}`
-        );
+        
+        // Add a timeout promise to prevent long loading times
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Request timeout')), 5000);
+        });
+        
+        const fetchPromise = fetch(`${API_ENDPOINTS.CATEGORIES}&role=${role}`);
+        
+        const response = await Promise.race([fetchPromise, timeoutPromise]);
+        
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        apiCache.set(cacheKey, data, 10 * 60 * 1000);
 
         logger.api("Categories fetched from API", { count: data.length });
         return data;
@@ -95,7 +91,16 @@ export const categoriesAPI = {
           "[Categories API] Fetching all items for role:",
           JSON.stringify({ role, endpoint: `${API_ENDPOINTS.ALL_ITEMS}?role=${role}` })
         );
-        const response = await fetch(`${API_ENDPOINTS.ALL_ITEMS}&role=${role}`);
+        
+        // Add a timeout promise to prevent long loading times
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Request timeout')), 5000);
+        });
+        
+        const fetchPromise = fetch(`${API_ENDPOINTS.ALL_ITEMS}&role=${role}`);
+        
+        const response = await Promise.race([fetchPromise, timeoutPromise]);
+        
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -123,9 +128,20 @@ export const categoriesAPI = {
   getCategoryItems: async (role = "customer", categoryName) => {
     return measureApiCall(async () => {
       try {
-        const response = await fetch(
-          `${API_ENDPOINTS.CATEGORY_ITEMS(categoryName)}&role=${role}`
+        logger.debug(
+          "[Categories API] Fetching category items for:",
+          JSON.stringify({ categoryName, role })
         );
+        
+        // Add a timeout promise to prevent long loading times
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Request timeout')), 5000);
+        });
+        
+        const fetchPromise = fetch(`${API_ENDPOINTS.CATEGORY_ITEMS(categoryName)}&role=${role}`);
+        
+        const response = await Promise.race([fetchPromise, timeoutPromise]);
+        
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -133,7 +149,7 @@ export const categoriesAPI = {
 
         logger.api("Category items fetched from API", {
           categoryName,
-          count: data.length || 0,
+          count: data.data?.length || data.length || 0,
         });
         console.log("[Categories API] Fetched category items:", data);
         return data;

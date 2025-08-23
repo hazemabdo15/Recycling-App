@@ -1,5 +1,6 @@
 ﻿import { Stack } from "expo-router";
 import DynamicStatusBar from '../components/common/DynamicStatusBar';
+import GlobalCartValidator from '../components/common/GlobalCartValidator';
 import GlobalToast from '../components/common/GlobalToast';
 import SplashController from '../components/common/SplashController';
 import { AuthProvider } from '../context/AuthContext';
@@ -23,6 +24,7 @@ export default function RootLayout() {
                   <SplashController>
                     <DynamicStatusBar />
                     <GlobalToast />
+                    <GlobalCartValidator />
                 <Stack
                   screenOptions={{
                   headerShown: false,

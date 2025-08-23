@@ -22,7 +22,7 @@ export const isStaging = () => getCurrentEnv() === ENV.STAGING;
 
 const API_CONFIGS = {
   [ENV.DEVELOPMENT]: {
-    baseUrl: 'https://recycling-backend-2vxx.onrender.com',
+    baseUrl: 'https://recycling-backend-2vxx.onrender.com', //'http://192.168.0.165:5000'
     timeout: 15000,
     retries: 2,
     debug: true

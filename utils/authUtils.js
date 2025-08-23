@@ -39,13 +39,19 @@ export async function getLoggedInUser() {
   }
 }
 
-export async function setLoggedInUser(user) {
+export async function setLoggedInUser(user, deliveryStatus = null) {
   try {
     console.log('[authUtils] Storing user in SecureStore:', user);
     console.log('[authUtils] User role being stored:', user?.role);
+    console.log('[authUtils] Delivery status being stored:', deliveryStatus);
+    
     if (user?.role === 'delivery') {
-      const userWithStatus = { ...user, deliveryStatus: 'pending' };
+      const userWithStatus = { 
+        ...user, 
+        deliveryStatus: deliveryStatus || user.deliveryStatus || 'pending' 
+      };
       await SecureStore.setItemAsync('user', JSON.stringify(userWithStatus));
+      console.log('[authUtils] Stored delivery user with status:', userWithStatus.deliveryStatus);
     } else {
       await SecureStore.setItemAsync('user', JSON.stringify(user));
     }

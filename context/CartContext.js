@@ -1,4 +1,5 @@
 ﻿import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { AppState } from 'react-native';
 import {
     addItemToCart,
     clearCart as apiClearCart,
@@ -10,7 +11,9 @@ import {
     updateCartItem,
 } from "../services/api/cart.js";
 import { createCartItem, getCartKey, normalizeItemData, validateQuantity } from "../utils/cartUtils";
+import { debouncedCartManager } from "../utils/debouncedCartOperations";
 import { useAuth } from "./AuthContext";
+import logger from '../utils/logger';
 
 const CartContext = createContext();
 
@@ -21,12 +24,24 @@ export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [pendingOperations, setPendingOperations] = useState(new Set());
   const [removingItems, setRemovingItems] = useState(new Set());
   const [updateTrigger, setUpdateTrigger] = useState(0);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
   const [cartItemDetails, setCartItemDetails] = useState({});
+
+  // App state management for syncing pending operations
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState) => {
+      if (nextAppState === 'background' && debouncedCartManager.hasPendingOperations()) {
+        logger.cart('App going to background, syncing pending operations');
+        debouncedCartManager.syncAll();
+      }
+    };
+    
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    return () => subscription?.remove();
+  }, []);
 
   useEffect(() => {
     let didCancel = false;
@@ -41,7 +56,6 @@ export const CartProvider = ({ children }) => {
       setCartItems({});
       setCartItemDetails({});
       setError(null);
-      setPendingOperations(new Set());
       setRemovingItems(new Set());
       setLoading(false);
       setHasLoadedOnce(false);
@@ -218,7 +232,9 @@ export const CartProvider = ({ children }) => {
     setCartItemDetails(optimisticDetails);
 
     try {
-      const result = await addItemToCart(cartItem, isLoggedIn);
+      // Use updateCartItem instead of addItemToCart for consistency
+      // This ensures all cart operations use absolute quantity setting rather than incremental adding
+      const result = await updateCartItem(cartItem, cartItem.quantity, isLoggedIn, cartItem.measurement_unit);
 
       if (result.items && Array.isArray(result.items)) {
         const itemsObj = {};
@@ -336,98 +352,167 @@ export const CartProvider = ({ children }) => {
   const handleUpdateQuantity = async (
     itemId,
     quantity,
-    measurementUnit = null
+    measurementUnit = null,
+    context = 'user-interaction',
+    itemData = null
   ) => {
-    const operationKey = `update-${itemId}`;
-    if (pendingOperations.has(operationKey)) {
-      return { success: false, reason: "Operation already pending" };
+    let itemDetails = cartItemDetails[itemId];
+    
+    // If item doesn't exist in cart yet, create it from provided itemData
+    if (!itemDetails && itemData) {
+      logger.cart('Creating new item entry for update operation', { itemId, quantity });
+      
+      // Create cart item from provided data
+      const cartItem = createCartItem(itemData, quantity);
+      itemDetails = cartItem;
+      
+      // Add to optimistic state immediately
+      const optimisticUpdate = { ...cartItems };
+      const optimisticDetails = { ...cartItemDetails };
+      
+      optimisticUpdate[itemId] = quantity;
+      optimisticDetails[itemId] = cartItem;
+      
+      setCartItems(optimisticUpdate);
+      setCartItemDetails(optimisticDetails);
+    } else if (!itemDetails) {
+      return { success: false, error: "Item details not found in cart and no itemData provided" };
     }
 
-    setPendingOperations((prev) => new Set([...prev, operationKey]));
+    // Determine operation strategy
+    const strategy = context === 'ai-bulk' || context === 'bulk-import' ? 'batch-save' : 'debounced';
+
+    if (strategy === 'batch-save') {
+      // Use batch save for bulk operations
+      return handleBatchUpdate(itemId, quantity, measurementUnit);
+    }
+
+    // DEBOUNCED APPROACH: For user interactions
+    const previousCartItems = { ...cartItems };
+    const previousCartDetails = { ...cartItemDetails };
+
+    // Immediate optimistic update (if not already done above)
+    if (cartItems[itemId] !== quantity) {
+      const optimisticUpdate = { ...cartItems };
+      const optimisticDetailsUpdate = { ...cartItemDetails };
+      optimisticUpdate[itemId] = quantity;
+      optimisticDetailsUpdate[itemId] = { ...itemDetails, quantity };
+      
+      setCartItems(optimisticUpdate);
+      setCartItemDetails(optimisticDetailsUpdate);
+    }
+
+    // Error callback for rollback
+    const onError = (prevState, error) => {
+      setCartItems(prevState);
+      setCartItemDetails(previousCartDetails);
+      setError(error.message || "Failed to update item");
+      logger.cart('Rolled back optimistic update', { itemId, error: error.message });
+    };
+
+    // Use debounced cart manager
+    debouncedCartManager.updateQuantity(
+      itemId,
+      itemDetails,
+      quantity,
+      measurementUnit,
+      isLoggedIn,
+      previousCartItems,
+      onError
+    );
+
+    return { success: true };
+  };
+  const handleBatchUpdate = async (itemId, quantity, measurementUnit) => {
+    // Convert current cart state to array format for batch save
+    const cartArray = Object.values(cartItemDetails).map(item => ({
+      ...item,
+      quantity: cartItems[item._id] === undefined ? item.quantity : cartItems[item._id]
+    }));
+
+    // Update the specific item in the array
+    const itemIndex = cartArray.findIndex(item => item._id === itemId);
+    if (itemIndex !== -1) {
+      cartArray[itemIndex].quantity = quantity;
+    }
 
     const previousCartItems = { ...cartItems };
     const previousCartDetails = { ...cartItemDetails };
 
-    const itemDetails = cartItemDetails[itemId];
-    if (!itemDetails) {
-      setPendingOperations((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(operationKey);
-        return newSet;
-      });
-      return { success: false, error: "Item details not found in cart" };
-    }
-
+    // Optimistic update
     const optimisticUpdate = { ...cartItems };
-    const optimisticDetailsUpdate = { ...cartItemDetails };
     optimisticUpdate[itemId] = quantity;
-    optimisticDetailsUpdate[itemId] = { ...itemDetails, quantity };
-    
     setCartItems(optimisticUpdate);
-    setCartItemDetails(optimisticDetailsUpdate);
+
+    // Error callback for rollback
+    const onError = (prevState, error) => {
+      setCartItems(prevState);
+      setCartItemDetails(previousCartDetails);
+      setError(error.message || "Failed to save cart");
+    };
 
     try {
-
-      const result = await updateCartItem(
-        itemDetails,
-        quantity,
-        isLoggedIn,
-        measurementUnit
-      );
-
-      if (result.items && Array.isArray(result.items)) {
-        const itemsObj = {};
-        const itemDetailsObj = {};
-        
-        result.items.forEach((backendItem) => {
-          const backendItemKey = getCartKey(backendItem);
-          itemsObj[backendItemKey] = backendItem.quantity;
-          itemDetailsObj[backendItemKey] = backendItem;
-        });
-        
-        setCartItems(itemsObj);
-        setCartItemDetails(itemDetailsObj);
-      } else {
-
-        console.log('[CartContext] Backend update successful, keeping optimistic update');
-      }
-      
-      setError(null);
-      return { success: true, result };
-    } catch (err) {
-
-      setCartItems(previousCartItems);
-      setCartItemDetails(previousCartDetails);
-
-      if (err.message.includes("Item not found in cart")) {
-        const updatedItems = { ...previousCartItems };
-        const updatedDetails = { ...previousCartDetails };
-        delete updatedItems[itemId];
-        delete updatedDetails[itemId];
-        setCartItems(updatedItems);
-        setCartItemDetails(updatedDetails);
-        setError("Item was removed from cart");
-      } else {
-        setError(err.message || "Failed to update item");
-      }
-      return { success: false, error: err.message };
-    } finally {
-      setTimeout(() => {
-        setPendingOperations((prev) => {
-          const newSet = new Set(prev);
-          newSet.delete(operationKey);
-          return newSet;
-        });
-      }, 10);
+      await debouncedCartManager.batchSave(cartArray, isLoggedIn, previousCartItems, onError);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
     }
   };
 
-  const handleRemoveFromCart = async (itemId) => {
+  // NEW: Add AI Results handler for bulk operations
+  const handleAddAIResults = async (aiItems) => {
+    const previousCartItems = { ...cartItems };
+    const previousCartDetails = { ...cartItemDetails };
+
+    try {
+      // Immediate optimistic update for all items
+      const optimisticCartItems = { ...cartItems };
+      const optimisticCartDetails = { ...cartItemDetails };
+      
+      aiItems.forEach(item => {
+        const processedItem = normalizeItemData(item);
+        const cartItem = createCartItem(processedItem, item.quantity);
+        
+        optimisticCartItems[cartItem._id] = cartItem.quantity;
+        optimisticCartDetails[cartItem._id] = cartItem;
+      });
+
+      setCartItems(optimisticCartItems);
+      setCartItemDetails(optimisticCartDetails);
+
+      // Batch save: Single API call for all AI items
+      const cartArray = Object.values(optimisticCartDetails).map(item => ({
+        ...item,
+        quantity: optimisticCartItems[item._id] || 0
+      })).filter(item => item.quantity > 0);
+
+      const onError = (prevState, error) => {
+        setCartItems(prevState);
+        setCartItemDetails(previousCartDetails);
+        setError("Failed to add AI results to cart");
+      };
+
+      await debouncedCartManager.batchSave(cartArray, isLoggedIn, previousCartItems, onError);
+      
+      logger.success(`Added ${aiItems.length} items from AI results via batch save`, null, 'CART');
+      return { success: true, itemCount: aiItems.length };
+      
+    } catch (error) {
+      // Revert on failure
+      setCartItems(previousCartItems);
+      setCartItemDetails(previousCartDetails);
+      setError('Failed to add AI results to cart');
+      return { success: false, error: error.message };
+    }
+  };
+
+  const handleRemoveFromCart = async (itemId, context = 'user-interaction') => {
     setRemovingItems((prev) => new Set([...prev, itemId]));
 
     const originalCartItems = { ...cartItems };
     const originalCartDetails = { ...cartItemDetails };
 
+    // Immediate optimistic update
     const optimisticUpdate = { ...cartItems };
     const optimisticDetails = { ...cartItemDetails };
     delete optimisticUpdate[itemId];
@@ -435,36 +520,63 @@ export const CartProvider = ({ children }) => {
     setCartItems(optimisticUpdate);
     setCartItemDetails(optimisticDetails);
 
-    try {
-      const result = await removeItemFromCart(itemId, isLoggedIn);
+    const strategy = context === 'ai-bulk' || context === 'bulk-import' ? 'batch-save' : 'debounced';
 
-      if (result && result.items && Array.isArray(result.items)) {
-        const itemsObj = {};
-        const itemDetailsObj = {};
-        result.items.forEach((backendItem) => {
-          const backendItemKey = getCartKey(backendItem);
-          itemsObj[backendItemKey] = backendItem.quantity;
-          itemDetailsObj[backendItemKey] = backendItem;
+    if (strategy === 'debounced') {
+      // Error callback for rollback
+      const onError = (prevState, error) => {
+        setCartItems(prevState);
+        setCartItemDetails(originalCartDetails);
+        setError(error.message || "Failed to remove item");
+        setRemovingItems((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(itemId);
+          return newSet;
         });
-        setCartItems(itemsObj);
-        setCartItemDetails(itemDetailsObj);
-      } else {
+      };
 
-        console.log('[CartContext] Backend remove successful, keeping optimistic update');
+      // Use debounced cart manager for single item removal
+      debouncedCartManager.removeItem(itemId, isLoggedIn, originalCartItems, onError);
+
+      // Remove from removing items set after a short delay (optimistic)
+      setTimeout(() => {
+        setRemovingItems((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(itemId);
+          return newSet;
+        });
+      }, 100);
+
+    } else {
+      // Use regular API call for batch operations
+      try {
+        const result = await removeItemFromCart(itemId, isLoggedIn);
+
+        if (result && result.items && Array.isArray(result.items)) {
+          const itemsObj = {};
+          const itemDetailsObj = {};
+          result.items.forEach((backendItem) => {
+            const backendItemKey = getCartKey(backendItem);
+            itemsObj[backendItemKey] = backendItem.quantity;
+            itemDetailsObj[backendItemKey] = backendItem;
+          });
+          setCartItems(itemsObj);
+          setCartItemDetails(itemDetailsObj);
+        }
+        
+        setError(null);
+      } catch (err) {
+        // Revert optimistic update on failure
+        setCartItems(originalCartItems);
+        setCartItemDetails(originalCartDetails);
+        setError(err.message || "Failed to remove item");
+      } finally {
+        setRemovingItems((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(itemId);
+          return newSet;
+        });
       }
-      
-      setError(null);
-    } catch (err) {
-
-      setCartItems(originalCartItems);
-      setCartItemDetails(originalCartDetails);
-      setError(err.message || "Failed to remove item");
-    } finally {
-      setRemovingItems((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(itemId);
-        return newSet;
-      });
     }
   };
 
@@ -648,6 +760,8 @@ export const CartProvider = ({ children }) => {
         handleAddToCart,
         handleAddSingleItem,
         handleUpdateQuantity,
+        handleBatchUpdate,
+        handleAddAIResults,
         handleRemoveFromCart,
         handleClearCart,
         refreshCart,
@@ -660,6 +774,7 @@ export const CartProvider = ({ children }) => {
         loading,
         error,
         removingItems,
+        debouncedCartManager, // Expose manager for advanced usage
       }}
     >
       {children}

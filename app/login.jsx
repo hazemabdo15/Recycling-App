@@ -34,7 +34,8 @@ export default function LoginScreen() {
               const updatedStatus = await refreshDeliveryStatus();
               console.log("[LoginScreen] Delivery status after refresh:", updatedStatus);
 
-              if (updatedStatus === "approved" && user.isApproved) {
+              // Check if user is approved (prioritize isApproved field)
+              if (user.isApproved === true || (updatedStatus === "approved" && user.isApproved)) {
                 router.replace("/delivery/dashboard");
               } else if (updatedStatus === "pending" || updatedStatus === "declined") {
                 router.replace("/waitingForApproval");
@@ -88,7 +89,7 @@ export default function LoginScreen() {
           
           if (user.role === "delivery") {
             const updatedStatus = await refreshDeliveryStatus();
-            if (updatedStatus === "approved" && user.isApproved) {
+            if (user.isApproved === true || (updatedStatus === "approved" && user.isApproved)) {
               router.replace("/delivery/dashboard");
             } else if (updatedStatus === "pending" || updatedStatus === "declined") {
               router.replace("/waitingForApproval");

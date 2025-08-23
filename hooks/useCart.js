@@ -1,6 +1,9 @@
 ﻿import { useCartContext } from '../context/CartContext';
+import { useStock } from '../context/StockContext';
+import { validateCartOperation } from '../utils/cartStockValidation';
 import { calculateQuantity, createCartItem, getIncrementStep, normalizeItemData } from '../utils/cartUtils';
 import { isBuyer } from '../utils/roleUtils';
+import { useAllItems } from './useAPI';
 
 export const useCart = (user = null) => {
   const {
@@ -11,6 +14,8 @@ export const useCart = (user = null) => {
     handleAddToCart,
     handleAddSingleItem,
     handleUpdateQuantity,
+    handleBatchUpdate,
+    handleAddAIResults,
     handleRemoveFromCart,
     handleClearCart,
     fetchBackendCart,
@@ -21,44 +26,133 @@ export const useCart = (user = null) => {
     loading,
     error,
     removingItems,
+    debouncedCartManager,
   } = useCartContext();
+
+  // Get real-time stock data with fallback support
+  const { getStockQuantity } = useStock();
+  
+  // Get all items for enhanced stock lookup
+  const { items: allItems } = useAllItems();
+  const safeAllItems = Array.isArray(allItems) ? allItems : [];
 
   const handleIncreaseQuantity = async (item, showError) => {
     const needsNormalization = !item._id || !item.categoryId || !item.image || item.measurement_unit === undefined;
     const processedItem = needsNormalization ? normalizeItemData(item) : item;
-    const { _id, measurement_unit, quantity: stockQuantity } = processedItem;
+    const { _id, measurement_unit } = processedItem;
     const currentQuantity = getItemQuantity(_id);
-    let newQuantity;
-    if (currentQuantity === 0) {
-      // Only apply stock validation for buyer users
-      if (isBuyer(user)) {
-        // Special case: for kg items, if stock < 0.25, block addition; for pieces, if stock < 1
-        const minStockRequired = measurement_unit === 1 ? 0.25 : 1;
-        if ((typeof stockQuantity === 'number') && stockQuantity < minStockRequired) {
-          if (typeof showError === 'function') {
-            showError('Not enough quantity in stock to add this item.');
-          }
-          return false;
+    
+    // Calculate new quantity consistently
+    const step = getIncrementStep(measurement_unit);
+    const newQuantity = calculateQuantity(currentQuantity, step, 'add');
+    
+    // Real-time stock validation for buyer users
+    if (isBuyer(user)) {
+      // Get API stock quantity using enhanced search logic - try multiple ID fields
+      // Only search if allItems data is available
+      let apiStockQuantity = processedItem.quantity || 0;
+      
+      if (safeAllItems.length > 0) {
+        const originalItem = safeAllItems.find(
+          (originalItem) =>
+            originalItem._id === _id ||
+            originalItem._id === processedItem.categoryId ||
+            originalItem.categoryId === _id ||
+            originalItem.categoryId === processedItem.categoryId
+        );
+        
+        // Get the most reliable stock value from the original item if found
+        if (originalItem) {
+          apiStockQuantity = originalItem?.quantity ??
+            originalItem?.available_quantity ??
+            originalItem?.stock_quantity ??
+            originalItem?.quantity_available ??
+            processedItem.quantity ??
+            processedItem.available_quantity ??
+            processedItem.stock_quantity ??
+            processedItem.quantity_available ?? 0;
         }
       }
-      // Use proper step increment for first addition - 0.25 for kg items, 1 for pieces
-      const step = getIncrementStep(measurement_unit);
-      newQuantity = step;
-    } else {
-      const step = getIncrementStep(measurement_unit);
-      newQuantity = calculateQuantity(currentQuantity, step, 'add');
+      
+      console.log(`🔍 [useCart Debug] Item ${_id} search in ${safeAllItems.length} items`);
+      
+      if (safeAllItems.length > 0) {
+        const originalItem = safeAllItems.find(
+          (originalItem) =>
+            originalItem._id === _id ||
+            originalItem._id === processedItem.categoryId ||
+            originalItem.categoryId === _id ||
+            originalItem.categoryId === processedItem.categoryId
+        );
+        
+        console.log(`🔍 [useCart Debug] Found originalItem:`, !!originalItem, originalItem ? {
+          _id: originalItem._id,
+          categoryId: originalItem.categoryId,
+          quantity: originalItem.quantity,
+          available_quantity: originalItem.available_quantity
+        } : 'not found');
+        
+        // Get the most reliable stock value from the original item if found
+        if (originalItem) {
+          apiStockQuantity = originalItem?.quantity ??
+            originalItem?.available_quantity ??
+            originalItem?.stock_quantity ??
+            originalItem?.quantity_available ??
+            processedItem.quantity ??
+            processedItem.available_quantity ??
+            processedItem.stock_quantity ??
+            processedItem.quantity_available ?? 0;
+        }
+      }
+      
+      console.log(`🔍 [useCart Debug] Final apiStockQuantity: ${apiStockQuantity}`);
+      
+      const fallbackStock = getStockQuantity(_id, apiStockQuantity);
+      console.log(`✅ [Cart Fix] Item ${_id} - API: ${apiStockQuantity}, Fallback: ${fallbackStock}, New Qty: ${newQuantity}`);
+      
+      const stockQuantitiesWithFallback = {
+        [_id]: fallbackStock // Use fallback to API data
+      };
+      
+      const validation = validateCartOperation(
+        'increase',
+        _id,
+        newQuantity,
+        stockQuantitiesWithFallback,
+        cartItems,
+        { [_id]: processedItem }
+      );
+      
+      console.log(`🔍 [Cart Validation] Result:`, {
+        canProceed: validation.canProceed,
+        reason: validation.reason,
+        availableStock: validation.availableStock,
+        requestedQuantity: validation.requestedQuantity
+      });
+      
+      if (!validation.canProceed) {
+        if (typeof showError === 'function') {
+          showError(validation.reason);
+        }
+        return false;
+      }
     }
+    
     try {
-      if (currentQuantity === 0) {
-        const cartItem = createCartItem(processedItem, newQuantity);
-        await handleAddSingleItem(cartItem);
-      } else {
-        const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit);
-        if (result && !result.success && result.reason === 'Operation already pending') {
-          console.log('⏸️ [useCart] Update skipped - operation already pending');
-          return;
-        }
+      // Always use handleUpdateQuantity for consistency - it can handle both new and existing items
+      const result = await handleUpdateQuantity(
+        _id, 
+        newQuantity, 
+        measurement_unit, 
+        'user-interaction',
+        currentQuantity === 0 ? processedItem : null // Pass item data for new items
+      );
+      
+      if (result && !result.success && result.reason === 'Operation already pending') {
+        console.log('⏸️ [useCart] Update skipped - operation already pending');
+        return;
       }
+      
       return true;
     } catch (error) {
       console.error('[useCart] handleIncreaseQuantity error:', error);
@@ -93,7 +187,7 @@ export const useCart = (user = null) => {
       if (newQuantity <= 0) {
         await handleRemoveFromCart(_id);
       } else {
-        const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit);
+        const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit, 'user-interaction');
 
         if (result && !result.success && result.reason === 'Operation already pending') {
           console.log('⏸️ [useCart] Update skipped - operation already pending');
@@ -108,24 +202,137 @@ export const useCart = (user = null) => {
   const handleFastIncreaseQuantity = async (item, showError) => {
     const needsNormalization = !item._id || !item.categoryId || !item.image || item.measurement_unit === undefined;
     const processedItem = needsNormalization ? normalizeItemData(item) : item;
-    const { _id, measurement_unit, quantity: stockQuantity } = processedItem;
+    const { _id, measurement_unit } = processedItem;
     const currentQuantity = getItemQuantity(_id);
     let newQuantity;
     if (currentQuantity === 0) {
-      // Only apply stock validation for buyer users
+      // Fast step should always be 5 regardless of measurement unit
+      const fastStep = 5;
+      newQuantity = calculateQuantity(currentQuantity, fastStep, 'add');
+      
+      // Real-time stock validation for buyer users
       if (isBuyer(user)) {
-        // Block add for kg items with stock < 0.25, for pieces with stock < 1
-        const minStockRequired = measurement_unit === 1 ? 0.25 : 1;
-        if ((typeof stockQuantity === 'number') && stockQuantity < minStockRequired) {
+        // Get API stock quantity using enhanced search logic - try multiple ID fields
+        // Only search if allItems data is available
+        let apiStockQuantity = processedItem.quantity || 0;
+        
+        if (safeAllItems.length > 0) {
+          const originalItem = safeAllItems.find(
+            (originalItem) =>
+              originalItem._id === _id ||
+              originalItem._id === processedItem.categoryId ||
+              originalItem.categoryId === _id ||
+              originalItem.categoryId === processedItem.categoryId
+          );
+          
+          // Get the most reliable stock value from the original item if found
+          if (originalItem) {
+            apiStockQuantity = originalItem?.quantity ??
+              originalItem?.available_quantity ??
+              originalItem?.stock_quantity ??
+              originalItem?.quantity_available ??
+              processedItem.quantity ??
+              processedItem.available_quantity ??
+              processedItem.stock_quantity ??
+              processedItem.quantity_available ?? 0;
+          }
+        }
+        
+        const fallbackStock = getStockQuantity(_id, apiStockQuantity);
+        console.log(`🔍 [Fast Cart Validation - New Item] Item ${_id} - Current: ${currentQuantity}, New: ${newQuantity}, API Stock: ${apiStockQuantity}, Fallback Stock: ${fallbackStock}`);
+        
+        const stockQuantitiesWithFallback = {
+          [_id]: fallbackStock // Use fallback to API data
+        };
+        
+        const validation = validateCartOperation(
+          'fast-increase',
+          _id,
+          newQuantity,
+          stockQuantitiesWithFallback,
+          cartItems,
+          { [_id]: processedItem }
+        );
+        
+        console.log(`🔍 [Fast Cart Validation - New Item] Result:`, {
+          canProceed: validation.canProceed,
+          reason: validation.reason,
+          availableStock: validation.availableStock,
+          requestedQuantity: validation.requestedQuantity
+        });
+        
+        if (!validation.canProceed) {
           if (typeof showError === 'function') {
-            showError('Not enough quantity in stock to add this item.');
+            showError(validation.reason);
           }
           return false;
         }
       }
-      newQuantity = 5;
+      
+      newQuantity = 5; // Always add 5 for fast increase
     } else {
-      newQuantity = currentQuantity + 5;
+      // Fast step should always be 5 regardless of measurement unit
+      const fastStep = 5;
+      newQuantity = calculateQuantity(currentQuantity, fastStep, 'add');
+      
+      // Real-time stock validation for buyer users
+      if (isBuyer(user)) {
+        // Get API stock quantity using enhanced search logic - try multiple ID fields
+        // Only search if allItems data is available
+        let apiStockQuantity = processedItem.quantity || 0;
+        
+        if (safeAllItems.length > 0) {
+          const originalItem = safeAllItems.find(
+            (originalItem) =>
+              originalItem._id === _id ||
+              originalItem._id === processedItem.categoryId ||
+              originalItem.categoryId === _id ||
+              originalItem.categoryId === processedItem.categoryId
+          );
+          
+          // Get the most reliable stock value from the original item if found
+          if (originalItem) {
+            apiStockQuantity = originalItem?.quantity ??
+              originalItem?.available_quantity ??
+              originalItem?.stock_quantity ??
+              originalItem?.quantity_available ??
+              processedItem.quantity ??
+              processedItem.available_quantity ??
+              processedItem.stock_quantity ??
+              processedItem.quantity_available ?? 0;
+          }
+        }
+        
+        const fallbackStock = getStockQuantity(_id, apiStockQuantity);
+        console.log(`🔍 [Fast Cart Validation - Existing Item] Item ${_id} - Current: ${currentQuantity}, New: ${newQuantity}, API Stock: ${apiStockQuantity}, Fallback Stock: ${fallbackStock}`);
+        
+        const stockQuantitiesWithFallback = {
+          [_id]: fallbackStock // Use fallback to API data
+        };
+        
+        const validation = validateCartOperation(
+          'fast-increase',
+          _id,
+          newQuantity,
+          stockQuantitiesWithFallback,
+          cartItems,
+          { [_id]: processedItem }
+        );
+        
+        console.log(`🔍 [Fast Cart Validation - Existing Item] Result:`, {
+          canProceed: validation.canProceed,
+          reason: validation.reason,
+          availableStock: validation.availableStock,
+          requestedQuantity: validation.requestedQuantity
+        });
+        
+        if (!validation.canProceed) {
+          if (typeof showError === 'function') {
+            showError(validation.reason);
+          }
+          return false;
+        }
+      }
     }
     try {
       if (currentQuantity === 0) {
@@ -136,7 +343,7 @@ export const useCart = (user = null) => {
         const cartItem = createCartItem(processedItem, formattedQuantity);
         await handleAddSingleItem(cartItem);
       } else {
-        const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit);
+        const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit, 'rapid-updates');
         if (result && !result.success && result.reason === 'Operation already pending') {
           console.log('⏸️ [useCart] Fast update skipped - operation already pending');
           return;
@@ -156,7 +363,10 @@ export const useCart = (user = null) => {
     const { _id, measurement_unit } = processedItem;
 
     const currentQuantity = getItemQuantity(_id);
-    let newQuantity = currentQuantity - 5;
+    
+    // Fast step should always be 5 regardless of measurement unit
+    const fastStep = 5;
+    let newQuantity = currentQuantity - fastStep;
 
     // Use proper minimum quantity based on measurement unit
     const minQuantity = measurement_unit === 1 ? 0.25 : 1;
@@ -168,7 +378,7 @@ export const useCart = (user = null) => {
       if (newQuantity <= 0) {
         await handleRemoveFromCart(_id);
       } else {
-        const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit);
+        const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit, 'rapid-updates');
         
         if (result && !result.success && result.reason === 'Operation already pending') {
           console.log('⏸️ [useCart] Fast decrease skipped - operation already pending');
@@ -195,6 +405,57 @@ export const useCart = (user = null) => {
       return { success: true };
     }
     
+    // Real-time stock validation for buyer users
+    if (isBuyer(user)) {
+      // Get API stock quantity using enhanced search logic - try multiple ID fields
+      // Only search if allItems data is available
+      let apiStockQuantity = processedItem.quantity || 0;
+      
+      if (safeAllItems.length > 0) {
+        const originalItem = safeAllItems.find(
+          (originalItem) =>
+            originalItem._id === _id ||
+            originalItem._id === processedItem.categoryId ||
+            originalItem.categoryId === _id ||
+            originalItem.categoryId === processedItem.categoryId
+        );
+        
+        // Get the most reliable stock value from the original item if found
+        if (originalItem) {
+          apiStockQuantity = originalItem?.quantity ??
+            originalItem?.available_quantity ??
+            originalItem?.stock_quantity ??
+            originalItem?.quantity_available ??
+            processedItem.quantity ??
+            processedItem.available_quantity ??
+            processedItem.stock_quantity ??
+            processedItem.quantity_available ?? 0;
+        }
+      }
+      
+      const stockQuantitiesWithFallback = {
+        [_id]: getStockQuantity(_id, apiStockQuantity) // Use fallback to API data
+      };
+      
+      const validation = validateCartOperation(
+        'set',
+        _id,
+        newQuantity,
+        stockQuantitiesWithFallback,
+        cartItems,
+        { [_id]: processedItem }
+      );
+      
+      if (!validation.canProceed) {
+        console.log('useCart handleSetQuantity: stock validation failed:', validation.reason);
+        return { 
+          success: false, 
+          error: validation.reason,
+          suggestion: validation.suggestion
+        };
+      }
+    }
+    
     try {
       if (currentQuantity === 0) {
         // Item doesn't exist in cart, add it
@@ -206,7 +467,7 @@ export const useCart = (user = null) => {
       } else {
         // Item exists in cart, update quantity
         console.log('useCart handleSetQuantity: updating existing item quantity');
-        const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit);
+        const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit, 'user-interaction');
         console.log('useCart handleSetQuantity: handleUpdateQuantity result:', result);
         return result;
       }
@@ -214,6 +475,21 @@ export const useCart = (user = null) => {
       console.error('useCart handleSetQuantity error:', error);
       return { success: false, error: error.message };
     }
+  };
+
+  // NEW: AI Results handler for bulk operations
+  const handleAIResults = async (aiItems) => {
+    return handleAddAIResults(aiItems);
+  };
+
+  // NEW: Batch update handler
+  const batchUpdateCart = async (itemId, quantity, measurementUnit) => {
+    return handleBatchUpdate(itemId, quantity, measurementUnit);
+  };
+
+  // NEW: Force sync all pending operations
+  const syncPendingOperations = async () => {
+    return debouncedCartManager.syncAll();
   };
 
   return {
@@ -229,6 +505,9 @@ export const useCart = (user = null) => {
     handleClearCart,
     handleRemoveFromCart,
     handleAddToCart,
+    handleAIResults, // NEW: For AI voice modal
+    batchUpdateCart, // NEW: For batch operations
+    syncPendingOperations, // NEW: Force sync pending operations
     fetchBackendCart,
     testConnectivity,
     testMinimalPostRequest,
@@ -237,5 +516,6 @@ export const useCart = (user = null) => {
     loading,
     error,
     removingItems,
+    debouncedCartManager, // NEW: Expose manager for advanced usage
   };
 };

@@ -1,5 +1,6 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useStock } from '../context/StockContext';
 import { addressService } from '../services/api/addresses';
 import { unifiedOrderService } from '../services/unifiedOrderService';
 import { workflowStateUtils } from '../utils/workflowStateUtils';
@@ -8,6 +9,7 @@ import { useCart } from './useCart';
 export const usePickupWorkflow = () => {
   const { user } = useAuth();
   const { cartItemDetails } = useCart(user);
+  const { stockQuantities } = useStock();
 
   const [addresses, setAddresses] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -196,6 +198,31 @@ export const usePickupWorkflow = () => {
       throw new Error(errorMsg);
     }
     
+    // Enhanced cart validation before proceeding with order creation
+    const cartItems = {};
+    Object.values(cartItemDetails).forEach(item => {
+      cartItems[item._id] = item.quantity;
+    });
+    
+    // Use the enhanced cart validator for better error handling
+    const { CartStockValidator } = await import('../services/cartStockValidator');
+    const validationResult = await CartStockValidator.quickValidate(
+      cartItems,
+      stockQuantities,
+      cartItemDetails
+    );
+    
+    if (!validationResult.isValid) {
+      console.error('Order creation failed - enhanced cart validation:', validationResult.issues);
+      
+      // Provide more detailed error message
+      const errorMessage = validationResult.issues?.length > 0 
+        ? `Cart validation failed: ${validationResult.issues.map(i => i.message).join(', ')}`
+        : 'Some items in your cart are no longer available';
+        
+      throw new Error(errorMessage);
+    }
+    
     // Save workflow state before potential payment redirect
     if (orderOptions.paymentMethod === 'credit-card') {
       console.log('💾 [Pickup Workflow] Saving state before payment redirect');
@@ -225,7 +252,12 @@ export const usePickupWorkflow = () => {
       });
       
       setOrderData(order);
-      setCurrentPhase(3);
+      
+      // Only set phase to confirmation if this is NOT a credit card payment
+      // (for credit card payments, the phase will be set by the deep link handler)
+      if (orderOptions.paymentMethod !== 'credit-card') {
+        setCurrentPhase(3);
+      }
       
       // Clear saved state after successful order creation
       await workflowStateUtils.clearWorkflowState();
@@ -244,7 +276,7 @@ export const usePickupWorkflow = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedAddress, user, cartItemDetails, currentPhase]);
+  }, [selectedAddress, user, cartItemDetails, currentPhase, stockQuantities]);
 
   // Removed validateOrderData - validation is now handled in unifiedOrderService
 

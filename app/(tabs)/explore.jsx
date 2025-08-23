@@ -41,13 +41,13 @@ const getExploreStyles = (colors) => StyleSheet.create({
   heroTitle: {
     fontSize: scaleSize(24),
     fontWeight: "bold",
-    color: colors.white,
+    color: colors.title,
     textAlign: "center",
     marginBottom: scaleSize(spacing.sm),
   },
   heroSubtitle: {
     fontSize: scaleSize(14),
-    color: colors.white,
+    color: colors.title,
     textAlign: "center",
     opacity: 0.85,
     lineHeight: scaleSize(22),

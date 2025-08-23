@@ -246,7 +246,8 @@
     "placeOrder": "Place Order",
     "loadingError": "Unable to load item details",
     "loadingErrorMessage": "There was a problem fetching item data. Please try again later.",
-    "noItems": "No items yet"
+    "noItems": "No items yet",
+    "syncing": "Syncing..."
   },
   "explore": {
     "title": {
@@ -987,6 +988,7 @@
     "noItemsSubtitle": "Try recording again or browse our catalog",
     "browseItems": "Browse Items",
     "addToCart": "Add to Cart",
+    "addingToCart": "Adding to Cart...",
     "fixItemsFirst": "Fix {count} Item{s} First",
     "noMaterialsFound": "No Materials Found",
     "noMaterialsExtracted": "No materials were extracted from the recording.",
@@ -1285,6 +1287,7 @@
       "removeFast": "Removed {{quantity}} {{unit}} of {{itemName}}",
       "removeFastComplete": "{{itemName}} removed from cart",
       "removeAll": "{{itemName}} removed from cart",
+      "allItems": "All items",
       "itemRemoved": "{{itemName}} removed from cart",
       "notInCart": "{{itemName}} is not in your cart",
       "invalidQuantityKg": "Please enter a valid quantity (minimum 0.25 kg)",
@@ -1320,12 +1323,13 @@
     "ai": {
       "outOfStockNotAdded": "{{itemName}} is out of stock and was not added to cart.",
       "limitedStockReduced": "{{itemName}}: Only {{availableToAdd}} {{unit}} available. {{discarded}} {{unit}} discarded.",
-      "multipleItemsAdded": "{{addedCount}} item{{s}} added to cart.",
-      "multipleItemsWithOutOfStock": " {{outOfStockCount}} item{{s}} out of stock.",
-      "multipleItemsWithLimits": " {{limitCount}} item{{s}} had quantities reduced due to stock limits.",
-      "singleItemAdded": "{{addedCount}} item{{s}} added to cart",
+      "multipleItemsAdded": "{{addedCount}} item added to cart.",
+      "multipleItemsWithOutOfStock": " {{outOfStockCount}} item out of stock.",
+      "multipleItemsWithLimits": " {{limitCount}} item had quantities reduced due to stock limits.",
+      "singleItemAdded": "{{addedCount}} item added to cart",
       "noItemsStockLimitations": "No items could be added due to stock limitations",
-      "noItemsAdded": "No items could be added"
+      "noItemsAdded": "No items could be added",
+      "addToCartError": "Failed to add items to cart. Please try again."
     }
   }
 }
