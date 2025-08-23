@@ -5,6 +5,7 @@ import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "rea
 import { useLocalization } from "../../context/LocalizationContext";
 import { useThemedStyles } from "../../hooks/useThemedStyles";
 import { orderService } from "../../services/api/orders";
+import networkUtils from "../../utils/networkUtils";
 import { scaleSize } from '../../utils/scale';
 import { extractNameFromMultilingual } from "../../utils/translationHelpers";
 
@@ -124,6 +125,63 @@ const TopRecycledSection = memo(() => {
   const [topItems, setTopItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [hasFailedOnce, setHasFailedOnce] = useState(false);
+
+  // Function to fetch top materials
+  const fetchTopMaterials = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await orderService.getTopMaterials();
+      console.log('Top Recycled Items Response:', res);
+      
+      if (res?.success) {
+        setTopItems(res.data || []);
+        setError(null);
+        setHasFailedOnce(false);
+      } else if (res?.data && Array.isArray(res.data) && res.data.length === 0) {
+        // Handle offline case with empty data but no error message
+        setTopItems([]);
+        setError(res.message || "No data available");
+        setHasFailedOnce(true);
+      } else {
+        setTopItems([]);
+        setError("Failed to load data");
+        setHasFailedOnce(true);
+      }
+    } catch (_err) {
+      setTopItems([]);
+      setError("Failed to load data");
+      setHasFailedOnce(true);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Initial load
+  useEffect(() => {
+    fetchTopMaterials();
+  }, [fetchTopMaterials]);
+
+  // Network monitoring for auto-retry
+  useEffect(() => {
+    const handleNetworkChange = (isOnline) => {
+      console.log('[TopRecycledSection] Network status changed:', isOnline);
+      // Only retry if we previously failed and now have connection
+      if (isOnline && hasFailedOnce && !loading) {
+        console.log('[TopRecycledSection] Auto-retrying data fetch after reconnection');
+        fetchTopMaterials();
+      }
+    };
+
+    // Start monitoring network status
+    networkUtils.startMonitoring();
+    const unsubscribe = networkUtils.addListener(handleNetworkChange);
+
+    return () => {
+      unsubscribe();
+    };
+  }, [hasFailedOnce, loading, fetchTopMaterials]);
 
   // Helper function to get translated item name
   const getTranslatedItemName = useCallback((item) => {
@@ -137,28 +195,6 @@ const TopRecycledSection = memo(() => {
     // Fallback to displayName or _id
     return item.displayName || item._id || "Unknown Item";
   }, [t, currentLanguage]);
-
-  useEffect(() => {
-    let mounted = true;
-    setLoading(true);
-    setError(null);
-    orderService.getTopMaterials()
-      .then((res) => {
-        console.log('Top Recycled Items Response:', res);
-        if (mounted && res?.success) {
-          setTopItems(res.data || []);
-        } else if (mounted) {
-          setError("Failed to load data");
-        }
-      })
-      .catch((err) => {
-        setError("Failed to load data");
-      })
-      .finally(() => {
-        if (mounted) setLoading(false);
-      });
-    return () => { mounted = false; };
-  }, []);
 
   // Helper to get category name for navigation
   const getCategoryNameForNavigation = useCallback((item) => {

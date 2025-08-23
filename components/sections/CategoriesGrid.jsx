@@ -1,3 +1,4 @@
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from 'react-i18next'; // Add this import
 import {
@@ -6,6 +7,7 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
 import { KeyboardAwareFlatList } from 'react-native-keyboard-aware-scroll-view';
@@ -82,11 +84,26 @@ const getCategoriesGridStyles = (colors) => StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingVertical: scaleSize(50),
+    paddingHorizontal: scaleSize(20),
   },
   errorText: {
     fontSize: scaleSize(16),
     color: colors.error,
     textAlign: "center",
+    marginBottom: scaleSize(20),
+  },
+  retryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    paddingHorizontal: scaleSize(20),
+    paddingVertical: scaleSize(12),
+    borderRadius: scaleSize(8),
+  },
+  retryButtonText: {
+    color: colors.white,
+    fontSize: scaleSize(14),
+    fontWeight: '600',
   },
   emptyContainer: {
     flex: 1,
@@ -701,7 +718,28 @@ const CategoriesGrid = ({
   if (error) {
     return (
       <View style={styles.errorContainer}>
+        <MaterialCommunityIcons 
+          name="wifi-off" 
+          size={48} 
+          color={colors.error} 
+          style={{ marginBottom: 16 }}
+        />
         <Text style={styles.errorText}>{t('common.error', 'Error')}: {error}</Text>
+        <TouchableOpacity 
+          style={styles.retryButton}
+          onPress={handleRefresh}
+          disabled={refreshing}
+        >
+          <MaterialCommunityIcons 
+            name="refresh" 
+            size={16} 
+            color={colors.white} 
+            style={{ marginRight: 8 }}
+          />
+          <Text style={styles.retryButtonText}>
+            {refreshing ? t('common.retrying', 'Retrying...') : t('common.retry', 'Retry')}
+          </Text>
+        </TouchableOpacity>
       </View>
     );
   }

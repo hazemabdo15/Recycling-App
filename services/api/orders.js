@@ -1,4 +1,6 @@
-﻿import { validateQuantity } from '../../utils/cartUtils';
+﻿import apiCache from '../../utils/apiCache';
+import { validateQuantity } from '../../utils/cartUtils';
+import persistentCache from '../../utils/persistentCache';
 import apiService from './apiService';
 
 
@@ -165,13 +167,61 @@ export const orderService = {
         ? `/top-materials-recycled?category=${encodeURIComponent(category)}`
         : '/top-materials-recycled';
       
-      const response = await apiService.get(url);
+      // Check memory cache first
+      const cacheKey = `top-materials-${category || 'all'}`;
+      const cached = apiCache.get(cacheKey);
+      if (cached) {
+        console.log('[Order Service] Top materials retrieved from cache');
+        return cached;
+      }
       
-      console.log('[Order Service] Top materials retrieved successfully');
-      return response;
+      // Check persistent cache for offline support
+      const persistentData = await persistentCache.get(cacheKey, true); // Allow expired data
+      
+      // Add timeout to prevent long loading times
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Request timeout')), 5000);
+      });
+      
+      try {
+        const fetchPromise = apiService.get(url);
+        const response = await Promise.race([fetchPromise, timeoutPromise]);
+        
+        // Cache successful response
+        if (response && response.success) {
+          apiCache.set(cacheKey, response, 5 * 60 * 1000); // Cache for 5 minutes
+          await persistentCache.set(cacheKey, response, 24 * 60 * 60 * 1000); // Persist for 24 hours
+        }
+        
+        console.log('[Order Service] Top materials retrieved successfully');
+        return response;
+      } catch (networkError) {
+        console.log('[Order Service] Network request failed, checking persistent cache...');
+        
+        if (persistentData) {
+          console.log('[Order Service] Returning persistent cached top materials');
+          return persistentData;
+        }
+        
+        throw networkError;
+      }
     } catch (error) {
       console.error('[Order Service] Failed to fetch top materials:', error.message);
-      throw error;
+      
+      // Try to return cached data even if expired as last resort
+      const cacheKey = `top-materials-${category || 'all'}`;
+      const expiredCache = apiCache.cache.get(cacheKey);
+      if (expiredCache && expiredCache.data) {
+        console.log('[Order Service] Returning expired cached top materials due to network error');
+        return expiredCache.data;
+      }
+      
+      // Return fallback data structure for offline scenarios
+      return {
+        success: false,
+        data: [],
+        message: 'Unable to load data. Please check your internet connection.'
+      };
     }
   },
 

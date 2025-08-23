@@ -715,6 +715,8 @@ const CategoryDetails = () => {
             "Error loading {{categoryName}} items",
             { categoryName: translatedCategoryName }
           )}
+          onRetry={handleRefresh}
+          retrying={refreshing}
         />
       </View>
     );
