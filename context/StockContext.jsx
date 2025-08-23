@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { io } from 'socket.io-client';
 import { API_BASE_URL } from '../services/api/config';
 import { refreshAccessToken } from '../services/auth';
+import stockCacheManager from '../utils/stockCacheManager';
 import { useAuth } from './AuthContext';
 
 const StockContext = createContext();
@@ -158,6 +159,9 @@ export const StockProvider = ({ children }) => {
             saveStockToCache(updated);
             setLastUpdated(new Date());
             
+            // Notify stock cache manager of the update
+            stockCacheManager.notifyStockUpdate({ [itemId]: quantity });
+            
             console.log('📦 Updated stock for item:', itemId, 'new quantity:', quantity);
             return updated;
           });
@@ -171,6 +175,10 @@ export const StockProvider = ({ children }) => {
           const updated = { ...prev, ...stockData };
           saveStockToCache(updated);
           setLastUpdated(new Date());
+          
+          // Notify stock cache manager of bulk update
+          stockCacheManager.notifyStockUpdate(stockData);
+          
           return updated;
         });
       });
@@ -181,6 +189,9 @@ export const StockProvider = ({ children }) => {
         setStockQuantities(stockData);
         saveStockToCache(stockData);
         setLastUpdated(new Date());
+        
+        // Notify stock cache manager of initial data
+        stockCacheManager.notifyStockUpdate(stockData);
       });
 
     } catch (error) {
@@ -224,6 +235,10 @@ export const StockProvider = ({ children }) => {
       const updated = { ...prev, ...stockUpdates };
       saveStockToCache(updated);
       setLastUpdated(new Date());
+      
+      // Notify stock cache manager of bulk update
+      stockCacheManager.notifyStockUpdate(stockUpdates);
+      
       return updated;
     });
   }, [saveStockToCache]);

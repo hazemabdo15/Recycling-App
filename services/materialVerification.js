@@ -1,8 +1,17 @@
 ﻿import { extractNameFromMultilingual } from '../utils/translationHelpers';
+import stockCacheManager from '../utils/stockCacheManager';
 import apiService from "./api/apiService";
+
 let cachedDatabaseItems = new Map(); // Use Map to cache per role
 let cacheTimestamp = null;
 const CACHE_DURATION = 5 * 60 * 1000;
+
+// Set up cache clearing when stock updates
+stockCacheManager.addStockUpdateListener(() => {
+  console.log('🔄 [Material Verification] Clearing cache due to stock update');
+  cachedDatabaseItems.clear();
+  cacheTimestamp = null;
+});
 
 export async function fetchDatabaseItems(userRole = 'customer') {
   try {

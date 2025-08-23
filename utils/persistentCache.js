@@ -177,6 +177,28 @@ class PersistentCache {
   }
 
   /**
+   * Clear items matching a pattern
+   * @param {string} pattern - Pattern to match against keys
+   */
+  async clearByPattern(pattern) {
+    await this.initialize();
+
+    const keysToRemove = [];
+    for (const key of this.memory.keys()) {
+      if (key.includes(pattern)) {
+        keysToRemove.push(key);
+      }
+    }
+
+    for (const key of keysToRemove) {
+      await this.remove(key);
+    }
+
+    console.log('[PersistentCache] Cleared', keysToRemove.length, 'items matching pattern:', pattern);
+    return keysToRemove.length;
+  }
+
+  /**
    * Clean up expired items
    */
   async cleanup() {

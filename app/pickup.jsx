@@ -142,6 +142,11 @@ export default function Pickup() {
       if (paymentStatus === "success" || paymentIntentId) {
         try {
           setCreatingOrder(true);
+          
+          // ✅ Immediately set to confirmation phase for better UX
+          if (setCurrentPhase) {
+            setCurrentPhase(3);
+          }
 
           // ✅ Check if we have address in workflow state, if not try to restore from previous state
           let addressToUse = selectedAddress;
@@ -194,9 +199,7 @@ export default function Pickup() {
           });
 
           // ✅ Order data should now be properly stored in workflow hook
-          if (setCurrentPhase) {
-            setCurrentPhase(3);
-          }
+          // Phase is already set to 3 at the beginning of this block
         } catch (error) {
           console.error("Deep link order failed", { error: error.message });
 
@@ -593,6 +596,22 @@ export default function Pickup() {
             />
           );
         case 3:
+          // Show loading state if order data is not yet available
+          if (!orderData) {
+            return (
+              <View style={styles.messageContainer}>
+                <MaterialCommunityIcons
+                  name="loading"
+                  size={64}
+                  color={colors.primary}
+                />
+                <Text style={styles.messageTitle}>Processing Order</Text>
+                <Text style={styles.messageText}>
+                  Please wait while we finalize your order...
+                </Text>
+              </View>
+            );
+          }
           return (
             <ConfirmationPhase
               order={orderData}

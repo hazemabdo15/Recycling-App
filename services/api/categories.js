@@ -3,6 +3,7 @@ import apiCache from "../../utils/apiCache";
 import logger from "../../utils/logger";
 import { measureApiCall } from "../../utils/performanceMonitor";
 import persistentCache from "../../utils/persistentCache";
+import stockCacheManager from "../../utils/stockCacheManager";
 import { extractNameFromMultilingual } from "../../utils/translationHelpers";
 import { API_ENDPOINTS } from "./config";
 
@@ -114,6 +115,13 @@ export const categoriesAPI = {
   getAllItems: async (role = "customer") => {
     return measureApiCall(async () => {
       const cacheKey = apiCache.generateKey(`all-items-${role}`);
+      
+      // Check if caches should be invalidated due to stock updates
+      if (stockCacheManager.shouldInvalidateCaches()) {
+        console.log('[Categories API] Stock data may be stale, clearing caches');
+        await stockCacheManager.invalidateStockCaches();
+      }
+      
       const cached = apiCache.get(cacheKey);
       if (cached) {
         logger.debug("All items retrieved from cache", {
@@ -182,6 +190,13 @@ export const categoriesAPI = {
   getCategoryItems: async (role = "customer", categoryName) => {
     return measureApiCall(async () => {
       const cacheKey = apiCache.generateKey(`category-items-${categoryName}-${role}`);
+      
+      // Check if caches should be invalidated due to stock updates
+      if (stockCacheManager.shouldInvalidateCaches()) {
+        console.log('[Categories API] Stock data may be stale, clearing category caches');
+        await stockCacheManager.invalidateStockCaches();
+      }
+      
       const cached = apiCache.get(cacheKey);
       if (cached) {
         logger.debug("Category items retrieved from cache", {

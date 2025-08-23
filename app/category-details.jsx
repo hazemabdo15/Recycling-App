@@ -97,6 +97,7 @@ const CategoryDetails = () => {
     getItemStock,
     syncItemsStock,
     wasRecentlyUpdated,
+    stockQuantities, // Add this to get real-time stock data
   } = useStockManager();
 
   // Sync stock data when items are loaded
@@ -106,19 +107,25 @@ const CategoryDetails = () => {
     }
   }, [items, syncItemsStock]);
 
+  // Update items with real-time stock data
+  const itemsWithRealTimeStock = useMemo(() => {
+    if (!items || !stockQuantities) return items;
+    
+    return items.map(item => ({
+      ...item,
+      quantity: stockQuantities[item._id] ?? item.quantity ?? 0
+    }));
+  }, [items, stockQuantities]);
+
   // Memoize the processed items separately from cart quantities for better performance
   const processedItems = useMemo(() => {
-    return items.map((item) => {
+    return itemsWithRealTimeStock.map((item) => {
       const needsNormalization =
         !item._id ||
         !item.categoryId ||
         !item.image ||
         item.measurement_unit === undefined;
       const processedItem = needsNormalization ? normalizeItemData(item) : item;
-
-      // Get real-time stock quantity
-      const realTimeStock = getItemStock(processedItem._id);
-      const stockQuantity = realTimeStock > 0 ? realTimeStock : (processedItem.quantity || 0);
 
       // Handle multilingual item name - extract from the item name structure
       const itemDisplayName = extractNameFromMultilingual(processedItem.name, currentLanguage);
@@ -133,13 +140,12 @@ const CategoryDetails = () => {
 
       return {
         ...processedItem,
-        quantity: stockQuantity, // Use real-time stock quantity
         displayName: translatedItemName, // Add translated name for display
         originalName: itemDisplayName, // Keep the original multilingual name for reference
         stockUpdated: wasRecentlyUpdated(processedItem._id), // Flag for UI feedback
       };
     });
-  }, [items, getItemStock, wasRecentlyUpdated, currentLanguage, t, categoryName]);
+  }, [itemsWithRealTimeStock, wasRecentlyUpdated, currentLanguage, t, categoryName]);
 
   // Memoize cart quantities separately to avoid recalculating processed items
   const mergedItems = useMemo(() => {

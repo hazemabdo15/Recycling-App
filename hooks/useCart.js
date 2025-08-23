@@ -1,5 +1,7 @@
 ﻿import { useCartContext } from '../context/CartContext';
+import { useStock } from '../context/StockContext';
 import { calculateQuantity, createCartItem, getIncrementStep, normalizeItemData } from '../utils/cartUtils';
+import { validateCartOperation } from '../utils/cartStockValidation';
 import { isBuyer } from '../utils/roleUtils';
 
 export const useCart = (user = null) => {
@@ -26,27 +28,37 @@ export const useCart = (user = null) => {
     debouncedCartManager,
   } = useCartContext();
 
+  // Get real-time stock data
+  const { stockQuantities } = useStock();
+
   const handleIncreaseQuantity = async (item, showError) => {
     const needsNormalization = !item._id || !item.categoryId || !item.image || item.measurement_unit === undefined;
     const processedItem = needsNormalization ? normalizeItemData(item) : item;
-    const { _id, measurement_unit, quantity: stockQuantity } = processedItem;
+    const { _id, measurement_unit } = processedItem;
     const currentQuantity = getItemQuantity(_id);
-    
-    // Only apply stock validation for buyer users
-    if (isBuyer(user)) {
-      // Special case: for kg items, if stock < 0.25, block addition; for pieces, if stock < 1
-      const minStockRequired = measurement_unit === 1 ? 0.25 : 1;
-      if ((typeof stockQuantity === 'number') && stockQuantity < minStockRequired) {
-        if (typeof showError === 'function') {
-          showError('Not enough quantity in stock to add this item.');
-        }
-        return false;
-      }
-    }
     
     // Calculate new quantity consistently
     const step = getIncrementStep(measurement_unit);
     const newQuantity = calculateQuantity(currentQuantity, step, 'add');
+    
+    // Real-time stock validation for buyer users
+    if (isBuyer(user)) {
+      const validation = validateCartOperation(
+        'increase',
+        _id,
+        newQuantity,
+        stockQuantities,
+        cartItems,
+        { [_id]: processedItem }
+      );
+      
+      if (!validation.canProceed) {
+        if (typeof showError === 'function') {
+          showError(validation.reason);
+        }
+        return false;
+      }
+    }
     
     try {
       // Always use handleUpdateQuantity for consistency - it can handle both new and existing items
@@ -112,24 +124,57 @@ export const useCart = (user = null) => {
   const handleFastIncreaseQuantity = async (item, showError) => {
     const needsNormalization = !item._id || !item.categoryId || !item.image || item.measurement_unit === undefined;
     const processedItem = needsNormalization ? normalizeItemData(item) : item;
-    const { _id, measurement_unit, quantity: stockQuantity } = processedItem;
+    const { _id, measurement_unit } = processedItem;
     const currentQuantity = getItemQuantity(_id);
     let newQuantity;
     if (currentQuantity === 0) {
-      // Only apply stock validation for buyer users
+      // Calculate new quantity consistently
+      const fastStep = measurement_unit === 1 ? 5 : 1.0; // 5 pieces or 1kg
+      newQuantity = calculateQuantity(currentQuantity, fastStep, 'add');
+      
+      // Real-time stock validation for buyer users
       if (isBuyer(user)) {
-        // Block add for kg items with stock < 0.25, for pieces with stock < 1
-        const minStockRequired = measurement_unit === 1 ? 0.25 : 1;
-        if ((typeof stockQuantity === 'number') && stockQuantity < minStockRequired) {
+        const validation = validateCartOperation(
+          'fast-increase',
+          _id,
+          newQuantity,
+          stockQuantities,
+          cartItems,
+          { [_id]: processedItem }
+        );
+        
+        if (!validation.canProceed) {
           if (typeof showError === 'function') {
-            showError('Not enough quantity in stock to add this item.');
+            showError(validation.reason);
           }
           return false;
         }
       }
-      newQuantity = 5;
+      
+      newQuantity = measurement_unit === 1 ? 5 : 1.0; // 5 pieces or 1kg
     } else {
-      newQuantity = currentQuantity + 5;
+      // Calculate new quantity consistently
+      const fastStep = measurement_unit === 1 ? 5 : 1.0; // 5 pieces or 1kg
+      newQuantity = calculateQuantity(currentQuantity, fastStep, 'add');
+      
+      // Real-time stock validation for buyer users
+      if (isBuyer(user)) {
+        const validation = validateCartOperation(
+          'fast-increase',
+          _id,
+          newQuantity,
+          stockQuantities,
+          cartItems,
+          { [_id]: processedItem }
+        );
+        
+        if (!validation.canProceed) {
+          if (typeof showError === 'function') {
+            showError(validation.reason);
+          }
+          return false;
+        }
+      }
     }
     try {
       if (currentQuantity === 0) {
@@ -197,6 +242,27 @@ export const useCart = (user = null) => {
       console.log('useCart handleSetQuantity: removing item (quantity <= 0)');
       await handleRemoveFromCart(_id);
       return { success: true };
+    }
+    
+    // Real-time stock validation for buyer users
+    if (isBuyer(user)) {
+      const validation = validateCartOperation(
+        'set',
+        _id,
+        newQuantity,
+        stockQuantities,
+        cartItems,
+        { [_id]: processedItem }
+      );
+      
+      if (!validation.canProceed) {
+        console.log('useCart handleSetQuantity: stock validation failed:', validation.reason);
+        return { 
+          success: false, 
+          error: validation.reason,
+          suggestion: validation.suggestion
+        };
+      }
     }
     
     try {

@@ -65,6 +65,26 @@ class APICache {
   size() {
     return this.cache.size;
   }
+
+  getStats() {
+    const now = Date.now();
+    let fresh = 0;
+    let expired = 0;
+
+    for (const cached of this.cache.values()) {
+      if (now <= cached.expiresAt) {
+        fresh++;
+      } else {
+        expired++;
+      }
+    }
+
+    return {
+      total: this.cache.size,
+      fresh,
+      expired
+    };
+  }
 }
 
 const apiCache = new APICache();

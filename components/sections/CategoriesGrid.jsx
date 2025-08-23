@@ -168,6 +168,7 @@ const CategoriesGrid = ({
     getItemStock,
     syncItemsStock,
     wasRecentlyUpdated,
+    stockQuantities, // Add real-time stock data
   } = useStockManager();
   
   // Sync stock data when items are loaded
@@ -268,8 +269,7 @@ const CategoriesGrid = ({
             }) || extractNameFromMultilingual(normalizedItem.categoryName, currentLanguage) || 'Unknown Category';
             
             // Get real-time stock quantity
-            const realTimeStock = getItemStock(normalizedItem._id);
-            const stockQuantity = realTimeStock > 0 ? realTimeStock : (normalizedItem.quantity || 0);
+            const stockQuantity = stockQuantities[normalizedItem._id] ?? normalizedItem.quantity ?? 0;
             
             return {
               ...normalizedItem,
@@ -328,7 +328,7 @@ const CategoriesGrid = ({
         });
       return { filteredCategories: cats, filteredItems: [] };
     }
-  }, [categories, allItems, showItemsMode, searchText, t, currentLanguage, getItemStock, wasRecentlyUpdated]);
+  }, [categories, allItems, showItemsMode, searchText, t, currentLanguage, stockQuantities, wasRecentlyUpdated]);
 
   // Memoize items with cart quantities separately for better performance
   const itemsWithCartQuantities = useMemo(() => {
