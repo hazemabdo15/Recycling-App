@@ -3,6 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Image,
   StatusBar,
   StyleSheet,
@@ -87,6 +88,7 @@ const Cart = () => {
     handleClearCart,
     handleSetQuantity,
     removingItems,
+    loading: cartLoading,
   } = useCart(user);
   const { items: allItems, loading: itemsLoading } = useAllItems();
   const {
@@ -942,6 +944,16 @@ const Cart = () => {
           ListFooterComponent={<View style={{ height: 100 }} />}
         />
       </View>
+      
+      {/* Loading overlay when cart is syncing */}
+      {cartLoading && cartArray.length > 0 && (
+        <View style={styles.loadingOverlay}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color={colors.primary} />
+            <Text style={styles.loadingText}>{t('cart.syncing')}</Text>
+          </View>
+        </View>
+      )}
     </View>
   );
 };
@@ -1318,6 +1330,36 @@ const getStyles = (colors) => StyleSheet.create({
   checkoutBtnBarTextDisabled: {
     color: colors.white,
     fontWeight: "600",
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  loadingContainer: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  loadingText: {
+    ...typography.subtitle,
+    color: colors.textPrimary,
+    marginLeft: spacing.md,
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
 

@@ -262,7 +262,8 @@
     "placeOrder": "تقديم الطلب",
     "loadingError": "غير قادر على تحميل تفاصيل العنصر",
     "loadingErrorMessage": "كان هناك مشكلة في جلب بيانات العنصر. يرجى المحاولة مرة أخرى لاحقًا.",
-    "noItems": "لا توجد عناصر بعد"
+    "noItems": "لا توجد عناصر بعد",
+    "syncing": "مزامنة..."
   },
   "explore": {
     "title": {
@@ -1045,6 +1046,7 @@
     "noItemsSubtitle": "جرب التسجيل مرة أخرى أو تصفح الكتالوج",
     "browseItems": "تصفح العناصر",
     "addToCart": "أضف إلى السلة",
+    "addingToCart": "إضافة إلى السلة...",
     "fixItemsFirst": "أصلح {count} عنصر{s} أولاً",
     "noMaterialsFound": "لم يتم العثور على مواد",
     "noMaterialsExtracted": "لم يتم استخراج أي مواد من التسجيل.",
@@ -1324,7 +1326,8 @@
       "multipleItemsWithLimits": " {{limitCount}} عنصر تم تقليل كميتها بسبب حدود المخزون.",
       "singleItemAdded": "تمت إضافة {{addedCount}} عنصر إلى السلة",
       "noItemsStockLimitations": "لا يمكن إضافة عناصر بسبب قيود المخزون",
-      "noItemsAdded": "لا يمكن إضافة عناصر"
+      "noItemsAdded": "لا يمكن إضافة عناصر",
+      "addToCartError": "فشل في إضافة العناصر إلى السلة. يرجى المحاولة مرة أخرى."
     }
   }
 }

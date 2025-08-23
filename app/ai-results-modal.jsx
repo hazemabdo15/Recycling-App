@@ -2,6 +2,7 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   Dimensions,
   FlatList,
   StatusBar,
@@ -87,6 +88,7 @@ export default function AIResultsModal() {
 
   const initialMaterials = parsedVerifiedMaterials.length > 0 ? parsedVerifiedMaterials : parsedExtractedMaterials;
   const [materials, setMaterials] = useState(initialMaterials);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
 
   // Helper function to get translated item names consistently
   const getTranslatedItemName = useCallback((item) => {
@@ -271,7 +273,7 @@ export default function AIResultsModal() {
     setMaterials(prev => prev.filter((_, i) => i !== index));
   }, []);
 
-  const addToCart = useCallback(() => {
+  const addToCart = useCallback(async () => {
     if (validationResults.hasErrors) {
       const errorMessage = `Please fix quantity issues:\n${validationResults.errors.map(error => 
         `• ${error.material}: minimum ${error.minQuantity} ${error.unit}`
@@ -280,13 +282,20 @@ export default function AIResultsModal() {
       return;
     }
 
-    console.log('🚀 [AI Results Modal] Starting cart addition with stock validation');
-    
-    const availableMaterials = materials.filter(item => item.available && item.databaseItem);
-    if (availableMaterials.length === 0) {
-      alert(t('aiResults.noAvailableMaterials'));
-      return;
+    if (isAddingToCart) {
+      return; // Prevent multiple simultaneous add operations
     }
+
+    setIsAddingToCart(true);
+
+    try {
+      console.log('🚀 [AI Results Modal] Starting cart addition with stock validation');
+      
+      const availableMaterials = materials.filter(item => item.available && item.databaseItem);
+      if (availableMaterials.length === 0) {
+        alert(t('aiResults.noAvailableMaterials'));
+        return;
+      }
     
     // Only apply stock validation for buyer users
     const applyStockValidation = isBuyer(user);
@@ -433,7 +442,7 @@ export default function AIResultsModal() {
     // Add items to cart if we have any to add
     if (processedItems.length > 0) {
       console.log('🔄 [AI Results Modal] Adding items to cart:', processedItems);
-      handleAddToCart(processedItems);
+      await handleAddToCart(processedItems);
       
       // Show appropriate message based on role and stock warnings (only for buyers)
       if (applyStockValidation && stockWarnings.length > 0) {
@@ -510,7 +519,14 @@ export default function AIResultsModal() {
     setTimeout(() => {
       router.push('/(tabs)/cart');
     }, 100);
-  }, [materials, handleAddToCart, validationResults, cartItems, allItems, user, t, getTranslatedItemName]);
+    
+    } catch (error) {
+      console.error('[AI Results Modal] Error adding items to cart:', error);
+      showGlobalToast(t('toast.ai.addToCartError'), 1200, 'error');
+    } finally {
+      setIsAddingToCart(false);
+    }
+  }, [materials, handleAddToCart, validationResults, cartItems, allItems, user, t, getTranslatedItemName, isAddingToCart]);
 
   const browseMore = useCallback(() => {
     // Use back navigation first to close modal, then navigate to explore
@@ -761,26 +777,32 @@ export default function AIResultsModal() {
               <TouchableOpacity 
                 style={[
                   styles.addToCartButton,
-                  validationResults.hasErrors && styles.addToCartButtonDisabled
+                  (validationResults.hasErrors || isAddingToCart) && styles.addToCartButtonDisabled
                 ]}
                 onPress={addToCart}
-                disabled={validationResults.hasErrors}
+                disabled={validationResults.hasErrors || isAddingToCart}
               >
-                <MaterialCommunityIcons 
-                  name={validationResults.hasErrors ? "alert" : "cart-plus"} 
-                  size={20} 
-                  color={validationResults.hasErrors ? colors.warning : colors.white} 
-                />
+                {isAddingToCart ? (
+                  <ActivityIndicator size="small" color={colors.white} />
+                ) : (
+                  <MaterialCommunityIcons 
+                    name={validationResults.hasErrors ? "alert" : "cart-plus"} 
+                    size={20} 
+                    color={validationResults.hasErrors ? colors.warning : colors.white} 
+                  />
+                )}
                 <Text style={[
                   styles.addToCartButtonText,
-                  validationResults.hasErrors && styles.addToCartButtonTextDisabled
+                  (validationResults.hasErrors || isAddingToCart) && styles.addToCartButtonTextDisabled
                 ]}>
-                  {validationResults.hasErrors 
-                    ? t('aiResults.fixItemsFirst', { 
-                        count: validationResults.errors.length,
-                        s: validationResults.errors.length > 1 ? 's' : ''
-                      })
-                    : `${t('aiResults.addToCart')} (${availableCount})`
+                  {isAddingToCart
+                    ? t('aiResults.addingToCart')
+                    : validationResults.hasErrors 
+                      ? t('aiResults.fixItemsFirst', { 
+                          count: validationResults.errors.length,
+                          s: validationResults.errors.length > 1 ? 's' : ''
+                        })
+                      : `${t('aiResults.addToCart')} (${availableCount})`
                   }
                 </Text>
               </TouchableOpacity>
