@@ -1321,10 +1321,10 @@
     "ai": {
       "outOfStockNotAdded": "{{itemName}} is out of stock and was not added to cart.",
       "limitedStockReduced": "{{itemName}}: Only {{availableToAdd}} {{unit}} available. {{discarded}} {{unit}} discarded.",
-      "multipleItemsAdded": "{{addedCount}} item{{s}} added to cart.",
-      "multipleItemsWithOutOfStock": " {{outOfStockCount}} item{{s}} out of stock.",
-      "multipleItemsWithLimits": " {{limitCount}} item{{s}} had quantities reduced due to stock limits.",
-      "singleItemAdded": "{{addedCount}} item{{s}} added to cart",
+      "multipleItemsAdded": "{{addedCount}} item added to cart.",
+      "multipleItemsWithOutOfStock": " {{outOfStockCount}} item out of stock.",
+      "multipleItemsWithLimits": " {{limitCount}} item had quantities reduced due to stock limits.",
+      "singleItemAdded": "{{addedCount}} item added to cart",
       "noItemsStockLimitations": "No items could be added due to stock limitations",
       "noItemsAdded": "No items could be added"
     }

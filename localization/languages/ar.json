@@ -1319,10 +1319,10 @@
     "ai": {
       "outOfStockNotAdded": "{{itemName}} غير متوفر في المخزون ولم يتم إضافته إلى السلة.",
       "limitedStockReduced": "{{itemName}}: متوفر فقط {{availableToAdd}} {{unit}}. تم تجاهل {{discarded}} {{unit}}.",
-      "multipleItemsAdded": "تمت إضافة {{addedCount}} عنصر{{s}} إلى السلة.",
-      "multipleItemsWithOutOfStock": " {{outOfStockCount}} عنصر{{s}} غير متوفر في المخزون.",
-      "multipleItemsWithLimits": " {{limitCount}} عنصر{{s}} تم تقليل كميتها بسبب حدود المخزون.",
-      "singleItemAdded": "تمت إضافة {{addedCount}} عنصر{{s}} إلى السلة",
+      "multipleItemsAdded": "تمت إضافة {{addedCount}} عنصر إلى السلة.",
+      "multipleItemsWithOutOfStock": " {{outOfStockCount}} عنصر غير متوفر في المخزون.",
+      "multipleItemsWithLimits": " {{limitCount}} عنصر تم تقليل كميتها بسبب حدود المخزون.",
+      "singleItemAdded": "تمت إضافة {{addedCount}} عنصر إلى السلة",
       "noItemsStockLimitations": "لا يمكن إضافة عناصر بسبب قيود المخزون",
       "noItemsAdded": "لا يمكن إضافة عناصر"
     }
