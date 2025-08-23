@@ -432,7 +432,7 @@ export default function Pickup() {
         <View style={styles.content}>
           <View style={styles.messageContainer}>
             <MaterialCommunityIcons
-              name="loading"
+              sto
               size={64}
               color={colors.primary}
             />

@@ -28,8 +28,8 @@ export const useCart = (user = null) => {
     debouncedCartManager,
   } = useCartContext();
 
-  // Get real-time stock data
-  const { stockQuantities } = useStock();
+  // Get real-time stock data with fallback support
+  const { getStockQuantity } = useStock();
 
   const handleIncreaseQuantity = async (item, showError) => {
     const needsNormalization = !item._id || !item.categoryId || !item.image || item.measurement_unit === undefined;
@@ -43,14 +43,30 @@ export const useCart = (user = null) => {
     
     // Real-time stock validation for buyer users
     if (isBuyer(user)) {
+      // Create stock quantities with fallback for validation
+      const apiStockQuantity = processedItem.quantity || 0; // Get API stock quantity
+      const fallbackStock = getStockQuantity(_id, apiStockQuantity);
+      console.log(`✅ [Cart Fix] Item ${_id} - API: ${apiStockQuantity}, Fallback: ${fallbackStock}, New Qty: ${newQuantity}`);
+      
+      const stockQuantitiesWithFallback = {
+        [_id]: fallbackStock // Use fallback to API data
+      };
+      
       const validation = validateCartOperation(
         'increase',
         _id,
         newQuantity,
-        stockQuantities,
+        stockQuantitiesWithFallback,
         cartItems,
         { [_id]: processedItem }
       );
+      
+      console.log(`🔍 [Cart Validation] Result:`, {
+        canProceed: validation.canProceed,
+        reason: validation.reason,
+        availableStock: validation.availableStock,
+        requestedQuantity: validation.requestedQuantity
+      });
       
       if (!validation.canProceed) {
         if (typeof showError === 'function') {
@@ -134,14 +150,30 @@ export const useCart = (user = null) => {
       
       // Real-time stock validation for buyer users
       if (isBuyer(user)) {
+        // Create stock quantities with fallback for validation
+        const apiStockQuantity = processedItem.quantity || 0; // Get API stock quantity
+        const fallbackStock = getStockQuantity(_id, apiStockQuantity);
+        console.log(`🔍 [Fast Cart Validation - New Item] Item ${_id} - Current: ${currentQuantity}, New: ${newQuantity}, API Stock: ${apiStockQuantity}, Fallback Stock: ${fallbackStock}`);
+        
+        const stockQuantitiesWithFallback = {
+          [_id]: fallbackStock // Use fallback to API data
+        };
+        
         const validation = validateCartOperation(
           'fast-increase',
           _id,
           newQuantity,
-          stockQuantities,
+          stockQuantitiesWithFallback,
           cartItems,
           { [_id]: processedItem }
         );
+        
+        console.log(`🔍 [Fast Cart Validation - New Item] Result:`, {
+          canProceed: validation.canProceed,
+          reason: validation.reason,
+          availableStock: validation.availableStock,
+          requestedQuantity: validation.requestedQuantity
+        });
         
         if (!validation.canProceed) {
           if (typeof showError === 'function') {
@@ -159,14 +191,30 @@ export const useCart = (user = null) => {
       
       // Real-time stock validation for buyer users
       if (isBuyer(user)) {
+        // Create stock quantities with fallback for validation
+        const apiStockQuantity = processedItem.quantity || 0; // Get API stock quantity
+        const fallbackStock = getStockQuantity(_id, apiStockQuantity);
+        console.log(`🔍 [Fast Cart Validation - Existing Item] Item ${_id} - Current: ${currentQuantity}, New: ${newQuantity}, API Stock: ${apiStockQuantity}, Fallback Stock: ${fallbackStock}`);
+        
+        const stockQuantitiesWithFallback = {
+          [_id]: fallbackStock // Use fallback to API data
+        };
+        
         const validation = validateCartOperation(
           'fast-increase',
           _id,
           newQuantity,
-          stockQuantities,
+          stockQuantitiesWithFallback,
           cartItems,
           { [_id]: processedItem }
         );
+        
+        console.log(`🔍 [Fast Cart Validation - Existing Item] Result:`, {
+          canProceed: validation.canProceed,
+          reason: validation.reason,
+          availableStock: validation.availableStock,
+          requestedQuantity: validation.requestedQuantity
+        });
         
         if (!validation.canProceed) {
           if (typeof showError === 'function') {
@@ -249,11 +297,17 @@ export const useCart = (user = null) => {
     
     // Real-time stock validation for buyer users
     if (isBuyer(user)) {
+      // Create stock quantities with fallback for validation
+      const apiStockQuantity = processedItem.quantity || 0; // Get API stock quantity
+      const stockQuantitiesWithFallback = {
+        [_id]: getStockQuantity(_id, apiStockQuantity) // Use fallback to API data
+      };
+      
       const validation = validateCartOperation(
         'set',
         _id,
         newQuantity,
-        stockQuantities,
+        stockQuantitiesWithFallback,
         cartItems,
         { [_id]: processedItem }
       );

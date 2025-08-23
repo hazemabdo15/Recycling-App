@@ -16,9 +16,9 @@ import { EmptyState, ItemCard } from "../components/category";
 import { ErrorState, Loader } from "../components/common";
 import { useAuth } from "../context/AuthContext";
 import { useLocalization } from "../context/LocalizationContext";
+import { useStock } from "../context/StockContext";
 import { useCategoryItems } from "../hooks/useAPI";
 import { useCart } from "../hooks/useCart";
-import { useStockManager } from "../hooks/useStockManager";
 import { useThemedStyles } from "../hooks/useThemedStyles";
 import { getLayoutStyles } from "../styles/components/commonStyles";
 import { spacing } from "../styles/theme";
@@ -71,6 +71,7 @@ const CategoryDetails = () => {
 
   const { items, loading, error, refetch } = useCategoryItems(categoryNameForAPI);
   const [refreshing, setRefreshing] = useState(false);
+  const [forceUpdateKey, setForceUpdateKey] = useState(0); // Force re-render key
   
   // Track pending operations to prevent spam clicking
   const [pendingOperations, setPendingOperations] = useState(new Map());
@@ -94,28 +95,56 @@ const CategoryDetails = () => {
   } = useCart(user);
   
   const {
-    getItemStock,
-    syncItemsStock,
-    wasRecentlyUpdated,
-    stockQuantities, // Add this to get real-time stock data
-  } = useStockManager();
+    stockQuantities,
+    getStockQuantity,
+    forceRefreshStock,
+    isConnected: stockSocketConnected,
+  } = useStock();
+  
+  // Debug stock context state
+  console.log('[CategoryDetails] Stock context has', Object.keys(stockQuantities || {}).length, 'items, socket connected:', stockSocketConnected);
 
-  // Sync stock data when items are loaded
+  // Force re-render when stock quantities change
   useEffect(() => {
-    if (items && items.length > 0) {
-      syncItemsStock(items);
+    setForceUpdateKey(prev => prev + 1);
+  }, [stockQuantities]);
+
+  // Additional effect to listen for stock updates and force refresh
+  useEffect(() => {
+    // Log when stock quantities change
+    if (stockQuantities && Object.keys(stockQuantities).length > 0) {
+      console.log('[CategoryDetails] Stock quantities available:', Object.keys(stockQuantities).length);
     }
-  }, [items, syncItemsStock]);
+  }, [stockQuantities]);
+
+  // Force refresh stock data when page loads and socket is connected
+  useEffect(() => {
+    if (stockSocketConnected && forceRefreshStock) {
+      console.log('[CategoryDetails] Page loaded with socket connected, requesting fresh stock data');
+      forceRefreshStock();
+    }
+  }, [stockSocketConnected, forceRefreshStock]);
 
   // Update items with real-time stock data
   const itemsWithRealTimeStock = useMemo(() => {
-    if (!items || !stockQuantities) return items;
+    if (!items) return items;
     
-    return items.map(item => ({
-      ...item,
-      quantity: stockQuantities[item._id] ?? item.quantity ?? 0
-    }));
-  }, [items, stockQuantities]);
+    console.log('[CategoryDetails] Updating items with real-time stock data');
+    return items.map(item => {
+      const realTimeStock = getStockQuantity(item._id);
+      const updatedItem = {
+        ...item,
+        quantity: realTimeStock !== undefined ? realTimeStock : (item.quantity ?? 0)
+      };
+      
+      // Debug individual item stock update
+      if (realTimeStock !== undefined && realTimeStock !== item.quantity) {
+        console.log(`[CategoryDetails] Updated ${item._id}: API=${item.quantity ?? 'undefined'} -> RealTime=${realTimeStock}`);
+      }
+      
+      return updatedItem;
+    });
+  }, [items, getStockQuantity]);
 
   // Memoize the processed items separately from cart quantities for better performance
   const processedItems = useMemo(() => {
@@ -142,10 +171,10 @@ const CategoryDetails = () => {
         ...processedItem,
         displayName: translatedItemName, // Add translated name for display
         originalName: itemDisplayName, // Keep the original multilingual name for reference
-        stockUpdated: wasRecentlyUpdated(processedItem._id), // Flag for UI feedback
+        stockUpdated: false, // Simplified - removing wasRecentlyUpdated dependency
       };
     });
-  }, [itemsWithRealTimeStock, wasRecentlyUpdated, currentLanguage, t, categoryName]);
+  }, [itemsWithRealTimeStock, currentLanguage, t, categoryName]);
 
   // Memoize cart quantities separately to avoid recalculating processed items
   const mergedItems = useMemo(() => {
@@ -227,9 +256,16 @@ const CategoryDetails = () => {
 
     // Only check stock for buyer users
     if (isBuyer(user)) {
-      // Get real-time stock quantity
-      const currentStock = getItemStock(item._id);
-      const stockQuantity = currentStock > 0 ? currentStock : item.quantity;
+      // Get real-time stock quantity with fallback to API data
+      const currentStock = getStockQuantity(item._id, item.quantity);
+      const stockQuantity = currentStock !== undefined ? currentStock : item.quantity;
+      
+      console.log(`[CategoryDetails] Manual input validation for ${itemDisplayName}:`, {
+        realTimeStock: getStockQuantity(item._id),
+        fallbackStock: item.quantity,
+        finalStock: stockQuantity,
+        requestedValue: value
+      });
       
       if (value > stockQuantity) {
         showCartMessage(CartMessageTypes.STOCK_ERROR, {
@@ -269,7 +305,7 @@ const CategoryDetails = () => {
       });
     } finally {
     }
-  }, [user, getItemStock, handleSetQuantity, t]);
+  }, [user, getStockQuantity, handleSetQuantity, t]);
 
   // Memoized render function to prevent unnecessary re-renders of individual items
   const renderItem = useCallback(({ item, index }) => {
@@ -283,14 +319,27 @@ const CategoryDetails = () => {
     let canAddToCart = () => true; // Default to always allow for non-buyers
 
     if (isBuyer(user)) {
+      // Get real-time stock with fallback to API data
+      const currentStock = getStockQuantity(item._id, item.quantity);
+      const stockQuantity = currentStock !== undefined ? currentStock : item.quantity;
+      
+      console.log(`[CategoryDetails] Render stock for ${itemDisplayName}:`, {
+        realTimeStock: getStockQuantity(item._id),
+        fallbackStock: item.quantity,
+        finalStock: stockQuantity
+      });
+      
       const stockUtils = require("../utils/stockUtils");
       const {
         isOutOfStock,
         isMaxStockReached,
         canAddToCart: stockCanAddToCart,
       } = stockUtils;
-      maxReached = isMaxStockReached(item, item.cartQuantity);
-      outOfStock = isOutOfStock(item);
+      
+      // Use updated stock quantity for validation
+      const itemWithCurrentStock = { ...item, quantity: stockQuantity };
+      maxReached = isMaxStockReached(itemWithCurrentStock, item.cartQuantity);
+      outOfStock = isOutOfStock(itemWithCurrentStock);
       canAddToCart = stockCanAddToCart;
     }
 
@@ -346,8 +395,8 @@ const CategoryDetails = () => {
             }
 
             // Check if adding step would exceed available stock
-            const currentStock = getItemStock(item._id);
-            const stockQuantity = currentStock > 0 ? currentStock : item.quantity;
+            const currentStock = getStockQuantity(item._id);
+            const stockQuantity = currentStock !== undefined ? currentStock : item.quantity;
             const currentCartQuantity = item.cartQuantity;
             const newTotalQuantity = currentCartQuantity + step;
 
@@ -397,9 +446,9 @@ const CategoryDetails = () => {
             const itemWithCorrectId = { ...item, _id: itemKey };
             const addResult = await handleIncreaseQuantity(itemWithCorrectId);
             if (addResult === false) {
-              // Show maxStock toast with real-time stock quantity
-              const currentStock = getItemStock(item._id);
-              const stockQuantity = currentStock > 0 ? currentStock : item.quantity;
+              // Show maxStock toast with fallback stock quantity
+              const currentStock = getStockQuantity(item._id, true); // Use fallback
+              const stockQuantity = currentStock !== undefined ? currentStock : item.quantity;
               showMaxStockMessage(
                 itemDisplayName,
                 stockQuantity,
@@ -494,8 +543,8 @@ const CategoryDetails = () => {
             }
 
             // Check if adding fast step would exceed available stock
-            const currentStock = getItemStock(item._id);
-            const stockQuantity = currentStock > 0 ? currentStock : item.quantity;
+            const currentStock = getStockQuantity(item._id);
+            const stockQuantity = currentStock !== undefined ? currentStock : item.quantity;
             const currentCartQuantity = item.cartQuantity;
             const newTotalQuantity = currentCartQuantity + fastStep;
 
@@ -610,7 +659,7 @@ const CategoryDetails = () => {
     user,
     pendingOperations,
     handleManualInput,
-    getItemStock,
+    getStockQuantity,
     handleIncreaseQuantity,
     handleDecreaseQuantity,
     handleFastIncreaseQuantity,
@@ -761,7 +810,7 @@ const CategoryDetails = () => {
             paddingHorizontal: scaleSize(spacing.sm),
             paddingTop: scaleSize(spacing.md),
           }}
-          extraData={`${Object.keys(cartItems).length}-${pendingOperations.size}`}
+          extraData={`${Object.keys(cartItems).length}-${pendingOperations.size}-${forceUpdateKey}`}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}

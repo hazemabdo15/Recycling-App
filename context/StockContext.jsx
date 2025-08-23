@@ -38,23 +38,66 @@ export const StockProvider = ({ children }) => {
   // Initialize stock data from cache
   const initializeStockData = useCallback(async () => {
     try {
+      // Check if cache is stale
+      const cacheIsStale = await isCacheStale();
+      
+      if (cacheIsStale) {
+        console.log('🗑️ Cache is stale, clearing old data');
+        await clearStockCache();
+        setStockQuantities({});
+        console.log('📦 Will load fresh data from server when connected');
+        return;
+      }
+
       const cachedStock = await AsyncStorage.getItem('stock_quantities');
       if (cachedStock) {
         const parsedStock = JSON.parse(cachedStock);
         setStockQuantities(parsedStock);
         console.log('📦 Loaded cached stock data:', Object.keys(parsedStock).length, 'items');
+        console.log('🔄 Note: This is cached data, fresh data will be requested from server');
+      } else {
+        console.log('📦 No cached stock data found, will load fresh data from server');
       }
     } catch (error) {
       console.error('❌ Failed to load cached stock data:', error);
     }
-  }, []);
+  }, [isCacheStale, clearStockCache]);
 
   // Save stock data to cache
   const saveStockToCache = useCallback(async (stockData) => {
     try {
       await AsyncStorage.setItem('stock_quantities', JSON.stringify(stockData));
+      await AsyncStorage.setItem('stock_last_updated', new Date().toISOString());
     } catch (error) {
       console.error('❌ Failed to save stock data to cache:', error);
+    }
+  }, []);
+
+  // Clear stale cache
+  const clearStockCache = useCallback(async () => {
+    try {
+      await AsyncStorage.removeItem('stock_quantities');
+      await AsyncStorage.removeItem('stock_last_updated');
+      console.log('🗑️ Cleared stale stock cache');
+    } catch (error) {
+      console.error('❌ Failed to clear stock cache:', error);
+    }
+  }, []);
+
+  // Check if cached data is stale (older than 5 minutes)
+  const isCacheStale = useCallback(async () => {
+    try {
+      const lastUpdated = await AsyncStorage.getItem('stock_last_updated');
+      if (!lastUpdated) return true;
+      
+      const lastUpdatedTime = new Date(lastUpdated);
+      const now = new Date();
+      const diffMinutes = (now - lastUpdatedTime) / (1000 * 60);
+      
+      return diffMinutes > 5; // Consider stale if older than 5 minutes
+    } catch (error) {
+      console.error('❌ Failed to check cache staleness:', error);
+      return true; // Assume stale on error
     }
   }, []);
 
@@ -100,8 +143,24 @@ export const StockProvider = ({ children }) => {
         isConnectingRef.current = false;
         socketRef.current = socket;
         
-        // Request initial stock data
+        // Immediately request fresh stock data to override any cached/stale data
+        console.log('🔄 Requesting fresh stock data from server...');
+        console.log('🔄 Emitting requestStockData event with userId:', user._id);
         socket.emit('requestStockData', { userId: user._id });
+        
+        // Add timeout to detect if server doesn't respond
+        const timeoutId = setTimeout(() => {
+          console.log('⚠️ Initial stock request timeout: Server did not respond with stock data within 15 seconds');
+          console.log('📊 Current stock quantities count:', Object.keys(stockQuantities).length);
+        }, 15000);
+        
+        // Clear timeout if we receive stock data
+        const timeoutStockHandler = (stockData) => {
+          clearTimeout(timeoutId);
+          console.log('✅ Initial stock request completed: Received stock data for', Object.keys(stockData).length, 'items');
+        };
+        
+        socket.once('stockData', timeoutStockHandler);
       });
 
       socket.on('disconnect', (reason) => {
@@ -165,6 +224,8 @@ export const StockProvider = ({ children }) => {
             console.log('📦 Updated stock for item:', itemId, 'new quantity:', quantity);
             return updated;
           });
+        } else {
+          console.warn('📦 Invalid stock update data:', data);
         }
       });
 
@@ -185,7 +246,8 @@ export const StockProvider = ({ children }) => {
 
       // Handle initial stock data response
       socket.on('stockData', (stockData) => {
-        console.log('📦 Initial stock data received:', Object.keys(stockData).length, 'items');
+        console.log('� Fresh stock data received from server:', Object.keys(stockData).length, 'items');
+        console.log('📦 Replacing all cached data with fresh server data');
         setStockQuantities(stockData);
         saveStockToCache(stockData);
         setLastUpdated(new Date());
@@ -199,7 +261,7 @@ export const StockProvider = ({ children }) => {
       setIsConnected(false);
       isConnectingRef.current = false;
     }
-  }, [accessToken, user, isLoggedIn, saveStockToCache]);
+  }, [accessToken, user, isLoggedIn, saveStockToCache, stockQuantities]);
 
   // Disconnect socket
   const disconnectSocket = useCallback(() => {
@@ -212,10 +274,24 @@ export const StockProvider = ({ children }) => {
     isConnectingRef.current = false;
   }, []);
 
-  // Get stock quantity for a specific item
-  const getStockQuantity = useCallback((itemId) => {
-    return stockQuantities[itemId] || 0;
-  }, [stockQuantities]);
+  // Get stock quantity for a specific item with fallback support
+  const getStockQuantity = useCallback((itemId, fallbackQuantity = undefined) => {
+    const realTimeStock = stockQuantities[itemId];
+    
+    // Return real-time stock if available
+    if (realTimeStock !== undefined) {
+      return realTimeStock;
+    }
+    
+    // If socket is connected but no data yet, we might be waiting for fresh data
+    if (isConnected && Object.keys(stockQuantities).length === 0) {
+      console.log(`🔄 [${itemId}] Waiting for real-time stock data...`);
+      return fallbackQuantity; // Use fallback (API data) while waiting
+    }
+    
+    // No real-time data available
+    return undefined;
+  }, [stockQuantities, isConnected]);
 
   // Update local stock (optimistic update)
   const updateLocalStock = useCallback((itemId, newQuantity) => {
@@ -248,6 +324,42 @@ export const StockProvider = ({ children }) => {
     const currentStock = stockQuantities[itemId] || 0;
     return currentStock >= requestedQuantity;
   }, [stockQuantities]);
+
+  // Force refresh stock data from server
+  const forceRefreshStock = useCallback(() => {
+    if (socketRef.current?.connected && user) {
+      console.log('🔄 Force refreshing stock data from server...');
+      console.log('🔄 Emitting requestStockData event with userId:', user._id);
+      socketRef.current.emit('requestStockData', { userId: user._id });
+      
+      // Add timeout to detect if server doesn't respond
+      const timeoutId = setTimeout(() => {
+        console.log('⚠️ Force refresh timeout: Server did not respond with stock data within 10 seconds');
+        console.log('📊 Current stock quantities count:', Object.keys(stockQuantities).length);
+      }, 10000);
+      
+      // Clear timeout if we receive stock data
+      const originalStockHandler = socketRef.current.listeners('stockData');
+      const timeoutStockHandler = (stockData) => {
+        clearTimeout(timeoutId);
+        console.log('✅ Force refresh completed: Received stock data for', Object.keys(stockData).length, 'items');
+        // Call original handlers
+        originalStockHandler.forEach(handler => handler(stockData));
+      };
+      
+      socketRef.current.once('stockData', timeoutStockHandler);
+      
+      return true;
+    } else {
+      console.log('❌ Cannot refresh stock data: socket not connected');
+      console.log('🔌 Socket status:', { 
+        exists: !!socketRef.current, 
+        connected: socketRef.current?.connected,
+        hasUser: !!user 
+      });
+      return false;
+    }
+  }, [user, stockQuantities]);
 
   // Initialize on mount
   useEffect(() => {
@@ -290,7 +402,10 @@ export const StockProvider = ({ children }) => {
     updateLocalStock,
     updateBulkStock,
     isInStock,
+    forceRefreshStock,
     reconnect: connectSocket,
+    // Add socket connection status for better debugging
+    stockSocketConnected: isConnected,
   };
 
   return (

@@ -1,5 +1,6 @@
 ﻿import { StyleSheet, Text, View } from "react-native";
 import { useLocalization } from "../../context/LocalizationContext";
+import { useStock } from "../../context/StockContext";
 import { useThemedStyles } from "../../hooks/useThemedStyles";
 import { getItemCardStyles } from "../../styles/components/categoryStyles";
 import { getUnitDisplay } from "../../utils/cartUtils";
@@ -25,9 +26,17 @@ const ItemCard = ({
 }) => {
   const { t, isRTL } = useLocalization();
   const { colors, isDarkMode } = useThemedStyles();
+  const { getStockQuantity, stockSocketConnected } = useStock();
   const itemCardStyles = getItemCardStyles(isDarkMode);
   const styles = getItemCardComponentStyles(colors);
   const unitDisplay = getUnitDisplay(item.measurement_unit);
+  
+  // Get real-time stock quantity with proper precedence and fallback
+  const realTimeStock = getStockQuantity(item._id, item.quantity);
+  const displayStock = realTimeStock !== undefined ? realTimeStock : (item.quantity ?? 0);
+  
+  // Debug logging for stock updates
+  console.log(`[ItemCard] ${item._id}: API=${item.quantity ?? 'undefined'}, RealTime=${getStockQuantity(item._id) ?? 'undefined'}, Fallback=${realTimeStock ?? 'undefined'}, Display=${displayStock}, Socket=${stockSocketConnected}`);
   
   // Debug RTL state
   console.log('ItemCard RTL state:', isRTL);
@@ -43,9 +52,9 @@ const ItemCard = ({
   // Only show stock-related logic for buyers
   const showStockLogic = isBuyer(user);
   const outOfStock = showStockLogic
-    ? isOutOfStock({ quantity: item.quantity })
+    ? isOutOfStock({ quantity: displayStock })
     : false;
-  const maxReached = showStockLogic ? isMaxStockReached(item, quantity) : false;
+  const maxReached = showStockLogic ? isMaxStockReached({ ...item, quantity: displayStock }, quantity) : false;
 
   return (
     <AnimatedListItem
@@ -69,8 +78,8 @@ const ItemCard = ({
       {showStockLogic && !outOfStock && (
         <View style={isRTL ? styles.stockBadgeRTL_Custom : styles.stockBadgeLTR_Custom}>
           <Text style={[styles.stockBadgeText, { color: colors.primary }]}>
-            {typeof item.quantity === "number"
-              ? `${t('categories.itemCard.stock')}: ${item.quantity} ${unitDisplay}`
+            {typeof displayStock === "number"
+              ? `${t('categories.itemCard.stock')}: ${displayStock} ${unitDisplay}`
               : `${t('categories.itemCard.stock')}: N/A`}
           </Text>
         </View>
@@ -98,7 +107,7 @@ const ItemCard = ({
         onFastDecrease={onFastDecrease}
         onManualInput={onManualInput}
         onQuantityInput={(val) => onManualInput(val)}
-        maxQuantity={showStockLogic ? item.quantity : undefined}
+        maxQuantity={showStockLogic ? displayStock : undefined}
         itemName={item.name}
         disabled={disabled}
         pendingAction={pendingAction}

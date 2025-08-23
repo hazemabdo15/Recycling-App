@@ -13,9 +13,9 @@ import {
 import { KeyboardAwareFlatList } from 'react-native-keyboard-aware-scroll-view';
 import { useAuth } from "../../context/AuthContext";
 import { useLocalization } from "../../context/LocalizationContext";
+import { useStock } from "../../context/StockContext";
 import { useAllItems, useCategories } from "../../hooks/useAPI";
 import { useCart } from "../../hooks/useCart";
-import { useStockManager } from "../../hooks/useStockManager";
 import { useThemedStyles } from "../../hooks/useThemedStyles";
 import { spacing } from "../../styles";
 import {
@@ -130,7 +130,7 @@ const CategoriesGrid = ({
   const { colors } = useThemedStyles(); // Add themed styles hook
   const styles = getCategoriesGridStyles(colors); // Generate dynamic styles
   const [refreshing, setRefreshing] = useState(false);
-  // const [rerenderKey, setRerenderKey] = useState(0); // Force re-render key
+  const [forceUpdateKey, setForceUpdateKey] = useState(0); // Force re-render key
   
   // Track pending operations to prevent spam clicking
   const [pendingOperations, setPendingOperations] = useState(new Map());
@@ -165,18 +165,42 @@ const CategoriesGrid = ({
   } = useCart(user);
   
   const {
-    getItemStock,
-    syncItemsStock,
-    wasRecentlyUpdated,
-    stockQuantities, // Add real-time stock data
-  } = useStockManager();
+    stockQuantities,
+    getStockQuantity,
+    forceRefreshStock,
+    isConnected: stockSocketConnected,
+  } = useStock();
   
-  // Sync stock data when items are loaded
+  // Debug stock context state (simplified)
+  console.log('[CategoriesGrid] Stock context has', Object.keys(stockQuantities || {}).length, 'items, socket connected:', stockSocketConnected);
+  
+  // Sync stock data when items are loaded - removed since useStock doesn't have syncItemsStock
+  // useEffect(() => {
+  //   if (allItems && allItems.length > 0) {
+  //     syncItemsStock(allItems);
+  //   }
+  // }, [allItems, syncItemsStock]);
+
+  // Force re-render when stock quantities change
   useEffect(() => {
-    if (allItems && allItems.length > 0) {
-      syncItemsStock(allItems);
+    setForceUpdateKey(prev => prev + 1);
+  }, [stockQuantities]);
+
+  // Additional effect to listen for stock updates and force refresh
+  useEffect(() => {
+    // Log when stock quantities change
+    if (stockQuantities && Object.keys(stockQuantities).length > 0) {
+      console.log('[CategoriesGrid] Stock quantities available:', Object.keys(stockQuantities).length);
     }
-  }, [allItems, syncItemsStock]);
+  }, [stockQuantities]);
+
+  // Force refresh stock data when showing items mode and socket is connected
+  useEffect(() => {
+    if (showItemsMode && stockSocketConnected && forceRefreshStock) {
+      console.log('[CategoriesGrid] Items mode with socket connected, requesting fresh stock data');
+      forceRefreshStock();
+    }
+  }, [showItemsMode, stockSocketConnected, forceRefreshStock]);
 
   const handleManualInput = useCallback(async (item, value) => {
     if (!item) return;
@@ -215,9 +239,16 @@ const CategoriesGrid = ({
 
     // Only check stock for buyer users
     if (isBuyer(user)) {
-      // Get real-time stock quantity
-      const currentStock = getItemStock(item._id);
-      const stockQuantity = currentStock > 0 ? currentStock : item.quantity;
+      // Get real-time stock quantity with fallback to API data
+      const currentStock = getStockQuantity(item._id, item.quantity);
+      const stockQuantity = currentStock !== undefined ? currentStock : item.quantity;
+      
+      console.log(`[CategoriesGrid] Manual input validation for ${translatedItemName}:`, {
+        realTimeStock: getStockQuantity(item._id),
+        fallbackStock: item.quantity,
+        finalStock: stockQuantity,
+        requestedValue: value
+      });
       
       if (value > stockQuantity) {
         showMaxStockMessage(
@@ -241,7 +272,7 @@ const CategoriesGrid = ({
       });
     } finally {
     }
-  }, [t, currentLanguage, user, getItemStock, handleSetQuantity]);
+  }, [t, currentLanguage, user, getStockQuantity, handleSetQuantity]);
 
   const { filteredCategories, filteredItems } = useMemo(() => {
     const searchLower = searchText.toLowerCase();
@@ -271,12 +302,19 @@ const CategoriesGrid = ({
             // Get real-time stock quantity
             const stockQuantity = stockQuantities[normalizedItem._id] ?? normalizedItem.quantity ?? 0;
             
+            // Debug logging for stock data flow (simplified) - fix name check
+            const nameForLogging = typeof normalizedItem.name === 'string' ? normalizedItem.name : 
+                                 normalizedItem.name?.en || normalizedItem.name?.ar || '';
+            if (nameForLogging && nameForLogging.toLowerCase().includes('test')) { // Only log for test items
+              console.log(`[CategoriesGrid] ${nameForLogging}: stockContext[${normalizedItem._id}]=${stockQuantities[normalizedItem._id]}, item.quantity=${normalizedItem.quantity}, final=${stockQuantity}`);
+            }
+            
             return {
               ...normalizedItem,
               quantity: stockQuantity, // Use real-time stock quantity
               displayName: translatedItemName, // Add display name for UI
               translatedCategoryName: translatedCategoryName, // Add translated category name
-              stockUpdated: wasRecentlyUpdated(normalizedItem._id), // Flag for UI feedback
+              stockUpdated: false, // Remove wasRecentlyUpdated since it's not available
             };
           } catch (error) {
             console.warn('Error processing item:', error, item);
@@ -328,7 +366,8 @@ const CategoriesGrid = ({
         });
       return { filteredCategories: cats, filteredItems: [] };
     }
-  }, [categories, allItems, showItemsMode, searchText, t, currentLanguage, stockQuantities, wasRecentlyUpdated]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categories, allItems, showItemsMode, searchText, t, currentLanguage, stockQuantities, forceUpdateKey]);
 
   // Memoize items with cart quantities separately for better performance
   const itemsWithCartQuantities = useMemo(() => {
@@ -377,14 +416,24 @@ const CategoriesGrid = ({
     let maxReached = false;
     let outOfStock = false;
     if (isBuyer(user)) {
+      // Get real-time stock quantity for validation with fallback to API data
+      const realTimeStock = getStockQuantity(item._id, item.quantity);
+      const currentStock = realTimeStock !== undefined ? realTimeStock : item.quantity;
+      
+      console.log(`[CategoriesGrid] Render stock for ${getTranslatedName(t, item?.name, 'subcategories', { categoryName: item?.categoryName, currentLanguage })}:`, {
+        realTimeStock: getStockQuantity(item._id),
+        fallbackStock: item.quantity,
+        finalStock: currentStock
+      });
+      
       const stockUtils = require("../../utils/stockUtils");
       const {
         isOutOfStock,
         isMaxStockReached,
       } = stockUtils;
       
-      maxReached = isMaxStockReached(item, cartQuantity);
-      outOfStock = isOutOfStock(item);
+      maxReached = isMaxStockReached({ ...item, quantity: currentStock }, cartQuantity);
+      outOfStock = isOutOfStock({ quantity: currentStock });
     }
 
     // Check if this item has pending operations
@@ -442,10 +491,19 @@ const CategoriesGrid = ({
 
           // Additional comprehensive stock validation for buyer users
           if (isBuyer(user)) {
-            const currentStock = getItemStock(item._id);
-            const stockQuantity = currentStock > 0 ? currentStock : item.quantity;
+            const currentStock = getStockQuantity(item._id, item.quantity);
+            const stockQuantity = currentStock !== undefined ? currentStock : item.quantity;
             const currentCartQuantity = cartQuantity;
             const newTotalQuantity = currentCartQuantity + step;
+            
+            console.log(`[CategoriesGrid] Stock validation for ${translatedItemName}:`, {
+              realTimeStock: getStockQuantity(item._id),
+              fallbackStock: item.quantity,
+              finalStock: stockQuantity,
+              currentCart: currentCartQuantity,
+              requestedAdd: step,
+              newTotal: newTotalQuantity
+            });
 
             // Check if adding step would exceed available stock
             if (newTotalQuantity > stockQuantity) {
@@ -480,8 +538,8 @@ const CategoriesGrid = ({
             
             if (addResult === false) {
               // Show stock error message
-              const currentStock = getItemStock(item._id);
-              const stockQuantity = currentStock > 0 ? currentStock : item.quantity;
+              const currentStock = getStockQuantity(item._id);
+              const stockQuantity = currentStock !== undefined ? currentStock : item.quantity;
               showMaxStockMessage(
                 translatedItemName,
                 stockQuantity,
@@ -584,8 +642,8 @@ const CategoriesGrid = ({
 
           // Additional comprehensive stock validation for buyer users
           if (isBuyer(user)) {
-            const currentStock = getItemStock(item._id);
-            const stockQuantity = currentStock > 0 ? currentStock : item.quantity;
+            const currentStock = getStockQuantity(item._id);
+            const stockQuantity = currentStock !== undefined ? currentStock : item.quantity;
             const currentCartQuantity = cartQuantity;
             const newTotalQuantity = currentCartQuantity + fastStep;
 
@@ -643,8 +701,8 @@ const CategoriesGrid = ({
             
             if (addResult === false) {
               // Show stock error message
-              const currentStock = getItemStock(item._id);
-              const stockQuantity = currentStock > 0 ? currentStock : item.quantity;
+              const currentStock = getStockQuantity(item._id);
+              const stockQuantity = currentStock !== undefined ? currentStock : item.quantity;
               showMaxStockMessage(
                 translatedItemName,
                 stockQuantity,
@@ -704,7 +762,7 @@ const CategoriesGrid = ({
         }}
       />
     );
-  }, [user, t, currentLanguage, getItemStock, handleIncreaseQuantity, handleDecreaseQuantity, handleFastIncreaseQuantity, handleFastDecreaseQuantity, handleManualInput, pendingOperations, setPendingOperations]);
+  }, [user, t, currentLanguage, getStockQuantity, handleIncreaseQuantity, handleDecreaseQuantity, handleFastIncreaseQuantity, handleFastDecreaseQuantity, handleManualInput, pendingOperations, setPendingOperations]);
   
   if (loading) {
     return (
@@ -744,19 +802,30 @@ const CategoriesGrid = ({
     );
   }
 
-  if (!categories || categories.length === 0) {
-    return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>{t('categories.noCategories', 'No categories available')}</Text>
-      </View>
-    );
+  // Check appropriate data source based on mode
+  if (showItemsMode) {
+    if (!allItems || allItems.length === 0) {
+      return (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>{t('items.noItems', 'No items available')}</Text>
+        </View>
+      );
+    }
+  } else {
+    if (!categories || categories.length === 0) {
+      return (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>{t('categories.noCategories', 'No categories available')}</Text>
+        </View>
+      );
+    }
   }
 
   return (
     <FadeInView delay={0}>
       {showItemsMode ? (
         <KeyboardAwareFlatList
-          key={"items"}
+          key={`items-${forceUpdateKey}`}
           style={styles.itemsScrollContainer}
           data={itemsWithCartQuantities}
           keyExtractor={(item) => getCartKey(item) || `${item?.name || 'unknown'}`}
