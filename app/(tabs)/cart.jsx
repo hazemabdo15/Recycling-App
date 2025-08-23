@@ -254,23 +254,37 @@ const Cart = () => {
 
       // Only apply stock validation for buyers
       if (isBuyer(user)) {
-        // Get real-time stock quantity from StockContext
-        const currentStock = getItemStock(item._id);
+        // Get API stock quantity as fallback - try multiple ID fields
+        const originalItem = safeAllItems.find(
+          (originalItem) =>
+            originalItem._id === item._id ||
+            originalItem._id === item.categoryId ||
+            originalItem.categoryId === item._id ||
+            originalItem.categoryId === item.categoryId
+        );
         
-        // Fallback to original item data if stock context doesn't have the item
-        let actualStockQuantity = currentStock;
-        if (actualStockQuantity === 0) {
-          const originalItem = safeAllItems.find(
-            (originalItem) =>
-              originalItem._id === item._id ||
-              originalItem.categoryId === item.categoryId
-          );
-          actualStockQuantity =
-            originalItem?.quantity ||
-            originalItem?.available_quantity ||
-            originalItem?.stock_quantity ||
-            originalItem?.quantity_available || 0;
-        }
+        // Get the most reliable stock value from the original item
+        const apiStockQuantity = originalItem?.quantity ??
+          originalItem?.available_quantity ??
+          originalItem?.stock_quantity ??
+          originalItem?.quantity_available ??
+          item.quantity ??
+          item.available_quantity ??
+          item.stock_quantity ??
+          item.quantity_available ?? 0;
+        
+        console.log(`🔍 [Cart Debug - Increase] Item ${item._id} search in ${safeAllItems.length} items`);
+        console.log(`🔍 [Cart Debug - Increase] Found originalItem:`, !!originalItem, originalItem ? {
+          _id: originalItem._id,
+          categoryId: originalItem.categoryId,
+          quantity: originalItem.quantity,
+          available_quantity: originalItem.available_quantity
+        } : 'not found');
+        console.log(`🔍 [Cart Debug - Increase] Final apiStockQuantity: ${apiStockQuantity}`);
+        
+        // Get real-time stock quantity from StockContext with API fallback
+        const actualStockQuantity = getItemStock(item._id, apiStockQuantity);
+        console.log(`✅ [Cart Fix - Increase] Item ${item._id} - API: ${apiStockQuantity}, Final: ${actualStockQuantity}, New Qty: ${newQuantity}`);
 
         // Stock validation - check against real-time stock quantity
         if (newQuantity > actualStockQuantity) {
@@ -458,23 +472,37 @@ const Cart = () => {
 
       // Only apply stock validation for buyers
       if (isBuyer(user)) {
-        // Get real-time stock quantity from StockContext
-        const currentStock = getItemStock(item._id);
+        // Get API stock quantity as fallback - try multiple ID fields
+        const originalItem = safeAllItems.find(
+          (originalItem) =>
+            originalItem._id === item._id ||
+            originalItem._id === item.categoryId ||
+            originalItem.categoryId === item._id ||
+            originalItem.categoryId === item.categoryId
+        );
         
-        // Fallback to original item data if stock context doesn't have the item
-        let actualStockQuantity = currentStock;
-        if (actualStockQuantity === 0) {
-          const originalItem = safeAllItems.find(
-            (originalItem) =>
-              originalItem._id === item._id ||
-              originalItem.categoryId === item.categoryId
-          );
-          actualStockQuantity =
-            originalItem?.quantity ||
-            originalItem?.available_quantity ||
-            originalItem?.stock_quantity ||
-            originalItem?.quantity_available || 0;
-        }
+        // Get the most reliable stock value from the original item
+        const apiStockQuantity = originalItem?.quantity ??
+          originalItem?.available_quantity ??
+          originalItem?.stock_quantity ??
+          originalItem?.quantity_available ??
+          item.quantity ??
+          item.available_quantity ??
+          item.stock_quantity ??
+          item.quantity_available ?? 0;
+        
+        console.log(`🔍 [Cart Debug - Manual] Item ${item._id} search in ${safeAllItems.length} items`);
+        console.log(`🔍 [Cart Debug - Manual] Found originalItem:`, !!originalItem, originalItem ? {
+          _id: originalItem._id,
+          categoryId: originalItem.categoryId,
+          quantity: originalItem.quantity,
+          available_quantity: originalItem.available_quantity
+        } : 'not found');
+        console.log(`🔍 [Cart Debug - Manual] Final apiStockQuantity: ${apiStockQuantity}`);
+        
+        // Get real-time stock quantity from StockContext with API fallback
+        const actualStockQuantity = getItemStock(item._id, apiStockQuantity);
+        console.log(`✅ [Cart Fix - Manual] Item ${item._id} - API: ${apiStockQuantity}, Final: ${actualStockQuantity}, Parsed Qty: ${parsedValue}`);
 
         // Stock validation - check against real-time stock quantity
         if (parsedValue > actualStockQuantity) {
