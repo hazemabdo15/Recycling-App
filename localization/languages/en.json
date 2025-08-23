@@ -1285,6 +1285,7 @@
       "removeFast": "Removed {{quantity}} {{unit}} of {{itemName}}",
       "removeFastComplete": "{{itemName}} removed from cart",
       "removeAll": "{{itemName}} removed from cart",
+      "allItems": "All items",
       "itemRemoved": "{{itemName}} removed from cart",
       "notInCart": "{{itemName}} is not in your cart",
       "invalidQuantityKg": "Please enter a valid quantity (minimum 0.25 kg)",

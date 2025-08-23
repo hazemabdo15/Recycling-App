@@ -505,14 +505,19 @@ export default function AIResultsModal() {
       showGlobalToast(t('toast.ai.noItemsAdded'), 1200, 'error');
     }
 
-    router.dismissAll();
-    router.push('/(tabs)/cart');
+    // Use back navigation first to close modal, then navigate to cart
+    router.back();
+    setTimeout(() => {
+      router.push('/(tabs)/cart');
+    }, 100);
   }, [materials, handleAddToCart, validationResults, cartItems, allItems, user, t, getTranslatedItemName]);
 
   const browseMore = useCallback(() => {
-
-    router.dismissAll();
-    router.push('/(tabs)/explore');
+    // Use back navigation first to close modal, then navigate to explore
+    router.back();
+    setTimeout(() => {
+      router.push('/(tabs)/explore');
+    }, 100);
   }, []);
 
   const renderMaterialItem = ({ item, index }) => {

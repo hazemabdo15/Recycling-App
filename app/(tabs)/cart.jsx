@@ -370,7 +370,7 @@ const Cart = () => {
       await handleClearCart();
       // Show toast for clear cart
       showCartMessage(CartMessageTypes.REMOVE_ALL, {
-        itemName: "All items",
+        itemName: t("toast.cart.allItems"),
         measurementUnit: 2,
         isBuyer: user?.role === "buyer",
         t // Pass translation function
