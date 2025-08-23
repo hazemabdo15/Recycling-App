@@ -2,13 +2,13 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from 'react-i18next'; // Add this import
 import {
-  ActivityIndicator,
-  FlatList,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    FlatList,
+    RefreshControl,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { KeyboardAwareFlatList } from 'react-native-keyboard-aware-scroll-view';
 import { useAuth } from "../../context/AuthContext";
@@ -16,17 +16,18 @@ import { useLocalization } from "../../context/LocalizationContext";
 import { useStock } from "../../context/StockContext";
 import { useAllItems, useCategories } from "../../hooks/useAPI";
 import { useCart } from "../../hooks/useCart";
+import { useCartValidation } from "../../hooks/useCartValidation";
 import { useThemedStyles } from "../../hooks/useThemedStyles";
 import { spacing } from "../../styles";
 import {
-  CartMessageTypes,
-  showCartMessage,
-  showMaxStockMessage,
+    CartMessageTypes,
+    showCartMessage,
+    showMaxStockMessage,
 } from "../../utils/cartMessages";
 import {
-  getCartKey,
-  getIncrementStep,
-  normalizeItemData,
+    getCartKey,
+    getIncrementStep,
+    normalizeItemData,
 } from "../../utils/cartUtils";
 import { isBuyer } from "../../utils/roleUtils";
 import { scaleSize } from "../../utils/scale";
@@ -151,6 +152,12 @@ const CategoriesGrid = ({
       } else {
         await refetchCategories();
       }
+      
+      // Trigger cart validation after data refresh for buyer users
+      if (isBuyer(user)) {
+        console.log('🔄 [CategoriesGrid] Data refreshed, triggering cart validation');
+        triggerValidationOnDataRefresh();
+      }
     } finally {
       setRefreshing(false);
     }
@@ -170,6 +177,15 @@ const CategoriesGrid = ({
     forceRefreshStock,
     isConnected: stockSocketConnected,
   } = useStock();
+  
+  // Add cart validation for real-time validation when data changes
+  const { triggerValidationOnDataRefresh } = useCartValidation({
+    validateOnFocus: false, // Don't validate on focus here
+    validateOnAppActivation: false, // Global validator handles this
+    autoCorrect: true,
+    showMessages: true,
+    source: 'categoriesGrid'
+  });
   
   // Debug stock context state (simplified)
   console.log('[CategoriesGrid] Stock context has', Object.keys(stockQuantities || {}).length, 'items, socket connected:', stockSocketConnected);

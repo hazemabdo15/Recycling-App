@@ -230,6 +230,9 @@ export const StockProvider = ({ children }) => {
       const updated = { ...prev, ...stockUpdates };
       setLastUpdated(new Date());
       
+      // Log the update for debugging
+      console.log('📦 Bulk stock update applied:', Object.keys(stockUpdates).length, 'items');
+      
       return updated;
     });
   }, []);

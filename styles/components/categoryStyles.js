@@ -155,7 +155,7 @@ export const getItemInfoStyles = (isDarkMode = false) => {
         priceContainer: {
             flexDirection: 'row',
             alignItems: 'center',
-            backgroundColor: colors.base200,
+            backgroundColor: colors.base300,
             borderRadius: borderRadius.sm,
             paddingHorizontal: spacing.sm,
             paddingVertical: spacing.xs,
@@ -165,7 +165,7 @@ export const getItemInfoStyles = (isDarkMode = false) => {
         unitContainer: {
             flexDirection: 'row',
             alignItems: 'center',
-            backgroundColor: colors.base200,
+            backgroundColor: colors.base300,
             borderRadius: borderRadius.sm,
             paddingHorizontal: spacing.sm,
             paddingVertical: spacing.xs,

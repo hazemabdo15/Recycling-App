@@ -15,13 +15,29 @@ export const getMinimumQuantity = (measurementUnit) => {
 
 export const validateQuantity = (item) => {
     const quantity = Number(item.quantity);
-    const measurementUnit = Number(item.measurement_unit);
+    
+    // Handle measurement_unit with proper defaults and validation
+    let measurementUnit = item.measurement_unit;
+    
+    // If measurement_unit is null, undefined, or empty, try to infer from other fields
+    if (measurementUnit === null || measurementUnit === undefined || measurementUnit === '') {
+        // Try to infer from item.unit field if available
+        if (item.unit && typeof item.unit === 'string') {
+            measurementUnit = item.unit.toUpperCase() === 'KG' ? 1 : 2;
+        } else {
+            // Default to pieces (2) if no measurement unit can be determined
+            measurementUnit = 2;
+            console.warn('No measurement unit provided, defaulting to pieces (2)');
+        }
+    }
+    
+    measurementUnit = Number(measurementUnit);
     
     if (isNaN(quantity) || quantity <= 0) {
         throw new Error("Quantity must be greater than 0.");
     }
     
-    if (isNaN(measurementUnit)) {
+    if (isNaN(measurementUnit) || (measurementUnit !== 1 && measurementUnit !== 2)) {
         throw new Error("Invalid measurement unit. Must be 1 (KG) or 2 (Piece).");
     }
     

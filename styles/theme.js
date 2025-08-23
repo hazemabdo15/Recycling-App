@@ -7,7 +7,7 @@ export const lightColors = {
   base50: "#FAFAFA",
   base100: "#F8FFFE",
   base200: "#F1F5F9",
-  base300: "#E0E0E0",
+  base300: "#F1F5F9",// E0E0E0
   base400: "#B0BEC5",
   white: "#ffffff",
   black: "#171717",

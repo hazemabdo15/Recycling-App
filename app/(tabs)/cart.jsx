@@ -23,6 +23,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useLocalization } from "../../context/LocalizationContext";
 import { useAllItems } from "../../hooks/useAPI";
 import { useCart } from "../../hooks/useCart";
+import { useCartValidation } from "../../hooks/useCartValidation";
 import { useStockManager } from "../../hooks/useStockManager";
 import { useThemedStyles } from "../../hooks/useThemedStyles";
 import { borderRadius, spacing, typography } from "../../styles";
@@ -94,6 +95,16 @@ const Cart = () => {
   const {
     getItemStock,
   } = useStockManager();
+  
+  // Add cart validation for buyers
+  const { validateCart, quickValidateCart } = useCartValidation({
+    validateOnFocus: true, // Validate when cart screen is focused
+    validateOnAppActivation: true, // Validate when app becomes active
+    autoCorrect: true, // Automatically fix cart issues
+    showMessages: true, // Show user feedback
+    source: 'cartScreen'
+  });
+  
   const [loading, setLoading] = useState(true);
   const [showEmptyState, setShowEmptyState] = useState(false);
   const [inputValues, setInputValues] = useState({});

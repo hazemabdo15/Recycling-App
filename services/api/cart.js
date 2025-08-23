@@ -356,15 +356,30 @@ export async function updateCartItem(item, quantity, isLoggedIn, measurementUnit
   return measureApiCall(
     async () => {
       try {
+        // Ensure we have a valid measurementUnit
+        let finalMeasurementUnit = measurementUnit || item.measurement_unit;
+        
+        // If still null/undefined, try to infer from item.unit or default to 2 (pieces)
+        if (finalMeasurementUnit === null || finalMeasurementUnit === undefined) {
+          if (item.unit && typeof item.unit === 'string') {
+            finalMeasurementUnit = item.unit.toUpperCase() === 'KG' ? 1 : 2;
+          } else {
+            finalMeasurementUnit = 2; // Default to pieces
+          }
+        }
+        
+        // Ensure it's a number
+        finalMeasurementUnit = Number(finalMeasurementUnit);
+        
         logger.cart('Updating cart item', {
           itemId: item._id || item.itemId,
           categoryId: item.categoryId,
           quantity,
-          measurementUnit,
+          measurementUnit: finalMeasurementUnit,
           userType: isLoggedIn ? 'authenticated' : 'guest'
         });
 
-        validateQuantity({ quantity, measurement_unit: measurementUnit });
+        validateQuantity({ quantity, measurement_unit: finalMeasurementUnit });
 
         const sessionId = isLoggedIn ? null : await getSessionId();
         const headers = await getAuthHeaders(isLoggedIn, sessionId);
@@ -373,7 +388,7 @@ export async function updateCartItem(item, quantity, isLoggedIn, measurementUnit
         const payload = { 
           _id: item._id || item.itemId,
           quantity, 
-          measurement_unit: measurementUnit || item.measurement_unit,
+          measurement_unit: finalMeasurementUnit,
           // Required fields for new item creation
           categoryId: item.categoryId,
           categoryName: item.categoryName,

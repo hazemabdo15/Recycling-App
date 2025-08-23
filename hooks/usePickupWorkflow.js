@@ -3,7 +3,6 @@ import { useAuth } from '../context/AuthContext';
 import { useStock } from '../context/StockContext';
 import { addressService } from '../services/api/addresses';
 import { unifiedOrderService } from '../services/unifiedOrderService';
-import { CheckoutValidator } from '../utils/checkoutValidator';
 import { workflowStateUtils } from '../utils/workflowStateUtils';
 import { useCart } from './useCart';
 
@@ -199,22 +198,29 @@ export const usePickupWorkflow = () => {
       throw new Error(errorMsg);
     }
     
-    // Validate cart stock before proceeding with order creation
+    // Enhanced cart validation before proceeding with order creation
     const cartItems = {};
     Object.values(cartItemDetails).forEach(item => {
       cartItems[item._id] = item.quantity;
     });
     
-    const stockValidation = await CheckoutValidator.validateForCheckout(
+    // Use the enhanced cart validator for better error handling
+    const { CartStockValidator } = await import('../services/cartStockValidator');
+    const validationResult = await CartStockValidator.quickValidate(
       cartItems,
       stockQuantities,
-      cartItemDetails,
-      { showMessages: true }
+      cartItemDetails
     );
     
-    if (!stockValidation.isValid) {
-      console.error('Order creation failed - stock validation:', stockValidation.error);
-      throw new Error(stockValidation.error || 'Some items in your cart are out of stock');
+    if (!validationResult.isValid) {
+      console.error('Order creation failed - enhanced cart validation:', validationResult.issues);
+      
+      // Provide more detailed error message
+      const errorMessage = validationResult.issues?.length > 0 
+        ? `Cart validation failed: ${validationResult.issues.map(i => i.message).join(', ')}`
+        : 'Some items in your cart are no longer available';
+        
+      throw new Error(errorMessage);
     }
     
     // Save workflow state before potential payment redirect

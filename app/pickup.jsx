@@ -20,6 +20,7 @@ import ReviewPhase from "../components/pickup/ReviewPhase";
 import { useAuth } from "../context/AuthContext";
 import { useLocalization } from "../context/LocalizationContext";
 import { useCart } from "../hooks/useCart";
+import { useCartValidation } from "../hooks/useCartValidation";
 import { usePickupWorkflow } from "../hooks/usePickupWorkflow";
 import { useThemedStyles } from "../hooks/useThemedStyles";
 import { isAuthenticated } from "../services/auth";
@@ -40,6 +41,16 @@ export default function Pickup() {
     loading: authContextLoading,
   } = useAuth();
   const { cartItems } = useCart(user);
+  
+  // Add cart validation for critical pickup screen
+  const { validateCart, quickValidateCart } = useCartValidation({
+    validateOnFocus: true, // Validate when pickup screen is focused
+    validateOnAppActivation: true, // Validate when app becomes active
+    autoCorrect: true, // Automatically fix cart issues
+    showMessages: true, // Show user feedback about corrections
+    source: 'pickupScreen'
+  });
+  
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState(null);
   const [dialogShown, setDialogShown] = useState(false);

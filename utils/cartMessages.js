@@ -18,7 +18,19 @@ export const CartMessageTypes = {
   NOT_IN_CART: 'not_in_cart',
   INVALID_QUANTITY: 'invalid_quantity',
   ADD_TO_CART_SUCCESS: 'add_to_cart_success',
-  OPERATION_FAILED: 'operation_failed'
+  OPERATION_FAILED: 'operation_failed',
+  // New validation message types
+  CART_ISSUES_DETECTED: 'cart_issues_detected',
+  CART_AUTO_CORRECTED: 'cart_auto_corrected',
+  CART_CORRECTION_ERROR: 'cart_correction_error',
+  OUT_OF_STOCK: 'out_of_stock',
+  INSUFFICIENT_STOCK: 'insufficient_stock',
+  // Additional helper functions
+  outOfStock: (options) => showCartMessage(CartMessageTypes.OUT_OF_STOCK, options),
+  insufficientStock: (options) => showCartMessage(CartMessageTypes.INSUFFICIENT_STOCK, options),
+  cartIssuesDetected: (options) => showCartMessage(CartMessageTypes.CART_ISSUES_DETECTED, options),
+  cartAutoCorrected: (options) => showCartMessage(CartMessageTypes.CART_AUTO_CORRECTED, options),
+  cartCorrectionError: (options) => showCartMessage(CartMessageTypes.CART_CORRECTION_ERROR, options)
 };
 
 /**
@@ -31,7 +43,7 @@ const getUnitText = (measurementUnit, t) => {
 /**
  * Fallback messages when no translation function is provided
  */
-const getFallbackMessage = (type, { itemName, quantity, unit, remainingQuantity, maxStock, totalItems, isBuyer }) => {
+const getFallbackMessage = (type, { itemName, quantity, unit, remainingQuantity, maxStock, totalItems, isBuyer, message, source, totalFixed, totalErrors }) => {
   switch (type) {
     case CartMessageTypes.ADD_SINGLE:
     case CartMessageTypes.ADD_FAST:
@@ -56,6 +68,17 @@ const getFallbackMessage = (type, { itemName, quantity, unit, remainingQuantity,
       return `${totalItems} item${totalItems > 1 ? 's' : ''} added to cart`;
     case CartMessageTypes.OPERATION_FAILED:
       return 'Failed to update cart';
+    // New validation message types
+    case CartMessageTypes.CART_ISSUES_DETECTED:
+      return message || 'Some items in your cart are no longer available as expected.';
+    case CartMessageTypes.CART_AUTO_CORRECTED:
+      return message || `Your cart has been updated${source || ''}.`;
+    case CartMessageTypes.CART_CORRECTION_ERROR:
+      return message || 'Failed to update some items in your cart. Please review manually.';
+    case CartMessageTypes.OUT_OF_STOCK:
+      return `${itemName} is out of stock`;
+    case CartMessageTypes.INSUFFICIENT_STOCK:
+      return `Not enough ${itemName} in stock. Only ${maxStock} ${unit} available`;
     default:
       return 'Cart updated';
   }
@@ -209,6 +232,39 @@ export const showCartMessage = (type, options = {}) => {
       message = getTranslation('toast.cart.operationFailed');
       toastType = 'error';
       defaultDuration = 2000;
+      break;
+
+    // New validation message types
+    case CartMessageTypes.CART_ISSUES_DETECTED:
+      message = options.message || getTranslation('toast.cart.cartIssuesDetected') || 'Some items in your cart are no longer available as expected.';
+      toastType = 'warning';
+      defaultDuration = 4000;
+      break;
+
+    case CartMessageTypes.CART_AUTO_CORRECTED:
+      message = options.message || getTranslation('toast.cart.cartAutoCorrected') || 'Your cart has been updated.';
+      toastType = 'info';
+      defaultDuration = 4000;
+      break;
+
+    case CartMessageTypes.CART_CORRECTION_ERROR:
+      message = options.message || getTranslation('toast.cart.cartCorrectionError') || 'Failed to update some items in your cart. Please review manually.';
+      toastType = 'error';
+      defaultDuration = 3000;
+      break;
+
+    case CartMessageTypes.OUT_OF_STOCK:
+      message = getTranslation('toast.cart.outOfStock', { itemName }) || `${itemName} is out of stock`;
+      toastType = 'error';
+      defaultDuration = 2000;
+      break;
+
+    case CartMessageTypes.INSUFFICIENT_STOCK:
+      const maxStockText = measurementUnit === 1 ? maxStock?.toFixed(2) : maxStock?.toString();
+      message = getTranslation('toast.cart.insufficientStock', { itemName, maxStock: maxStockText, unit }) || 
+                `Not enough ${itemName} in stock. Only ${maxStockText} ${unit} available`;
+      toastType = 'error';
+      defaultDuration = 2500;
       break;
 
     default:
