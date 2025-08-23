@@ -65,7 +65,10 @@ export function AuthProvider({ children }) {
 
     const updatedStatus = response?.deliveryStatus || null;
     setDeliveryStatus(updatedStatus);
-    user.deliveryStatus = updatedStatus;
+    
+    // Update user object and persist to storage
+    const updatedUser = { ...user, deliveryStatus: updatedStatus };
+    setUser(updatedUser);
 
     return updatedStatus;
   } catch (error) {
@@ -112,6 +115,12 @@ export function AuthProvider({ children }) {
           setUser(normalizedUser);
           setAccessToken(storedToken);
           setIsLoggedIn(true);
+          
+          // Set delivery status if user is a delivery user
+          if (normalizedUser.role === 'delivery' && normalizedUser.deliveryStatus) {
+            console.log('[AuthContext] Setting delivery status from stored user:', normalizedUser.deliveryStatus);
+            setDeliveryStatus(normalizedUser.deliveryStatus);
+          }
         }
       } catch (error) {
         console.error("[AuthContext] Error loading stored user:", error);
