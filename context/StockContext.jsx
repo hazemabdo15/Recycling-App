@@ -145,7 +145,7 @@ export const StockProvider = ({ children }) => {
       // Listen for item stock updates from backend
       socket.on('itemUpdated', (data) => {
         console.log('📦 Stock update received:', data);
-        const { itemId, categoryId, quantity } = data;
+        const { itemId, quantity } = data;
         
         if (itemId && quantity !== undefined) {
           setStockQuantities(prev => {

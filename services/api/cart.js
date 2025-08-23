@@ -369,11 +369,18 @@ export async function updateCartItem(item, quantity, isLoggedIn, measurementUnit
         const sessionId = isLoggedIn ? null : await getSessionId();
         const headers = await getAuthHeaders(isLoggedIn, sessionId);
 
+        // Include all required fields for creating new items
         const payload = { 
           _id: item._id || item.itemId,
-          categoryId: item.categoryId,
           quantity, 
-          measurement_unit: measurementUnit
+          measurement_unit: measurementUnit || item.measurement_unit,
+          // Required fields for new item creation
+          categoryId: item.categoryId,
+          categoryName: item.categoryName,
+          name: item.name,
+          image: item.image,
+          points: item.points,
+          price: item.price,
         };
 
         if (!item.categoryId) {
@@ -515,5 +522,90 @@ export async function clearCart(isLoggedIn) {
       }
     },
     'cart-clear'
+  );
+}
+
+export async function saveCart(cartItems, isLoggedIn) {
+  return measureApiCall(
+    async () => {
+      try {
+        logger.cart('Saving entire cart', {
+          itemCount: cartItems.length,
+          userType: isLoggedIn ? 'authenticated' : 'guest'
+        });
+
+        const sessionId = isLoggedIn ? null : await getSessionId();
+        const headers = await getAuthHeaders(isLoggedIn, sessionId);
+
+        // Validate all items before sending
+        const validatedItems = cartItems.map(item => {
+          validateQuantity(item);
+          return {
+            _id: item._id,
+            categoryId: item.categoryId,
+            categoryName: item.categoryName,
+            name: item.name,
+            image: item.image,
+            points: item.points,
+            price: item.price,
+            measurement_unit: item.measurement_unit,
+            quantity: item.quantity,
+          };
+        });
+
+        const response = await fetch(`${BASE_URL}/save`, {
+          method: "POST",
+          headers,
+          credentials: "include",
+          body: JSON.stringify({ items: validatedItems }),
+        });
+
+        await setSessionIdFromResponse(response);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          
+          if (response.status === 401) {
+            logger.auth('Authentication failed - token expired', null, 'ERROR');
+            await clearSession();
+            cachedToken = null;
+            tokenCacheTime = 0;
+            throw new Error("Authentication failed - please login again");
+          }
+
+          let backendError = `HTTP ${response.status}: ${response.statusText}`;
+          try {
+            const errorData = JSON.parse(errorText);
+            backendError = errorData.message || errorData.error || backendError;
+          } catch (_parseError) {
+            if (errorText && errorText.trim()) {
+              backendError = errorText;
+            }
+          }
+
+          logger.cart('Failed to save cart', {
+            itemCount: cartItems.length,
+            status: response.status,
+            error: backendError
+          }, 'ERROR');
+
+          throw new Error(backendError);
+        }
+
+        const result = await response.json();
+        logger.success('Cart saved successfully', {
+          itemCount: cartItems.length
+        }, 'CART');
+
+        return result;
+      } catch (error) {
+        logger.cart('Save cart failed', {
+          itemCount: cartItems?.length || 0,
+          error: error.message
+        }, 'ERROR');
+        throw error;
+      }
+    },
+    'cart-save'
   );
 }

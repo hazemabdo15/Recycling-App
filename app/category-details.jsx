@@ -1,7 +1,7 @@
 ﻿import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useNavigation } from "expo-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next"; // Add this import
 import {
   RefreshControl,
@@ -46,8 +46,6 @@ const CategoryDetails = () => {
   const { t } = useTranslation(); // Add translation hook
   const { colors, isDarkMode } = useThemedStyles();
   const layoutStyles = getLayoutStyles(isDarkMode);
-
-  const [pendingOperations, setPendingOperations] = useState({});
   
   // Parse the category name if it's a JSON string, otherwise use as-is
   let categoryName;
@@ -73,6 +71,10 @@ const CategoryDetails = () => {
 
   const { items, loading, error, refetch } = useCategoryItems(categoryNameForAPI);
   const [refreshing, setRefreshing] = useState(false);
+  
+  // Track pending operations to prevent spam clicking
+  const [pendingOperations, setPendingOperations] = useState(new Map());
+  
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
@@ -104,47 +106,60 @@ const CategoryDetails = () => {
     }
   }, [items, syncItemsStock]);
 
-  const mergedItems = items.map((item) => {
-    const needsNormalization =
-      !item._id ||
-      !item.categoryId ||
-      !item.image ||
-      item.measurement_unit === undefined;
-    const processedItem = needsNormalization ? normalizeItemData(item) : item;
-    const itemKey = getCartKey(processedItem);
-    const cartQuantity = cartItems[itemKey] || 0;
+  // Memoize the processed items separately from cart quantities for better performance
+  const processedItems = useMemo(() => {
+    return items.map((item) => {
+      const needsNormalization =
+        !item._id ||
+        !item.categoryId ||
+        !item.image ||
+        item.measurement_unit === undefined;
+      const processedItem = needsNormalization ? normalizeItemData(item) : item;
 
-    // Get real-time stock quantity
-    const realTimeStock = getItemStock(processedItem._id);
-    const stockQuantity = realTimeStock > 0 ? realTimeStock : (processedItem.quantity || 0);
+      // Get real-time stock quantity
+      const realTimeStock = getItemStock(processedItem._id);
+      const stockQuantity = realTimeStock > 0 ? realTimeStock : (processedItem.quantity || 0);
 
-    // Handle multilingual item name - extract from the item name structure
-    const itemDisplayName = extractNameFromMultilingual(processedItem.name, currentLanguage);
-    
-    // Add translated name to item (fallback to translation system if multilingual data not available)
-    const translatedItemName = getTranslatedName(
-      t,
-      processedItem.name,
-      "subcategories",
-      { categoryName: categoryName, currentLanguage }
-    );
+      // Handle multilingual item name - extract from the item name structure
+      const itemDisplayName = extractNameFromMultilingual(processedItem.name, currentLanguage);
+      
+      // Add translated name to item (fallback to translation system if multilingual data not available)
+      const translatedItemName = getTranslatedName(
+        t,
+        processedItem.name,
+        "subcategories",
+        { categoryName: categoryName, currentLanguage }
+      );
 
-    return {
-      ...processedItem,
-      quantity: stockQuantity, // Use real-time stock quantity
-      cartQuantity, // this is the quantity in the cart
-      displayName: translatedItemName, // Add translated name for display
-      originalName: itemDisplayName, // Keep the original multilingual name for reference
-      stockUpdated: wasRecentlyUpdated(processedItem._id), // Flag for UI feedback
-    };
-  });
+      return {
+        ...processedItem,
+        quantity: stockQuantity, // Use real-time stock quantity
+        displayName: translatedItemName, // Add translated name for display
+        originalName: itemDisplayName, // Keep the original multilingual name for reference
+        stockUpdated: wasRecentlyUpdated(processedItem._id), // Flag for UI feedback
+      };
+    });
+  }, [items, getItemStock, wasRecentlyUpdated, currentLanguage, t, categoryName]);
+
+  // Memoize cart quantities separately to avoid recalculating processed items
+  const mergedItems = useMemo(() => {
+    return processedItems.map((processedItem) => {
+      const itemKey = getCartKey(processedItem);
+      const cartQuantity = cartItems[itemKey] || 0;
+
+      return {
+        ...processedItem,
+        cartQuantity, // this is the quantity in the cart
+      };
+    });
+  }, [processedItems, cartItems]);
 
   const { totalItems, totalPoints, totalValue } = calculateCartStats(
     mergedItems,
     cartItems
   );
 
-  const handleManualInput = async (itemOrValue, valueMaybe) => {
+  const handleManualInput = useCallback(async (itemOrValue, valueMaybe) => {
     console.log("handleManualInput called with:", { itemOrValue, valueMaybe });
 
     // itemOrValue can be item or value depending on call
@@ -177,6 +192,13 @@ const CategoryDetails = () => {
     // Validate minimum quantity based on measurement unit
     const measurementUnit =
       item.measurement_unit || (item.unit === "KG" ? 1 : 2);
+    
+    // For pieces (measurement_unit === 2), round fractional values to nearest integer
+    if (measurementUnit === 2 && value !== Math.floor(value)) {
+      value = Math.round(value);
+      console.log("Rounded fractional value for pieces to:", value);
+    }
+    
     if (value > 0) {
       if (measurementUnit === 1 && value < 0.25) {
         showCartMessage(CartMessageTypes.INVALID_QUANTITY, {
@@ -214,8 +236,6 @@ const CategoryDetails = () => {
         return;
       }
     }
-    const itemKey = getCartKey(item);
-    setPendingOperations((prev) => ({ ...prev, [itemKey]: "manualInput" }));
     try {
       console.log("Calling handleSetQuantity with:", {
         item: itemDisplayName,
@@ -242,17 +262,12 @@ const CategoryDetails = () => {
         t
       });
     } finally {
-      setPendingOperations((prev) => {
-        const newState = { ...prev };
-        delete newState[itemKey];
-        return newState;
-      });
     }
-  };
+  }, [user, getItemStock, handleSetQuantity, t]);
 
-  const renderItem = ({ item, index }) => {
+  // Memoized render function to prevent unnecessary re-renders of individual items
+  const renderItem = useCallback(({ item, index }) => {
     const itemKey = getCartKey(item);
-    const itemPendingAction = pendingOperations[itemKey];
     // Use displayName if available (already translated), otherwise extract from multilingual name
     const itemDisplayName = item.displayName || extractNameFromMultilingual(item.name, currentLanguage);
 
@@ -273,6 +288,9 @@ const CategoryDetails = () => {
       canAddToCart = stockCanAddToCart;
     }
 
+    // Check if this item has pending operations
+    const hasPendingOperation = pendingOperations.has(itemKey);
+
     return (
       <ItemCard
         item={{
@@ -281,27 +299,29 @@ const CategoryDetails = () => {
           name: itemDisplayName,
         }}
         quantity={item.cartQuantity}
-        disabled={!!itemPendingAction}
-        pendingAction={itemPendingAction}
+        disabled={hasPendingOperation}
+        pendingAction={hasPendingOperation ? pendingOperations.get(itemKey) : null}
         index={index}
         maxReached={maxReached}
         outOfStock={outOfStock}
         user={user}
         onManualInput={(val) => handleManualInput(item, val)}
         onIncrease={async () => {
-          // Check if operation is already pending
-          if (itemPendingAction) return;
+          // Prevent spam clicking
+          if (pendingOperations.has(itemKey)) {
+            console.log(`[CategoryDetails] Blocking rapid click for ${item.name} - operation pending`);
+            return;
+          }
 
-          // Only check stock limits for buyer users
-          if (isBuyer(user) && (maxReached || outOfStock)) {
-            if (maxReached) {
-              showMaxStockMessage(
-                itemDisplayName,
-                item.quantity,
-                item.measurement_unit,
-                t
-              );
-            }
+          // Set pending operation
+          setPendingOperations(prev => new Map(prev).set(itemKey, 'increase'));
+
+          // Pre-compute values for instant feedback
+          const normalizedItem = normalizeItemData(item);
+          const step = getIncrementStep(normalizedItem.measurement_unit);
+
+          // Comprehensive stock validation for buyer users before showing optimistic UI
+          if (isBuyer(user)) {
             if (outOfStock) {
               showCartMessage(CartMessageTypes.STOCK_ERROR, {
                 itemName: itemDisplayName,
@@ -310,13 +330,55 @@ const CategoryDetails = () => {
                 isBuyer: true,
                 t
               });
+              // Clear pending operation
+              setPendingOperations(prev => {
+                const newMap = new Map(prev);
+                newMap.delete(itemKey);
+                return newMap;
+              });
+              return;
             }
-            return;
-          }
-          // Show toast instantly
-          const normalizedItem = normalizeItemData(item);
-          const step = getIncrementStep(normalizedItem.measurement_unit);
 
+            // Check if adding step would exceed available stock
+            const currentStock = getItemStock(item._id);
+            const stockQuantity = currentStock > 0 ? currentStock : item.quantity;
+            const currentCartQuantity = item.cartQuantity;
+            const newTotalQuantity = currentCartQuantity + step;
+
+            if (newTotalQuantity > stockQuantity) {
+              showMaxStockMessage(
+                itemDisplayName,
+                stockQuantity,
+                item.measurement_unit,
+                t
+              );
+              // Clear pending operation
+              setPendingOperations(prev => {
+                const newMap = new Map(prev);
+                newMap.delete(itemKey);
+                return newMap;
+              });
+              return;
+            }
+
+            if (maxReached) {
+              showMaxStockMessage(
+                itemDisplayName,
+                item.quantity,
+                item.measurement_unit,
+                t
+              );
+              // Clear pending operation
+              setPendingOperations(prev => {
+                const newMap = new Map(prev);
+                newMap.delete(itemKey);
+                return newMap;
+              });
+              return;
+            }
+          }
+
+          // Show toast instantly (only after stock checks pass)
           showCartMessage(CartMessageTypes.ADD_SINGLE, {
             itemName: itemDisplayName,
             quantity: step,
@@ -325,18 +387,7 @@ const CategoryDetails = () => {
             t
           });
 
-          const timeoutId = setTimeout(() => {
-            setPendingOperations((prev) => {
-              const newState = { ...prev };
-              delete newState[itemKey];
-              return newState;
-            });
-          }, 1000);
           try {
-            setPendingOperations((prev) => ({
-              ...prev,
-              [itemKey]: "increase",
-            }));
             const itemWithCorrectId = { ...item, _id: itemKey };
             const addResult = await handleIncreaseQuantity(itemWithCorrectId);
             if (addResult === false) {
@@ -359,16 +410,15 @@ const CategoryDetails = () => {
               t
             });
           } finally {
-            clearTimeout(timeoutId);
-            setPendingOperations((prev) => {
-              const newState = { ...prev };
-              delete newState[itemKey];
-              return newState;
+            // Always clear pending operation
+            setPendingOperations(prev => {
+              const newMap = new Map(prev);
+              newMap.delete(itemKey);
+              return newMap;
             });
           }
         }}
         onDecrease={async () => {
-          if (itemPendingAction) return;
           // Show toast instantly
           const normalizedItem = normalizeItemData(item);
           const step = getIncrementStep(normalizedItem.measurement_unit);
@@ -392,18 +442,7 @@ const CategoryDetails = () => {
             });
           }
 
-          const timeoutId = setTimeout(() => {
-            setPendingOperations((prev) => {
-              const newState = { ...prev };
-              delete newState[itemKey];
-              return newState;
-            });
-          }, 1000);
           try {
-            setPendingOperations((prev) => ({
-              ...prev,
-              [itemKey]: "decrease",
-            }));
             const itemWithCorrectId = { ...item, _id: itemKey };
             await handleDecreaseQuantity(itemWithCorrectId);
           } catch (err) {
@@ -414,36 +453,81 @@ const CategoryDetails = () => {
               isBuyer: user?.role === "buyer",
               t
             });
-          } finally {
-            clearTimeout(timeoutId);
-            setPendingOperations((prev) => {
-              const newState = { ...prev };
-              delete newState[itemKey];
-              return newState;
-            });
           }
         }}
         onFastIncrease={async () => {
-          // Check if operation is already pending
-          if (itemPendingAction) return;
-
-          // Only prevent fast-increase for buyer users based on stock
-          const fastStep = 5;
-          if (
-            isBuyer(user) &&
-            !canAddToCart(item, item.cartQuantity, fastStep)
-          ) {
-            showMaxStockMessage(
-              itemDisplayName,
-              item.quantity,
-              item.measurement_unit,
-              t
-            );
+          // Prevent spam clicking
+          if (pendingOperations.has(itemKey)) {
+            console.log(`[CategoryDetails] Blocking rapid click for ${item.name} - fast operation pending`);
             return;
           }
-          // Show toast instantly
+
+          // Set pending operation
+          setPendingOperations(prev => new Map(prev).set(itemKey, 'fastIncrease'));
+
+          // Pre-compute values for instant feedback
+          const fastStep = 5;
           const normalizedItem = normalizeItemData(item);
 
+          // Comprehensive stock validation for buyer users before showing optimistic UI
+          if (isBuyer(user)) {
+            if (outOfStock) {
+              showMaxStockMessage(
+                itemDisplayName,
+                0,
+                item.measurement_unit,
+                t
+              );
+              // Clear pending operation
+              setPendingOperations(prev => {
+                const newMap = new Map(prev);
+                newMap.delete(itemKey);
+                return newMap;
+              });
+              return;
+            }
+
+            // Check if adding fast step would exceed available stock
+            const currentStock = getItemStock(item._id);
+            const stockQuantity = currentStock > 0 ? currentStock : item.quantity;
+            const currentCartQuantity = item.cartQuantity;
+            const newTotalQuantity = currentCartQuantity + fastStep;
+
+            if (newTotalQuantity > stockQuantity) {
+              showMaxStockMessage(
+                itemDisplayName,
+                stockQuantity,
+                item.measurement_unit,
+                t
+              );
+              // Clear pending operation
+              setPendingOperations(prev => {
+                const newMap = new Map(prev);
+                newMap.delete(itemKey);
+                return newMap;
+              });
+              return;
+            }
+
+            // Use the existing canAddToCart function as additional validation
+            if (!canAddToCart(item, item.cartQuantity, fastStep)) {
+              showMaxStockMessage(
+                itemDisplayName,
+                item.quantity,
+                item.measurement_unit,
+                t
+              );
+              // Clear pending operation
+              setPendingOperations(prev => {
+                const newMap = new Map(prev);
+                newMap.delete(itemKey);
+                return newMap;
+              });
+              return;
+            }
+          }
+
+          // Show toast instantly (only after stock checks pass)
           showCartMessage(CartMessageTypes.ADD_FAST, {
             itemName: itemDisplayName,
             quantity: fastStep,
@@ -452,18 +536,7 @@ const CategoryDetails = () => {
             t
           });
 
-          const timeoutId = setTimeout(() => {
-            setPendingOperations((prev) => {
-              const newState = { ...prev };
-              delete newState[itemKey];
-              return newState;
-            });
-          }, 1000);
           try {
-            setPendingOperations((prev) => ({
-              ...prev,
-              [itemKey]: "fastIncrease",
-            }));
             await handleFastIncreaseQuantity(item);
           } catch (err) {
             console.error(
@@ -477,18 +550,15 @@ const CategoryDetails = () => {
               t
             });
           } finally {
-            clearTimeout(timeoutId);
-            setPendingOperations((prev) => {
-              const newState = { ...prev };
-              delete newState[itemKey];
-              return newState;
+            // Always clear pending operation
+            setPendingOperations(prev => {
+              const newMap = new Map(prev);
+              newMap.delete(itemKey);
+              return newMap;
             });
           }
         }}
         onFastDecrease={async () => {
-          // Check if operation is already pending
-          if (itemPendingAction) return;
-
           // Show toast instantly
           const normalizedItem = normalizeItemData(item);
           const fastStep = 5;
@@ -512,18 +582,7 @@ const CategoryDetails = () => {
             });
           }
 
-          const timeoutId = setTimeout(() => {
-            setPendingOperations((prev) => {
-              const newState = { ...prev };
-              delete newState[itemKey];
-              return newState;
-            });
-          }, 1000);
           try {
-            setPendingOperations((prev) => ({
-              ...prev,
-              [itemKey]: "fastDecrease",
-            }));
             await handleFastDecreaseQuantity(item);
           } catch (err) {
             console.error(
@@ -536,18 +595,23 @@ const CategoryDetails = () => {
               isBuyer: user?.role === "buyer",
               t
             });
-          } finally {
-            clearTimeout(timeoutId);
-            setPendingOperations((prev) => {
-              const newState = { ...prev };
-              delete newState[itemKey];
-              return newState;
-            });
           }
         }}
       />
     );
-  };
+  }, [
+    currentLanguage,
+    user,
+    pendingOperations,
+    handleManualInput,
+    getItemStock,
+    handleIncreaseQuantity,
+    handleDecreaseQuantity,
+    handleFastIncreaseQuantity,
+    handleFastDecreaseQuantity,
+    setPendingOperations,
+    t
+  ]);
 
   const handleAddItem = () => {
     console.log("Add item to", translatedCategoryName);
@@ -689,7 +753,7 @@ const CategoryDetails = () => {
             paddingHorizontal: scaleSize(spacing.sm),
             paddingTop: scaleSize(spacing.md),
           }}
-          extraData={cartItems}
+          extraData={`${Object.keys(cartItems).length}-${pendingOperations.size}`}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -702,6 +766,13 @@ const CategoryDetails = () => {
           extraScrollHeight={160}
           keyboardOpeningTime={0}
           keyboardShouldPersistTaps="handled"
+          // Performance optimizations for large lists
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          updateCellsBatchingPeriod={50}
+          initialNumToRender={15}
+          windowSize={10}
+          getItemLayout={undefined} // Let FlatList calculate automatically
         />
       )}
     </View>

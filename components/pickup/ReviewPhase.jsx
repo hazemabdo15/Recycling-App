@@ -740,7 +740,7 @@ const ReviewPhase = ({
             {isAnyProcessing
               ? isCashOrderProcessing
                 ? t('pickup.reviewPhase.creatingOrder')
-                : "Processing..."
+                : t('pickup.reviewPhase.processing')
               : shouldUsePayment(user)
               ? selectedPaymentMethod === 'cash'
                 ? t("pickup.reviewPhase.confirmOrder")

@@ -187,25 +187,47 @@ export const createCartItem = (item, quantity = 1) => {
 
     let categoryName = processedItem.categoryName;
 
-    if (!categoryName) {
-        console.warn('[createCartItem] Missing categoryName, using fallback mapping for:', processedItem.name);
-        const categoryNameMapping = {
-            "687d76c4ba6a94b1537a1ae5": "paper",
-            "687e051316468b6886743500": "e-wasted", 
-            "687e977eadcf919b39d0b1d4": "spare-parts",
-            "687e9637adcf919b39d0b0e7": "metals",
-            "687e9686adcf919b39d0b0ea": "metals",
-            "687e9635adcf919b39d0b0e6": "plastic",
-            "687e9633adcf919b39d0b0e5": "glass"
-        };
+    // If categoryName is missing or not in bilingual format, create fallback bilingual object
+    if (!categoryName || typeof categoryName === 'string') {
+        console.warn('[createCartItem] Missing or invalid categoryName format, using fallback mapping for:', processedItem.name);
         
-        categoryName = categoryNameMapping[processedItem.categoryId] || "unknown";
+        // First try to get from existing string value
+        let fallbackName = categoryName;
+        
+        // If no categoryName at all, use mapping
+        if (!fallbackName) {
+            const categoryNameMapping = {
+                "687d76c4ba6a94b1537a1ae5": "paper",
+                "687e051316468b6886743500": "e-wasted", 
+                "687e977eadcf919b39d0b1d4": "spare-parts",
+                "687e9637adcf919b39d0b0e7": "metals",
+                "687e9686adcf919b39d0b0ea": "metals",
+                "687e9635adcf919b39d0b0e6": "plastic",
+                "687e9633adcf919b39d0b0e5": "glass"
+            };
+            fallbackName = categoryNameMapping[processedItem.categoryId] || "unknown";
+        }
+        
+        // Create bilingual object
+        categoryName = {
+            en: fallbackName,
+            ar: fallbackName // Fallback, ideally should be translated
+        };
+    }
+
+    // Ensure name is in bilingual format
+    let itemName = processedItem.name;
+    if (typeof itemName === 'string') {
+        itemName = {
+            en: itemName,
+            ar: itemName // Fallback, ideally should be translated
+        };
     }
     
     const result = {
         _id: processedItem._id,
         categoryId: processedItem.categoryId,
-        name: processedItem.name,
+        name: itemName,
         image: processedItem.image || '',
         points: processedItem.points || 0,
         price: processedItem.price || 0,
@@ -213,7 +235,7 @@ export const createCartItem = (item, quantity = 1) => {
         measurement_unit: processedItem.measurement_unit,
         quantity: quantity
     };
-    console.log('[createCartItem] Created cart item:', result);
+    console.log('[createCartItem] Created cart item with bilingual structure:', result);
     return result;
 };
 

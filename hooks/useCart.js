@@ -11,6 +11,8 @@ export const useCart = (user = null) => {
     handleAddToCart,
     handleAddSingleItem,
     handleUpdateQuantity,
+    handleBatchUpdate,
+    handleAddAIResults,
     handleRemoveFromCart,
     handleClearCart,
     fetchBackendCart,
@@ -21,6 +23,7 @@ export const useCart = (user = null) => {
     loading,
     error,
     removingItems,
+    debouncedCartManager,
   } = useCartContext();
 
   const handleIncreaseQuantity = async (item, showError) => {
@@ -28,37 +31,38 @@ export const useCart = (user = null) => {
     const processedItem = needsNormalization ? normalizeItemData(item) : item;
     const { _id, measurement_unit, quantity: stockQuantity } = processedItem;
     const currentQuantity = getItemQuantity(_id);
-    let newQuantity;
-    if (currentQuantity === 0) {
-      // Only apply stock validation for buyer users
-      if (isBuyer(user)) {
-        // Special case: for kg items, if stock < 0.25, block addition; for pieces, if stock < 1
-        const minStockRequired = measurement_unit === 1 ? 0.25 : 1;
-        if ((typeof stockQuantity === 'number') && stockQuantity < minStockRequired) {
-          if (typeof showError === 'function') {
-            showError('Not enough quantity in stock to add this item.');
-          }
-          return false;
+    
+    // Only apply stock validation for buyer users
+    if (isBuyer(user)) {
+      // Special case: for kg items, if stock < 0.25, block addition; for pieces, if stock < 1
+      const minStockRequired = measurement_unit === 1 ? 0.25 : 1;
+      if ((typeof stockQuantity === 'number') && stockQuantity < minStockRequired) {
+        if (typeof showError === 'function') {
+          showError('Not enough quantity in stock to add this item.');
         }
+        return false;
       }
-      // Use proper step increment for first addition - 0.25 for kg items, 1 for pieces
-      const step = getIncrementStep(measurement_unit);
-      newQuantity = step;
-    } else {
-      const step = getIncrementStep(measurement_unit);
-      newQuantity = calculateQuantity(currentQuantity, step, 'add');
     }
+    
+    // Calculate new quantity consistently
+    const step = getIncrementStep(measurement_unit);
+    const newQuantity = calculateQuantity(currentQuantity, step, 'add');
+    
     try {
-      if (currentQuantity === 0) {
-        const cartItem = createCartItem(processedItem, newQuantity);
-        await handleAddSingleItem(cartItem);
-      } else {
-        const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit);
-        if (result && !result.success && result.reason === 'Operation already pending') {
-          console.log('⏸️ [useCart] Update skipped - operation already pending');
-          return;
-        }
+      // Always use handleUpdateQuantity for consistency - it can handle both new and existing items
+      const result = await handleUpdateQuantity(
+        _id, 
+        newQuantity, 
+        measurement_unit, 
+        'user-interaction',
+        currentQuantity === 0 ? processedItem : null // Pass item data for new items
+      );
+      
+      if (result && !result.success && result.reason === 'Operation already pending') {
+        console.log('⏸️ [useCart] Update skipped - operation already pending');
+        return;
       }
+      
       return true;
     } catch (error) {
       console.error('[useCart] handleIncreaseQuantity error:', error);
@@ -93,7 +97,7 @@ export const useCart = (user = null) => {
       if (newQuantity <= 0) {
         await handleRemoveFromCart(_id);
       } else {
-        const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit);
+        const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit, 'user-interaction');
 
         if (result && !result.success && result.reason === 'Operation already pending') {
           console.log('⏸️ [useCart] Update skipped - operation already pending');
@@ -136,7 +140,7 @@ export const useCart = (user = null) => {
         const cartItem = createCartItem(processedItem, formattedQuantity);
         await handleAddSingleItem(cartItem);
       } else {
-        const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit);
+        const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit, 'rapid-updates');
         if (result && !result.success && result.reason === 'Operation already pending') {
           console.log('⏸️ [useCart] Fast update skipped - operation already pending');
           return;
@@ -168,7 +172,7 @@ export const useCart = (user = null) => {
       if (newQuantity <= 0) {
         await handleRemoveFromCart(_id);
       } else {
-        const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit);
+        const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit, 'rapid-updates');
         
         if (result && !result.success && result.reason === 'Operation already pending') {
           console.log('⏸️ [useCart] Fast decrease skipped - operation already pending');
@@ -206,7 +210,7 @@ export const useCart = (user = null) => {
       } else {
         // Item exists in cart, update quantity
         console.log('useCart handleSetQuantity: updating existing item quantity');
-        const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit);
+        const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit, 'user-interaction');
         console.log('useCart handleSetQuantity: handleUpdateQuantity result:', result);
         return result;
       }
@@ -214,6 +218,21 @@ export const useCart = (user = null) => {
       console.error('useCart handleSetQuantity error:', error);
       return { success: false, error: error.message };
     }
+  };
+
+  // NEW: AI Results handler for bulk operations
+  const handleAIResults = async (aiItems) => {
+    return handleAddAIResults(aiItems);
+  };
+
+  // NEW: Batch update handler
+  const batchUpdateCart = async (itemId, quantity, measurementUnit) => {
+    return handleBatchUpdate(itemId, quantity, measurementUnit);
+  };
+
+  // NEW: Force sync all pending operations
+  const syncPendingOperations = async () => {
+    return debouncedCartManager.syncAll();
   };
 
   return {
@@ -229,6 +248,9 @@ export const useCart = (user = null) => {
     handleClearCart,
     handleRemoveFromCart,
     handleAddToCart,
+    handleAIResults, // NEW: For AI voice modal
+    batchUpdateCart, // NEW: For batch operations
+    syncPendingOperations, // NEW: Force sync pending operations
     fetchBackendCart,
     testConnectivity,
     testMinimalPostRequest,
@@ -237,5 +259,6 @@ export const useCart = (user = null) => {
     loading,
     error,
     removingItems,
+    debouncedCartManager, // NEW: Expose manager for advanced usage
   };
 };

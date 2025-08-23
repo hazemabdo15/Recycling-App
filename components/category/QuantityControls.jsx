@@ -77,6 +77,10 @@ const QuantityControls = ({
                 return;
             }
             
+            // Update input field to show rounded value immediately
+            setInputValue(num.toString());
+            lastValidValue.current = num.toString();
+            
             if (onQuantityInput) onQuantityInput(num);
             // Remove duplicate toast - parent will handle unified messaging
             
@@ -105,6 +109,10 @@ const QuantityControls = ({
                 setInputValue(lastValidValue.current);
                 return;
             }
+            
+            // Update input field to show rounded value immediately
+            setInputValue(num.toString());
+            lastValidValue.current = num.toString();
             
             if (onQuantityInput) onQuantityInput(num);
             // Remove duplicate toast - parent will handle unified messaging

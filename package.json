@@ -80,6 +80,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
+    "@types/react": "^19.1.11",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~9.2.0"
   },
