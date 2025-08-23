@@ -21,6 +21,7 @@ export const lightColors = {
   textTertiary: "#9CA3AF",
   shadow: "#000000",
   disabled: "#9CA3AF",
+  title: "#E5E5E5",
 };
 
 // Dark theme colors
@@ -50,115 +51,106 @@ export const darkColors = {
   textTertiary: "#71717A",
   shadow: "#00000060",
   disabled: "#4B5563",
+  title: "#E5E5E5",
 };
 
 // Function to get colors based on theme
 export const getColors = (isDarkMode = false) => {
   const baseColors = isDarkMode ? darkColors : lightColors;
-  
+
   return {
     ...baseColors,
     // Override background with primarySurface for consistent, better-looking background
-    background: isDarkMode ? baseColors.base100 : '#f0fdf4',
+    background: isDarkMode ? baseColors.base100 : "#f0fdf4",
     // Card specific colors - updated for better contrast with new background
     cardBackground: isDarkMode ? baseColors.base200 : baseColors.white,
-    cardGradient: isDarkMode 
-      ? [baseColors.base200, baseColors.base300] 
-      : [baseColors.white, '#f8fafc'],
-    cardBorder: isDarkMode 
-      ? 'rgba(148, 163, 184, 0.3)' 
-      : 'rgba(0,0,0,0.1)',
+    cardGradient: isDarkMode
+      ? [baseColors.base200, baseColors.base300]
+      : [baseColors.white, "#f8fafc"],
+    cardBorder: isDarkMode ? "rgba(148, 163, 184, 0.3)" : "rgba(0,0,0,0.1)",
     shadowColor: baseColors.shadow,
-    
+
     // Avatar specific colors
-    avatarGradient: isDarkMode 
-      ? ['#1e40af', '#3b82f6'] 
-      : ['#e3f2fd', '#bbdefb'],
-    overlayBg: isDarkMode 
-      ? 'rgba(30, 41, 91, 0.7)' 
-      : 'rgba(255,255,255,0.7)',
-    
+    avatarGradient: isDarkMode
+      ? ["#1e40af", "#3b82f6"]
+      : ["#e3f2fd", "#bbdefb"],
+    overlayBg: isDarkMode ? "rgba(30, 41, 91, 0.7)" : "rgba(255,255,255,0.7)",
+
     // Stats card colors
-    statCardBg: isDarkMode 
-      ? 'rgba(30, 41, 91, 0.4)' 
-      : 'rgba(255,255,255,0.7)',
-    
+    statCardBg: isDarkMode ? "rgba(30, 41, 91, 0.4)" : "rgba(255,255,255,0.7)",
+
     // Stat specific gradients
-    recycleStatGradient: isDarkMode 
-      ? ['#047857', '#065f46'] 
-      : ['#e8f5e8', '#f1f8e9'],
-    recycleStatIcon: isDarkMode ? '#10b981' : '#2e7d32',
-    
-    pointsStatGradient: isDarkMode 
-      ? ['#b45309', '#92400e'] 
-      : ['#fff3e0', '#fce4ec'],
-    pointsStatIcon: isDarkMode ? '#fbbf24' : '#f57c00',
-    
-    tierStatGradient: isDarkMode 
-      ? ['#1e40af', '#7c3aed'] 
-      : ['#e3f2fd', '#f3e5f5'],
-    
+    recycleStatGradient: isDarkMode
+      ? ["#047857", "#065f46"]
+      : ["#e8f5e8", "#f1f8e9"],
+    recycleStatIcon: isDarkMode ? "#10b981" : "#2e7d32",
+
+    pointsStatGradient: isDarkMode
+      ? ["#b45309", "#92400e"]
+      : ["#fff3e0", "#fce4ec"],
+    pointsStatIcon: isDarkMode ? "#fbbf24" : "#f57c00",
+
+    tierStatGradient: isDarkMode
+      ? ["#1e40af", "#7c3aed"]
+      : ["#e3f2fd", "#f3e5f5"],
+
     // Modal specific colors
-    modalOverlay: isDarkMode 
-      ? 'rgba(0, 0, 0, 0.85)' 
-      : 'rgba(0, 0, 0, 0.7)',
-    modalButtonBg: isDarkMode 
-      ? 'rgba(55, 65, 81, 0.8)' 
-      : 'rgba(0, 0, 0, 0.5)',
-    modalImageBg: isDarkMode 
-      ? 'rgba(55, 65, 81, 0.2)' 
-      : 'rgba(255, 255, 255, 0.1)',
-    modalText: isDarkMode ? baseColors.white : 'white',
-    modalSubText: isDarkMode 
-      ? 'rgba(203, 213, 225, 0.9)' 
-      : 'rgba(255, 255, 255, 0.7)',
-    
+    modalOverlay: isDarkMode ? "rgba(0, 0, 0, 0.85)" : "rgba(0, 0, 0, 0.7)",
+    modalButtonBg: isDarkMode ? "rgba(55, 65, 81, 0.8)" : "rgba(0, 0, 0, 0.5)",
+    modalImageBg: isDarkMode
+      ? "rgba(55, 65, 81, 0.2)"
+      : "rgba(255, 255, 255, 0.1)",
+    modalText: isDarkMode ? baseColors.white : "white",
+    modalSubText: isDarkMode
+      ? "rgba(203, 213, 225, 0.9)"
+      : "rgba(255, 255, 255, 0.7)",
+
     // Achievement specific colors
     achievementCardBg: isDarkMode ? baseColors.base100 : baseColors.white,
-    achievementCompletedBorder: isDarkMode ? baseColors.success : '#10b981',
-    achievementIconBg: isDarkMode 
-      ? [baseColors.base200, baseColors.base300] 
-      : ['#e5e7eb', '#f3f4f6'],
-    achievementIconCompleted: isDarkMode 
-      ? [baseColors.success, '#16a34a'] 
-      : ['#10b981', '#34d399'],
-    
+    achievementCompletedBorder: isDarkMode ? baseColors.success : "#10b981",
+    achievementIconBg: isDarkMode
+      ? [baseColors.base200, baseColors.base300]
+      : ["#e5e7eb", "#f3f4f6"],
+    achievementIconCompleted: isDarkMode
+      ? [baseColors.success, "#16a34a"]
+      : ["#10b981", "#34d399"],
+
     // Help & Support specific colors
     helpCardBg: isDarkMode ? baseColors.base100 : baseColors.white,
-    helpSectionBg: isDarkMode ? baseColors.base50 : '#f8fafc',
-    helpBorderColor: isDarkMode ? baseColors.base300 : '#e2e8f0',
-    
+    helpSectionBg: isDarkMode ? baseColors.base50 : "#f8fafc",
+    helpBorderColor: isDarkMode ? baseColors.base300 : "#e2e8f0",
+
     // Home screen specific colors
     heroGradient: [baseColors.primary, baseColors.neutral],
-    notificationButtonBg: isDarkMode 
-      ? 'rgba(148, 163, 184, 0.15)' 
-      : 'rgba(255, 255, 255, 0.15)',
+    notificationButtonBg: isDarkMode
+      ? "rgba(148, 163, 184, 0.15)"
+      : "rgba(255, 255, 255, 0.15)",
     textLight: baseColors.textSecondary,
-    
+
     // Header specific colors
-    headerButtonBg: isDarkMode ? baseColors.base200 : '#F5F5F5',
-    
+    headerButtonBg: isDarkMode ? baseColors.base200 : "#F5F5F5",
+
     // Category specific colors
     surface: isDarkMode ? baseColors.base200 : baseColors.white,
-    
+
     // Profile specific colors
-    border: isDarkMode ? baseColors.base300 : '#e2e8f0',
-    primaryLight: isDarkMode ? baseColors.base200 : '#bbf7d0',
-    primaryDark: isDarkMode ? '#047857' : '#065f46',
-    primarySurface: isDarkMode ? baseColors.base100 : '#f0fdf4',
-    errorLight: isDarkMode ? '#7f1d1d' : '#fee2e2',
-    errorBorder: isDarkMode ? '#b91c1c' : '#fecaca',
-    infoLight: isDarkMode ? '#1e3a8a' : '#e0f2fe',
-    infoBorder: isDarkMode ? '#3b82f6' : '#bae6fd',
-    
+    border: isDarkMode ? baseColors.base300 : "#e2e8f0",
+    primaryLight: isDarkMode ? baseColors.base200 : "#bbf7d0",
+    primaryDark: isDarkMode ? "#047857" : "#065f46",
+    primarySurface: isDarkMode ? baseColors.base100 : "#f0fdf4",
+    errorLight: isDarkMode ? "#7f1d1d" : "#fee2e2",
+    errorBorder: isDarkMode ? "#b91c1c" : "#fecaca",
+    infoLight: isDarkMode ? "#1e3a8a" : "#e0f2fe",
+    infoBorder: isDarkMode ? "#3b82f6" : "#bae6fd",
+
     // Enhanced card backgrounds for different component types
-    itemCardBg: isDarkMode ? baseColors.base200 : '#ffffff',
-    categoryCardBg: isDarkMode ? baseColors.base200 : '#ffffff',
-    earnPointsCardBg: isDarkMode ? baseColors.base200 : '#ffffff',
-    addressCardBg: isDarkMode ? baseColors.base200 : '#ffffff',
-    
+    itemCardBg: isDarkMode ? baseColors.base200 : "#ffffff",
+    categoryCardBg: isDarkMode ? baseColors.base200 : "#ffffff",
+    earnPointsCardBg: isDarkMode ? baseColors.base200 : "#ffffff",
+    addressCardBg: isDarkMode ? baseColors.base200 : "#ffffff",
+
     // StatusBar style
-    statusBarStyle: isDarkMode ? 'light' : 'dark',
+    statusBarStyle: isDarkMode ? "light" : "dark",
   };
 };
 

@@ -699,7 +699,7 @@ export default function Pickup() {
               }
             }}
           >
-            <Text style={{ color: colors.white, fontWeight: "bold" }}>
+            <Text style={{ color: colors.title, fontWeight: "bold" }}>
               Try Again
             </Text>
           </TouchableOpacity>
@@ -748,7 +748,7 @@ const getPickupStyles = (colors) => StyleSheet.create({
     ...typography.title,
     fontSize: scaleSize(24),
     fontWeight: "bold",
-    color: colors.white,
+    color: colors.title,
     textAlign: "center",
     marginBottom: scaleSize(spacing.lg),
   },
@@ -800,14 +800,14 @@ const getPickupStyles = (colors) => StyleSheet.create({
     borderColor: "rgba(255, 255, 255, 0.5)",
   },
   progressCircleActive: {
-    backgroundColor: colors.white,
-    borderColor: colors.white,
+    backgroundColor: colors.title,
+    borderColor: colors.title,
   },
   progressText: {
     ...typography.caption,
     fontSize: scaleSize(14),
     fontWeight: "bold",
-    color: colors.white,
+    color: colors.title,
   },
   progressTextActive: {
     color: colors.primary,
@@ -819,6 +819,6 @@ const getPickupStyles = (colors) => StyleSheet.create({
     marginHorizontal: scaleSize(spacing.sm),
   },
   progressLineActive: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.title,
   },
 });

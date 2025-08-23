@@ -688,17 +688,17 @@ const CategoryDetails = () => {
           <MaterialCommunityIcons
             name="arrow-left"
             size={24}
-            color={colors.white}
+            color={colors.title}
           />
         </TouchableOpacity>
 
-        <Text style={[heroStyles.heroTitle, { color: colors.white }]}>{translatedCategoryName}</Text>
+        <Text style={[heroStyles.heroTitle, { color: colors.title }]}>{translatedCategoryName}</Text>
 
         <View style={heroStyles.spacer} />
       </View>
 
       <View style={heroStyles.heroContent}>
-        <Text style={[heroStyles.heroSubtitle, { color: colors.white }]}>
+        <Text style={[heroStyles.heroSubtitle, { color: colors.title }]}>
           {t("categories.subtitle", {
             categoryName: translatedCategoryName.toLowerCase(),
           })}
@@ -709,10 +709,10 @@ const CategoryDetails = () => {
             <MaterialCommunityIcons
               name="package-variant"
               size={20}
-              color={colors.white}
+              color={colors.title}
             />
-            <Text style={[heroStyles.statValue, { color: colors.white }]}>{totalItems}</Text>
-            <Text style={[heroStyles.statLabel, { color: colors.white }]}>{t("common.items")}</Text>
+            <Text style={[heroStyles.statValue, { color: colors.title }]}>{totalItems}</Text>
+            <Text style={[heroStyles.statLabel, { color: colors.title }]}>{t("common.items")}</Text>
           </View>
 
           {!isBuyer(user) && (
@@ -720,10 +720,10 @@ const CategoryDetails = () => {
               <MaterialCommunityIcons
                 name="star"
                 size={20}
-                color={colors.white}
+                color={colors.title}
               />
-              <Text style={[heroStyles.statValue, { color: colors.white }]}>{totalPoints}</Text>
-              <Text style={[heroStyles.statLabel, { color: colors.white }]}>{t("common.points")}</Text>
+              <Text style={[heroStyles.statValue, { color: colors.title }]}>{totalPoints}</Text>
+              <Text style={[heroStyles.statLabel, { color: colors.title }]}>{t("common.points")}</Text>
             </View>
           )}
 
@@ -731,10 +731,10 @@ const CategoryDetails = () => {
             <MaterialCommunityIcons
               name="cash"
               size={20}
-              color={colors.white}
+              color={colors.title}
             />
-            <Text style={[heroStyles.statValue, { color: colors.white }]}>{totalValue} {t("units.egp")}</Text>
-            <Text style={[heroStyles.statLabel, { color: colors.white }]}>
+            <Text style={[heroStyles.statValue, { color: colors.title }]}>{totalValue} {t("units.egp")}</Text>
+            <Text style={[heroStyles.statLabel, { color: colors.title }]}>
               {tRole("money", user?.role)}
             </Text>
           </View>

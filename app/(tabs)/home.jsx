@@ -136,7 +136,7 @@ const getStyles = (colors) => StyleSheet.create({
   appName: {
     fontSize: scaleSize(24),
     fontWeight: "bold",
-    color: colors.white,
+    color: colors.title,
   },
   notificationButton: {
     position: "relative",
@@ -178,21 +178,21 @@ const getStyles = (colors) => StyleSheet.create({
   },
   welcomeText: {
     fontSize: scaleSize(16),
-    color: colors.white,
+    color: colors.title,
     opacity: 0.9,
     marginBottom: scaleSize(spacing.xs),
   },
   heroTitle: {
     fontSize: scaleSize(32),
     fontWeight: "bold",
-    color: colors.white,
+    color: colors.title,
     textAlign: "center",
     marginBottom: scaleSize(spacing.sm),
     letterSpacing: 1,
   },
   heroSubtitle: {
     fontSize: scaleSize(16),
-    color: colors.white,
+    color: colors.title,
     textAlign: "center",
     opacity: 0.85,
     lineHeight: scaleSize(24),

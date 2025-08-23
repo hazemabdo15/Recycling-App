@@ -772,7 +772,7 @@ const Cart = () => {
               <MaterialCommunityIcons
                 name={getRoleBasedIcon("findItems", user?.role)}
                 size={28}
-                color={colors.white}
+                color={colors.title}
               />
               <Text style={styles.heroFindBtnText}>
                 {tRole("cart.findItemsButton", user?.role)}
@@ -924,7 +924,7 @@ const Cart = () => {
                       : getRoleBasedIcon("locked", user?.role)
                   }
                   size={24}
-                  color={canProceed ? colors.white : colors.white}
+                  color={canProceed ? colors.title : colors.title}
                 />
                 <Text
                   style={[
@@ -948,7 +948,7 @@ const Cart = () => {
                   <MaterialCommunityIcons
                     name="delete-sweep"
                     size={22}
-                    color={colors.white}
+                    color={colors.title}
                   />
                 </TouchableOpacity>
               )}
@@ -1022,14 +1022,14 @@ const getStyles = (colors) => StyleSheet.create({
   heroTitle: {
     fontSize: scaleSize(24),
     fontWeight: "bold",
-    color: colors.white,
+    color: colors.title,
     textAlign: "center",
     marginBottom: scaleSize(spacing.sm),
     letterSpacing: -0.5,
   },
   heroSubtitle: {
     fontSize: scaleSize(14),
-    color: colors.white,
+    color: colors.title,
     textAlign: "center",
     opacity: 0.85,
     lineHeight: scaleSize(22),
@@ -1092,7 +1092,7 @@ const getStyles = (colors) => StyleSheet.create({
   },
   heroFindBtnText: {
     ...typography.subtitle,
-    color: colors.white,
+    color: colors.title,
     fontWeight: "700",
     fontSize: scaleSize(18),
     marginLeft: scaleSize(spacing.md),
@@ -1278,7 +1278,7 @@ const getStyles = (colors) => StyleSheet.create({
   },
   checkoutSummaryLabelHero: {
     ...typography.caption,
-    color: colors.white,
+    color: colors.title,
     marginTop: 2,
     marginBottom: 2,
     fontSize: 13,
@@ -1286,7 +1286,7 @@ const getStyles = (colors) => StyleSheet.create({
   checkoutSummaryValueHero: {
     ...typography.title,
     fontSize: 18,
-    color: colors.white,
+    color: colors.title,
     fontWeight: "700",
     marginTop: 2,
   },
@@ -1315,7 +1315,7 @@ const getStyles = (colors) => StyleSheet.create({
   },
   checkoutBtnBarTextHero: {
     ...typography.subtitle,
-    color: colors.white,
+    color: colors.title,
     fontWeight: "700",
     fontSize: 18,
     marginLeft: spacing.sm,
@@ -1356,7 +1356,7 @@ const getStyles = (colors) => StyleSheet.create({
     elevation: 0,
   },
   checkoutBtnBarTextDisabled: {
-    color: colors.white,
+    color: colors.title,
     fontWeight: "600",
   },
   loadingOverlay: {

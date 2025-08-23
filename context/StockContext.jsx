@@ -3,7 +3,6 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { io } from 'socket.io-client';
 import { API_BASE_URL } from '../services/api/config';
 import { refreshAccessToken } from '../services/auth';
-import stockCacheManager from '../utils/stockCacheManager';
 import { useAuth } from './AuthContext';
 
 const StockContext = createContext();
@@ -34,72 +33,6 @@ export const StockProvider = ({ children }) => {
       return true;
     }
   };
-
-  // Initialize stock data from cache
-  const initializeStockData = useCallback(async () => {
-    try {
-      // Check if cache is stale
-      const cacheIsStale = await isCacheStale();
-      
-      if (cacheIsStale) {
-        console.log('🗑️ Cache is stale, clearing old data');
-        await clearStockCache();
-        setStockQuantities({});
-        console.log('📦 Will load fresh data from server when connected');
-        return;
-      }
-
-      const cachedStock = await AsyncStorage.getItem('stock_quantities');
-      if (cachedStock) {
-        const parsedStock = JSON.parse(cachedStock);
-        setStockQuantities(parsedStock);
-        console.log('📦 Loaded cached stock data:', Object.keys(parsedStock).length, 'items');
-        console.log('🔄 Note: This is cached data, fresh data will be requested from server');
-      } else {
-        console.log('📦 No cached stock data found, will load fresh data from server');
-      }
-    } catch (error) {
-      console.error('❌ Failed to load cached stock data:', error);
-    }
-  }, [isCacheStale, clearStockCache]);
-
-  // Save stock data to cache
-  const saveStockToCache = useCallback(async (stockData) => {
-    try {
-      await AsyncStorage.setItem('stock_quantities', JSON.stringify(stockData));
-      await AsyncStorage.setItem('stock_last_updated', new Date().toISOString());
-    } catch (error) {
-      console.error('❌ Failed to save stock data to cache:', error);
-    }
-  }, []);
-
-  // Clear stale cache
-  const clearStockCache = useCallback(async () => {
-    try {
-      await AsyncStorage.removeItem('stock_quantities');
-      await AsyncStorage.removeItem('stock_last_updated');
-      console.log('🗑️ Cleared stale stock cache');
-    } catch (error) {
-      console.error('❌ Failed to clear stock cache:', error);
-    }
-  }, []);
-
-  // Check if cached data is stale (older than 5 minutes)
-  const isCacheStale = useCallback(async () => {
-    try {
-      const lastUpdated = await AsyncStorage.getItem('stock_last_updated');
-      if (!lastUpdated) return true;
-      
-      const lastUpdatedTime = new Date(lastUpdated);
-      const now = new Date();
-      const diffMinutes = (now - lastUpdatedTime) / (1000 * 60);
-      
-      return diffMinutes > 5; // Consider stale if older than 5 minutes
-    } catch (error) {
-      console.error('❌ Failed to check cache staleness:', error);
-      return true; // Assume stale on error
-    }
-  }, []);
 
   // Connect to socket for real-time stock updates
   const connectSocket = useCallback(async () => {
@@ -143,7 +76,7 @@ export const StockProvider = ({ children }) => {
         isConnectingRef.current = false;
         socketRef.current = socket;
         
-        // Immediately request fresh stock data to override any cached/stale data
+        // Immediately request fresh stock data from server
         console.log('🔄 Requesting fresh stock data from server...');
         console.log('🔄 Emitting requestStockData event with userId:', user._id);
         socket.emit('requestStockData', { userId: user._id });
@@ -214,12 +147,7 @@ export const StockProvider = ({ children }) => {
               [itemId]: quantity
             };
             
-            // Save to cache
-            saveStockToCache(updated);
             setLastUpdated(new Date());
-            
-            // Notify stock cache manager of the update
-            stockCacheManager.notifyStockUpdate({ [itemId]: quantity });
             
             console.log('📦 Updated stock for item:', itemId, 'new quantity:', quantity);
             return updated;
@@ -234,11 +162,7 @@ export const StockProvider = ({ children }) => {
         console.log('📦 Bulk stock update received:', Object.keys(stockData).length, 'items');
         setStockQuantities(prev => {
           const updated = { ...prev, ...stockData };
-          saveStockToCache(updated);
           setLastUpdated(new Date());
-          
-          // Notify stock cache manager of bulk update
-          stockCacheManager.notifyStockUpdate(stockData);
           
           return updated;
         });
@@ -247,13 +171,9 @@ export const StockProvider = ({ children }) => {
       // Handle initial stock data response
       socket.on('stockData', (stockData) => {
         console.log('� Fresh stock data received from server:', Object.keys(stockData).length, 'items');
-        console.log('📦 Replacing all cached data with fresh server data');
+        console.log('📦 Setting fresh stock data from server');
         setStockQuantities(stockData);
-        saveStockToCache(stockData);
         setLastUpdated(new Date());
-        
-        // Notify stock cache manager of initial data
-        stockCacheManager.notifyStockUpdate(stockData);
       });
 
     } catch (error) {
@@ -261,7 +181,7 @@ export const StockProvider = ({ children }) => {
       setIsConnected(false);
       isConnectingRef.current = false;
     }
-  }, [accessToken, user, isLoggedIn, saveStockToCache, stockQuantities]);
+  }, [accessToken, user, isLoggedIn, stockQuantities]);
 
   // Disconnect socket
   const disconnectSocket = useCallback(() => {
@@ -300,24 +220,19 @@ export const StockProvider = ({ children }) => {
         ...prev,
         [itemId]: Math.max(0, newQuantity) // Ensure non-negative
       };
-      saveStockToCache(updated);
       return updated;
     });
-  }, [saveStockToCache]);
+  }, []);
 
   // Bulk update stock quantities
   const updateBulkStock = useCallback((stockUpdates) => {
     setStockQuantities(prev => {
       const updated = { ...prev, ...stockUpdates };
-      saveStockToCache(updated);
       setLastUpdated(new Date());
-      
-      // Notify stock cache manager of bulk update
-      stockCacheManager.notifyStockUpdate(stockUpdates);
       
       return updated;
     });
-  }, [saveStockToCache]);
+  }, []);
 
   // Check if item is in stock
   const isInStock = useCallback((itemId, requestedQuantity = 1) => {
@@ -361,11 +276,6 @@ export const StockProvider = ({ children }) => {
     }
   }, [user, stockQuantities]);
 
-  // Initialize on mount
-  useEffect(() => {
-    initializeStockData();
-  }, [initializeStockData]);
-
   // Handle authentication state changes
   useEffect(() => {
     const shouldConnect = isLoggedIn && user && !user.isGuest && accessToken;
@@ -377,7 +287,6 @@ export const StockProvider = ({ children }) => {
       console.log('🔒 Auth lost, disconnecting from stock socket...');
       disconnectSocket();
       setStockQuantities({});
-      AsyncStorage.removeItem('stock_quantities');
     }
 
     return () => {

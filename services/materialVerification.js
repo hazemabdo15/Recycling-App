@@ -1,27 +1,8 @@
-﻿import stockCacheManager from '../utils/stockCacheManager';
-import { extractNameFromMultilingual } from '../utils/translationHelpers';
+﻿import { extractNameFromMultilingual } from '../utils/translationHelpers';
 import apiService from "./api/apiService";
-
-let cachedDatabaseItems = new Map(); // Use Map to cache per role
-let cacheTimestamp = null;
-const CACHE_DURATION = 5 * 60 * 1000;
-
-// Set up cache clearing when stock updates
-stockCacheManager.addStockUpdateListener(() => {
-  console.log('🔄 [Material Verification] Clearing cache due to stock update');
-  cachedDatabaseItems.clear();
-  cacheTimestamp = null;
-});
 
 export async function fetchDatabaseItems(userRole = 'customer') {
   try {
-    // Use cached data if available and fresh (cache per role)
-    const cacheKey = userRole;
-    if (cachedDatabaseItems.has(cacheKey) && cacheTimestamp && (Date.now() - cacheTimestamp < CACHE_DURATION)) {
-      console.log('🔍 [Material Verification] Using cached data for role:', userRole);
-      return cachedDatabaseItems.get(cacheKey);
-    }
-
     console.log('🔍 [Material Verification] Fetching categories from API for role:', userRole);
     const response = await apiService.get(`/categories?role=${userRole}`);
     
@@ -35,13 +16,10 @@ export async function fetchDatabaseItems(userRole = 'customer') {
 
     let categoriesData;
     if (Array.isArray(response)) {
-
       categoriesData = response;
     } else if (response && response.data && Array.isArray(response.data)) {
-
       categoriesData = response.data;
     } else if (response && Array.isArray(response.categories)) {
-
       categoriesData = response.categories;
     } else {
       console.error('🔥 [Material Verification] Unexpected response format:', response);
@@ -141,9 +119,6 @@ export async function fetchDatabaseItems(userRole = 'customer') {
         subcategoriesType: typeof cat.subcategories
       })));
     }
-
-    cachedDatabaseItems.set(userRole, result);
-    cacheTimestamp = Date.now();
 
     console.log(`✅ Database items fetched: ${allItems.length} items from ${categoriesData.length} categories`);
     return result;
@@ -494,10 +469,4 @@ export function filterAvailableMaterials(verifiedMaterials) {
       quantity: material.quantity,
       unit: convertMeasurementUnit(material.databaseItem.measurement_unit)
     }));
-}
-
-export function clearMaterialCache() {
-  cachedDatabaseItems.clear();
-  cacheTimestamp = null;
-  console.log('🗑️ Material cache cleared');
 }

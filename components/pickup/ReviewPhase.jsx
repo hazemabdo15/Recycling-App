@@ -762,7 +762,7 @@ const ReviewPhase = ({
               <MaterialCommunityIcons
                 name="refresh"
                 size={20}
-                color={colors.white}
+                color={colors.title}
               />
             </Animated.View>
           ) : (

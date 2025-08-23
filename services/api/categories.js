@@ -1,9 +1,6 @@
 ﻿import itemsData from "../../data/items.json";
-import apiCache from "../../utils/apiCache";
 import logger from "../../utils/logger";
 import { measureApiCall } from "../../utils/performanceMonitor";
-import persistentCache from "../../utils/persistentCache";
-import stockCacheManager from "../../utils/stockCacheManager";
 import { extractNameFromMultilingual } from "../../utils/translationHelpers";
 import { API_ENDPOINTS } from "./config";
 
@@ -51,18 +48,6 @@ const generateFallbackItems = () => {
 export const categoriesAPI = {
   getAllCategories: async (role = "customer") => {
     return measureApiCall(async () => {
-      const cacheKey = apiCache.generateKey(`categories-${role}`);
-      const cached = apiCache.get(cacheKey);
-      if (cached) {
-        logger.debug("Categories retrieved from cache", {
-          count: cached.length,
-        });
-        return cached;
-      }
-
-      // Check persistent cache for offline support
-      const persistentData = await persistentCache.get(cacheKey, true); // Allow expired data
-
       try {
         console.log(
           "[Categories API] Fetching categories for role:",
@@ -76,28 +61,15 @@ export const categoriesAPI = {
         
         const fetchPromise = fetch(`${API_ENDPOINTS.CATEGORIES}&role=${role}`);
         
-        try {
-          const response = await Promise.race([fetchPromise, timeoutPromise]);
-          
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          const data = await response.json();
-          apiCache.set(cacheKey, data, 10 * 60 * 1000);
-          await persistentCache.set(cacheKey, data, 24 * 60 * 60 * 1000); // Persist for 24 hours
-
-          logger.api("Categories fetched from API", { count: data.length });
-          return data;
-        } catch (networkError) {
-          console.log('[Categories API] Network request failed, checking persistent cache...');
-          
-          if (persistentData) {
-            console.log('[Categories API] Returning persistent cached categories');
-            return persistentData;
-          }
-          
-          throw networkError;
+        const response = await Promise.race([fetchPromise, timeoutPromise]);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
+        const data = await response.json();
+
+        logger.api("Categories fetched from API", { count: data.length });
+        return data;
       } catch (error) {
         logger.api(
           "Failed to fetch categories, using fallback",
@@ -114,25 +86,6 @@ export const categoriesAPI = {
 
   getAllItems: async (role = "customer") => {
     return measureApiCall(async () => {
-      const cacheKey = apiCache.generateKey(`all-items-${role}`);
-      
-      // Check if caches should be invalidated due to stock updates
-      if (stockCacheManager.shouldInvalidateCaches()) {
-        console.log('[Categories API] Stock data may be stale, clearing caches');
-        await stockCacheManager.invalidateStockCaches();
-      }
-      
-      const cached = apiCache.get(cacheKey);
-      if (cached) {
-        logger.debug("All items retrieved from cache", {
-          count: cached.data?.length || cached.items?.length || 0,
-        });
-        return cached;
-      }
-
-      // Check persistent cache for offline support
-      const persistentData = await persistentCache.get(cacheKey, true); // Allow expired data
-
       try {
         logger.debug(
           "[Categories API] Fetching all items for role:",
@@ -146,32 +99,17 @@ export const categoriesAPI = {
         
         const fetchPromise = fetch(`${API_ENDPOINTS.ALL_ITEMS}&role=${role}`);
         
-        try {
-          const response = await Promise.race([fetchPromise, timeoutPromise]);
-          
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          const data = await response.json();
-          
-          // Cache the items data for offline use
-          apiCache.set(cacheKey, data, 10 * 60 * 1000);
-          await persistentCache.set(cacheKey, data, 24 * 60 * 60 * 1000); // Persist for 24 hours
-
-          logger.api("All items fetched from API", {
-            count: data.data?.length || data.items?.length || 0,
-          });
-          return data;
-        } catch (networkError) {
-          console.log('[Categories API] Network request failed, checking persistent cache...');
-          
-          if (persistentData) {
-            console.log('[Categories API] Returning persistent cached items');
-            return persistentData;
-          }
-          
-          throw networkError;
+        const response = await Promise.race([fetchPromise, timeoutPromise]);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
+        const data = await response.json();
+
+        logger.api("All items fetched from API", {
+          count: data.data?.length || data.items?.length || 0,
+        });
+        return data;
       } catch (error) {
         const fallbackItems = generateFallbackItems();
         logger.api(
@@ -189,26 +127,6 @@ export const categoriesAPI = {
 
   getCategoryItems: async (role = "customer", categoryName) => {
     return measureApiCall(async () => {
-      const cacheKey = apiCache.generateKey(`category-items-${categoryName}-${role}`);
-      
-      // Check if caches should be invalidated due to stock updates
-      if (stockCacheManager.shouldInvalidateCaches()) {
-        console.log('[Categories API] Stock data may be stale, clearing category caches');
-        await stockCacheManager.invalidateStockCaches();
-      }
-      
-      const cached = apiCache.get(cacheKey);
-      if (cached) {
-        logger.debug("Category items retrieved from cache", {
-          categoryName,
-          count: cached.data?.length || 0,
-        });
-        return cached;
-      }
-
-      // Check persistent cache for offline support
-      const persistentData = await persistentCache.get(cacheKey, true); // Allow expired data
-
       try {
         logger.debug(
           "[Categories API] Fetching category items for:",
@@ -222,34 +140,19 @@ export const categoriesAPI = {
         
         const fetchPromise = fetch(`${API_ENDPOINTS.CATEGORY_ITEMS(categoryName)}&role=${role}`);
         
-        try {
-          const response = await Promise.race([fetchPromise, timeoutPromise]);
-          
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          const data = await response.json();
-
-          // Cache the response for future use
-          apiCache.set(cacheKey, data, 10 * 60 * 1000); // Cache for 10 minutes
-          await persistentCache.set(cacheKey, data, 24 * 60 * 60 * 1000); // Persist for 24 hours
-
-          logger.api("Category items fetched from API", {
-            categoryName,
-            count: data.data?.length || data.length || 0,
-          });
-          console.log("[Categories API] Fetched category items:", data);
-          return data;
-        } catch (networkError) {
-          console.log('[Categories API] Network request failed, checking persistent cache...');
-          
-          if (persistentData) {
-            console.log('[Categories API] Returning persistent cached category items');
-            return persistentData;
-          }
-          
-          throw networkError;
+        const response = await Promise.race([fetchPromise, timeoutPromise]);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
+        const data = await response.json();
+
+        logger.api("Category items fetched from API", {
+          categoryName,
+          count: data.data?.length || data.length || 0,
+        });
+        console.log("[Categories API] Fetched category items:", data);
+        return data;
       } catch (error) {
         const fallbackItems = generateFallbackItems().filter(
           (item) => {

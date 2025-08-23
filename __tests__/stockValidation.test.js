@@ -133,36 +133,6 @@ export const testCheckoutValidation = async () => {
 };
 
 /**
- * Test 4: Cache Invalidation Simulation
- */
-export const testCacheInvalidation = async () => {
-  console.log('🧪 Running Cache Invalidation Test...');
-  
-  try {
-    const stockCacheManager = require('../utils/stockCacheManager').default;
-    
-    // Get initial cache stats
-    const initialStats = await stockCacheManager.getCacheStats();
-    console.log('Initial Cache Stats:', initialStats);
-    
-    // Simulate stock update
-    stockCacheManager.notifyStockUpdate({ 'item1': 15, 'item3': 5 });
-    
-    // Check if invalidation timestamp updated
-    const shouldInvalidate = stockCacheManager.shouldInvalidateCaches(1000); // 1 second
-    
-    console.log('Cache Invalidation Triggered:', !shouldInvalidate);
-    
-    const testPassed = !shouldInvalidate; // Should be false if recently invalidated
-    console.log('✅ Test 4 Passed:', testPassed);
-    return testPassed;
-  } catch (error) {
-    console.log('❌ Test 4 Failed:', error.message);
-    return false;
-  }
-};
-
-/**
  * Run all tests
  */
 export const runAllTests = async () => {
@@ -173,7 +143,6 @@ export const runAllTests = async () => {
   results.push(testCartStockValidation());
   results.push(testCartOperationValidation());
   results.push(await testCheckoutValidation());
-  results.push(await testCacheInvalidation());
   
   const passedTests = results.filter(Boolean).length;
   const totalTests = results.length;
@@ -194,6 +163,5 @@ export default {
   testCartStockValidation,
   testCartOperationValidation,
   testCheckoutValidation,
-  testCacheInvalidation,
   runAllTests
 };
