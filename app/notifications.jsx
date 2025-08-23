@@ -45,8 +45,6 @@ const NotificationsScreen = () => {
     markAsRead,
     markNotificationAsRead,
     deleteNotification,
-    isConnected,
-    reconnectSocket,
   } = useNotifications();
 
   useFocusEffect(
@@ -311,11 +309,7 @@ const NotificationsScreen = () => {
           
           <Text style={styles.heroTitle}>{t("notifications.title")}</Text>
           
-          <View style={styles.connectionStatus}>
-            <View style={[styles.connectionDot, { 
-              backgroundColor: isConnected ? '#10B981' : '#EF4444' 
-            }]} />
-          </View>
+          <View style={styles.headerSpacer} />
         </View>
 
         <View style={styles.heroContent}>
@@ -331,23 +325,6 @@ const NotificationsScreen = () => {
       </LinearGradient>
 
       <View style={styles.contentContainer}>
-        {!isConnected && (
-          <View style={styles.connectionBanner}>
-            <View style={styles.connectionBannerContent}>
-              <Ionicons name="warning-outline" size={20} color={colors.warning} />
-              <Text style={styles.connectionBannerText}>
-                Real-time notifications disconnected
-              </Text>
-              <TouchableOpacity 
-                style={styles.reconnectButton}
-                onPress={reconnectSocket}
-              >
-                <Text style={styles.reconnectButtonText}>Reconnect</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-        
         {unreadCount > 0 && (
           <View style={styles.unreadBanner}>
             <Text style={styles.unreadBannerText}>
@@ -422,18 +399,6 @@ const getStyles = (colors) => StyleSheet.create({
   headerSpacer: {
     width: 40,
   },
-  connectionStatus: {
-    width: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  connectionDot: {
-    width: scaleSize(10),
-    height: scaleSize(10),
-    borderRadius: scaleSize(5),
-    borderWidth: 2,
-    borderColor: colors.white,
-  },
   heroContent: {
     alignItems: "center",
     paddingTop: scaleSize(spacing.sm),
@@ -456,38 +421,6 @@ const getStyles = (colors) => StyleSheet.create({
   contentContainer: {
     flex: 1,
     paddingTop: scaleSize(spacing.md),
-  },
-  connectionBanner: {
-    backgroundColor: '#FEF3C7',
-    borderRadius: scaleSize(8),
-    padding: scaleSize(spacing.sm),
-    marginHorizontal: scaleSize(spacing.md),
-    marginBottom: scaleSize(spacing.md),
-    borderWidth: 1,
-    borderColor: '#F59E0B',
-  },
-  connectionBannerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  connectionBannerText: {
-    flex: 1,
-    fontSize: scaleSize(14),
-    color: '#92400E',
-    marginLeft: scaleSize(spacing.xs),
-    fontWeight: '500',
-  },
-  reconnectButton: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: scaleSize(spacing.sm),
-    paddingVertical: scaleSize(spacing.xs),
-    borderRadius: scaleSize(6),
-  },
-  reconnectButtonText: {
-    color: colors.white,
-    fontSize: scaleSize(12),
-    fontWeight: '600',
   },
   unreadBanner: {
     backgroundColor: colors.cardBackground,
