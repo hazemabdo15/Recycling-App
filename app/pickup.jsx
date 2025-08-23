@@ -5,6 +5,7 @@ import { router, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
     Alert,
+    Animated,
     StatusBar,
     StyleSheet,
     Text,
@@ -44,6 +45,9 @@ export default function Pickup() {
   const [dialogShown, setDialogShown] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [, setCreatingOrder] = useState(false);
+
+  // Animation for loading spinner  
+  const orderSpinValue = useRef(new Animated.Value(0)).current;
 
   const cartItemsRef = useRef(cartItems);
 
@@ -294,6 +298,27 @@ export default function Pickup() {
       selectedAddress ? "present" : "null"
     );
   }, [currentPhase, selectedAddress]);
+
+  // Animation effect for loading spinner in phase 3
+  useEffect(() => {
+    if (currentPhase === 3) {
+      const spinAnimation = Animated.loop(
+        Animated.timing(orderSpinValue, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        { iterations: -1 } // Infinite loop
+      );
+      spinAnimation.start();
+      return () => {
+        spinAnimation.stop();
+      };
+    } else {
+      // Reset animation when not in phase 3
+      orderSpinValue.setValue(0);
+    }
+  }, [currentPhase, orderSpinValue]);
 
   const handleAddressSelect = useCallback(
     async (address) => {
@@ -600,11 +625,22 @@ export default function Pickup() {
           if (!orderData) {
             return (
               <View style={styles.messageContainer}>
-                <MaterialCommunityIcons
-                  name="loading"
-                  size={64}
-                  color={colors.primary}
-                />
+                <Animated.View 
+                  style={{
+                    transform: [{
+                      rotate: orderSpinValue.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ['0deg', '360deg'],
+                      })
+                    }]
+                  }}
+                >
+                  <MaterialCommunityIcons
+                    name="refresh"
+                    size={64}
+                    color={colors.primary}
+                  />
+                </Animated.View>
                 <Text style={styles.messageTitle}>Processing Order</Text>
                 <Text style={styles.messageText}>
                   Please wait while we finalize your order...

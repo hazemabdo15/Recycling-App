@@ -246,9 +246,7 @@ const ReviewPhase = ({
 
   // Animation effect for loading spinner
   useEffect(() => {
-    console.log('[ReviewPhase] Animation effect triggered, isAnyProcessing:', isAnyProcessing);
     if (isAnyProcessing) {
-      console.log('[ReviewPhase] Starting spinner animation...');
       const spinAnimation = Animated.loop(
         Animated.timing(spinValue, {
           toValue: 1,
@@ -259,12 +257,10 @@ const ReviewPhase = ({
       );
       spinAnimation.start();
       return () => {
-        console.log('[ReviewPhase] Stopping spinner animation...');
         spinAnimation.stop();
       };
     } else {
       // Reset animation when not processing
-      console.log('[ReviewPhase] Resetting spinner animation...');
       spinValue.setValue(0);
     }
   }, [isAnyProcessing, spinValue]);
