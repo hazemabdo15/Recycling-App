@@ -862,7 +862,7 @@ const Cart = () => {
                   <MaterialCommunityIcons
                     name="star"
                     size={22}
-                    color={colors.accent}
+                    color={colors.title}
                   />
                   <Text style={styles.checkoutSummaryLabelHero}>
                     {t("common.points")}
@@ -876,7 +876,7 @@ const Cart = () => {
                 <MaterialCommunityIcons
                   name="cash"
                   size={22}
-                  color={colors.secondary}
+                  color={colors.title}
                 />
                 <Text style={styles.checkoutSummaryLabelHero}>
                   {tRole("money", user?.role)}
