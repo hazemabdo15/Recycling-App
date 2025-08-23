@@ -91,10 +91,6 @@ const Cart = () => {
   const { items: allItems, loading: itemsLoading } = useAllItems();
   const {
     getItemStock,
-    validateQuantity,
-    getStockStatus,
-    wasRecentlyUpdated,
-    isConnected: stockConnected,
   } = useStockManager();
   const [loading, setLoading] = useState(true);
   const [showEmptyState, setShowEmptyState] = useState(false);
