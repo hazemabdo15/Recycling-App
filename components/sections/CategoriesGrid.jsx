@@ -535,8 +535,11 @@ const CategoriesGrid = ({
                 user={user}
                 onManualInput={(val) => handleManualInput(item, val)}
                 onIncrease={async () => {
+                  // Check if operation is already pending
+                  if (itemPendingAction) return;
+
                   // Only check stock limitations for buyer users
-                  if (isBuyer(user) && (itemPendingAction || outOfStock)) {
+                  if (isBuyer(user) && (outOfStock)) {
                     if (outOfStock) {
                       showGlobalToast(
                         t('cart.outOfStock', 'This item is out of stock.'),
@@ -595,8 +598,16 @@ const CategoriesGrid = ({
                   }
                   await handleCartOperation(item, "increase");
                 }}
-                onDecrease={() => handleCartOperation(item, "decrease")}
+                onDecrease={() => {
+                  // Check if operation is already pending
+                  if (itemPendingAction) return;
+                  
+                  handleCartOperation(item, "decrease");
+                }}
                 onFastIncrease={async () => {
+                  // Check if operation is already pending
+                  if (itemPendingAction) return;
+
                   // Only apply stock limitations for buyer users
                   if (isBuyer(user)) {
                     const isKg = item.measurement_unit === 1;
@@ -645,7 +656,12 @@ const CategoriesGrid = ({
                   }
                   await handleCartOperation(item, "fastIncrease");
                 }}
-                onFastDecrease={() => handleCartOperation(item, "fastDecrease")}
+                onFastDecrease={() => {
+                  // Check if operation is already pending
+                  if (itemPendingAction) return;
+                  
+                  handleCartOperation(item, "fastDecrease");
+                }}
               />
             );
           }}

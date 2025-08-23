@@ -289,11 +289,11 @@ const CategoryDetails = () => {
         user={user}
         onManualInput={(val) => handleManualInput(item, val)}
         onIncrease={async () => {
+          // Check if operation is already pending
+          if (itemPendingAction) return;
+
           // Only check stock limits for buyer users
-          if (
-            isBuyer(user) &&
-            (itemPendingAction || maxReached || outOfStock)
-          ) {
+          if (isBuyer(user) && (maxReached || outOfStock)) {
             if (maxReached) {
               showMaxStockMessage(
                 itemDisplayName,
@@ -424,7 +424,9 @@ const CategoryDetails = () => {
           }
         }}
         onFastIncrease={async () => {
+          // Check if operation is already pending
           if (itemPendingAction) return;
+
           // Only prevent fast-increase for buyer users based on stock
           const fastStep = 5;
           if (
@@ -453,14 +455,14 @@ const CategoryDetails = () => {
           const timeoutId = setTimeout(() => {
             setPendingOperations((prev) => {
               const newState = { ...prev };
-              delete newState[item.categoryId];
+              delete newState[itemKey];
               return newState;
             });
           }, 1000);
           try {
             setPendingOperations((prev) => ({
               ...prev,
-              [item.categoryId]: "fastIncrease",
+              [itemKey]: "fastIncrease",
             }));
             await handleFastIncreaseQuantity(item);
           } catch (err) {
@@ -478,13 +480,15 @@ const CategoryDetails = () => {
             clearTimeout(timeoutId);
             setPendingOperations((prev) => {
               const newState = { ...prev };
-              delete newState[item.categoryId];
+              delete newState[itemKey];
               return newState;
             });
           }
         }}
         onFastDecrease={async () => {
+          // Check if operation is already pending
           if (itemPendingAction) return;
+
           // Show toast instantly
           const normalizedItem = normalizeItemData(item);
           const fastStep = 5;
@@ -511,14 +515,14 @@ const CategoryDetails = () => {
           const timeoutId = setTimeout(() => {
             setPendingOperations((prev) => {
               const newState = { ...prev };
-              delete newState[item.categoryId];
+              delete newState[itemKey];
               return newState;
             });
           }, 1000);
           try {
             setPendingOperations((prev) => ({
               ...prev,
-              [item.categoryId]: "fastDecrease",
+              [itemKey]: "fastDecrease",
             }));
             await handleFastDecreaseQuantity(item);
           } catch (err) {
@@ -536,7 +540,7 @@ const CategoryDetails = () => {
             clearTimeout(timeoutId);
             setPendingOperations((prev) => {
               const newState = { ...prev };
-              delete newState[item.categoryId];
+              delete newState[itemKey];
               return newState;
             });
           }
