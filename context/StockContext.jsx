@@ -34,6 +34,46 @@ export const StockProvider = ({ children }) => {
     }
   };
 
+  // Load cached stock data as fallback
+  const loadCachedStockData = useCallback(async () => {
+    try {
+      console.log('🔄 Loading cached stock data as fallback...');
+      const cachedData = await AsyncStorage.getItem('@stock_cache');
+      if (cachedData) {
+        const { stockData, timestamp } = JSON.parse(cachedData);
+        const isRecent = Date.now() - timestamp < 3600000; // 1 hour old max
+        
+        if (isRecent && stockData && Object.keys(stockData).length > 0) {
+          console.log('✅ Loaded cached stock data:', Object.keys(stockData).length, 'items');
+          setStockQuantities(stockData);
+          setLastUpdated(new Date(timestamp));
+          return true;
+        } else {
+          console.log('⚠️ Cached stock data is too old or empty, ignoring');
+        }
+      } else {
+        console.log('⚠️ No cached stock data found');
+      }
+    } catch (error) {
+      console.error('❌ Error loading cached stock data:', error);
+    }
+    return false;
+  }, []);
+
+  // Save stock data to cache
+  const saveStockDataToCache = useCallback(async (stockData) => {
+    try {
+      const cacheData = {
+        stockData,
+        timestamp: Date.now()
+      };
+      await AsyncStorage.setItem('@stock_cache', JSON.stringify(cacheData));
+      console.log('💾 Stock data cached successfully');
+    } catch (error) {
+      console.error('❌ Error caching stock data:', error);
+    }
+  }, []);
+
   // Connect to socket for real-time stock updates
   const connectSocket = useCallback(async () => {
     if (isConnectingRef.current || socketRef.current?.connected) {
@@ -85,6 +125,25 @@ export const StockProvider = ({ children }) => {
         const timeoutId = setTimeout(() => {
           console.log('⚠️ Initial stock request timeout: Server did not respond with stock data within 15 seconds');
           console.log('📊 Current stock quantities count:', Object.keys(stockQuantities).length);
+          
+          // Try alternative approach: request without userId
+          console.log('🔄 Retrying stock request without userId...');
+          socket.emit('requestStockData', {});
+          
+          // Set another timeout for the retry
+          const retryTimeoutId = setTimeout(() => {
+            console.log('⚠️ Retry also timed out. Using fallback stock data if available.');
+            // Try to load cached stock data from AsyncStorage as fallback
+            loadCachedStockData();
+          }, 10000);
+          
+          // Clear retry timeout if we receive stock data
+          const retryStockHandler = (stockData) => {
+            clearTimeout(retryTimeoutId);
+            console.log('✅ Retry stock request completed: Received stock data for', Object.keys(stockData).length, 'items');
+          };
+          
+          socket.once('stockData', retryStockHandler);
         }, 15000);
         
         // Clear timeout if we receive stock data
@@ -116,6 +175,10 @@ export const StockProvider = ({ children }) => {
         setIsConnected(false);
         socketRef.current = null;
         isConnectingRef.current = false;
+
+        // Load cached data as immediate fallback
+        console.log('🔄 Socket connection failed, trying to load cached stock data...');
+        await loadCachedStockData();
 
         // Handle authentication errors
         if (error?.message?.toLowerCase().includes('invalid token') || 
@@ -170,10 +233,13 @@ export const StockProvider = ({ children }) => {
 
       // Handle initial stock data response
       socket.on('stockData', (stockData) => {
-        console.log('� Fresh stock data received from server:', Object.keys(stockData).length, 'items');
+        console.log('🎯 Fresh stock data received from server:', Object.keys(stockData).length, 'items');
         console.log('📦 Setting fresh stock data from server');
         setStockQuantities(stockData);
         setLastUpdated(new Date());
+        
+        // Cache the stock data for fallback
+        saveStockDataToCache(stockData);
       });
 
     } catch (error) {
@@ -181,7 +247,7 @@ export const StockProvider = ({ children }) => {
       setIsConnected(false);
       isConnectingRef.current = false;
     }
-  }, [accessToken, user, isLoggedIn, stockQuantities]);
+  }, [accessToken, user, isLoggedIn, stockQuantities, loadCachedStockData, saveStockDataToCache]);
 
   // Disconnect socket
   const disconnectSocket = useCallback(() => {
@@ -299,6 +365,18 @@ export const StockProvider = ({ children }) => {
     };
   }, [isLoggedIn, user, accessToken, connectSocket, disconnectSocket]);
 
+  // Load cached data on initial mount for faster startup
+  useEffect(() => {
+    const loadInitialData = async () => {
+      if (isLoggedIn && user && !user.isGuest && Object.keys(stockQuantities).length === 0) {
+        console.log('🔄 Loading cached stock data for faster startup...');
+        await loadCachedStockData();
+      }
+    };
+
+    loadInitialData();
+  }, [isLoggedIn, user, stockQuantities, loadCachedStockData]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -315,6 +393,7 @@ export const StockProvider = ({ children }) => {
     updateBulkStock,
     isInStock,
     forceRefreshStock,
+    loadCachedStockData, // Add fallback data loader
     reconnect: connectSocket,
     // Add socket connection status for better debugging
     stockSocketConnected: isConnected,

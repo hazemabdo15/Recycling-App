@@ -12,7 +12,8 @@ import { CheckoutValidator } from '../utils/checkoutValidator';
 import logger from '../utils/logger';
 
 const LAST_VALIDATION_KEY = '@cart_last_validation';
-const VALIDATION_COOLDOWN = 30000; // 30 seconds cooldown between validations
+const VALIDATION_COOLDOWN = 15000; // Reduced to 15 seconds cooldown between validations
+const FORCED_VALIDATION_COOLDOWN = 5000; // 5 seconds for critical operations
 
 export class CartStockValidator {
   static instance = null;
@@ -39,11 +40,18 @@ export class CartStockValidator {
   /**
    * Check if validation is needed based on cooldown
    */
-  static async shouldValidate() {
+  static async shouldValidate(source = 'unknown', isCritical = false) {
     const now = Date.now();
     
+    // Use shorter cooldown for critical operations (checkout, cart screen focus)
+    const cooldownPeriod = isCritical ? FORCED_VALIDATION_COOLDOWN : VALIDATION_COOLDOWN;
+    
     // Check cooldown
-    if (now - CartStockValidator.lastValidationTime < VALIDATION_COOLDOWN) {
+    if (now - CartStockValidator.lastValidationTime < cooldownPeriod) {
+      if (isCritical) {
+        logger.cart(`Critical validation from ${source} - bypassing cooldown`);
+        return true; // Allow critical validations to bypass cooldown
+      }
       return false;
     }
 
@@ -51,8 +59,8 @@ export class CartStockValidator {
       const lastValidation = await AsyncStorage.getItem(LAST_VALIDATION_KEY);
       if (lastValidation) {
         const timeSinceLastValidation = now - parseInt(lastValidation);
-        // If last validation was less than 5 minutes ago, skip
-        if (timeSinceLastValidation < 300000) { // 5 minutes
+        // Reduce storage-based cooldown for better responsiveness
+        if (timeSinceLastValidation < 120000) { // 2 minutes instead of 5
           return false;
         }
       }
@@ -82,7 +90,8 @@ export class CartStockValidator {
       showMessages = true, 
       autoCorrect = true, 
       source = 'unknown',
-      forceValidation = false 
+      forceValidation = false,
+      isCritical = false // Add flag for critical operations
     } = options;
 
     // Skip if validation is in progress or cooldown active
@@ -91,8 +100,8 @@ export class CartStockValidator {
       return { success: true, noAction: true };
     }
 
-    if (!forceValidation && !(await CartStockValidator.shouldValidate())) {
-      logger.cart('Cart validation skipped due to cooldown');
+    if (!forceValidation && !(await CartStockValidator.shouldValidate(source, isCritical))) {
+      logger.cart(`Cart validation skipped due to cooldown (source: ${source}, critical: ${isCritical})`);
       return { success: true, noAction: true };
     }
 

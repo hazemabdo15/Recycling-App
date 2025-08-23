@@ -175,7 +175,10 @@ export const useCartValidation = (options = {}) => {
         
         // Add delay to ensure data is ready
         setTimeout(() => {
-          validateCart({ source: 'screenFocus' });
+          validateCart({ 
+            source: 'screenFocus',
+            isCritical: true // Mark screen focus as critical for better responsiveness
+          });
         }, 500);
       }
     }, [validateOnFocus, shouldValidate, validateCart])
