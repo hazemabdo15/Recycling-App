@@ -1,6 +1,6 @@
 import apiCache from './apiCache';
-import persistentCache from './persistentCache';
 import logger from './logger';
+import persistentCache from './persistentCache';
 
 /**
  * Stock Cache Manager

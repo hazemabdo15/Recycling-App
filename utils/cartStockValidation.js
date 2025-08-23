@@ -89,7 +89,7 @@ export const validateCartStock = (cartItems, stockQuantities, itemDetails = {}) 
   Object.entries(cartItems).forEach(([itemId, quantity]) => {
     const item = itemDetails[itemId] || {};
     const itemName = item.name || `Item ${itemId}`;
-    const measurementUnit = item.measurement_unit === 1 ? 'pieces' : 'kg';
+    const measurementUnit = item.measurement_unit === 2 ? 'pieces' : 'kg';
 
     const validation = validateItemStock(itemId, quantity, stockQuantities, {
       itemName,
@@ -151,7 +151,7 @@ export const validateCartOperation = (
 ) => {
   const item = itemDetails[itemId] || {};
   const itemName = item.name || `Item ${itemId}`;
-  const measurementUnit = item.measurement_unit === 1 ? 'pieces' : 'kg';
+  const measurementUnit = item.measurement_unit === 2 ? 'pieces' : 'kg';
 
   // Check if this would be a valid stock operation
   const validation = validateItemStock(itemId, newQuantity, stockQuantities, {

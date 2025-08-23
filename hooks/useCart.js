@@ -1,7 +1,7 @@
 ﻿import { useCartContext } from '../context/CartContext';
 import { useStock } from '../context/StockContext';
-import { calculateQuantity, createCartItem, getIncrementStep, normalizeItemData } from '../utils/cartUtils';
 import { validateCartOperation } from '../utils/cartStockValidation';
+import { calculateQuantity, createCartItem, getIncrementStep, normalizeItemData } from '../utils/cartUtils';
 import { isBuyer } from '../utils/roleUtils';
 
 export const useCart = (user = null) => {
@@ -129,7 +129,7 @@ export const useCart = (user = null) => {
     let newQuantity;
     if (currentQuantity === 0) {
       // Calculate new quantity consistently
-      const fastStep = measurement_unit === 1 ? 5 : 1.0; // 5 pieces or 1kg
+      const fastStep = measurement_unit === 2 ? 5 : 1.0; // 5 pieces or 1kg
       newQuantity = calculateQuantity(currentQuantity, fastStep, 'add');
       
       // Real-time stock validation for buyer users
@@ -151,10 +151,10 @@ export const useCart = (user = null) => {
         }
       }
       
-      newQuantity = measurement_unit === 1 ? 5 : 1.0; // 5 pieces or 1kg
+      newQuantity = measurement_unit === 2 ? 5 : 1.0; // 5 pieces or 1kg
     } else {
       // Calculate new quantity consistently
-      const fastStep = measurement_unit === 1 ? 5 : 1.0; // 5 pieces or 1kg
+      const fastStep = measurement_unit === 2 ? 5 : 1.0; // 5 pieces or 1kg
       newQuantity = calculateQuantity(currentQuantity, fastStep, 'add');
       
       // Real-time stock validation for buyer users
@@ -205,7 +205,10 @@ export const useCart = (user = null) => {
     const { _id, measurement_unit } = processedItem;
 
     const currentQuantity = getItemQuantity(_id);
-    let newQuantity = currentQuantity - 5;
+    
+    // Calculate decrease step based on measurement unit
+    const fastStep = measurement_unit === 2 ? 5 : 1.0; // 5 pieces or 1kg
+    let newQuantity = currentQuantity - fastStep;
 
     // Use proper minimum quantity based on measurement unit
     const minQuantity = measurement_unit === 1 ? 0.25 : 1;

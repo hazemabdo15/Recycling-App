@@ -3,7 +3,7 @@
  * Run these tests to verify the fix is working properly
  */
 
-import { validateCartStock, validateCartOperation } from '../utils/cartStockValidation';
+import { validateCartOperation, validateCartStock } from '../utils/cartStockValidation';
 import { CheckoutValidator } from '../utils/checkoutValidator';
 
 // Mock data for testing

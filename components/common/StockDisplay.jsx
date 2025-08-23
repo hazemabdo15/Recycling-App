@@ -1,10 +1,9 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { StyleSheet, Text, View } from 'react-native';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
-import { scaleSize } from '../../utils/scale';
 import { spacing } from '../../styles/theme';
 import { getStockStatus } from '../../utils/cartStockValidation';
+import { scaleSize } from '../../utils/scale';
 
 /**
  * Real-time stock display component

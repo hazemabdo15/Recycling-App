@@ -1,11 +1,11 @@
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { useMemo } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useStock } from '../../context/StockContext';
-import { scaleSize } from '../../utils/scale';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { spacing } from '../../styles/theme';
 import { validateCartStock } from '../../utils/cartStockValidation';
+import { scaleSize } from '../../utils/scale';
 
 /**
  * Cart Stock Monitor

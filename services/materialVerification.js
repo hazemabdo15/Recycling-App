@@ -1,5 +1,5 @@
-﻿import { extractNameFromMultilingual } from '../utils/translationHelpers';
-import stockCacheManager from '../utils/stockCacheManager';
+﻿import stockCacheManager from '../utils/stockCacheManager';
+import { extractNameFromMultilingual } from '../utils/translationHelpers';
 import apiService from "./api/apiService";
 
 let cachedDatabaseItems = new Map(); // Use Map to cache per role

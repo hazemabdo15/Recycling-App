@@ -1,5 +1,5 @@
-import { validateCartStock } from './cartStockValidation';
 import { showCartMessage } from './cartMessages';
+import { validateCartStock } from './cartStockValidation';
 
 /**
  * Pre-checkout cart validation
