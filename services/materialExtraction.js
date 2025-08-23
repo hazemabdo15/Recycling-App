@@ -184,7 +184,7 @@ export async function extractMaterialsFromTranscription(transcription) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: 'meta-llama/llama-4-maverick-17b-128e-instruct',
         temperature: 1,
         response_format: { type: 'json_object' },
         messages: [
