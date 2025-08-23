@@ -56,7 +56,7 @@ const Index = () => {
                 <Ionicons
                   name="notifications-outline"
                   size={24}
-                  color={colors.white}
+                  color={colors.title}
                 />
                 <View
                   style={[
