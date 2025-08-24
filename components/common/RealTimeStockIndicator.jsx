@@ -9,6 +9,8 @@ import { scaleSize } from "../../utils/scale";
 // Global ref to track the last actual stock update timestamp
 // This prevents false positives when components remount
 let lastGlobalStockUpdate = 0;
+// Global map to persist change directions across component remounts
+const globalChangeDirections = new Map();
 
 const RealTimeStockIndicator = ({
   itemId,
@@ -34,26 +36,51 @@ const RealTimeStockIndicator = ({
     if (!isInitialized && currentStock !== undefined) {
       setPreviousStock(currentStock);
       setIsInitialized(true);
+      
+      // Check if there's a persisted change direction for this item
+      const persistedDirection = globalChangeDirections.get(itemId);
+      if (persistedDirection) {
+        setChangeDirection(persistedDirection.direction);
+        const timeLeft = persistedDirection.expiry - Date.now();
+        if (timeLeft > 0) {
+          setIsRecentlyUpdated(true);
+          const timer = setTimeout(() => {
+            setIsRecentlyUpdated(false);
+            setChangeDirection(null);
+            globalChangeDirections.delete(itemId);
+          }, timeLeft);
+          return () => clearTimeout(timer);
+        } else {
+          // Expired, clean up
+          globalChangeDirections.delete(itemId);
+        }
+      }
     }
-  }, [currentStock, isInitialized]);
+  }, [currentStock, isInitialized, itemId]);
 
   // Track stock changes for visual feedback - only after initialization
   useEffect(() => {
     if (isInitialized && previousStock !== null && currentStock !== previousStock) {
-      setChangeDirection(currentStock > previousStock ? "up" : "down");
+      const direction = currentStock > previousStock ? "up" : "down";
+      setChangeDirection(direction);
       setIsRecentlyUpdated(true);
+
+      // Persist change direction globally for 5 seconds (longer duration)
+      const expiry = Date.now() + 5000;
+      globalChangeDirections.set(itemId, { direction, expiry });
 
       const timer = setTimeout(() => {
         setIsRecentlyUpdated(false);
         setChangeDirection(null);
-      }, 3000);
+        globalChangeDirections.delete(itemId);
+      }, 5000); // Increased from 3000 to 5000ms
 
       return () => clearTimeout(timer);
     }
     if (isInitialized) {
       setPreviousStock(currentStock);
     }
-  }, [currentStock, previousStock, isInitialized]);
+  }, [currentStock, previousStock, isInitialized, itemId]);
 
   // Show visual feedback for recent updates - only if recently updated and initialized
   useEffect(() => {
