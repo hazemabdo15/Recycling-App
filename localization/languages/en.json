@@ -234,6 +234,10 @@
       "customer": "Request Pickup",
       "buyer": "Checkout"
     },
+    "fixStockIssues": {
+      "customer": "Fix Stock Issues",
+      "buyer": "Fix Stock Issues"
+    },
     "removeItem": "Remove Item",
     "updateQuantity": "Update Quantity",
     "quantity": "Quantity",

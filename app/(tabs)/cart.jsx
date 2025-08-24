@@ -101,11 +101,11 @@ const Cart = () => {
   // Enhanced real-time stock integration
   const {
     getStockQuantity,
-    subscribeToStockUpdates,
+    lastUpdated,
   } = useStock();
   
   // Real-time cart validation for stock changes - DISABLED to prevent issues after order creation
-  const { validateCart, isValidationSupported } = useCartValidation({
+  useCartValidation({
     validateOnFocus: false,
     validateOnAppActivation: false,
     autoCorrect: false, // Disable auto-correction to prevent unwanted updates
@@ -127,40 +127,63 @@ const Cart = () => {
   const validateCartStock = useCallback(() => {
     if (!isBuyer(user)) return {}; // Only validate for buyers
     
+    console.log("[validateCartStock] Running validation...");
+    console.log("[validateCartStock] cartItems:", cartItems);
+    console.log("[validateCartStock] cartItemDetails keys:", Object.keys(cartItemDetails));
+    
     const errors = {};
     
-    cartArray.forEach(item => {
-      const currentStock = getItemStock(item._id) ?? item.quantity ?? 0;
-      const cartQuantity = item.quantity || 0;
+    // Use cartItems and cartItemDetails directly instead of cartArray to avoid stale closures
+    Object.entries(cartItems).forEach(([itemId, quantity]) => {
+      const itemDetails = cartItemDetails[itemId];
+      if (!itemDetails || !quantity || quantity <= 0) return;
+      
+      const realTimeStock = getStockQuantity(itemId, itemDetails.availableStock || itemDetails.quantity);
+      const currentStock = realTimeStock !== undefined ? realTimeStock : (itemDetails.availableStock || itemDetails.quantity || 0);
+      const cartQuantity = quantity || 0;
+      
+      console.log(`[validateCartStock] ${itemDetails.name}: cart=${cartQuantity}, stock=${currentStock}, realTime=${realTimeStock}`);
       
       if (currentStock <= 0) {
-        errors[item._id] = {
+        errors[itemId] = {
           type: 'out_of_stock',
           message: 'Out of stock',
           currentStock: 0,
           cartQuantity
         };
+        console.log(`[validateCartStock] ERROR: ${itemDetails.name} is out of stock`);
       } else if (cartQuantity > currentStock) {
-        errors[item._id] = {
+        errors[itemId] = {
           type: 'exceeds_stock',
           message: `Only ${currentStock} available`,
           currentStock,
           cartQuantity
         };
+        console.log(`[validateCartStock] ERROR: ${itemDetails.name} exceeds stock (${cartQuantity} > ${currentStock})`);
+      } else {
+        console.log(`[validateCartStock] OK: ${itemDetails.name} is valid (${cartQuantity} <= ${currentStock})`);
       }
     });
     
+    console.log("[validateCartStock] Final validation result:", Object.keys(errors).length, "errors");
     return errors;
-  }, [cartArray, getItemStock, user]);
+  }, [cartItems, cartItemDetails, getStockQuantity, user]);
 
-  // Update validation errors when cart or stock changes
+  // Update validation errors when cart or stock changes - using direct cart state for immediate updates
   useEffect(() => {
+    console.log("[Cart Validation] Effect triggered");
+    console.log("[Cart Validation] cartItems:", cartItems);
+    console.log("[Cart Validation] cartItemDetails keys:", Object.keys(cartItemDetails));
+    
     const errors = validateCartStock();
+    console.log("[Cart Validation] Setting errors:", errors);
     setCartValidationErrors(errors);
-  }, [validateCartStock]);
+  }, [validateCartStock, lastUpdated]); // Removed cartArray dependency, using cartItems/cartItemDetails from validateCartStock dependencies
 
   // Check if cart has any validation errors
   const hasValidationErrors = Object.keys(cartValidationErrors).length > 0;
+  console.log("[Cart Status] hasValidationErrors:", hasValidationErrors);
+  console.log("[Cart Status] cartValidationErrors:", cartValidationErrors);
 
   // Helper function to get translated item names consistently
   const getTranslatedItemName = (item) => {
@@ -943,6 +966,29 @@ const Cart = () => {
 
   const remainingAmount = MINIMUM_ORDER_VALUE - totalValue;
 
+  // Determine the appropriate button text based on different blocking conditions
+  const getButtonText = () => {
+    if (canSchedulePickup || canProceedToPurchase) {
+      return tRole("cart.checkout", user?.role);
+    }
+    if (canGuestProceed) {
+      return t("auth.loginToContinue");
+    }
+    
+    // When blocked, prioritize stock issues over minimum order issues
+    if (hasValidationErrors) {
+      return tRole("cart.fixStockIssues", user?.role) || "Please fix stock issues";
+    }
+    
+    // Only show minimum order message if that's the only issue
+    if (totalValue < MINIMUM_ORDER_VALUE) {
+      return tRole("minimumOrder.button", user?.role);
+    }
+    
+    // Fallback
+    return tRole("minimumOrder.button", user?.role);
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar
@@ -1052,11 +1098,7 @@ const Cart = () => {
                     !canProceed && styles.checkoutBtnBarTextDisabled,
                   ]}
                 >
-                  {canSchedulePickup || canProceedToPurchase
-                    ? tRole("cart.checkout", user?.role)
-                    : canGuestProceed
-                    ? t("auth.loginToContinue")
-                    : tRole("minimumOrder.button", user?.role)}
+                  {getButtonText()}
                 </Text>
               </AnimatedButton>
               {cartArray.length > 0 && (

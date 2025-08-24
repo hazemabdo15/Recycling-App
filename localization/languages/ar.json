@@ -250,6 +250,10 @@
       "customer": "طلب الاستلام",
       "buyer": "الدفع"
     },
+    "fixStockIssues": {
+      "customer": "إصلاح مشاكل المخزون",
+      "buyer": "إصلاح مشاكل المخزون"
+    },
     "removeItem": "إزالة العنصر",
     "updateQuantity": "تحديث الكمية",
     "quantity": "الكمية",
