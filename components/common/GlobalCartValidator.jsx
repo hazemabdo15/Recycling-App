@@ -5,6 +5,7 @@
  * This component should be placed at the app root level
  */
 
+import * as Linking from 'expo-linking';
 import { useEffect } from 'react';
 import { AppState } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
@@ -43,10 +44,24 @@ const GlobalCartValidator = () => {
       if (nextAppState === 'active') {
         logger.cart('Global validator: App became active');
         
-        // Add delay to ensure all contexts are ready
-        setTimeout(() => {
-          validateCart({ source: 'globalAppActivation' });
-        }, 2000);
+        // Check if we're in a payment flow to avoid disrupting it
+        Linking.getInitialURL().then(url => {
+          if (url && (url.includes('payment=success') || url.includes('payment_intent'))) {
+            logger.cart('Global validator: Skipping validation - payment flow detected');
+            return;
+          }
+          
+          // Add delay to ensure all contexts are ready
+          setTimeout(() => {
+            validateCart({ source: 'globalAppActivation' });
+          }, 2000);
+        }).catch(error => {
+          console.warn('Could not check initial URL:', error);
+          // Continue with validation if URL check fails
+          setTimeout(() => {
+            validateCart({ source: 'globalAppActivation' });
+          }, 2000);
+        });
       }
     };
 

@@ -1,4 +1,5 @@
 ﻿import * as SecureStore from 'expo-secure-store';
+import apiService from '../services/api/apiService';
 
 export async function getAccessToken() {
   try {
@@ -13,7 +14,6 @@ export async function setAccessToken(token) {
     await SecureStore.setItemAsync('accessToken', token);
 
     try {
-      const { default: apiService } = await import('../services/api/apiService');
       await apiService.setAccessToken(token);
       console.log('[authUtils] Token set in both SecureStore and APIService');
     } catch (error) {

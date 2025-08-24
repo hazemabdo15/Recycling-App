@@ -4,11 +4,11 @@ import { useLocalSearchParams, useNavigation } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next"; // Add this import
 import {
-  RefreshControl,
-  StatusBar,
-  Text,
-  TouchableOpacity,
-  View,
+    RefreshControl,
+    StatusBar,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { KeyboardAwareFlatList } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -23,19 +23,20 @@ import { useThemedStyles } from "../hooks/useThemedStyles";
 import { getLayoutStyles } from "../styles/components/commonStyles";
 import { spacing } from "../styles/theme";
 import {
-  CartMessageTypes,
-  showCartMessage,
-  showMaxStockMessage,
+    CartMessageTypes,
+    showCartMessage,
+    showMaxStockMessage,
 } from "../utils/cartMessages";
 import {
-  calculateCartStats,
-  getCartKey,
-  getDisplayKey,
-  getIncrementStep,
-  normalizeItemData,
+    calculateCartStats,
+    getCartKey,
+    getDisplayKey,
+    getIncrementStep,
+    normalizeItemData,
 } from "../utils/cartUtils";
 import { isBuyer } from "../utils/roleUtils";
 import { scaleSize } from "../utils/scale";
+import { isMaxStockReached, isOutOfStock, canAddToCart as stockCanAddToCart } from "../utils/stockUtils";
 import { extractNameFromMultilingual, getTranslatedName } from "../utils/translationHelpers";
 
 const CategoryDetails = () => {
@@ -97,12 +98,23 @@ const CategoryDetails = () => {
   const {
     stockQuantities,
     getStockQuantity,
-    forceRefreshStock,
-    isConnected: stockSocketConnected,
+    subscribeToStockUpdates,
   } = useStock();
   
+  // Enhanced real-time stock update subscription for category page
+  useEffect(() => {
+    if (!subscribeToStockUpdates) return;
+    
+    const unsubscribe = subscribeToStockUpdates((timestamp) => {
+      // Force update when stock changes to ensure components reflect new data
+      setForceUpdateKey(prev => prev + 1);
+    });
+    
+    return unsubscribe;
+  }, [subscribeToStockUpdates]);
+  
   // Debug stock context state
-  console.log('[CategoryDetails] Stock context has', Object.keys(stockQuantities || {}).length, 'items, socket connected:', stockSocketConnected);
+  console.log('[CategoryDetails] Stock context has', Object.keys(stockQuantities || {}).length, 'items');
 
   // Force re-render when stock quantities change
   useEffect(() => {
@@ -116,14 +128,6 @@ const CategoryDetails = () => {
       console.log('[CategoryDetails] Stock quantities available:', Object.keys(stockQuantities).length);
     }
   }, [stockQuantities]);
-
-  // Force refresh stock data when page loads and socket is connected
-  useEffect(() => {
-    if (stockSocketConnected && forceRefreshStock) {
-      console.log('[CategoryDetails] Page loaded with socket connected, requesting fresh stock data');
-      forceRefreshStock();
-    }
-  }, [stockSocketConnected, forceRefreshStock]);
 
   // Update items with real-time stock data
   const itemsWithRealTimeStock = useMemo(() => {
@@ -328,13 +332,6 @@ const CategoryDetails = () => {
         fallbackStock: item.quantity,
         finalStock: stockQuantity
       });
-      
-      const stockUtils = require("../utils/stockUtils");
-      const {
-        isOutOfStock,
-        isMaxStockReached,
-        canAddToCart: stockCanAddToCart,
-      } = stockUtils;
       
       // Use updated stock quantity for validation
       const itemWithCurrentStock = { ...item, quantity: stockQuantity };

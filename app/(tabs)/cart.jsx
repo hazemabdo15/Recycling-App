@@ -1,26 +1,28 @@
 ﻿import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  Image,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Image,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { KeyboardAwareFlatList } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
-  AnimatedButton,
-  AnimatedListItem,
-  Loader,
+    AnimatedButton,
+    AnimatedListItem,
+    Loader,
+    RealTimeStockIndicator,
 } from "../../components/common";
 import { useAuth } from "../../context/AuthContext";
 import { useLocalization } from "../../context/LocalizationContext";
+import { useStock } from "../../context/StockContext";
 import { useAllItems } from "../../hooks/useAPI";
 import { useCart } from "../../hooks/useCart";
 import { useCartValidation } from "../../hooks/useCartValidation";
@@ -28,20 +30,20 @@ import { useStockManager } from "../../hooks/useStockManager";
 import { useThemedStyles } from "../../hooks/useThemedStyles";
 import { borderRadius, spacing, typography } from "../../styles";
 import {
-  CartMessageTypes,
-  showCartMessage,
-  showMaxStockMessage,
+    CartMessageTypes,
+    showCartMessage,
+    showMaxStockMessage,
 } from "../../utils/cartMessages";
 import {
-  getCartKey,
-  getDisplayKey,
-  normalizeItemData,
+    getCartKey,
+    getDisplayKey,
+    normalizeItemData,
 } from "../../utils/cartUtils";
 import { isBuyer } from "../../utils/roleUtils";
 import { scaleSize } from "../../utils/scale";
 import {
-  extractNameFromMultilingual,
-  getTranslatedName,
+    extractNameFromMultilingual,
+    getTranslatedName,
 } from "../../utils/translationHelpers";
 
 const getRoleBasedIcon = (iconType, userRole = "customer") => {
@@ -96,18 +98,76 @@ const Cart = () => {
     getItemStock,
   } = useStockManager();
   
-  // Add cart validation for buyers
-  const { validateCart, quickValidateCart } = useCartValidation({
-    validateOnFocus: true, // Validate when cart screen is focused
-    validateOnAppActivation: true, // Validate when app becomes active
-    autoCorrect: true, // Automatically fix cart issues
-    showMessages: true, // Show user feedback
-    source: 'cartScreen'
+  // Enhanced real-time stock integration
+  const {
+    getStockQuantity,
+    subscribeToStockUpdates,
+  } = useStock();
+  
+  // Real-time cart validation for stock changes
+  const { validateCart, isValidationSupported } = useCartValidation({
+    validateOnFocus: false,
+    validateOnAppActivation: false,
+    autoCorrect: true,
+    showMessages: true,
+    source: 'cartPage'
   });
   
   const [loading, setLoading] = useState(true);
   const [showEmptyState, setShowEmptyState] = useState(false);
   const [inputValues, setInputValues] = useState({});
+  
+  // Subscribe to real-time stock updates for cart validation
+  useEffect(() => {
+    if (!isValidationSupported || !subscribeToStockUpdates) return;
+    
+    const unsubscribe = subscribeToStockUpdates((timestamp) => {
+      // Trigger cart validation when stock changes
+      validateCart({ immediate: true, source: 'realTimeStockUpdate' });
+    });
+    
+    return unsubscribe;
+  }, [isValidationSupported, subscribeToStockUpdates, validateCart]);
+  const [cartValidationErrors, setCartValidationErrors] = useState({});
+
+  // Stock validation for cart items
+  const validateCartStock = useCallback(() => {
+    if (!isBuyer(user)) return {}; // Only validate for buyers
+    
+    const errors = {};
+    
+    cartArray.forEach(item => {
+      const currentStock = getItemStock(item._id) ?? item.quantity ?? 0;
+      const cartQuantity = item.quantity || 0;
+      
+      if (currentStock <= 0) {
+        errors[item._id] = {
+          type: 'out_of_stock',
+          message: 'Out of stock',
+          currentStock: 0,
+          cartQuantity
+        };
+      } else if (cartQuantity > currentStock) {
+        errors[item._id] = {
+          type: 'exceeds_stock',
+          message: `Only ${currentStock} available`,
+          currentStock,
+          cartQuantity
+        };
+      }
+    });
+    
+    return errors;
+  }, [cartArray, getItemStock, user]);
+
+  // Update validation errors when cart or stock changes
+  useEffect(() => {
+    const errors = validateCartStock();
+    setCartValidationErrors(errors);
+  }, [validateCartStock]);
+
+  // Check if cart has any validation errors
+  const hasValidationErrors = Object.keys(cartValidationErrors).length > 0;
 
   // Helper function to get translated item names consistently
   const getTranslatedItemName = (item) => {
@@ -579,6 +639,15 @@ const Cart = () => {
         : null;
     const quantity = typeof item.quantity === "number" ? item.quantity : 1;
 
+    // Get real-time stock data for this cart item
+    const realTimeStock = getStockQuantity(item._id, item.availableStock || item.quantity);
+    const currentStock = realTimeStock !== undefined ? realTimeStock : (item.availableStock || item.quantity || 0);
+    
+    const validationError = cartValidationErrors[item._id];
+    const hasError = !!validationError;
+    const isOutOfStock = validationError?.type === 'out_of_stock' || currentStock === 0;
+    const exceedsStock = validationError?.type === 'exceeds_stock' || quantity > currentStock;
+
     const totalValue = value !== null ? value * quantity : null;
 
     return (
@@ -588,11 +657,13 @@ const Cart = () => {
           styles.cartCard,
           {
             borderLeftWidth: 5,
-            borderLeftColor: colors.primary,
+            borderLeftColor: hasError ? colors.error : colors.primary,
             marginBottom: spacing.md,
             marginTop: spacing.sm,
             shadowOpacity: 0.18,
+            opacity: isOutOfStock ? 0.6 : 1,
           },
+          hasError && styles.cartCardError,
         ]}
       >
         <TouchableOpacity
@@ -623,7 +694,19 @@ const Cart = () => {
           )}
         </View>
         <View style={styles.cartInfoContainer}>
-          <Text style={styles.cartName}>{name}</Text>
+          <View style={styles.cartHeaderRow}>
+            <Text style={styles.cartName}>{name}</Text>
+            {isBuyer(user) && (
+              <RealTimeStockIndicator 
+                itemId={item._id}
+                quantity={currentStock}
+                showConnectionStatus={false}
+                showChangeIndicator={true}
+                size="small"
+                style={styles.cartStockIndicator}
+              />
+            )}
+          </View>
           <View style={styles.itemDetailsRow}>
             <Text
               style={[
@@ -730,6 +813,23 @@ const Cart = () => {
               );
             })()}
           </View>
+          {hasError && (
+            <View style={styles.validationErrorContainer}>
+              <MaterialCommunityIcons
+                name={isOutOfStock ? "alert-circle" : "alert-outline"}
+                size={14}
+                color={colors.error}
+              />
+              <Text style={styles.validationErrorMessage}>
+                {isOutOfStock 
+                  ? t("cart.validation.outOfStock", "Out of stock")
+                  : exceedsStock 
+                  ? t("cart.validation.exceedsStock", `Only ${validationError.currentStock} available`)
+                  : validationError.message
+                }
+              </Text>
+            </View>
+          )}
         </View>
       </AnimatedListItem>
     );
@@ -837,10 +937,10 @@ const Cart = () => {
 
   const isGuest = !isLoggedIn || !user;
   const canSchedulePickup =
-    totalValue >= MINIMUM_ORDER_VALUE && user?.role === "customer";
+    totalValue >= MINIMUM_ORDER_VALUE && user?.role === "customer" && !hasValidationErrors;
   const canProceedToPurchase =
-    totalValue >= MINIMUM_ORDER_VALUE && user?.role === "buyer";
-  const canGuestProceed = totalValue >= MINIMUM_ORDER_VALUE && isGuest;
+    totalValue >= MINIMUM_ORDER_VALUE && user?.role === "buyer" && !hasValidationErrors;
+  const canGuestProceed = totalValue >= MINIMUM_ORDER_VALUE && isGuest && !hasValidationErrors;
   const canProceed =
     canSchedulePickup || canProceedToPurchase || canGuestProceed;
 
@@ -908,6 +1008,18 @@ const Cart = () => {
                   {tRole("minimumOrder.message", user?.role, {
                     amount: remainingAmount.toFixed(2),
                   })}
+                </Text>
+              </View>
+            )}
+            {hasValidationErrors && (
+              <View style={styles.validationErrorWarning}>
+                <MaterialCommunityIcons
+                  name="alert-circle-outline"
+                  size={16}
+                  color={colors.error}
+                />
+                <Text style={styles.validationErrorText}>
+                  {t("cart.validation.hasErrors", "Please fix cart issues before proceeding")}
                 </Text>
               </View>
             )}
@@ -1361,6 +1473,44 @@ const getStyles = (colors) => StyleSheet.create({
     marginLeft: spacing.xs,
     textAlign: "center",
   },
+  validationErrorWarning: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: "rgba(255, 59, 48, 0.15)",
+    borderRadius: borderRadius.md,
+    marginHorizontal: spacing.md,
+  },
+  validationErrorText: {
+    ...typography.caption,
+    color: colors.error,
+    fontWeight: "600",
+    fontSize: 13,
+    marginLeft: spacing.xs,
+    textAlign: "center",
+  },
+  cartCardError: {
+    backgroundColor: "rgba(255, 59, 48, 0.05)",
+  },
+  validationErrorContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: spacing.xs,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xs / 2,
+    backgroundColor: "rgba(255, 59, 48, 0.1)",
+    borderRadius: borderRadius.sm,
+  },
+  validationErrorMessage: {
+    ...typography.caption,
+    color: colors.error,
+    fontWeight: "600",
+    fontSize: 12,
+    marginLeft: spacing.xs / 2,
+  },
   checkoutBtnBarDisabled: {
     backgroundColor: colors.base300,
     shadowOpacity: 0,
@@ -1392,6 +1542,15 @@ const getStyles = (colors) => StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 5,
+  },
+  cartHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  cartStockIndicator: {
+    marginLeft: spacing.xs,
   },
   loadingText: {
     ...typography.subtitle,

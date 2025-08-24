@@ -20,7 +20,7 @@ import { useStockManager } from "../../hooks/useStockManager";
 import { useThemedStyles } from "../../hooks/useThemedStyles";
 import { borderRadius, spacing, typography } from "../../styles";
 import { normalizeItemData } from "../../utils/cartUtils";
-import { isBuyer, isBuyer as isBuyerRole, shouldShowDeliveryFee, shouldShowTotalValue } from "../../utils/roleUtils";
+import { isBuyer, shouldShowDeliveryFee, shouldShowTotalValue } from "../../utils/roleUtils";
 import { extractNameFromMultilingual, getTranslatedName } from "../../utils/translationHelpers";
 
 
@@ -82,11 +82,13 @@ const ReviewPhase = ({
   const user = propUser || contextUser;
   const { cartItemDetails } = useCart(user);
   
+  // Always call the hook but conditionally use its values
+  const stockManager = useStockManager();
   const {
     getItemStock,
     syncItemsStock,
     validateQuantity,
-  } = useStockManager();
+  } = stockManager;
 
   const { isProcessing, processPayment, shouldUsePayment } = usePayment();
 
@@ -104,8 +106,10 @@ const ReviewPhase = ({
       setAllItems(itemsFromCart);
       setItemsLoaded(true);
       
-      // Sync stock data for review phase items
-      syncItemsStock(itemsFromCart);
+      // Sync stock data for review phase items (only for buyer users)
+      if (isBuyer(user)) {
+        syncItemsStock(itemsFromCart);
+      }
       
       console.log(
         "[ReviewPhase] Loaded",
@@ -124,7 +128,7 @@ const ReviewPhase = ({
         setItemsLoaded(true);
       }
     }
-  }, [cartItemDetails, cartItems, syncItemsStock]);
+  }, [cartItemDetails, cartItems, syncItemsStock, user]);
 
   useEffect(() => {
     if (itemsLoaded && cartItems && allItems.length > 0) {
@@ -146,12 +150,18 @@ const ReviewPhase = ({
             const normalizedItem = normalizeItemData(realItem);
             const translatedItemName = getTranslatedItemName(normalizedItem);
             
-            // Get real-time stock quantity
-            const realTimeStock = getItemStock(normalizedItem._id);
-            const stockQuantity = realTimeStock > 0 ? realTimeStock : (normalizedItem.quantity || 0);
+            // Only perform stock checks for buyer users
+            let stockQuantity = normalizedItem.quantity || 0;
+            let stockValidation = { isValid: true };
             
-            // Validate quantity against real-time stock
-            const stockValidation = validateQuantity(normalizedItem._id, quantity);
+            if (isBuyer(user)) {
+              // Get real-time stock quantity
+              const realTimeStock = getItemStock(normalizedItem._id);
+              stockQuantity = realTimeStock > 0 ? realTimeStock : (normalizedItem.quantity || 0);
+              
+              // Validate quantity against real-time stock
+              stockValidation = validateQuantity(normalizedItem._id, quantity);
+            }
             
             return {
               categoryId,
@@ -167,7 +177,7 @@ const ReviewPhase = ({
               totalPoints: (normalizedItem.points || 10) * quantity,
               totalPrice: (normalizedItem.price || 5.0) * quantity,
               isValidItem: true,
-              hasStockIssue: !stockValidation.isValid, // Flag items with stock issues
+              hasStockIssue: isBuyer(user) ? !stockValidation.isValid : false, // Only flag stock issues for buyer users
             };
           } else {
             console.warn(
@@ -242,7 +252,7 @@ const ReviewPhase = ({
 
       setCartItemsDisplay(displayItems);
     }
-  }, [itemsLoaded, cartItems, allItems, getTranslatedItemName, t, getItemStock, validateQuantity]);
+  }, [itemsLoaded, cartItems, allItems, getTranslatedItemName, t, getItemStock, validateQuantity, user]);
 
   // Animation effect for loading spinner
   useEffect(() => {
@@ -301,7 +311,7 @@ const ReviewPhase = ({
           );
         },
         // Only pass paymentMethod if user is a buyer
-        ...(isBuyerRole(user) ? { paymentMethod: 'card' } : {})
+        ...(isBuyer(user) ? { paymentMethod: 'card' } : {})
       });
     }
   };
@@ -678,7 +688,7 @@ const ReviewPhase = ({
                 <Text style={styles.summaryValue}>{totalItems}</Text>
               </View>
               
-              {!isBuyerRole(user) && (
+              {!isBuyer(user) && (
                 <View style={styles.summaryRow}>
                   <Text style={styles.summaryLabel}>{t("pickup.reviewPhase.totalPoints")}</Text>
                   <View style={styles.pointsContainer}>
@@ -696,7 +706,7 @@ const ReviewPhase = ({
               
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>
-                  {isBuyerRole(user) ? t("pickup.reviewPhase.itemsSubtotal") : t("pickup.reviewPhase.totalValue")}
+                  {isBuyer(user) ? t("pickup.reviewPhase.itemsSubtotal") : t("pickup.reviewPhase.totalValue")}
                 </Text>
                 <Text style={styles.summaryValue}>
                   {itemsTotalPrice.toFixed(2)} {t("units.egp")}

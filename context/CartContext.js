@@ -1,10 +1,12 @@
 ﻿import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { AppState } from 'react-native';
+import { categoriesAPI } from "../services/api";
 import {
     addItemToCart,
     clearCart as apiClearCart,
     clearAuthData,
     getCart,
+    getSessionId,
     removeItemFromCart,
     testBackendConnectivity,
     testMinimalPost,
@@ -12,8 +14,8 @@ import {
 } from "../services/api/cart.js";
 import { createCartItem, getCartKey, normalizeItemData, validateQuantity } from "../utils/cartUtils";
 import { debouncedCartManager } from "../utils/debouncedCartOperations";
-import { useAuth } from "./AuthContext";
 import logger from '../utils/logger';
+import { useAuth } from "./AuthContext";
 
 const CartContext = createContext();
 
@@ -130,7 +132,6 @@ export const CartProvider = ({ children }) => {
             let allItemsData = null;
             if (needsFullItemData) {
               try {
-                const { categoriesAPI } = await import("../services/api");
                 const response = await categoriesAPI.getAllItems(user?.role || "customer");
                 allItemsData = response.data?.items || response.data || response.items || response;
                 console.log('[CartContext] Fetched', allItemsData?.length || 0, 'items for cart merging');
@@ -690,7 +691,7 @@ export const CartProvider = ({ children }) => {
 
       let sessionId = null;
       try {
-        sessionId = await require('../services/api/cart').getSessionId();
+        sessionId = await getSessionId();
       } catch {}
       if (!sessionId) {
 

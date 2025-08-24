@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { io } from 'socket.io-client';
 import { API_BASE_URL } from '../services/api/config';
 import { refreshAccessToken } from '../services/auth';
+import logger from '../utils/logger';
 import { useAuth } from './AuthContext';
 
 const StockContext = createContext();
@@ -17,6 +18,65 @@ export const StockProvider = ({ children }) => {
   const { user, accessToken, isLoggedIn } = useAuth();
   const socketRef = useRef(null);
   const isConnectingRef = useRef(false);
+  
+  // Add subscription tracking to prevent duplicate subscriptions
+  const isSubscribedRef = useRef(false);
+  const lastSubscriptionTimeRef = useRef(0);
+  
+  // Enhanced client-side optimization for real-time updates
+  const lastUpdateTimeRef = useRef(0);
+  const updateThrottleTimeoutRef = useRef(null);
+  const subscribersRef = useRef(new Set());
+  
+  // Optimized stock update function that respects backend rate limiting
+  const throttledStockUpdate = useCallback((updateFunction) => {
+    const now = Date.now();
+    const timeSinceLastUpdate = now - lastUpdateTimeRef.current;
+    
+    // Clear any pending timeout
+    if (updateThrottleTimeoutRef.current) {
+      clearTimeout(updateThrottleTimeoutRef.current);
+    }
+    
+    // Client-side rate limiting (100ms) for better responsiveness
+    if (timeSinceLastUpdate >= 100) {
+      lastUpdateTimeRef.current = now;
+      updateFunction();
+      
+      // Notify subscribers of stock update
+      subscribersRef.current.forEach(callback => {
+        try {
+          callback(now);
+        } catch (error) {
+          console.warn('Error notifying stock subscriber:', error);
+        }
+      });
+    } else {
+      // Batch updates with shorter delay for better responsiveness
+      updateThrottleTimeoutRef.current = setTimeout(() => {
+        lastUpdateTimeRef.current = Date.now();
+        updateFunction();
+        
+        // Notify subscribers of stock update
+        subscribersRef.current.forEach(callback => {
+          try {
+            callback(Date.now());
+          } catch (error) {
+            console.warn('Error notifying stock subscriber:', error);
+          }
+        });
+      }, 100 - timeSinceLastUpdate);
+    }
+  }, []);
+
+  // Subscribe to real-time stock updates
+  const subscribeToStockUpdates = useCallback((callback) => {
+    subscribersRef.current.add(callback);
+    
+    return () => {
+      subscribersRef.current.delete(callback);
+    };
+  }, []);
 
   // Helper function to check if token is expired
   const isTokenExpired = (token) => {
@@ -116,43 +176,18 @@ export const StockProvider = ({ children }) => {
         isConnectingRef.current = false;
         socketRef.current = socket;
         
-        // Immediately request fresh stock data from server
-        console.log('🔄 Requesting fresh stock data from server...');
-        console.log('🔄 Emitting requestStockData event with userId:', user._id);
-        socket.emit('requestStockData', { userId: user._id });
+        // Only subscribe once per connection (backend now prevents duplicates)
+        if (!isSubscribedRef.current) {
+          console.log('🔄 Subscribing to real-time stock updates...');
+          socket.emit('stock:subscribe');
+          isSubscribedRef.current = true;
+          lastSubscriptionTimeRef.current = Date.now();
+        } else {
+          console.log('🔒 Already subscribed to stock updates, skipping duplicate subscription');
+        }
         
-        // Add timeout to detect if server doesn't respond
-        const timeoutId = setTimeout(() => {
-          console.log('⚠️ Initial stock request timeout: Server did not respond with stock data within 15 seconds');
-          console.log('📊 Current stock quantities count:', Object.keys(stockQuantities).length);
-          
-          // Try alternative approach: request without userId
-          console.log('🔄 Retrying stock request without userId...');
-          socket.emit('requestStockData', {});
-          
-          // Set another timeout for the retry
-          const retryTimeoutId = setTimeout(() => {
-            console.log('⚠️ Retry also timed out. Using fallback stock data if available.');
-            // Try to load cached stock data from AsyncStorage as fallback
-            loadCachedStockData();
-          }, 10000);
-          
-          // Clear retry timeout if we receive stock data
-          const retryStockHandler = (stockData) => {
-            clearTimeout(retryTimeoutId);
-            console.log('✅ Retry stock request completed: Received stock data for', Object.keys(stockData).length, 'items');
-          };
-          
-          socket.once('stockData', retryStockHandler);
-        }, 15000);
-        
-        // Clear timeout if we receive stock data
-        const timeoutStockHandler = (stockData) => {
-          clearTimeout(timeoutId);
-          console.log('✅ Initial stock request completed: Received stock data for', Object.keys(stockData).length, 'items');
-        };
-        
-        socket.once('stockData', timeoutStockHandler);
+        // Backend now automatically sends stock:full-state after subscription
+        // No need for legacy requestStockData calls
       });
 
       socket.on('disconnect', (reason) => {
@@ -160,6 +195,7 @@ export const StockProvider = ({ children }) => {
         setIsConnected(false);
         socketRef.current = null;
         isConnectingRef.current = false;
+        isSubscribedRef.current = false; // Reset subscription state
 
         // Attempt to reconnect after delay if user is still authenticated
         setTimeout(() => {
@@ -198,22 +234,192 @@ export const StockProvider = ({ children }) => {
         }
       });
 
-      // Listen for item stock updates from backend
+      // Handle your new real-time stock updates (individual item quantity changes)
+      socket.on('stock:updated', (data) => {
+        console.log('📦 Individual stock update received:', data);
+        
+        if (data.items && Array.isArray(data.items)) {
+          // Use throttling to prevent excessive updates but with faster response
+          throttledStockUpdate(() => {
+            setStockQuantities(prev => {
+              const updated = { ...prev };
+              let hasChanges = false;
+              
+              data.items.forEach(item => {
+                if (item.itemId && item.quantity !== undefined) {
+                  const previousQuantity = updated[item.itemId];
+                  if (previousQuantity !== item.quantity) {
+                    updated[item.itemId] = item.quantity;
+                    hasChanges = true;
+                    
+                    // Enhanced logging with change details
+                    const changeInfo = item.previousQuantity !== undefined && item.changeAmount !== undefined
+                      ? ` (${item.previousQuantity} → ${item.quantity}, change: ${item.changeAmount})`
+                      : ` → ${item.quantity}`;
+                    
+                    logger.stock(`Stock updated: ${item.name?.en || item.itemId}${changeInfo}`);
+                  }
+                }
+              });
+              
+              if (hasChanges) {
+                setLastUpdated(new Date());
+                console.log(`📦 Applied ${data.items.length} stock updates in category: ${data.categoryName?.en || data.categoryId}`);
+              }
+              
+              return hasChanges ? updated : prev;
+            });
+          });
+        }
+      });
+
+      // Handle category-level updates (when items are added/removed from category)
+      socket.on('stock:category-updated', (data) => {
+        console.log('📦 Category stock update received:', data);
+        
+        if (data.items && Array.isArray(data.items)) {
+          // Use throttling to prevent excessive updates
+          throttledStockUpdate(() => {
+            setStockQuantities(prev => {
+              const updated = { ...prev };
+              let hasChanges = false;
+              
+              data.items.forEach(item => {
+                if (item.itemId && item.quantity !== undefined) {
+                  const previousQuantity = updated[item.itemId];
+                  if (previousQuantity !== item.quantity) {
+                    updated[item.itemId] = item.quantity;
+                    hasChanges = true;
+                  }
+                }
+              });
+              
+              if (hasChanges) {
+                setLastUpdated(new Date());
+                console.log(`📦 Category updated: ${data.categoryName?.en || data.categoryId} with ${data.items.length} items`);
+              }
+              
+              return hasChanges ? updated : prev;
+            });
+          });
+        }
+      });
+
+      // Handle bulk stock updates efficiently
+      socket.on('stock:bulk-update', (data) => {
+        console.log('📦 Bulk stock update received:', data);
+        
+        if (data.items && Array.isArray(data.items)) {
+          throttledStockUpdate(() => {
+            setStockQuantities(prev => {
+              const updated = { ...prev };
+              let changeCount = 0;
+              
+              data.items.forEach(item => {
+                if (item.itemId && item.quantity !== undefined) {
+                  const previousQuantity = updated[item.itemId];
+                  if (previousQuantity !== item.quantity) {
+                    updated[item.itemId] = item.quantity;
+                    changeCount++;
+                  }
+                }
+              });
+              
+              if (changeCount > 0) {
+                setLastUpdated(new Date());
+                console.log(`📦 Bulk update applied: ${changeCount} items changed`);
+              }
+              
+              return changeCount > 0 ? updated : prev;
+            });
+          });
+        }
+      });
+
+      // Handle new category additions
+      socket.on('stock:category-added', (data) => {
+        console.log('📦 New category added:', data);
+        
+        if (data.items && Array.isArray(data.items)) {
+          // Use throttling to prevent excessive updates
+          throttledStockUpdate(() => {
+            setStockQuantities(prev => {
+              const updated = { ...prev };
+              
+              data.items.forEach(item => {
+                if (item.itemId && item.quantity !== undefined) {
+                  updated[item.itemId] = item.quantity;
+                }
+              });
+              
+              setLastUpdated(new Date());
+              return updated;
+            });
+            
+            console.log(`📦 New category added: ${data.categoryName?.en || data.categoryId} with ${data.items.length} items`);
+          });
+        }
+      });
+
+      // Handle category deletions
+      socket.on('stock:category-deleted', (data) => {
+        console.log('📦 Category deleted:', data);
+        
+        // Note: We'll keep the stock data for now as the backend doesn't send which items to remove
+        // In a real scenario, you might want to refetch the full state or maintain a category->items mapping
+        console.log(`📦 Category deleted: ${data.categoryId} - Full state refresh may be needed`);
+        
+        // Optionally trigger a full state refresh
+        if (socketRef.current?.connected) {
+          socketRef.current.emit('stock:subscribe');
+        }
+      });
+
+      // Handle full stock state on connection (don't throttle initial full state)
+      socket.on('stock:full-state', (data) => {
+        console.log('📊 Full stock state received:', data);
+        
+        const fullStock = {};
+        if (data.categories && Array.isArray(data.categories)) {
+          data.categories.forEach(category => {
+            if (category.items && Array.isArray(category.items)) {
+              category.items.forEach(item => {
+                if (item.itemId && item.quantity !== undefined) {
+                  fullStock[item.itemId] = item.quantity;
+                }
+              });
+            }
+          });
+        }
+        
+        // Don't throttle full state updates as they're typically sent once on connection
+        setStockQuantities(fullStock);
+        setLastUpdated(new Date());
+        console.log('📦 Initialized stock data for', Object.keys(fullStock).length, 'items');
+        
+        // Cache the stock data for fallback
+        saveStockDataToCache(fullStock);
+      });
+
+      // Listen for item stock updates from backend (legacy support)
       socket.on('itemUpdated', (data) => {
         console.log('📦 Stock update received:', data);
         const { itemId, quantity } = data;
         
         if (itemId && quantity !== undefined) {
-          setStockQuantities(prev => {
-            const updated = {
-              ...prev,
-              [itemId]: quantity
-            };
-            
-            setLastUpdated(new Date());
-            
-            console.log('📦 Updated stock for item:', itemId, 'new quantity:', quantity);
-            return updated;
+          // Use throttling for legacy updates too
+          throttledStockUpdate(() => {
+            setStockQuantities(prev => {
+              const updated = {
+                ...prev,
+                [itemId]: quantity
+              };
+              
+              setLastUpdated(new Date());
+              
+              console.log('📦 Updated stock for item:', itemId, 'new quantity:', quantity);
+              return updated;
+            });
           });
         } else {
           console.warn('📦 Invalid stock update data:', data);
@@ -247,7 +453,7 @@ export const StockProvider = ({ children }) => {
       setIsConnected(false);
       isConnectingRef.current = false;
     }
-  }, [accessToken, user, isLoggedIn, stockQuantities, loadCachedStockData, saveStockDataToCache]);
+  }, [accessToken, user, isLoggedIn, loadCachedStockData, saveStockDataToCache, throttledStockUpdate]);
 
   // Disconnect socket
   const disconnectSocket = useCallback(() => {
@@ -313,6 +519,11 @@ export const StockProvider = ({ children }) => {
   const forceRefreshStock = useCallback(() => {
     if (socketRef.current?.connected && user) {
       console.log('🔄 Force refreshing stock data from server...');
+      
+      // Use the new subscription method first
+      socketRef.current.emit('stock:subscribe');
+      
+      // Keep legacy support
       console.log('🔄 Emitting requestStockData event with userId:', user._id);
       socketRef.current.emit('requestStockData', { userId: user._id });
       
@@ -394,6 +605,7 @@ export const StockProvider = ({ children }) => {
     isInStock,
     forceRefreshStock,
     loadCachedStockData, // Add fallback data loader
+    subscribeToStockUpdates, // Add subscription functionality
     reconnect: connectSocket,
     // Add socket connection status for better debugging
     stockSocketConnected: isConnected,

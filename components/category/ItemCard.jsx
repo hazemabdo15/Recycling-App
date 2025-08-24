@@ -1,4 +1,5 @@
-﻿import { StyleSheet, Text, View } from "react-native";
+﻿import React, { useMemo } from "react";
+import { StyleSheet, View } from "react-native";
 import { useLocalization } from "../../context/LocalizationContext";
 import { useStock } from "../../context/StockContext";
 import { useThemedStyles } from "../../hooks/useThemedStyles";
@@ -7,6 +8,7 @@ import { getUnitDisplay } from "../../utils/cartUtils";
 import { isBuyer } from "../../utils/roleUtils";
 import { isMaxStockReached, isOutOfStock } from "../../utils/stockUtils";
 import { AnimatedListItem } from "../common";
+import RealTimeStockIndicator from "../common/RealTimeStockIndicator";
 import ItemImage from "./ItemImage";
 import ItemInfo from "./ItemInfo";
 import QuantityControls from "./QuantityControls";
@@ -24,30 +26,19 @@ const ItemCard = ({
   index = 0,
   user = null,
 }) => {
-  const { t, isRTL } = useLocalization();
+  const { isRTL } = useLocalization();
   const { colors, isDarkMode } = useThemedStyles();
-  const { getStockQuantity, stockSocketConnected } = useStock();
+  const { getStockQuantity } = useStock();
   const itemCardStyles = getItemCardStyles(isDarkMode);
   const styles = getItemCardComponentStyles(colors);
   const unitDisplay = getUnitDisplay(item.measurement_unit);
   
-  // Get real-time stock quantity with proper precedence and fallback
-  const realTimeStock = getStockQuantity(item._id, item.quantity);
-  const displayStock = realTimeStock !== undefined ? realTimeStock : (item.quantity ?? 0);
-  
-  // Debug logging for stock updates
-  console.log(`[ItemCard] ${item._id}: API=${item.quantity ?? 'undefined'}, RealTime=${getStockQuantity(item._id) ?? 'undefined'}, Fallback=${realTimeStock ?? 'undefined'}, Display=${displayStock}, Socket=${stockSocketConnected}`);
-  
-  // Debug RTL state
-  console.log('ItemCard RTL state:', isRTL);
-  
-  // Use separate style objects for RTL and LTR
-  const bannerWrapperStyle = isRTL ? styles.cornerBannerWrapperRTL_Custom : styles.cornerBannerWrapperLTR_Custom;
-  const bannerStyle = isRTL ? styles.cornerBannerRTL_Custom : styles.cornerBannerLTR_Custom;
-  
-  // Debug the applied styles
-  console.log('Banner wrapper style:', bannerWrapperStyle);
-  console.log('Banner style:', bannerStyle);
+  // Enhanced real-time stock quantity with memoization for performance
+  // The stock context already handles updates efficiently, so we just need to respond to them
+  const displayStock = useMemo(() => {
+    const realTimeStock = getStockQuantity(item._id, item.quantity);
+    return realTimeStock !== undefined ? realTimeStock : (item.quantity ?? 0);
+  }, [getStockQuantity, item._id, item.quantity]);
   
   // Only show stock-related logic for buyers
   const showStockLogic = isBuyer(user);
@@ -63,25 +54,20 @@ const ItemCard = ({
         ...itemCardStyles.itemCard,
       }}
     >
-      {/* Debug: Log parent container styles */}
-      {console.log('Parent container styles:', itemCardStyles.itemCard)}
+      {/* Debug: Log parent container styles (disabled to prevent infinite logs) */}
+      {/* {console.log('Parent container styles:', itemCardStyles.itemCard)} */}
       
-      {/* Diagonal Out of Stock Banner Overlay */}
-      {outOfStock && (
-        <View style={bannerWrapperStyle} pointerEvents="none">
-          <View style={bannerStyle}>
-            <Text style={styles.cornerBannerText}>{t('categories.itemCard.outOfStock')}</Text>
-          </View>
-        </View>
-      )}
-      {/* Show badge with stock quantity only if in stock, hide if out of stock */}
-      {showStockLogic && !outOfStock && (
+  {/* Out-of-stock banner removed - handled by RealTimeStockIndicator and QuantityControls */}
+      {/* Show real-time stock indicator for buyers */}
+      {showStockLogic && (
         <View style={isRTL ? styles.stockBadgeRTL_Custom : styles.stockBadgeLTR_Custom}>
-          <Text style={[styles.stockBadgeText, { color: colors.primary }]}>
-            {typeof displayStock === "number"
-              ? `${t('categories.itemCard.stock')}: ${displayStock} ${unitDisplay}`
-              : `${t('categories.itemCard.stock')}: N/A`}
-          </Text>
+          <RealTimeStockIndicator 
+            itemId={item._id}
+            quantity={displayStock}
+            showConnectionStatus={true}
+            showChangeIndicator={true}
+            size="small"
+          />
         </View>
       )}
       <View
@@ -238,4 +224,15 @@ const getItemCardComponentStyles = (colors) => StyleSheet.create({
   },
 });
 
-export default ItemCard;
+export default React.memo(ItemCard, (prevProps, nextProps) => {
+  // Custom comparison to prevent unnecessary re-renders
+  return (
+    prevProps.item._id === nextProps.item._id &&
+    prevProps.quantity === nextProps.quantity &&
+    prevProps.disabled === nextProps.disabled &&
+    prevProps.pendingAction === nextProps.pendingAction &&
+    prevProps.user?.role === nextProps.user?.role &&
+    // Compare item quantities for stock changes
+    prevProps.item.quantity === nextProps.item.quantity
+  );
+});

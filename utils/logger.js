@@ -18,6 +18,7 @@ const LOG_COLORS = {
   AUTH: '🔐',
   CART: '🛒',
   PAYMENT: '💳',
+  STOCK: '📦',
 };
 
 const isProduction = !__DEV__;
@@ -240,6 +241,10 @@ class Logger {
     this._log(level, 'PAYMENT', message, data);
   }
 
+  stock(message, data = null, level = 'INFO') {
+    this._log(level, 'STOCK', message, data);
+  }
+
   performance(message, data = null) {
     this._log('INFO', 'PERFORMANCE', message, data);
   }
@@ -351,5 +356,6 @@ export const logApi = (message, data, level) => logger.api(message, data, level)
 export const logAuth = (message, data, level) => logger.auth(message, data, level);
 export const logCart = (message, data, level) => logger.cart(message, data, level);
 export const logPayment = (message, data, level) => logger.payment(message, data, level);
+export const logStock = (message, data, level) => logger.stock(message, data, level);
 export const logPerformance = (message, data) => logger.performance(message, data);
 export const logSuccess = (message, data, category) => logger.success(message, data, category);

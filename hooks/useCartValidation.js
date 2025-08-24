@@ -6,6 +6,7 @@
  */
 
 import { useFocusEffect } from '@react-navigation/native';
+import * as Linking from 'expo-linking';
 import { useCallback, useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
 import { useAuth } from '../context/AuthContext';
@@ -31,11 +32,12 @@ export const useCartValidation = (options = {}) => {
     handleUpdateQuantity,
     loading: cartLoading 
   } = useCartContext();
-  const { stockQuantities } = useStock();
+  const { stockQuantities, lastUpdated } = useStock();
   
   const appStateRef = useRef(AppState.currentState);
   const lastValidationRef = useRef(0);
   const validationInProgressRef = useRef(false);
+  const lastStockUpdateRef = useRef(null);
 
   // Only validate for buyer users
   const shouldValidate = isBuyer(user) && !cartLoading;
@@ -48,7 +50,16 @@ export const useCartValidation = (options = {}) => {
       return { success: true, noAction: true };
     }
 
+    const { immediate = false } = validationOptions;
+    const now = Date.now();
+    
+    // Bypass cooldown for real-time updates with optimized delay for backend rate limiting
+    if (!immediate && (now - lastValidationRef.current) < 3000) { // Reduced back to 3s since backend is rate-limited
+      return { success: true, skipped: true };
+    }
+
     validationInProgressRef.current = true;
+    lastValidationRef.current = now;
 
     try {
       const updateFunction = async (itemId, newQuantity) => {
@@ -56,10 +67,8 @@ export const useCartValidation = (options = {}) => {
         const measurementUnit = item?.measurement_unit || (item?.unit === 'KG' ? 1 : 2);
         
         if (newQuantity === 0) {
-          // Remove item from cart
           await handleUpdateQuantity(itemId, 0, measurementUnit);
         } else {
-          // Update quantity
           await handleUpdateQuantity(itemId, newQuantity, measurementUnit);
         }
       };
@@ -70,23 +79,27 @@ export const useCartValidation = (options = {}) => {
         stockQuantities,
         updateFunction,
         {
-          showMessages,
           autoCorrect,
-          source,
+          showMessages,
+          source: validationOptions.source || source,
+          forceValidation: validationOptions.forceValidation || immediate,
           ...validationOptions
         }
       );
 
-      lastValidationRef.current = Date.now();
+      if (result.corrected && showMessages) {
+        logger.cart(`✅ Cart auto-corrected due to stock changes: ${result.fixes?.length || 0} fixes applied`);
+      }
+
       return result;
 
     } catch (error) {
-      logger.error('Cart validation error:', error);
+      logger.error('Cart validation failed:', error);
       return { success: false, error: error.message };
     } finally {
       validationInProgressRef.current = false;
     }
-  }, [shouldValidate, cartItems, cartItemDetails, stockQuantities, handleUpdateQuantity, showMessages, autoCorrect, source]);
+  }, [shouldValidate, cartItems, cartItemDetails, stockQuantities, handleUpdateQuantity, autoCorrect, showMessages, source]);
 
   /**
    * Quick validation without auto-correction
@@ -107,22 +120,29 @@ export const useCartValidation = (options = {}) => {
       return { success: true, noAction: true };
     }
 
-    return validateCart({ forceValidation: true });
+    return validateCart({ forceValidation: true, immediate: true });
   }, [shouldValidate, validateCart]);
 
-  /**
-   * Trigger validation when fresh data is loaded
-   */
-  const triggerValidationOnDataRefresh = useCallback(async () => {
-    if (!shouldValidate) return;
-
-    logger.cart('Data refreshed, triggering cart validation');
+  // Immediate validation when stock data changes (real-time)
+  useEffect(() => {
+    if (!shouldValidate || !lastUpdated) return;
     
-    // Use a shorter delay for data refresh scenarios
-    setTimeout(() => {
-      validateCart({ source: 'dataRefresh', forceValidation: true });
-    }, 500);
-  }, [shouldValidate, validateCart]);
+    // Check if this is a new stock update
+    if (lastStockUpdateRef.current && lastUpdated > lastStockUpdateRef.current) {
+      logger.cart('🔄 Real-time stock update detected, validating cart immediately');
+      
+      // Validate with shorter delay since backend is rate-limited
+      setTimeout(() => {
+        validateCart({ 
+          source: 'realTimeStockUpdate', 
+          forceValidation: true,
+          immediate: true 
+        });
+      }, 1000); // Reduced from 2s to 1s since backend prevents spam
+    }
+    
+    lastStockUpdateRef.current = lastUpdated;
+  }, [lastUpdated, shouldValidate, validateCart]);
 
   // Validate cart when stock quantities change (real-time validation)
   useEffect(() => {
@@ -136,10 +156,10 @@ export const useCartValidation = (options = {}) => {
 
     logger.cart('Stock quantities changed, validating cart');
     
-    // Add delay to allow for batch stock updates
+    // Reduced delay since backend is rate-limited
     const timeoutId = setTimeout(() => {
       validateCart({ source: 'stockUpdate' });
-    }, 1000);
+    }, 1500); // Reduced from 3s to 1.5s
 
     return () => clearTimeout(timeoutId);
   }, [stockQuantities, shouldValidate, cartItems, validateCart]);
@@ -156,10 +176,18 @@ export const useCartValidation = (options = {}) => {
       if (currentState.match(/inactive|background/) && nextAppState === 'active') {
         logger.cart('App became active, validating cart');
         
-        // Add small delay to ensure cart and stock data is loaded
-        setTimeout(() => {
-          validateCart({ source: 'appActivation' });
-        }, 1000);
+        // Check if we're in a payment flow to avoid disrupting it
+        Linking.getInitialURL().then(url => {
+          if (url && (url.includes('payment=success') || url.includes('payment_intent'))) {
+            logger.cart('Cart validation: Skipping validation - payment flow detected');
+            return;
+          }
+          
+          // Add small delay to ensure cart and stock data is loaded
+          setTimeout(() => {
+            validateCart({ source: 'appActivation' });
+          }, 1000);
+        });
       }
     };
 
@@ -205,9 +233,14 @@ export const useCartValidation = (options = {}) => {
     validateCart,
     quickValidateCart,
     forceValidateCart,
-    triggerValidationOnDataRefresh,
+    triggerValidationOnDataRefresh: useCallback(() => {
+      if (shouldValidate) {
+        validateCart({ source: 'dataRefresh', forceValidation: true, immediate: true });
+      }
+    }, [shouldValidate, validateCart]),
     isValidationSupported: shouldValidate,
-    validationInProgress: validationInProgressRef.current
+    validationInProgress: validationInProgressRef.current,
+    isValidating: validationInProgressRef.current
   };
 };
 

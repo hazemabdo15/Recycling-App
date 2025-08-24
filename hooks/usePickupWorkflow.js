@@ -2,7 +2,9 @@
 import { useAuth } from '../context/AuthContext';
 import { useStock } from '../context/StockContext';
 import { addressService } from '../services/api/addresses';
+import { CartStockValidator } from '../services/cartStockValidator';
 import { unifiedOrderService } from '../services/unifiedOrderService';
+import { isBuyer } from '../utils/roleUtils';
 import { workflowStateUtils } from '../utils/workflowStateUtils';
 import { useCart } from './useCart';
 
@@ -198,29 +200,32 @@ export const usePickupWorkflow = () => {
       throw new Error(errorMsg);
     }
     
-    // Enhanced cart validation before proceeding with order creation
-    const cartItems = {};
-    Object.values(cartItemDetails).forEach(item => {
-      cartItems[item._id] = item.quantity;
-    });
-    
-    // Use the enhanced cart validator for better error handling
-    const { CartStockValidator } = await import('../services/cartStockValidator');
-    const validationResult = await CartStockValidator.quickValidate(
-      cartItems,
-      stockQuantities,
-      cartItemDetails
-    );
-    
-    if (!validationResult.isValid) {
-      console.error('Order creation failed - enhanced cart validation:', validationResult.issues);
+    // Enhanced cart validation before proceeding with order creation (only for buyer users)
+    if (isBuyer(user)) {
+      const cartItems = {};
+      Object.values(cartItemDetails).forEach(item => {
+        cartItems[item._id] = item.quantity;
+      });
       
-      // Provide more detailed error message
-      const errorMessage = validationResult.issues?.length > 0 
-        ? `Cart validation failed: ${validationResult.issues.map(i => i.message).join(', ')}`
-        : 'Some items in your cart are no longer available';
+      // Use the enhanced cart validator for better error handling
+      const validationResult = await CartStockValidator.quickValidate(
+        cartItems,
+        stockQuantities,
+        cartItemDetails
+      );
+      
+      if (!validationResult.isValid) {
+        console.error('Order creation failed - enhanced cart validation:', validationResult.issues);
         
-      throw new Error(errorMessage);
+        // Provide more detailed error message
+        const errorMessage = validationResult.issues?.length > 0 
+          ? `Cart validation failed: ${validationResult.issues.map(i => i.message).join(', ')}`
+          : 'Some items in your cart are no longer available';
+          
+        throw new Error(errorMessage);
+      }
+    } else {
+      console.log('🔄 [Pickup Workflow] Skipping stock validation for customer user');
     }
     
     // Save workflow state before potential payment redirect

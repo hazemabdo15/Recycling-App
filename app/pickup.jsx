@@ -4,13 +4,13 @@ import * as Linking from "expo-linking";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Alert,
-  Animated,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Alert,
+    Animated,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -44,8 +44,8 @@ export default function Pickup() {
   
   // Add cart validation for critical pickup screen
   const { validateCart, quickValidateCart } = useCartValidation({
-    validateOnFocus: true, // Validate when pickup screen is focused
-    validateOnAppActivation: true, // Validate when app becomes active
+    validateOnFocus: false, // Disabled to prevent interference with payment flow
+    validateOnAppActivation: false, // Disabled - handled by GlobalCartValidator with payment flow check
     autoCorrect: true, // Automatically fix cart issues
     showMessages: true, // Show user feedback about corrections
     source: 'pickupScreen'
@@ -56,6 +56,9 @@ export default function Pickup() {
   const [dialogShown, setDialogShown] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [, setCreatingOrder] = useState(false);
+  
+  // Add flag to prevent multiple deep link processing
+  const isProcessingPaymentRef = useRef(false);
 
   // Animation for loading spinner  
   const orderSpinValue = useRef(new Animated.Value(0)).current;
@@ -155,6 +158,14 @@ export default function Pickup() {
       });
 
       if (paymentStatus === "success" || paymentIntentId) {
+        // Prevent multiple processing of the same payment
+        if (isProcessingPaymentRef.current) {
+          console.log("Payment already being processed, ignoring duplicate deep link");
+          return;
+        }
+        
+        isProcessingPaymentRef.current = true;
+        
         try {
           setCreatingOrder(true);
           
@@ -243,6 +254,7 @@ export default function Pickup() {
           }
         } finally {
           setCreatingOrder(false);
+          isProcessingPaymentRef.current = false; // Reset the flag
         }
       } else if (
         event.url.includes("canceled=true") ||

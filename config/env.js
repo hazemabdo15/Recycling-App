@@ -22,7 +22,7 @@ export const isStaging = () => getCurrentEnv() === ENV.STAGING;
 
 const API_CONFIGS = {
   [ENV.DEVELOPMENT]: {
-    baseUrl: 'https://recycling-backend-2vxx.onrender.com', //'http://192.168.0.165:5000'
+    baseUrl: 'http://192.168.0.165:5000', //'https://recycling-backend-2vxx.onrender.com', 
     timeout: 15000,
     retries: 2,
     debug: true
@@ -79,6 +79,9 @@ export const FEATURE_FLAGS = {
   ENABLE_SSL_PINNING: isProduction(),
   ENABLE_ROOT_DETECTION: isProduction(),
   ENABLE_DEBUG_PROTECTION: isProduction(),
+  
+  // New flag to control component debug logging
+  ENABLE_COMPONENT_DEBUG_LOGS: false, // Disabled to prevent infinite logs
 };
 
 const getSecureApiKey = () => {

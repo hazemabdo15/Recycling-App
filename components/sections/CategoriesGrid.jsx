@@ -2,13 +2,13 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from 'react-i18next'; // Add this import
 import {
-    ActivityIndicator,
-    FlatList,
-    RefreshControl,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { KeyboardAwareFlatList } from 'react-native-keyboard-aware-scroll-view';
 import { useAuth } from "../../context/AuthContext";
@@ -20,17 +20,18 @@ import { useCartValidation } from "../../hooks/useCartValidation";
 import { useThemedStyles } from "../../hooks/useThemedStyles";
 import { spacing } from "../../styles";
 import {
-    CartMessageTypes,
-    showCartMessage,
-    showMaxStockMessage,
+  CartMessageTypes,
+  showCartMessage,
+  showMaxStockMessage,
 } from "../../utils/cartMessages";
 import {
-    getCartKey,
-    getIncrementStep,
-    normalizeItemData,
+  getCartKey,
+  getIncrementStep,
+  normalizeItemData,
 } from "../../utils/cartUtils";
 import { isBuyer } from "../../utils/roleUtils";
 import { scaleSize } from "../../utils/scale";
+import { isMaxStockReached, isOutOfStock } from "../../utils/stockUtils";
 import { extractNameFromMultilingual, getTranslatedName } from "../../utils/translationHelpers";
 import { CategoryCard } from "../cards";
 import { ItemCard } from "../category";
@@ -174,9 +175,21 @@ const CategoriesGrid = ({
   const {
     stockQuantities,
     getStockQuantity,
-    forceRefreshStock,
-    isConnected: stockSocketConnected,
+    lastUpdated,
+    subscribeToStockUpdates,
   } = useStock();
+  
+  // Enhanced real-time stock update subscription
+  useEffect(() => {
+    if (!showItemsMode || !subscribeToStockUpdates) return;
+    
+    const unsubscribe = subscribeToStockUpdates((timestamp) => {
+      // Force update when stock changes to ensure FlatList reflects new data
+      setForceUpdateKey(prev => prev + 1);
+    });
+    
+    return unsubscribe;
+  }, [showItemsMode, subscribeToStockUpdates]);
   
   // Add cart validation for real-time validation when data changes
   const { triggerValidationOnDataRefresh } = useCartValidation({
@@ -188,7 +201,8 @@ const CategoriesGrid = ({
   });
   
   // Debug stock context state (simplified)
-  console.log('[CategoriesGrid] Stock context has', Object.keys(stockQuantities || {}).length, 'items, socket connected:', stockSocketConnected);
+  // Debug logging disabled to prevent infinite logs
+  // console.log('[CategoriesGrid] Stock context has', Object.keys(stockQuantities || {}).length, 'items, socket connected:', stockSocketConnected);
   
   // Sync stock data when items are loaded - removed since useStock doesn't have syncItemsStock
   // useEffect(() => {
@@ -206,17 +220,12 @@ const CategoriesGrid = ({
   useEffect(() => {
     // Log when stock quantities change
     if (stockQuantities && Object.keys(stockQuantities).length > 0) {
-      console.log('[CategoriesGrid] Stock quantities available:', Object.keys(stockQuantities).length);
+      // Debug logging disabled to prevent infinite logs
+      // console.log('[CategoriesGrid] Stock quantities available:', Object.keys(stockQuantities).length);
     }
   }, [stockQuantities]);
 
-  // Force refresh stock data when showing items mode and socket is connected
-  useEffect(() => {
-    if (showItemsMode && stockSocketConnected && forceRefreshStock) {
-      console.log('[CategoriesGrid] Items mode with socket connected, requesting fresh stock data');
-      forceRefreshStock();
-    }
-  }, [showItemsMode, stockSocketConnected, forceRefreshStock]);
+  // Note: Removed force refresh logic - backend now automatically sends stock on subscription
 
   const handleManualInput = useCallback(async (item, value) => {
     if (!item) return;
@@ -318,12 +327,12 @@ const CategoriesGrid = ({
             // Get real-time stock quantity
             const stockQuantity = stockQuantities[normalizedItem._id] ?? normalizedItem.quantity ?? 0;
             
-            // Debug logging for stock data flow (simplified) - fix name check
-            const nameForLogging = typeof normalizedItem.name === 'string' ? normalizedItem.name : 
-                                 normalizedItem.name?.en || normalizedItem.name?.ar || '';
-            if (nameForLogging && nameForLogging.toLowerCase().includes('test')) { // Only log for test items
-              console.log(`[CategoriesGrid] ${nameForLogging}: stockContext[${normalizedItem._id}]=${stockQuantities[normalizedItem._id]}, item.quantity=${normalizedItem.quantity}, final=${stockQuantity}`);
-            }
+            // Debug logging for stock data flow disabled to prevent infinite logs
+            // const nameForLogging = typeof normalizedItem.name === 'string' ? normalizedItem.name : 
+            //                      normalizedItem.name?.en || normalizedItem.name?.ar || '';
+            // if (nameForLogging && nameForLogging.toLowerCase().includes('test')) { // Only log for test items
+            //   console.log(`[CategoriesGrid] ${nameForLogging}: stockContext[${normalizedItem._id}]=${stockQuantities[normalizedItem._id]}, item.quantity=${normalizedItem.quantity}, final=${stockQuantity}`);
+            // }
             
             return {
               ...normalizedItem,
@@ -425,8 +434,8 @@ const CategoriesGrid = ({
     // Use cartQuantity from the item (already calculated in itemsWithCartQuantities)
     const cartQuantity = item.cartQuantity;
     
-    // Debug logging to verify this function is being used
-    console.log(`[CategoriesGrid] renderItemCard called for ${item.name}: quantity=${cartQuantity}`);
+    // Debug logging to verify this function is being used (disabled to prevent infinite logs)
+    // console.log(`[CategoriesGrid] renderItemCard called for ${item.name}: quantity=${cartQuantity}`);
 
     // Only apply stock validation for buyer users
     let maxReached = false;
@@ -436,17 +445,12 @@ const CategoriesGrid = ({
       const realTimeStock = getStockQuantity(item._id, item.quantity);
       const currentStock = realTimeStock !== undefined ? realTimeStock : item.quantity;
       
-      console.log(`[CategoriesGrid] Render stock for ${getTranslatedName(t, item?.name, 'subcategories', { categoryName: item?.categoryName, currentLanguage })}:`, {
-        realTimeStock: getStockQuantity(item._id),
-        fallbackStock: item.quantity,
-        finalStock: currentStock
-      });
-      
-      const stockUtils = require("../../utils/stockUtils");
-      const {
-        isOutOfStock,
-        isMaxStockReached,
-      } = stockUtils;
+      // Debug logging disabled to prevent infinite logs
+      // console.log(`[CategoriesGrid] Render stock for ${getTranslatedName(t, item?.name, 'subcategories', { categoryName: item?.categoryName, currentLanguage })}:`, {
+      //   realTimeStock: getStockQuantity(item._id),
+      //   fallbackStock: item.quantity,
+      //   finalStock: currentStock
+      // });
       
       maxReached = isMaxStockReached({ ...item, quantity: currentStock }, cartQuantity);
       outOfStock = isOutOfStock({ quantity: currentStock });
@@ -457,7 +461,7 @@ const CategoriesGrid = ({
 
     return (
       <ItemCard
-        key={itemKey || `${item.name}-${index}`}
+        key={`${itemKey}-${item.quantity || 0}-${cartQuantity}-${lastUpdated?.getTime() || 0}`}
         item={{
           ...item,
           // Pass the display name to ItemCard so it shows translated text
@@ -778,7 +782,7 @@ const CategoriesGrid = ({
         }}
       />
     );
-  }, [user, t, currentLanguage, getStockQuantity, handleIncreaseQuantity, handleDecreaseQuantity, handleFastIncreaseQuantity, handleFastDecreaseQuantity, handleManualInput, pendingOperations, setPendingOperations]);
+  }, [user, t, currentLanguage, getStockQuantity, handleIncreaseQuantity, handleDecreaseQuantity, handleFastIncreaseQuantity, handleFastDecreaseQuantity, handleManualInput, pendingOperations, setPendingOperations, lastUpdated]);
   
   if (loading) {
     return (
@@ -863,13 +867,20 @@ const CategoriesGrid = ({
           enableOnAndroid
           extraScrollHeight={70}
           keyboardShouldPersistTaps="handled"
-          // Performance optimizations for large lists
-          removeClippedSubviews={true}
-          maxToRenderPerBatch={10}
-          updateCellsBatchingPeriod={50}
+          // Enhanced performance optimizations to reduce unnecessary remounting
+          removeClippedSubviews={false} // Disable to prevent frequent mounting/unmounting
+          maxToRenderPerBatch={12}
+          updateCellsBatchingPeriod={150}
           initialNumToRender={15}
-          windowSize={10}
-          extraData={`${Object.keys(cartItems).length}-${pendingOperations.size}`}
+          windowSize={10} // Increased window size to keep more items in memory
+          getItemLayout={null} // Let FlatList handle layout calculations
+          maintainVisibleContentPosition={{
+            minIndexForVisible: 0,
+            autoscrollToTopThreshold: 10
+          }}
+          // Optimized extraData to prevent unnecessary re-renders with backend rate limiting
+          // Include forceUpdateKey to ensure re-renders when stock changes
+          extraData={`${Object.keys(cartItems).length}-${pendingOperations.size}-${lastUpdated?.getTime() || 0}-${forceUpdateKey}`}
         />
       ) : (
         <FlatList

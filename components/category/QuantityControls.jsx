@@ -3,6 +3,7 @@ import React, { useRef } from 'react';
 import { Dimensions, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { getQuantityControlsStyles } from '../../styles/components/categoryStyles';
+import { showMaxStockMessage } from '../../utils/cartMessages';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const scale = (size) => (SCREEN_WIDTH / 375) * size;
@@ -70,7 +71,6 @@ const QuantityControls = ({
             // Stock validation
             if (typeof maxQuantity === 'number' && num > maxQuantity) {
                 // Show stock error message for buyers
-                const { showMaxStockMessage } = require('../../utils/cartMessages');
                 showMaxStockMessage(itemName, maxQuantity, measurementUnit);
                 // Instant reversion - no setTimeout delay
                 setInputValue(lastValidValue.current);
@@ -103,7 +103,6 @@ const QuantityControls = ({
             // Stock validation
             if (typeof maxQuantity === 'number' && num > maxQuantity) {
                 // Show stock error message for buyers
-                const { showMaxStockMessage } = require('../../utils/cartMessages');
                 showMaxStockMessage(itemName, maxQuantity, measurementUnit);
                 // Instant reversion - no setTimeout delay
                 setInputValue(lastValidValue.current);
