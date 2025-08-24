@@ -407,7 +407,7 @@
     "inProgress": "قيد التنفيذ",
     "completed": "مكتمل",
     "no_orders_assigned": "لا توجد طلبات حتى الآن",
-    "orders_will_appear_here":"ستظهر الطلبات المطلوبه هنا",
+    "orders_will_appear_here": "ستظهر الطلبات المطلوبه هنا",
     "cancelled": "ملغي",
     "orderDetails": "تفاصيل الطلب",
     "trackOrder": "تتبع الطلب",
@@ -587,7 +587,8 @@
     "all": "جميع الفئات",
     "itemCard": {
       "outOfStock": "نفد المخزون",
-      "stock": "المخزون"
+      "stock": "المخزون ({{count}})",
+      "lowStock": "المخزون منخفض ({{count}})"
     },
     "errors": {
       "notEnoughStock": "لا توجد كمية كافية في المخزون لإضافة هذا العنصر.",

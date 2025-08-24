@@ -528,8 +528,9 @@
     "subtitle": "Explore and manage your {{categoryName}} items",
     "all": "All Categories",
     "itemCard": {
-      "outOfStock": "OUT OF STOCK",
-      "stock": "Stock"
+      "outOfStock": "Out of Stock",
+      "stock": "In Stock ({{count}})",
+      "lowStock": "Low Stock ({{count}})"
     },
     "errors": {
       "notEnoughStock": "Not enough quantity in stock to add this item.",

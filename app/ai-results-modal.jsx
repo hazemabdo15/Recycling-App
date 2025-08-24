@@ -883,7 +883,7 @@ const getAIResultsModalStyles = (colors) => StyleSheet.create({
     ...typography.title,
     fontSize: 24,
     fontWeight: '800',
-    color: colors.textPrimary,
+    color: colors.text,
     marginBottom: spacing.xs,
     textAlign: 'center',
   },
@@ -999,7 +999,7 @@ const getAIResultsModalStyles = (colors) => StyleSheet.create({
     ...typography.subtitle,
     fontSize: 18,
     fontWeight: '700',
-    color: colors.textPrimary,
+    color: colors.text,
     letterSpacing: 0.3,
     lineHeight: 24,
 

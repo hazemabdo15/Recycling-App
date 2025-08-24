@@ -5,6 +5,7 @@ import { useStock } from "../../context/StockContext";
 import { useThemedStyles } from "../../hooks/useThemedStyles";
 import { spacing } from "../../styles/theme";
 import { scaleSize } from "../../utils/scale";
+import { t } from "i18next";
 
 // Global ref to track the last actual stock update timestamp
 // This prevents false positives when components remount
@@ -109,21 +110,21 @@ const RealTimeStockIndicator = ({
       return {
         color: colors.error,
         icon: "package-variant-closed",
-        text: "Out of Stock",
+        text: t("categories.itemCard.outOfStock"),
         bgColor: colors.error + "15",
       };
     } else if (currentStock <= 5) {
       return {
         color: colors.warning,
         icon: "alert",
-        text: `Low Stock (${currentStock})`,
+        text: t("categories.itemCard.lowStock", { count: currentStock }),
         bgColor: colors.warning + "15",
       };
     } else {
       return {
         color: colors.success,
         icon: "check-circle",
-        text: `In Stock (${currentStock})`,
+        text: t("categories.itemCard.stock", { count: currentStock }),
         bgColor: colors.success + "15",
       };
     }
