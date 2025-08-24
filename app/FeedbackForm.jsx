@@ -47,6 +47,7 @@ const FeedbackForm = () => {
           language === 'ar' && styles.rtlText
         ]}
         placeholder={t('feedback.placeholder')}
+        placeholderTextColor={colors.textSecondary}
         value={feedback}
         onChangeText={setFeedback}
         multiline
@@ -96,7 +97,7 @@ const getStyles = (colors) => StyleSheet.create({
   },
   rtlText: {
     textAlign: I18nManager.isRTL ? 'right' : 'left',
-    writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr'
+    writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
   },
   button: {
     backgroundColor: colors.primary,

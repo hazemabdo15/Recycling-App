@@ -11,17 +11,17 @@ const QuickLinks = () => {
   const LINKS = [
     { 
       label: t('quickLinks.guide'), 
-      url: 'https://recyclingapp.com/guide', 
+      url: 'https://www.youtube.com/watch?v=-WA5SVF6wMw', 
       icon: 'book-open-page-variant' 
     },
     { 
       label: t('quickLinks.troubleshooting'), 
-      url: 'https://recyclingapp.com/troubleshoot', 
+      url: 'https://youtu.be/GvFlq2NIhWs?si=LxLcLOED1h_Ozg-o', 
       icon: 'alert-circle-outline' 
     },
     { 
       label: t('quickLinks.tutorials'), 
-      url: 'https://recyclingapp.com/tutorials', 
+      url: 'https://youtu.be/cNPEH0GOhRw?si=yBacpuLDK65Jtifx', 
       icon: 'play-circle-outline' 
     },
   ];

@@ -7,9 +7,9 @@ const ContactOptions = () => {
   const { t, language } = useLocalization();
   const { colors } = useThemedStyles();
   const styles = getStyles(colors);
-  
-  const EMAIL = 'support@recyclingapp.com';
-  const PHONE = '+1234567890';
+
+  const EMAIL = 'recyclecrew7@gmail.com';
+  const PHONE = '+1126374221';
 
   return (
     <View style={[

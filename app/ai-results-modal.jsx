@@ -1100,7 +1100,7 @@ const getAIResultsModalStyles = (colors) => StyleSheet.create({
     ...typography.title,
     fontSize: 18,
     fontWeight: '700',
-    color: colors.textPrimary,
+    color: colors.text,
     marginHorizontal: spacing.lg,
     minWidth: 50,
     textAlign: 'center',
