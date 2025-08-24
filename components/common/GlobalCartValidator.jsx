@@ -9,7 +9,6 @@ import * as Linking from 'expo-linking';
 import { useEffect } from 'react';
 import { AppState } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
-import { useCartStockMonitor } from '../../hooks/useCartStockMonitor';
 import { useCartValidation } from '../../hooks/useCartValidation';
 import logger from '../../utils/logger';
 import { isBuyer } from '../../utils/roleUtils';
@@ -17,21 +16,21 @@ import { isBuyer } from '../../utils/roleUtils';
 const GlobalCartValidator = () => {
   const { user } = useAuth();
   
-  // Global cart validation for buyer users
+  // Global cart validation for buyer users - DISABLED REAL-TIME VALIDATION
   const { validateCart } = useCartValidation({
     validateOnFocus: false, // We don't want focus validation at global level
     validateOnAppActivation: true, // This is the main purpose - validate when app activates
-    autoCorrect: true, // Auto-fix issues
-    showMessages: true, // Show user feedback
+    autoCorrect: false, // Disable auto-correction to prevent conflicts with order completion
+    showMessages: false, // Disable messages to prevent unwanted toasts after order creation
     source: 'globalValidator'
   });
 
-  // Real-time stock monitoring
-  const { triggerValidation, isMonitoring } = useCartStockMonitor({
-    enableRealTimeValidation: true,
-    validationDelay: 1500, // 1.5 seconds after stock change
-    source: 'globalStockMonitor'
-  });
+  // DISABLED: Real-time stock monitoring to prevent cart validation after order creation
+  // const { triggerValidation, isMonitoring } = useCartStockMonitor({
+  //   enableRealTimeValidation: true,
+  //   validationDelay: 1500, // 1.5 seconds after stock change
+  //   source: 'globalStockMonitor'
+  // });
 
   // Only validate for buyer users
   const shouldValidate = isBuyer(user);
@@ -69,12 +68,12 @@ const GlobalCartValidator = () => {
     return () => subscription?.remove();
   }, [shouldValidate, validateCart]);
 
-  // Log monitoring status for debugging
-  useEffect(() => {
-    if (shouldValidate) {
-      logger.cart(`Global cart validator active - Real-time monitoring: ${isMonitoring}`);
-    }
-  }, [shouldValidate, isMonitoring]);
+  // DISABLED: Real-time monitoring logging since it's no longer active
+  // useEffect(() => {
+  //   if (shouldValidate) {
+  //     logger.cart(`Global cart validator active - Real-time monitoring: ${isMonitoring}`);
+  //   }
+  // }, [shouldValidate, isMonitoring]);
 
   // This component doesn't render anything - it's just for logic
   return null;

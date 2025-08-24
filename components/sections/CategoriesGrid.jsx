@@ -191,12 +191,12 @@ const CategoriesGrid = ({
     return unsubscribe;
   }, [showItemsMode, subscribeToStockUpdates]);
   
-  // Add cart validation for real-time validation when data changes
+  // Add cart validation for real-time validation when data changes - DISABLED to prevent conflicts with order completion
   const { triggerValidationOnDataRefresh } = useCartValidation({
     validateOnFocus: false, // Don't validate on focus here
     validateOnAppActivation: false, // Global validator handles this
-    autoCorrect: true,
-    showMessages: true,
+    autoCorrect: false, // Disable auto-correction to prevent conflicts with order completion
+    showMessages: false, // Disable messages to prevent unwanted toasts after order creation
     source: 'categoriesGrid'
   });
   

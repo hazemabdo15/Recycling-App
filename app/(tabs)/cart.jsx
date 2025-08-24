@@ -3,22 +3,22 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    Image,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Image,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { KeyboardAwareFlatList } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
-    AnimatedButton,
-    AnimatedListItem,
-    Loader,
-    RealTimeStockIndicator,
+  AnimatedButton,
+  AnimatedListItem,
+  Loader,
+  RealTimeStockIndicator,
 } from "../../components/common";
 import { useAuth } from "../../context/AuthContext";
 import { useLocalization } from "../../context/LocalizationContext";
@@ -30,20 +30,20 @@ import { useStockManager } from "../../hooks/useStockManager";
 import { useThemedStyles } from "../../hooks/useThemedStyles";
 import { borderRadius, spacing, typography } from "../../styles";
 import {
-    CartMessageTypes,
-    showCartMessage,
-    showMaxStockMessage,
+  CartMessageTypes,
+  showCartMessage,
+  showMaxStockMessage,
 } from "../../utils/cartMessages";
 import {
-    getCartKey,
-    getDisplayKey,
-    normalizeItemData,
+  getCartKey,
+  getDisplayKey,
+  normalizeItemData,
 } from "../../utils/cartUtils";
 import { isBuyer } from "../../utils/roleUtils";
 import { scaleSize } from "../../utils/scale";
 import {
-    extractNameFromMultilingual,
-    getTranslatedName,
+  extractNameFromMultilingual,
+  getTranslatedName,
 } from "../../utils/translationHelpers";
 
 const getRoleBasedIcon = (iconType, userRole = "customer") => {
@@ -104,12 +104,12 @@ const Cart = () => {
     subscribeToStockUpdates,
   } = useStock();
   
-  // Real-time cart validation for stock changes
+  // Real-time cart validation for stock changes - DISABLED to prevent issues after order creation
   const { validateCart, isValidationSupported } = useCartValidation({
     validateOnFocus: false,
     validateOnAppActivation: false,
-    autoCorrect: true,
-    showMessages: true,
+    autoCorrect: false, // Disable auto-correction to prevent unwanted updates
+    showMessages: false, // Disable messages in cart page to prevent unwanted toasts
     source: 'cartPage'
   });
   
@@ -117,17 +117,10 @@ const Cart = () => {
   const [showEmptyState, setShowEmptyState] = useState(false);
   const [inputValues, setInputValues] = useState({});
   
-  // Subscribe to real-time stock updates for cart validation
-  useEffect(() => {
-    if (!isValidationSupported || !subscribeToStockUpdates) return;
-    
-    const unsubscribe = subscribeToStockUpdates((timestamp) => {
-      // Trigger cart validation when stock changes
-      validateCart({ immediate: true, source: 'realTimeStockUpdate' });
-    });
-    
-    return unsubscribe;
-  }, [isValidationSupported, subscribeToStockUpdates, validateCart]);
+  // REMOVED: Real-time stock update subscription to prevent cart validation after order creation
+  // The cart is automatically cleared by the backend after successful order creation
+  // No real-time cart validation needed as it conflicts with order completion flow
+  
   const [cartValidationErrors, setCartValidationErrors] = useState({});
 
   // Stock validation for cart items
@@ -676,6 +669,20 @@ const Cart = () => {
             color={colors.error}
           />
         </TouchableOpacity>
+        
+        {/* Real-time stock indicator positioned above the image */}
+        {isBuyer(user) && (
+          <View style={styles.cartStockIndicatorAbove}>
+            <RealTimeStockIndicator 
+              itemId={item._id}
+              quantity={currentStock}
+              showConnectionStatus={false}
+              showChangeIndicator={true}
+              size="small"
+            />
+          </View>
+        )}
+        
         <View style={styles.cartImageContainer}>
           {item.image ? (
             <Image
@@ -696,16 +703,6 @@ const Cart = () => {
         <View style={styles.cartInfoContainer}>
           <View style={styles.cartHeaderRow}>
             <Text style={styles.cartName}>{name}</Text>
-            {isBuyer(user) && (
-              <RealTimeStockIndicator 
-                itemId={item._id}
-                quantity={currentStock}
-                showConnectionStatus={false}
-                showChangeIndicator={true}
-                size="small"
-                style={styles.cartStockIndicator}
-              />
-            )}
           </View>
           <View style={styles.itemDetailsRow}>
             <Text
@@ -1265,6 +1262,7 @@ const getStyles = (colors) => StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     gap: 2,
+    marginLeft: scaleSize(spacing.md), // Move text content to the right
   },
   cartName: {
     ...typography.subtitle,
@@ -1551,6 +1549,13 @@ const getStyles = (colors) => StyleSheet.create({
   },
   cartStockIndicator: {
     marginLeft: spacing.xs,
+  },
+  cartStockIndicatorAbove: {
+    position: 'absolute',
+    top: scaleSize(spacing.sm),
+    left: scaleSize(spacing.lg),
+    zIndex: 2,
+    backgroundColor: 'transparent',
   },
   loadingText: {
     ...typography.subtitle,

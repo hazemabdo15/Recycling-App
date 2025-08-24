@@ -19,9 +19,9 @@ import { isBuyer } from '../utils/roleUtils';
 export const useCartValidation = (options = {}) => {
   const {
     validateOnFocus = false,
-    validateOnAppActivation = true,
-    autoCorrect = true,
-    showMessages = true,
+    validateOnAppActivation = false, // Changed default to false to prevent conflicts
+    autoCorrect = false, // Changed default to false to prevent unwanted corrections
+    showMessages = false, // Changed default to false to prevent unwanted toasts
     source = 'useCartValidation'
   } = options;
 
@@ -123,46 +123,46 @@ export const useCartValidation = (options = {}) => {
     return validateCart({ forceValidation: true, immediate: true });
   }, [shouldValidate, validateCart]);
 
-  // Immediate validation when stock data changes (real-time)
-  useEffect(() => {
-    if (!shouldValidate || !lastUpdated) return;
-    
-    // Check if this is a new stock update
-    if (lastStockUpdateRef.current && lastUpdated > lastStockUpdateRef.current) {
-      logger.cart('🔄 Real-time stock update detected, validating cart immediately');
-      
-      // Validate with shorter delay since backend is rate-limited
-      setTimeout(() => {
-        validateCart({ 
-          source: 'realTimeStockUpdate', 
-          forceValidation: true,
-          immediate: true 
-        });
-      }, 1000); // Reduced from 2s to 1s since backend prevents spam
-    }
-    
-    lastStockUpdateRef.current = lastUpdated;
-  }, [lastUpdated, shouldValidate, validateCart]);
+  // DISABLED: Immediate validation when stock data changes to prevent conflicts with order completion
+  // useEffect(() => {
+  //   if (!shouldValidate || !lastUpdated) return;
+  //   
+  //   // Check if this is a new stock update
+  //   if (lastStockUpdateRef.current && lastUpdated > lastStockUpdateRef.current) {
+  //     logger.cart('🔄 Real-time stock update detected, validating cart immediately');
+  //     
+  //     // Validate with shorter delay since backend is rate-limited
+  //     setTimeout(() => {
+  //       validateCart({ 
+  //         source: 'realTimeStockUpdate', 
+  //         forceValidation: true,
+  //         immediate: true 
+  //       });
+  //     }, 1000); // Reduced from 2s to 1s since backend prevents spam
+  //   }
+  //   
+  //   lastStockUpdateRef.current = lastUpdated;
+  // }, [lastUpdated, shouldValidate, validateCart]);
 
-  // Validate cart when stock quantities change (real-time validation)
-  useEffect(() => {
-    if (!shouldValidate) return;
+  // DISABLED: Validate cart when stock quantities change to prevent conflicts with order completion
+  // useEffect(() => {
+  //   if (!shouldValidate) return;
 
-    // Skip if stock data is empty (initial load)
-    if (!stockQuantities || Object.keys(stockQuantities).length === 0) return;
+  //   // Skip if stock data is empty (initial load)
+  //   if (!stockQuantities || Object.keys(stockQuantities).length === 0) return;
 
-    // Skip if cart is empty
-    if (!cartItems || Object.keys(cartItems).length === 0) return;
+  //   // Skip if cart is empty
+  //   if (!cartItems || Object.keys(cartItems).length === 0) return;
 
-    logger.cart('Stock quantities changed, validating cart');
-    
-    // Reduced delay since backend is rate-limited
-    const timeoutId = setTimeout(() => {
-      validateCart({ source: 'stockUpdate' });
-    }, 1500); // Reduced from 3s to 1.5s
+  //   logger.cart('Stock quantities changed, validating cart');
+  //   
+  //   // Reduced delay since backend is rate-limited
+  //   const timeoutId = setTimeout(() => {
+  //     validateCart({ source: 'stockUpdate' });
+  //   }, 1500); // Reduced from 3s to 1.5s
 
-    return () => clearTimeout(timeoutId);
-  }, [stockQuantities, shouldValidate, cartItems, validateCart]);
+  //   return () => clearTimeout(timeoutId);
+  // }, [stockQuantities, shouldValidate, cartItems, validateCart]);
 
   // App state change handler
   useEffect(() => {

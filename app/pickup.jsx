@@ -42,12 +42,12 @@ export default function Pickup() {
   } = useAuth();
   const { cartItems } = useCart(user);
   
-  // Add cart validation for critical pickup screen
+  // Add cart validation for critical pickup screen - DISABLED during order flow to prevent conflicts
   const { validateCart, quickValidateCart } = useCartValidation({
     validateOnFocus: false, // Disabled to prevent interference with payment flow
     validateOnAppActivation: false, // Disabled - handled by GlobalCartValidator with payment flow check
-    autoCorrect: true, // Automatically fix cart issues
-    showMessages: true, // Show user feedback about corrections
+    autoCorrect: false, // DISABLED - Don't auto-correct during order completion to prevent conflicts
+    showMessages: false, // DISABLED - Don't show messages during order flow to prevent confusion
     source: 'pickupScreen'
   });
   
