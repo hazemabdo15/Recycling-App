@@ -1063,7 +1063,8 @@
       "selectVoucher": "Select a voucher",
       "error": "Error",
       "couldNotDeduct": "Could not deduct points"
-    }
+    },
+    "toWallet": "{{count}} EGP have been added to your wallet"
   },
   "eWallet": {
     "title": "E-Wallet",

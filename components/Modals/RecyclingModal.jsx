@@ -405,7 +405,7 @@ const RecyclingModal = ({ visible, onClose, totalPoints, onPointsUpdated }) => {
         
         // Update local points immediately
         setLocalPoints(prev => prev - calculatedPoints);
-        setQrValue(`Cashback: ${amount} EGP redeemed!`);
+        setQrValue(t("recyclingModal.toWallet", { count: amount }));
         setQrVisible(true);
         setPointsChanged(true);
         setRedeemedType("money");

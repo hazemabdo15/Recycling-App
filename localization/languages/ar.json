@@ -1121,7 +1121,8 @@
       "selectVoucher": "اختر قسيمة",
       "error": "خطأ",
       "couldNotDeduct": "تعذر خصم النقاط"
-    }
+    },
+    "toWallet": " تم إضافة {{count}} جنيه مصري إلى محفظتك"
   },
   "eWallet": {
     "title": "المحفظة الإلكترونية",
