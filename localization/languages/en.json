@@ -1324,7 +1324,8 @@
       "reviewUpdated": "Review updated successfully!",
       "reviewSubmitted": "Review submitted successfully!",
       "reviewFailed": "Failed to submit review",
-      "reviewDeleted": "Review deleted successfully"
+      "reviewDeleted": "Review deleted successfully.",
+      "ready": "Ready for Delivery"
     },
     "ai": {
       "outOfStockNotAdded": "{{itemName}} is out of stock and was not added to cart.",

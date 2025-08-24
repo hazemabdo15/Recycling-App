@@ -1322,7 +1322,8 @@
       "reviewUpdated": "تم تحديث التقييم بنجاح!",
       "reviewSubmitted": "تم إرسال التقييم بنجاح!",
       "reviewFailed": "فشل في إرسال التقييم",
-      "reviewDeleted": "تم حذف التقييم بنجاح"
+      "reviewDeleted": "تم حذف التقييم بنجاح",
+      "ready": "جاهز للتوصيل"
     },
     "ai": {
       "outOfStockNotAdded": "{{itemName}} غير متوفر في المخزون ولم يتم إضافته إلى السلة.",
