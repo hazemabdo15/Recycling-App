@@ -336,6 +336,16 @@ export default function Pickup() {
     );
   }, [currentPhase, selectedAddress]);
 
+  // Debug order data changes
+  useEffect(() => {
+    console.log("INFO", "Order data changed:", {
+      hasOrderData: !!orderData,
+      orderId: orderData?._id || orderData?.data?._id,
+      orderStatus: orderData?.status,
+      currentPhase
+    });
+  }, [orderData, currentPhase]);
+
   // Animation effect for loading spinner in phase 3
   useEffect(() => {
     if (currentPhase === 3) {

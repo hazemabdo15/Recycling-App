@@ -50,9 +50,41 @@ const ReviewPhase = ({
   // Add processing lock to prevent multiple order creation
   const [isConfirmProcessing, setIsConfirmProcessing] = useState(false);
   const processingLockRef = useRef(false);
+  const cashOrderLockRef = useRef(false); // Separate lock for cash orders
+  const processingTimeoutRef = useRef(null);
 
   // Animation for loading spinner
   const spinValue = useRef(new Animated.Value(0)).current;
+
+  // Initialize processing states on mount
+  useEffect(() => {
+    console.log('[ReviewPhase] Component mounted, initializing processing states');
+    setIsCashOrderProcessing(false);
+    setIsConfirmProcessing(false);
+    processingLockRef.current = false;
+    cashOrderLockRef.current = false;
+    
+    // Clear any existing timeout
+    if (processingTimeoutRef.current) {
+      clearTimeout(processingTimeoutRef.current);
+      processingTimeoutRef.current = null;
+    }
+    
+    // Cleanup function to reset states on unmount
+    return () => {
+      console.log('[ReviewPhase] Component unmounting, resetting processing states');
+      setIsCashOrderProcessing(false);
+      setIsConfirmProcessing(false);
+      processingLockRef.current = false;
+      cashOrderLockRef.current = false;
+      
+      // Clear timeout on unmount
+      if (processingTimeoutRef.current) {
+        clearTimeout(processingTimeoutRef.current);
+        processingTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   // Helper function to get translated item names consistently
   const getTranslatedItemName = useCallback((item) => {
@@ -280,10 +312,14 @@ const ReviewPhase = ({
   }, [isAnyProcessing, spinValue]);
 
   const handlePaymentFlow = async (cartItemsArray, userData) => {
+    console.log('[ReviewPhase] handlePaymentFlow called with selectedPaymentMethod:', selectedPaymentMethod);
+    
     if (selectedPaymentMethod === 'cash') {
+      console.log('[ReviewPhase] Processing cash on delivery order');
       // For cash on delivery, create order directly without Stripe
       await handleCashOnDeliveryOrder();
     } else {
+      console.log('[ReviewPhase] Processing credit card payment');
       // For credit card, use the existing Stripe flow
       await processPayment({
         user,
@@ -321,44 +357,119 @@ const ReviewPhase = ({
   };
 
   const handleCashOnDeliveryOrder = async () => {
-    // Prevent multiple executions
-    if (isCashOrderProcessing || processingLockRef.current) {
+    // More detailed logging for debugging
+    console.log('[ReviewPhase] handleCashOnDeliveryOrder called - checking state:', {
+      isCashOrderProcessing,
+      cashOrderLockRef: cashOrderLockRef.current,
+      isConfirmProcessing
+    });
+    
+    // Prevent multiple executions using separate lock for cash orders
+    if (isCashOrderProcessing || cashOrderLockRef.current) {
       console.log('[ReviewPhase] Cash order already in progress, ignoring duplicate request');
       return;
     }
     
-    processingLockRef.current = true;
+    console.log('[ReviewPhase] Setting cash order processing locks...');
+    cashOrderLockRef.current = true;
     setIsCashOrderProcessing(true);
     setIsConfirmProcessing(true);
     
+    // Set a safety timeout to reset processing state if something goes wrong
+    processingTimeoutRef.current = setTimeout(() => {
+      console.log('[ReviewPhase] Safety timeout triggered, resetting processing states');
+      setIsCashOrderProcessing(false);
+      setIsConfirmProcessing(false);
+      cashOrderLockRef.current = false;
+    }, 10000); // 10 second timeout
+    
     try {
       console.log('[ReviewPhase] Creating cash order via unified service');
+      console.log('[ReviewPhase] Current state:', {
+        hasSelectedAddress: !!selectedAddress,
+        selectedAddressId: selectedAddress?._id,
+        hasUser: !!user,
+        userRole: user?.role,
+        hasOnConfirm: typeof onConfirm === "function"
+      });
+      
       // Use the unified order flow through onConfirm (which is createOrder from usePickupWorkflow)
       if (typeof onConfirm === "function") {
-        const order = await onConfirm({ paymentMethod: 'cash' });
+        const orderOptions = { 
+          paymentMethod: 'cash',
+          address: selectedAddress // Pass the address explicitly
+        };
+        console.log('[ReviewPhase] Calling onConfirm with options:', orderOptions);
+        
+        const order = await onConfirm(orderOptions);
+        
         console.log('[ReviewPhase] Cash order created successfully:', order);
+        console.log('[ReviewPhase] Order creation completed, workflow should handle phase transition');
+        
+        // Don't immediately reset states - let the workflow handle the transition
+        // Add a small delay to ensure the workflow state updates are processed
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // The workflow should handle navigation to confirmation phase
+        // No need to manually navigate here
+      } else {
+        throw new Error('onConfirm function is not available');
       }
     } catch (error) {
       console.error('[ReviewPhase] Cash order creation failed:', error);
+      
+      // More specific error messages
+      let errorMessage = "Failed to create order. Please try again.";
+      if (error.message.includes('address')) {
+        errorMessage = "Please select a delivery address and try again.";
+      } else if (error.message.includes('authentication') || error.message.includes('user')) {
+        errorMessage = "Authentication error. Please log in again.";
+      } else if (error.message.includes('cart') || error.message.includes('empty')) {
+        errorMessage = "Your cart is empty. Please add items before ordering.";
+      }
+      
       Alert.alert(
         "Order Creation Failed",
-        error.message || "Failed to create order. Please try again.",
+        errorMessage,
         [{ text: "OK" }]
       );
     } finally {
-      setIsCashOrderProcessing(false);
-      setIsConfirmProcessing(false);
-      processingLockRef.current = false;
+      // Clear the safety timeout
+      if (processingTimeoutRef.current) {
+        clearTimeout(processingTimeoutRef.current);
+        processingTimeoutRef.current = null;
+      }
+      
+      // Add delay before resetting states to prevent premature UI reset
+      setTimeout(() => {
+        setIsCashOrderProcessing(false);
+        setIsConfirmProcessing(false);
+        cashOrderLockRef.current = false;
+        console.log('[ReviewPhase] Cash order processing states reset');
+      }, 200);
     }
   };
 
   const handleRegularOrderFlow = (cartItemsArray, userData) => {
     if (typeof onConfirm === "function") {
-      onConfirm(cartItemsArray, userData);
+      // For regular flow (non-buyer users), just pass basic order options
+      const orderOptions = {
+        address: selectedAddress
+      };
+      console.log('[ReviewPhase] Calling onConfirm for regular flow with options:', orderOptions);
+      onConfirm(orderOptions);
     }
   };
 
   const handleConfirm = async () => {
+    // More detailed logging for debugging
+    console.log('[ReviewPhase] handleConfirm called - checking state:', {
+      isConfirmProcessing,
+      processingLockRef: processingLockRef.current,
+      isCashOrderProcessing,
+      selectedPaymentMethod
+    });
+    
     // Prevent multiple executions
     if (isConfirmProcessing || processingLockRef.current) {
       console.log('[ReviewPhase] Confirm already in progress, ignoring duplicate request');
@@ -376,9 +487,12 @@ const ReviewPhase = ({
       return;
     }
 
-    // Set processing lock early to prevent multiple executions
-    processingLockRef.current = true;
-    setIsConfirmProcessing(true);
+    // Only set main processing lock for non-cash flows to avoid conflicts
+    if (!shouldUsePayment(user) || selectedPaymentMethod !== 'cash') {
+      // Set processing lock early to prevent multiple executions
+      processingLockRef.current = true;
+      setIsConfirmProcessing(true);
+    }
 
     try {
       const cartItemsArray = Object.entries(cartItems).map(
@@ -456,10 +570,19 @@ const ReviewPhase = ({
         : null;
 
       console.log("[ReviewPhase] Prepared user data:", JSON.stringify(userData, null, 2));
+      console.log("[ReviewPhase] shouldUsePayment(user):", shouldUsePayment(user));
+      console.log("[ReviewPhase] selectedPaymentMethod:", selectedPaymentMethod);
+      console.log("[ReviewPhase] User role check:", {
+        userRole: user?.role,
+        isBuyerResult: isBuyer(user),
+        shouldUsePaymentResult: shouldUsePayment(user)
+      });
 
       if (shouldUsePayment(user)) {
+        console.log("[ReviewPhase] Calling handlePaymentFlow");
         await handlePaymentFlow(cartItemsArray, userData);
       } else {
+        console.log("[ReviewPhase] Calling handleRegularOrderFlow");
         handleRegularOrderFlow(cartItemsArray, userData);
       }
     } catch (error) {
@@ -470,8 +593,11 @@ const ReviewPhase = ({
         [{ text: "OK" }]
       );
     } finally {
-      setIsConfirmProcessing(false);
-      processingLockRef.current = false;
+      // Only reset main processing lock if it was set (not for cash orders)
+      if (!shouldUsePayment(user) || selectedPaymentMethod !== 'cash') {
+        setIsConfirmProcessing(false);
+        processingLockRef.current = false;
+      }
     }
   };
 

@@ -179,38 +179,41 @@ export const usePickupWorkflow = () => {
     // Allow passing address in orderOptions to override selectedAddress from state
     const addressToUse = orderOptions.address || selectedAddress;
     
-    console.log('Order creation attempt', { 
+    console.log('[Pickup Workflow] ==> Order creation attempt started', { 
       hasSelectedAddress: !!selectedAddress,
       hasAddressToUse: !!addressToUse,
       selectedAddressId: selectedAddress?._id,
       addressToUseId: addressToUse?._id,
       hasUser: !!user,
       userId: user?._id,
+      userRole: user?.role,
       hasCartItemDetails: !!cartItemDetails,
       cartItemCount: Object.keys(cartItemDetails || {}).length,
       orderOptions,
-      isLocked: orderCreationLockRef.current
+      isLocked: orderCreationLockRef.current,
+      timestamp: new Date().toISOString()
     });
 
     if (!addressToUse) {
       const errorMsg = 'Please select an address first';
-      console.error('Order creation failed - no address:', errorMsg);
+      console.error('[Pickup Workflow] Order creation failed - no address:', errorMsg);
       throw new Error(errorMsg);
     }
     
     if (!user) {
       const errorMsg = 'User authentication required';
-      console.error('Order creation failed - no user:', errorMsg);
+      console.error('[Pickup Workflow] Order creation failed - no user:', errorMsg);
       throw new Error(errorMsg);
     }
 
     if (!cartItemDetails || Object.keys(cartItemDetails).length === 0) {
       const errorMsg = 'Cart is empty - cannot create order';
-      console.error('Order creation failed - empty cart:', errorMsg);
+      console.error('[Pickup Workflow] Order creation failed - empty cart:', errorMsg);
       throw new Error(errorMsg);
     }
     
     // Set the lock to prevent concurrent executions
+    console.log('[Pickup Workflow] Setting order creation lock');
     orderCreationLockRef.current = true;
     
     // Enhanced cart validation before proceeding with order creation (only for buyer users)
@@ -267,34 +270,55 @@ export const usePickupWorkflow = () => {
       console.log('Order created, storing data', { 
         orderId: order._id || order?.data?._id, 
         hasItems: !!(order.items || order?.data?.items),
-        itemCount: (order.items || order?.data?.items)?.length
+        itemCount: (order.items || order?.data?.items)?.length,
+        fullOrder: order
       });
       
+      console.log('[Pickup Workflow] Setting order data:', order);
       setOrderData(order);
       
       // Only set phase to confirmation if this is NOT a credit card payment
       // (for credit card payments, the phase will be set by the deep link handler)
+      console.log('[Pickup Workflow] Order created, checking payment method for phase transition:', {
+        paymentMethod: orderOptions.paymentMethod,
+        shouldSetPhase: orderOptions.paymentMethod !== 'credit-card',
+        currentPhase,
+        orderId: order._id || order?.data?._id
+      });
+      
       if (orderOptions.paymentMethod !== 'credit-card') {
+        console.log('[Pickup Workflow] Setting current phase to 3 (confirmation)');
         setCurrentPhase(3);
+        
+        // Add delay to ensure state update is processed
+        await new Promise(resolve => setTimeout(resolve, 50));
+        console.log('[Pickup Workflow] Phase transition completed');
+      } else {
+        console.log('[Pickup Workflow] Skipping phase transition - credit card payment, deep link will handle');
       }
       
       // Clear saved state after successful order creation
       await workflowStateUtils.clearWorkflowState();
       
       // ✅ Return the complete order for external handlers
+      console.log('[Pickup Workflow] ==> Order creation completed successfully');
       return order;
     } catch (error) {
-      console.error('Order creation failed in workflow', { 
+      console.error('[Pickup Workflow] ==> Order creation failed', { 
         error: error.message,
+        stack: error.stack,
         hasSelectedAddress: !!selectedAddress,
         hasUser: !!user,
-        hasCartItems: !!cartItemDetails
+        hasCartItems: !!cartItemDetails,
+        timestamp: new Date().toISOString()
       });
       setError(error.message);
       throw error;
     } finally {
+      console.log('[Pickup Workflow] ==> Cleaning up order creation (finally block)');
       setLoading(false);
       orderCreationLockRef.current = false; // Reset lock when done
+      console.log('[Pickup Workflow] ==> Order creation cleanup completed');
     }
   }, [selectedAddress, user, cartItemDetails, currentPhase, stockQuantities]);
 

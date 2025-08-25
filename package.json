@@ -76,7 +76,8 @@
     "react-native-vector-icons": "^10.3.0",
     "react-native-web": "~0.20.0",
     "react-native-webview": "13.13.5",
-    "socket.io-client": "^4.8.1"
+    "socket.io-client": "^4.8.1",
+    "expo-dev-client": "~5.2.4"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
