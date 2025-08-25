@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useStock } from '../context/StockContext';
 import { addressService } from '../services/api/addresses';
@@ -21,6 +21,9 @@ export const usePickupWorkflow = () => {
   const [currentPhase, setCurrentPhase] = useState(1);
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [orderData, setOrderData] = useState(null);
+
+  // Add processing lock to prevent multiple order creation
+  const orderCreationLockRef = useRef(false);
 
   // Restore workflow state on mount (for deep link returns)
   useEffect(() => {
@@ -167,6 +170,12 @@ export const usePickupWorkflow = () => {
 
   // Enhanced createOrder using unified service with proper data handling
   const createOrder = useCallback(async (orderOptions = {}) => {
+    // Prevent multiple order creation attempts
+    if (orderCreationLockRef.current) {
+      console.log('[Pickup Workflow] Order creation already in progress, ignoring duplicate request');
+      return;
+    }
+    
     // Allow passing address in orderOptions to override selectedAddress from state
     const addressToUse = orderOptions.address || selectedAddress;
     
@@ -179,7 +188,8 @@ export const usePickupWorkflow = () => {
       userId: user?._id,
       hasCartItemDetails: !!cartItemDetails,
       cartItemCount: Object.keys(cartItemDetails || {}).length,
-      orderOptions
+      orderOptions,
+      isLocked: orderCreationLockRef.current
     });
 
     if (!addressToUse) {
@@ -199,6 +209,9 @@ export const usePickupWorkflow = () => {
       console.error('Order creation failed - empty cart:', errorMsg);
       throw new Error(errorMsg);
     }
+    
+    // Set the lock to prevent concurrent executions
+    orderCreationLockRef.current = true;
     
     // Enhanced cart validation before proceeding with order creation (only for buyer users)
     if (isBuyer(user)) {
@@ -222,6 +235,7 @@ export const usePickupWorkflow = () => {
           ? `Cart validation failed: ${validationResult.issues.map(i => i.message).join(', ')}`
           : 'Some items in your cart are no longer available';
           
+        orderCreationLockRef.current = false; // Reset lock on validation failure
         throw new Error(errorMessage);
       }
     } else {
@@ -280,6 +294,7 @@ export const usePickupWorkflow = () => {
       throw error;
     } finally {
       setLoading(false);
+      orderCreationLockRef.current = false; // Reset lock when done
     }
   }, [selectedAddress, user, cartItemDetails, currentPhase, stockQuantities]);
 

@@ -46,6 +46,10 @@ const ReviewPhase = ({
 
   const [isCashOrderProcessing, setIsCashOrderProcessing] = useState(false);
   const [deliveryFee, setDeliveryFee] = useState(0);
+  
+  // Add processing lock to prevent multiple order creation
+  const [isConfirmProcessing, setIsConfirmProcessing] = useState(false);
+  const processingLockRef = useRef(false);
 
   // Animation for loading spinner
   const spinValue = useRef(new Animated.Value(0)).current;
@@ -93,7 +97,7 @@ const ReviewPhase = ({
   const { isProcessing, processPayment, shouldUsePayment } = usePayment();
 
   // Helper to check if any processing is happening
-  const isAnyProcessing = isProcessing || isCashOrderProcessing;
+  const isAnyProcessing = isProcessing || isCashOrderProcessing || isConfirmProcessing;
 
   useEffect(() => {
     console.log(
@@ -317,8 +321,16 @@ const ReviewPhase = ({
   };
 
   const handleCashOnDeliveryOrder = async () => {
-    if (isCashOrderProcessing) return;
+    // Prevent multiple executions
+    if (isCashOrderProcessing || processingLockRef.current) {
+      console.log('[ReviewPhase] Cash order already in progress, ignoring duplicate request');
+      return;
+    }
+    
+    processingLockRef.current = true;
     setIsCashOrderProcessing(true);
+    setIsConfirmProcessing(true);
+    
     try {
       console.log('[ReviewPhase] Creating cash order via unified service');
       // Use the unified order flow through onConfirm (which is createOrder from usePickupWorkflow)
@@ -335,6 +347,8 @@ const ReviewPhase = ({
       );
     } finally {
       setIsCashOrderProcessing(false);
+      setIsConfirmProcessing(false);
+      processingLockRef.current = false;
     }
   };
 
@@ -345,6 +359,12 @@ const ReviewPhase = ({
   };
 
   const handleConfirm = async () => {
+    // Prevent multiple executions
+    if (isConfirmProcessing || processingLockRef.current) {
+      console.log('[ReviewPhase] Confirm already in progress, ignoring duplicate request');
+      return;
+    }
+    
     if (!cartItems || typeof cartItems !== "object") {
       console.error("[ReviewPhase] Invalid cartItems format:", cartItems);
       return;
@@ -356,86 +376,102 @@ const ReviewPhase = ({
       return;
     }
 
-    const cartItemsArray = Object.entries(cartItems).map(
-      ([categoryId, quantity]) => {
-        let realItem = allItems.find((item) => item._id === categoryId);
+    // Set processing lock early to prevent multiple executions
+    processingLockRef.current = true;
+    setIsConfirmProcessing(true);
 
-        if (!realItem) {
-          realItem = allItems.find((item) => {
-            const normalizedItem = normalizeItemData(item);
-            return (
-              normalizedItem.categoryId === categoryId ||
-              String(normalizedItem.id) === String(categoryId)
-            );
-          });
+    try {
+      const cartItemsArray = Object.entries(cartItems).map(
+        ([categoryId, quantity]) => {
+          let realItem = allItems.find((item) => item._id === categoryId);
+
+          if (!realItem) {
+            realItem = allItems.find((item) => {
+              const normalizedItem = normalizeItemData(item);
+              return (
+                normalizedItem.categoryId === categoryId ||
+                String(normalizedItem.id) === String(categoryId)
+              );
+            });
+          }
+
+          if (realItem) {
+            const normalizedItem = normalizeItemData(realItem);
+            const measurementUnit =
+              typeof normalizedItem.measurement_unit === "string"
+                ? normalizedItem.measurement_unit === "KG"
+                  ? 1
+                  : 2
+                : Number(normalizedItem.measurement_unit);
+
+            const translatedItemName = getTranslatedItemName(normalizedItem);
+
+            return {
+              _id: normalizedItem._id || normalizedItem.id || categoryId,
+              categoryId: categoryId,
+              quantity: quantity,
+              name: translatedItemName,
+              categoryName: normalizedItem.categoryName || "Unknown Category",
+              measurement_unit: measurementUnit,
+              points: normalizedItem.points || 10,
+              price: normalizedItem.price || 5.0,
+              image:
+                normalizedItem.image ||
+                `${(normalizedItem.name || normalizedItem.itemName || "item")
+                  .toLowerCase()
+                  .replace(/\s+/g, "-")}.png`,
+            };
+          } else {
+            return {
+              _id: categoryId,
+              categoryId: categoryId,
+              quantity: quantity,
+              name: `Recycling Item`,
+              categoryName: "Unknown Category",
+              measurement_unit: 1,
+              points: 10,
+              price: 5.0,
+              image: `recycling-item.png`,
+            };
+          }
         }
+      );
 
-        if (realItem) {
-          const normalizedItem = normalizeItemData(realItem);
-          const measurementUnit =
-            typeof normalizedItem.measurement_unit === "string"
-              ? normalizedItem.measurement_unit === "KG"
-                ? 1
-                : 2
-              : Number(normalizedItem.measurement_unit);
+      const userData = user
+        ? {
+            userId: user._id || user.userId,
+            phoneNumber: user.phoneNumber || user.phone || "",
+            userName: user.name || user.userName || user.fullName || "User",
+            email: user.email || "",
+            imageUrl:
+              (typeof user.imageUrl === "string" &&
+                user.imageUrl &&
+                user.imageUrl.trim()) ||
+              (typeof user.image === "string" &&
+                user.image &&
+                user.image.trim()) ||
+              "https://via.placeholder.com/150/0000FF/808080?text=User",
+            role: user.role,
+          }
+        : null;
 
-          const translatedItemName = getTranslatedItemName(normalizedItem);
+      console.log("[ReviewPhase] Prepared user data:", JSON.stringify(userData, null, 2));
 
-          return {
-            _id: normalizedItem._id || normalizedItem.id || categoryId,
-            categoryId: categoryId,
-            quantity: quantity,
-            name: translatedItemName,
-            categoryName: normalizedItem.categoryName || "Unknown Category",
-            measurement_unit: measurementUnit,
-            points: normalizedItem.points || 10,
-            price: normalizedItem.price || 5.0,
-            image:
-              normalizedItem.image ||
-              `${(normalizedItem.name || normalizedItem.itemName || "item")
-                .toLowerCase()
-                .replace(/\s+/g, "-")}.png`,
-          };
-        } else {
-          return {
-            _id: categoryId,
-            categoryId: categoryId,
-            quantity: quantity,
-            name: `Recycling Item`,
-            categoryName: "Unknown Category",
-            measurement_unit: 1,
-            points: 10,
-            price: 5.0,
-            image: `recycling-item.png`,
-          };
-        }
+      if (shouldUsePayment(user)) {
+        await handlePaymentFlow(cartItemsArray, userData);
+      } else {
+        handleRegularOrderFlow(cartItemsArray, userData);
       }
-    );
-
-    const userData = user
-      ? {
-          userId: user._id || user.userId,
-          phoneNumber: user.phoneNumber || user.phone || "",
-          userName: user.name || user.userName || user.fullName || "User",
-          email: user.email || "",
-          imageUrl:
-            (typeof user.imageUrl === "string" &&
-              user.imageUrl &&
-              user.imageUrl.trim()) ||
-            (typeof user.image === "string" &&
-              user.image &&
-              user.image.trim()) ||
-            "https://via.placeholder.com/150/0000FF/808080?text=User",
-          role: user.role,
-        }
-      : null;
-
-    console.log("[ReviewPhase] Prepared user data:", JSON.stringify(userData, null, 2));
-
-    if (shouldUsePayment(user)) {
-      await handlePaymentFlow(cartItemsArray, userData);
-    } else {
-      handleRegularOrderFlow(cartItemsArray, userData);
+    } catch (error) {
+      console.error('[ReviewPhase] Error in handleConfirm:', error);
+      Alert.alert(
+        "Error",
+        error.message || "An error occurred while processing your order.",
+        [{ text: "OK" }]
+      );
+    } finally {
+      setIsConfirmProcessing(false);
+      processingLockRef.current = false;
     }
   };
 

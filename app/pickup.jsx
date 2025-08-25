@@ -59,6 +59,7 @@ export default function Pickup() {
   
   // Add flag to prevent multiple deep link processing
   const isProcessingPaymentRef = useRef(false);
+  const deepLinkTimeoutRef = useRef(null);
 
   // Animation for loading spinner  
   const orderSpinValue = useRef(new Animated.Value(0)).current;
@@ -164,98 +165,111 @@ export default function Pickup() {
           return;
         }
         
-        isProcessingPaymentRef.current = true;
+        // Clear any existing timeout
+        if (deepLinkTimeoutRef.current) {
+          clearTimeout(deepLinkTimeoutRef.current);
+        }
         
-        try {
-          setCreatingOrder(true);
-          
-          // ✅ Immediately set to confirmation phase for better UX
-          if (setCurrentPhase) {
-            setCurrentPhase(3);
+        // Add small delay to prevent race conditions with button clicks
+        deepLinkTimeoutRef.current = setTimeout(async () => {
+          if (isProcessingPaymentRef.current) {
+            console.log("Payment processing started during timeout, ignoring");
+            return;
           }
+          
+          isProcessingPaymentRef.current = true;
+          
+          try {
+            setCreatingOrder(true);
+            
+            // ✅ Immediately set to confirmation phase for better UX
+            if (setCurrentPhase) {
+              setCurrentPhase(3);
+            }
 
-          // ✅ Check if we have address in workflow state, if not try to restore from previous state
-          let addressToUse = selectedAddress;
-          if (!addressToUse) {
-            console.warn(
-              "No selected address found in deep link handler, attempting to restore from saved workflow state"
-            );
-            // Try to restore from saved workflow state
-            const savedState = await workflowStateUtils.restoreWorkflowState();
-            if (savedState && savedState.selectedAddress) {
-              console.log("Found saved address in workflow state:", savedState.selectedAddress);
-              addressToUse = savedState.selectedAddress;
-              setSelectedAddress(savedState.selectedAddress);
-            } else {
-              console.error("No address found in workflow state either");
-              // ✅ Fallback: Try to get the most recently created address
-              if (workflowHook && workflowHook.addresses && workflowHook.addresses.length > 0) {
-                const mostRecentAddress = workflowHook.addresses[workflowHook.addresses.length - 1];
-                console.log("Using most recent address as fallback:", mostRecentAddress);
-                addressToUse = mostRecentAddress;
-                setSelectedAddress(mostRecentAddress);
+            // ✅ Check if we have address in workflow state, if not try to restore from previous state
+            let addressToUse = selectedAddress;
+            if (!addressToUse) {
+              console.warn(
+                "No selected address found in deep link handler, attempting to restore from saved workflow state"
+              );
+              // Try to restore from saved workflow state
+              const savedState = await workflowStateUtils.restoreWorkflowState();
+              if (savedState && savedState.selectedAddress) {
+                console.log("Found saved address in workflow state:", savedState.selectedAddress);
+                addressToUse = savedState.selectedAddress;
+                setSelectedAddress(savedState.selectedAddress);
               } else {
-                throw new Error("Please select your delivery address and try again");
+                console.error("No address found in workflow state either");
+                // ✅ Fallback: Try to get the most recently created address
+                if (workflowHook && workflowHook.addresses && workflowHook.addresses.length > 0) {
+                  const mostRecentAddress = workflowHook.addresses[workflowHook.addresses.length - 1];
+                  console.log("Using most recent address as fallback:", mostRecentAddress);
+                  addressToUse = mostRecentAddress;
+                  setSelectedAddress(mostRecentAddress);
+                } else {
+                  throw new Error("Please select your delivery address and try again");
+                }
               }
             }
-          }
 
-          // ✅ Single order creation call through unified workflow
-          // Only pass paymentMethod if user is a buyer
-          let orderOptions = {
-            paymentStatus: "success",
-            paymentIntentId,
-            address: addressToUse, // Pass the address directly
-          };
-          if (isBuyer(user)) {
-            orderOptions = {
-              ...orderOptions,
-              paymentMethod: "credit-card",
+            // ✅ Single order creation call through unified workflow
+            // Only pass paymentMethod if user is a buyer
+            let orderOptions = {
+              paymentStatus: "success",
+              paymentIntentId,
+              address: addressToUse, // Pass the address directly
             };
-          } else {
-            // Remove paymentMethod if present for customers
-            if (orderOptions.paymentMethod) delete orderOptions.paymentMethod;
-          }
-          console.log('[Pickup] Creating order with options:', orderOptions, 'User role:', user?.role);
-          const orderResult = await createOrder(orderOptions);
+            if (isBuyer(user)) {
+              orderOptions = {
+                ...orderOptions,
+                paymentMethod: "credit-card",
+              };
+            } else {
+              // Remove paymentMethod if present for customers
+              if (orderOptions.paymentMethod) delete orderOptions.paymentMethod;
+            }
+            console.log('[Pickup] Creating order with options:', orderOptions, 'User role:', user?.role);
+            const orderResult = await createOrder(orderOptions);
 
-          console.log("Deep link order created", {
-            orderId: orderResult?._id || orderResult?.data?._id,
-            hasOrderData: !!orderResult,
-          });
+            console.log("Deep link order created", {
+              orderId: orderResult?._id || orderResult?.data?._id,
+              hasOrderData: !!orderResult,
+            });
 
-          // ✅ Order data should now be properly stored in workflow hook
-          // Phase is already set to 3 at the beginning of this block
-        } catch (error) {
-          console.error("Deep link order failed", { error: error.message });
+            // ✅ Order data should now be properly stored in workflow hook
+            // Phase is already set to 3 at the beginning of this block
+          } catch (error) {
+            console.error("Deep link order failed", { error: error.message });
 
-          // Enhanced error handling for specific cases
-          if (error.message.includes("Please select an address first")) {
-            Alert.alert(
-              "Address Required",
-              "Please select your delivery address and try again.",
-              [
-                {
-                  text: "Select Address",
-                  onPress: () => {
-                    if (setCurrentPhase) {
-                      setCurrentPhase(1); // Go back to address selection
-                    }
+            // Enhanced error handling for specific cases
+            if (error.message.includes("Please select an address first")) {
+              Alert.alert(
+                "Address Required",
+                "Please select your delivery address and try again.",
+                [
+                  {
+                    text: "Select Address",
+                    onPress: () => {
+                      if (setCurrentPhase) {
+                        setCurrentPhase(1); // Go back to address selection
+                      }
+                    },
                   },
-                },
-              ]
-            );
-          } else {
-            Alert.alert(
-              "Order Status Unclear",
-              "There was an issue processing your order. Please check your order history.",
-              [{ text: "OK" }]
-            );
+                ]
+              );
+            } else {
+              Alert.alert(
+                "Order Status Unclear",
+                "There was an issue processing your order. Please check your order history.",
+                [{ text: "OK" }]
+              );
+            }
+          } finally {
+            setCreatingOrder(false);
+            isProcessingPaymentRef.current = false; // Reset the flag
           }
-        } finally {
-          setCreatingOrder(false);
-          isProcessingPaymentRef.current = false; // Reset the flag
-        }
+        }, 300); // Small delay to prevent race conditions
       } else if (
         event.url.includes("canceled=true") ||
         event.url.includes("cancelled=true")
@@ -431,7 +445,13 @@ export default function Pickup() {
   }, [authError, dialogShown, isFocused]);
 
   useEffect(() => {
-    return () => reset();
+    return () => {
+      reset();
+      // Cleanup timeout if component unmounts
+      if (deepLinkTimeoutRef.current) {
+        clearTimeout(deepLinkTimeoutRef.current);
+      }
+    };
   }, [reset]);
 
   if (authLoading || authContextLoading) {
