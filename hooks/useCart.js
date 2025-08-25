@@ -2,6 +2,7 @@
 import { useStock } from '../context/StockContext';
 import { validateCartOperation } from '../utils/cartStockValidation';
 import { calculateQuantity, createCartItem, getIncrementStep, normalizeItemData } from '../utils/cartUtils';
+import logger from '../utils/logger';
 import { isBuyer } from '../utils/roleUtils';
 import { useAllItems } from './useAPI';
 
@@ -26,7 +27,6 @@ export const useCart = (user = null) => {
     loading,
     error,
     removingItems,
-    debouncedCartManager,
   } = useCartContext();
 
   // Get real-time stock data with fallback support
@@ -148,6 +148,10 @@ export const useCart = (user = null) => {
         currentQuantity === 0 ? processedItem : null // Pass item data for new items
       );
       
+      if (result && result.success) {
+        logger.success('Quantity increased successfully', { itemId: _id, newQuantity }, 'CART');
+      }
+      
       if (result && !result.success && result.reason === 'Operation already pending') {
         console.log('⏸️ [useCart] Update skipped - operation already pending');
         return;
@@ -186,8 +190,13 @@ export const useCart = (user = null) => {
     try {
       if (newQuantity <= 0) {
         await handleRemoveFromCart(_id);
+        logger.success('Item removed from cart (quantity decreased to 0)', { itemId: _id }, 'CART');
       } else {
         const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit, 'user-interaction');
+        
+        if (result && result.success) {
+          logger.success('Quantity decreased successfully', { itemId: _id, newQuantity }, 'CART');
+        }
 
         if (result && !result.success && result.reason === 'Operation already pending') {
           console.log('⏸️ [useCart] Update skipped - operation already pending');
@@ -344,6 +353,11 @@ export const useCart = (user = null) => {
         await handleAddSingleItem(cartItem);
       } else {
         const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit, 'rapid-updates');
+        
+        if (result && result.success) {
+          logger.success('Rapid quantity update succeeded', { itemId: _id, newQuantity }, 'CART');
+        }
+        
         if (result && !result.success && result.reason === 'Operation already pending') {
           console.log('⏸️ [useCart] Fast update skipped - operation already pending');
           return;
@@ -377,8 +391,13 @@ export const useCart = (user = null) => {
     try {
       if (newQuantity <= 0) {
         await handleRemoveFromCart(_id);
+        logger.success('Item removed from cart (rapid decrease to 0)', { itemId: _id }, 'CART');
       } else {
         const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit, 'rapid-updates');
+        
+        if (result && result.success) {
+          logger.success('Rapid quantity decrease succeeded', { itemId: _id, newQuantity }, 'CART');
+        }
         
         if (result && !result.success && result.reason === 'Operation already pending') {
           console.log('⏸️ [useCart] Fast decrease skipped - operation already pending');
@@ -402,6 +421,7 @@ export const useCart = (user = null) => {
     if (newQuantity <= 0) {
       console.log('useCart handleSetQuantity: removing item (quantity <= 0)');
       await handleRemoveFromCart(_id);
+      logger.success('Item removed from cart (set quantity to 0)', { itemId: _id }, 'CART');
       return { success: true };
     }
     
@@ -469,6 +489,11 @@ export const useCart = (user = null) => {
         console.log('useCart handleSetQuantity: updating existing item quantity');
         const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit, 'user-interaction');
         console.log('useCart handleSetQuantity: handleUpdateQuantity result:', result);
+        
+        if (result && result.success) {
+          logger.success('Set quantity succeeded', { itemId: _id, newQuantity }, 'CART');
+        }
+        
         return result;
       }
     } catch (error) {
@@ -487,11 +512,6 @@ export const useCart = (user = null) => {
     return handleBatchUpdate(itemId, quantity, measurementUnit);
   };
 
-  // NEW: Force sync all pending operations
-  const syncPendingOperations = async () => {
-    return debouncedCartManager.syncAll();
-  };
-
   return {
     cartItems,
     cartItemDetails,
@@ -507,7 +527,6 @@ export const useCart = (user = null) => {
     handleAddToCart,
     handleAIResults, // NEW: For AI voice modal
     batchUpdateCart, // NEW: For batch operations
-    syncPendingOperations, // NEW: Force sync pending operations
     fetchBackendCart,
     testConnectivity,
     testMinimalPostRequest,
@@ -516,6 +535,5 @@ export const useCart = (user = null) => {
     loading,
     error,
     removingItems,
-    debouncedCartManager, // NEW: Expose manager for advanced usage
   };
 };

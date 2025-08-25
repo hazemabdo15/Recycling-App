@@ -100,6 +100,7 @@ const ItemCard = ({
         disableDecrease={quantity === 0}
         maxReached={showStockLogic ? maxReached : false}
         outOfStock={showStockLogic ? outOfStock : false}
+        componentKey={item._id}
       />
     </AnimatedListItem>
   );
@@ -225,7 +226,7 @@ const getItemCardComponentStyles = (colors) => StyleSheet.create({
 });
 
 export default React.memo(ItemCard, (prevProps, nextProps) => {
-  // Custom comparison to prevent unnecessary re-renders
+  // Enhanced comparison to prevent unnecessary re-renders and state cross-contamination
   return (
     prevProps.item._id === nextProps.item._id &&
     prevProps.quantity === nextProps.quantity &&
@@ -233,6 +234,11 @@ export default React.memo(ItemCard, (prevProps, nextProps) => {
     prevProps.pendingAction === nextProps.pendingAction &&
     prevProps.user?.role === nextProps.user?.role &&
     // Compare item quantities for stock changes
-    prevProps.item.quantity === nextProps.item.quantity
+    prevProps.item.quantity === nextProps.item.quantity &&
+    // Compare item names to prevent translation changes affecting other items
+    prevProps.item.name === nextProps.item.name &&
+    // Add more specific checks
+    prevProps.maxReached === nextProps.maxReached &&
+    prevProps.outOfStock === nextProps.outOfStock
   );
 });

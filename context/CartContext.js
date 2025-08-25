@@ -1,19 +1,17 @@
 ﻿import { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { AppState } from 'react-native';
 import { categoriesAPI } from "../services/api";
 import {
-    addItemToCart,
-    clearCart as apiClearCart,
-    clearAuthData,
-    getCart,
-    getSessionId,
-    removeItemFromCart,
-    testBackendConnectivity,
-    testMinimalPost,
-    updateCartItem,
+  addItemToCart,
+  clearCart as apiClearCart,
+  clearAuthData,
+  getCart,
+  getSessionId,
+  testBackendConnectivity,
+  testMinimalPost,
+  updateCartItem,
 } from "../services/api/cart.js";
 import { createCartItem, getCartKey, normalizeItemData, validateQuantity } from "../utils/cartUtils";
-import { debouncedCartManager } from "../utils/debouncedCartOperations";
+import { simpleCartManager } from "../utils/debouncedCartOperations";
 import logger from '../utils/logger';
 import { useAuth } from "./AuthContext";
 
@@ -31,19 +29,6 @@ export const CartProvider = ({ children }) => {
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
   const [cartItemDetails, setCartItemDetails] = useState({});
-
-  // App state management for syncing pending operations
-  useEffect(() => {
-    const handleAppStateChange = (nextAppState) => {
-      if (nextAppState === 'background' && debouncedCartManager.hasPendingOperations()) {
-        logger.cart('App going to background, syncing pending operations');
-        debouncedCartManager.syncAll();
-      }
-    };
-    
-    const subscription = AppState.addEventListener('change', handleAppStateChange);
-    return () => subscription?.remove();
-  }, []);
 
   useEffect(() => {
     let didCancel = false;
@@ -222,131 +207,69 @@ export const CartProvider = ({ children }) => {
       return { success: false, error: err.message };
     }
 
-    const itemKey = cartItem._id;
-    const optimisticUpdate = { ...cartItems };
-    const optimisticDetails = { ...cartItemDetails };
-    
-    optimisticUpdate[itemKey] = cartItem.quantity;
-    optimisticDetails[itemKey] = cartItem;
-
-    setCartItems(optimisticUpdate);
-    setCartItemDetails(optimisticDetails);
-
     try {
-      // Use updateCartItem instead of addItemToCart for consistency
-      // This ensures all cart operations use absolute quantity setting rather than incremental adding
-      const result = await updateCartItem(cartItem, cartItem.quantity, isLoggedIn, cartItem.measurement_unit);
-
-      if (result.items && Array.isArray(result.items)) {
-        const itemsObj = {};
-        const itemDetailsObj = {};
-        
-        for (const backendItem of result.items) {
-          const backendItemKey = getCartKey(backendItem);
-          itemsObj[backendItemKey] = backendItem.quantity;
-          itemDetailsObj[backendItemKey] = backendItem;
-        }
-        
-        setCartItems(itemsObj);
-        setCartItemDetails(itemDetailsObj);
-      } else {
-
-        console.log('[CartContext] Backend add successful, keeping optimistic update');
-      }
+      // Direct API call - add item to cart
+      const result = await addItemToCart(cartItem, isLoggedIn);
+      
+      // Refresh cart from backend to get accurate state
+      await refreshCart();
       
       setError(null);
       return { success: true, result };
     } catch (err) {
-
-      setCartItems(cartItems);
-      setCartItemDetails(cartItemDetails);
       setError(err.message || "Failed to add item");
       return { success: false, error: err.message };
     }
   };
 
   const handleAddToCart = async (itemOrItems) => {
-    const items = Array.isArray(itemOrItems) ? itemOrItems : [itemOrItems];
-    const normalizedItems = items.map(normalizeItemData);
-    try {
-      normalizedItems.forEach(validateQuantity);
-    } catch (err) {
-      setError(err.message);
-      return { success: false, error: err.message };
-    }
-    try {
-      const currentBackendCart = await getCart(isLoggedIn);
-      const actualCartItems = {};
-      (currentBackendCart.items || []).forEach((item) => {
-        const itemKey = getCartKey(item);
-        actualCartItems[itemKey] = item.quantity;
-      });
-      setCartItems(actualCartItems);
-      const itemsToMerge = {};
-      normalizedItems.forEach((item) => {
-        const itemKey = getCartKey(item);
-        if (itemsToMerge[itemKey]) {
-          itemsToMerge[itemKey].quantity += item.quantity;
-        } else {
-          itemsToMerge[itemKey] = { ...item };
-        }
-      });
-      const optimisticUpdate = { ...actualCartItems };
-      Object.values(itemsToMerge).forEach((item) => {
-        const itemKey = getCartKey(item);
-        const currentQuantity = actualCartItems[itemKey] || 0;
-        const newQuantity = currentQuantity + item.quantity;
-        optimisticUpdate[itemKey] = newQuantity;
-      });
-      setCartItems(optimisticUpdate);
-      const results = [];
-      for (const mergedItem of Object.values(itemsToMerge)) {
-        const itemKey = getCartKey(mergedItem);
-        const actualCurrentQuantity = actualCartItems[itemKey] || 0;
-        if (actualCurrentQuantity > 0) {
-          const newTotalQuantity = actualCurrentQuantity + mergedItem.quantity;
+    setLoading(true);
+    setError(null);
 
-          const result = await updateCartItem(
-            mergedItem,
-            newTotalQuantity,
-            isLoggedIn,
-            mergedItem.measurement_unit
-          );
-          results.push(result);
+    try {
+      const items = Array.isArray(itemOrItems) ? itemOrItems : [itemOrItems];
+      const normalizedItems = items.map(normalizeItemData);
+      
+      // Validate items
+      normalizedItems.forEach(validateQuantity);
+
+      // Add items directly without optimistic updates
+      for (const item of normalizedItems) {
+        logger.cart('Adding item to cart directly', { itemId: item._id, quantity: item.quantity });
+        
+        const itemKey = item._id;
+        const currentQuantity = cartItems[itemKey] || 0;
+        
+        if (currentQuantity > 0) {
+          // Update existing item
+          const newQuantity = currentQuantity + item.quantity;
+          await updateCartItem(item, newQuantity, isLoggedIn, item.measurement_unit);
         } else {
-          const result = await addItemToCart(mergedItem, isLoggedIn);
-          results.push(result);
+          // Add new item
+          await addItemToCart(item, isLoggedIn);
         }
       }
-      const finalCart = await getCart(isLoggedIn);
-      const finalItemsObj = {};
-      const finalItemDetailsObj = {};
-      (finalCart.items || []).forEach((backendItem) => {
-        const itemKey = getCartKey(backendItem);
-        finalItemsObj[itemKey] = backendItem.quantity;
-        finalItemDetailsObj[itemKey] = backendItem;
-      });
-      setCartItems(finalItemsObj);
-      setCartItemDetails(finalItemDetailsObj);
-      setError(null);
+
+      // Refresh cart from backend to get the latest state
+      await refreshCart();
+      
+      logger.success('Items added to cart successfully', { count: normalizedItems.length }, 'CART');
+      return { success: true };
+
     } catch (err) {
-      try {
-        const revertCart = await getCart(isLoggedIn);
-        const revertItemsObj = {};
-        const revertItemDetailsObj = {};
-        (revertCart.items || []).forEach((item) => {
-          const itemKey = getCartKey(item);
-          revertItemsObj[itemKey] = item.quantity;
-          revertItemDetailsObj[itemKey] = item;
-        });
-        setCartItems(revertItemsObj);
-        setCartItemDetails(revertItemDetailsObj);
-      } catch (_revertErr) {
-        setCartItems({});
-        setCartItemDetails({});
-      }
+      logger.cart('Failed to add items to cart', { error: err.message }, 'ERROR');
       setError(err.message || "Failed to add items");
+      
+      // Refresh cart to ensure consistency
+      try {
+        await refreshCart();
+      } catch (refreshError) {
+        logger.cart('Failed to refresh cart after error', { error: refreshError.message }, 'ERROR');
+      }
+      
       throw err;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -357,227 +280,148 @@ export const CartProvider = ({ children }) => {
     context = 'user-interaction',
     itemData = null
   ) => {
-    let itemDetails = cartItemDetails[itemId];
-    
-    // If item doesn't exist in cart yet, create it from provided itemData
-    if (!itemDetails && itemData) {
-      logger.cart('Creating new item entry for update operation', { itemId, quantity });
-      
-      // Create cart item from provided data
-      const cartItem = createCartItem(itemData, quantity);
-      itemDetails = cartItem;
-      
-      // Add to optimistic state immediately
-      const optimisticUpdate = { ...cartItems };
-      const optimisticDetails = { ...cartItemDetails };
-      
-      optimisticUpdate[itemId] = quantity;
-      optimisticDetails[itemId] = cartItem;
-      
-      setCartItems(optimisticUpdate);
-      setCartItemDetails(optimisticDetails);
-    } else if (!itemDetails) {
-      return { success: false, error: "Item details not found in cart and no itemData provided" };
-    }
-
-    // Determine operation strategy
-    const strategy = context === 'ai-bulk' || context === 'bulk-import' ? 'batch-save' : 'debounced';
-
-    if (strategy === 'batch-save') {
-      // Use batch save for bulk operations
-      return handleBatchUpdate(itemId, quantity, measurementUnit);
-    }
-
-    // DEBOUNCED APPROACH: For user interactions
-    const previousCartItems = { ...cartItems };
-    const previousCartDetails = { ...cartItemDetails };
-
-    // Immediate optimistic update (if not already done above)
-    if (cartItems[itemId] !== quantity) {
-      const optimisticUpdate = { ...cartItems };
-      const optimisticDetailsUpdate = { ...cartItemDetails };
-      optimisticUpdate[itemId] = quantity;
-      optimisticDetailsUpdate[itemId] = { ...itemDetails, quantity };
-      
-      setCartItems(optimisticUpdate);
-      setCartItemDetails(optimisticDetailsUpdate);
-    }
-
-    // Error callback for rollback
-    const onError = (prevState, error) => {
-      setCartItems(prevState);
-      setCartItemDetails(previousCartDetails);
-      setError(error.message || "Failed to update item");
-      logger.cart('Rolled back optimistic update', { itemId, error: error.message });
-    };
-
-    // Use debounced cart manager
-    debouncedCartManager.updateQuantity(
-      itemId,
-      itemDetails,
-      quantity,
-      measurementUnit,
-      isLoggedIn,
-      previousCartItems,
-      onError
-    );
-
-    return { success: true };
-  };
-  const handleBatchUpdate = async (itemId, quantity, measurementUnit) => {
-    // Convert current cart state to array format for batch save
-    const cartArray = Object.values(cartItemDetails).map(item => ({
-      ...item,
-      quantity: cartItems[item._id] === undefined ? item.quantity : cartItems[item._id]
-    }));
-
-    // Update the specific item in the array
-    const itemIndex = cartArray.findIndex(item => item._id === itemId);
-    if (itemIndex !== -1) {
-      cartArray[itemIndex].quantity = quantity;
-    }
-
-    const previousCartItems = { ...cartItems };
-    const previousCartDetails = { ...cartItemDetails };
-
-    // Optimistic update
-    const optimisticUpdate = { ...cartItems };
-    optimisticUpdate[itemId] = quantity;
-    setCartItems(optimisticUpdate);
-
-    // Error callback for rollback
-    const onError = (prevState, error) => {
-      setCartItems(prevState);
-      setCartItemDetails(previousCartDetails);
-      setError(error.message || "Failed to save cart");
-    };
+    setLoading(true);
+    setError(null);
 
     try {
-      await debouncedCartManager.batchSave(cartArray, isLoggedIn, previousCartItems, onError);
+      let itemDetails = cartItemDetails[itemId];
+      
+      // If item doesn't exist in cart yet, create it from provided itemData
+      if (!itemDetails && itemData) {
+        logger.cart('Creating new item entry for update operation', { itemId, quantity });
+        const cartItem = createCartItem(itemData, quantity);
+        itemDetails = cartItem;
+      } else if (!itemDetails) {
+        throw new Error("Item details not found in cart and no itemData provided");
+      }
+
+      // Store original state for potential rollback
+      const originalQuantity = cartItems[itemId] || 0;
+
+      // Optimistic update for immediate UI feedback
+      const optimisticUpdate = { ...cartItems };
+      optimisticUpdate[itemId] = quantity;
+      setCartItems(optimisticUpdate);
+
+      // Define rollback function
+      const rollbackOptimisticUpdate = () => {
+        setCartItems(prevItems => ({
+          ...prevItems,
+          [itemId]: originalQuantity
+        }));
+        refreshCart(); // Sync with backend to be safe
+      };
+
+      // Use SimpleCartManager for background sync with optimistic update
+      logger.cart('Updating item quantity with optimistic update', { itemId, quantity, measurementUnit });
+      
+      await simpleCartManager.updateQuantity(
+        itemId,
+        itemDetails,
+        quantity,
+        measurementUnit || itemDetails.measurement_unit,
+        isLoggedIn,
+        null, // onOptimisticUpdate already done above
+        rollbackOptimisticUpdate // onError rollback
+      );
+      
+      logger.success('Item quantity updated successfully', { itemId, quantity }, 'CART');
+      return { success: true };
+
+    } catch (error) {
+      logger.cart('Failed to update item quantity', {
+        itemId,
+        error: error.message
+      }, 'ERROR');
+      
+      setError(error.message || "Failed to update item");
+      return { success: false, error: error.message };
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handleBatchUpdate = async (itemId, quantity, measurementUnit) => {
+    try {
+      // Direct API call with item update
+      await updateCartItem(itemId, quantity, measurementUnit, isLoggedIn);
+      
+      // Refresh cart from backend to get accurate state
+      await refreshCart();
+      
+      setError(null);
       return { success: true };
     } catch (error) {
+      setError(error.message || "Failed to update item");
       return { success: false, error: error.message };
     }
   };
 
   // NEW: Add AI Results handler for bulk operations
   const handleAddAIResults = async (aiItems) => {
-    const previousCartItems = { ...cartItems };
-    const previousCartDetails = { ...cartItemDetails };
-
     try {
-      // Immediate optimistic update for all items
-      const optimisticCartItems = { ...cartItems };
-      const optimisticCartDetails = { ...cartItemDetails };
-      
-      aiItems.forEach(item => {
+      // Process each AI item and add it to cart individually
+      for (const item of aiItems) {
         const processedItem = normalizeItemData(item);
         const cartItem = createCartItem(processedItem, item.quantity);
         
-        optimisticCartItems[cartItem._id] = cartItem.quantity;
-        optimisticCartDetails[cartItem._id] = cartItem;
-      });
+        // Direct API call for each item
+        await addItemToCart(cartItem, isLoggedIn);
+      }
 
-      setCartItems(optimisticCartItems);
-      setCartItemDetails(optimisticCartDetails);
-
-      // Batch save: Single API call for all AI items
-      const cartArray = Object.values(optimisticCartDetails).map(item => ({
-        ...item,
-        quantity: optimisticCartItems[item._id] || 0
-      })).filter(item => item.quantity > 0);
-
-      const onError = (prevState, error) => {
-        setCartItems(prevState);
-        setCartItemDetails(previousCartDetails);
-        setError("Failed to add AI results to cart");
-      };
-
-      await debouncedCartManager.batchSave(cartArray, isLoggedIn, previousCartItems, onError);
+      // Refresh cart from backend to get accurate state
+      await refreshCart();
       
-      logger.success(`Added ${aiItems.length} items from AI results via batch save`, null, 'CART');
+      setError(null);
+      logger.success(`Added ${aiItems.length} items from AI results`, null, 'CART');
       return { success: true, itemCount: aiItems.length };
       
     } catch (error) {
-      // Revert on failure
-      setCartItems(previousCartItems);
-      setCartItemDetails(previousCartDetails);
       setError('Failed to add AI results to cart');
       return { success: false, error: error.message };
     }
   };
 
   const handleRemoveFromCart = async (itemId, context = 'user-interaction') => {
+    // Set loading state
     setRemovingItems((prev) => new Set([...prev, itemId]));
 
-    const originalCartItems = { ...cartItems };
-    const originalCartDetails = { ...cartItemDetails };
+    try {
+      // Store original state for potential rollback
+      const originalCartItems = { ...cartItems };
+      const originalCartDetails = { ...cartItemDetails };
 
-    // Immediate optimistic update
-    const optimisticUpdate = { ...cartItems };
-    const optimisticDetails = { ...cartItemDetails };
-    delete optimisticUpdate[itemId];
-    delete optimisticDetails[itemId];
-    setCartItems(optimisticUpdate);
-    setCartItemDetails(optimisticDetails);
+      // Optimistic update for immediate UI feedback
+      const optimisticUpdate = { ...cartItems };
+      const optimisticDetails = { ...cartItemDetails };
+      delete optimisticUpdate[itemId];
+      delete optimisticDetails[itemId];
+      setCartItems(optimisticUpdate);
+      setCartItemDetails(optimisticDetails);
 
-    const strategy = context === 'ai-bulk' || context === 'bulk-import' ? 'batch-save' : 'debounced';
-
-    if (strategy === 'debounced') {
-      // Error callback for rollback
-      const onError = (prevState, error) => {
-        setCartItems(prevState);
-        setCartItemDetails(originalCartDetails);
-        setError(error.message || "Failed to remove item");
-        setRemovingItems((prev) => {
-          const newSet = new Set(prev);
-          newSet.delete(itemId);
-          return newSet;
-        });
-      };
-
-      // Use debounced cart manager for single item removal
-      debouncedCartManager.removeItem(itemId, isLoggedIn, originalCartItems, onError);
-
-      // Remove from removing items set after a short delay (optimistic)
-      setTimeout(() => {
-        setRemovingItems((prev) => {
-          const newSet = new Set(prev);
-          newSet.delete(itemId);
-          return newSet;
-        });
-      }, 100);
-
-    } else {
-      // Use regular API call for batch operations
-      try {
-        const result = await removeItemFromCart(itemId, isLoggedIn);
-
-        if (result && result.items && Array.isArray(result.items)) {
-          const itemsObj = {};
-          const itemDetailsObj = {};
-          result.items.forEach((backendItem) => {
-            const backendItemKey = getCartKey(backendItem);
-            itemsObj[backendItemKey] = backendItem.quantity;
-            itemDetailsObj[backendItemKey] = backendItem;
-          });
-          setCartItems(itemsObj);
-          setCartItemDetails(itemDetailsObj);
-        }
-        
-        setError(null);
-      } catch (err) {
-        // Revert optimistic update on failure
+      // Define rollback function
+      const rollbackOptimisticUpdate = () => {
         setCartItems(originalCartItems);
         setCartItemDetails(originalCartDetails);
-        setError(err.message || "Failed to remove item");
-      } finally {
-        setRemovingItems((prev) => {
-          const newSet = new Set(prev);
-          newSet.delete(itemId);
-          return newSet;
-        });
-      }
+      };
+
+      // Use SimpleCartManager for background sync
+      await simpleCartManager.removeItem(
+        itemId,
+        isLoggedIn,
+        null, // onOptimisticUpdate already done above
+        rollbackOptimisticUpdate // onError rollback
+      );
+      
+      setError(null);
+    } catch (err) {
+      setError(err.message || "Failed to remove item");
+    } finally {
+      // Clear loading state
+      setRemovingItems((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(itemId);
+        return newSet;
+      });
     }
   };
 
@@ -641,8 +485,10 @@ export const CartProvider = ({ children }) => {
         });
       }
       
+      // Direct update without preserving pending operations
       setCartItems(itemsObj);
       setCartItemDetails(itemDetailsObj);
+      
       console.log('[CartContext] Cart refreshed successfully, total items:', Object.keys(itemsObj).length);
     } catch (err) {
       console.error('[CartContext] Error refreshing cart:', err.message);
@@ -668,21 +514,32 @@ export const CartProvider = ({ children }) => {
   }, [refreshCart]);
 
   const getItemQuantity = (identifier) => {
-
-    if (cartItems[identifier]) {
-      return cartItems[identifier];
+    // First, try direct lookup with the identifier
+    if (cartItems[identifier] !== undefined) {
+      const quantity = cartItems[identifier];
+      logger.cart('Direct quantity lookup', { identifier, quantity }, 'DEBUG');
+      return quantity;
     }
 
+    // FIXED: More precise matching to prevent cross-item contamination
+    // Only match by exact _id, not by category or loose matching
     const matchingItemKey = Object.keys(cartItems).find(key => {
       const item = cartItemDetails[key];
       if (!item) return false;
 
-      return key === identifier || 
-             item.categoryId === identifier ||
-             item._id === identifier;
+      // ONLY match by exact _id to prevent quantity cross-contamination
+      return item._id === identifier;
     });
     
-    return matchingItemKey ? cartItems[matchingItemKey] : 0;
+    const result = matchingItemKey ? cartItems[matchingItemKey] : 0;
+    logger.cart('Fallback quantity lookup', { 
+      identifier, 
+      matchingKey: matchingItemKey, 
+      quantity: result,
+      availableKeys: Object.keys(cartItems)
+    }, 'DEBUG');
+    
+    return result;
   };
 
   const fetchBackendCart = async () => {
@@ -775,7 +632,6 @@ export const CartProvider = ({ children }) => {
         loading,
         error,
         removingItems,
-        debouncedCartManager, // Expose manager for advanced usage
       }}
     >
       {children}

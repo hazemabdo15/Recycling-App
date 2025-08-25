@@ -132,7 +132,6 @@ const CategoriesGrid = ({
   const { colors } = useThemedStyles(); // Add themed styles hook
   const styles = getCategoriesGridStyles(colors); // Generate dynamic styles
   const [refreshing, setRefreshing] = useState(false);
-  const [forceUpdateKey, setForceUpdateKey] = useState(0); // Force re-render key
   
   // Track pending operations to prevent spam clicking
   const [pendingOperations, setPendingOperations] = useState(new Map());
@@ -174,8 +173,6 @@ const CategoriesGrid = ({
   
   const {
     stockQuantities,
-    getStockQuantity,
-    lastUpdated,
     subscribeToStockUpdates,
   } = useStock();
   
@@ -184,8 +181,8 @@ const CategoriesGrid = ({
     if (!showItemsMode || !subscribeToStockUpdates) return;
     
     const unsubscribe = subscribeToStockUpdates((timestamp) => {
-      // Force update when stock changes to ensure FlatList reflects new data
-      setForceUpdateKey(prev => prev + 1);
+      // Stock updates will be handled through the useMemo dependencies
+      console.log('[CategoriesGrid] Stock updated at:', timestamp);
     });
     
     return unsubscribe;
@@ -203,18 +200,6 @@ const CategoriesGrid = ({
   // Debug stock context state (simplified)
   // Debug logging disabled to prevent infinite logs
   // console.log('[CategoriesGrid] Stock context has', Object.keys(stockQuantities || {}).length, 'items, socket connected:', stockSocketConnected);
-  
-  // Sync stock data when items are loaded - removed since useStock doesn't have syncItemsStock
-  // useEffect(() => {
-  //   if (allItems && allItems.length > 0) {
-  //     syncItemsStock(allItems);
-  //   }
-  // }, [allItems, syncItemsStock]);
-
-  // Force re-render when stock quantities change
-  useEffect(() => {
-    setForceUpdateKey(prev => prev + 1);
-  }, [stockQuantities]);
 
   // Additional effect to listen for stock updates and force refresh
   useEffect(() => {
@@ -265,11 +250,11 @@ const CategoriesGrid = ({
     // Only check stock for buyer users
     if (isBuyer(user)) {
       // Get real-time stock quantity with fallback to API data
-      const currentStock = getStockQuantity(item._id, item.quantity);
+      const currentStock = stockQuantities[item._id] ?? item.quantity;
       const stockQuantity = currentStock !== undefined ? currentStock : item.quantity;
       
       console.log(`[CategoriesGrid] Manual input validation for ${translatedItemName}:`, {
-        realTimeStock: getStockQuantity(item._id),
+        realTimeStock: stockQuantities[item._id],
         fallbackStock: item.quantity,
         finalStock: stockQuantity,
         requestedValue: value
@@ -297,7 +282,7 @@ const CategoriesGrid = ({
       });
     } finally {
     }
-  }, [t, currentLanguage, user, getStockQuantity, handleSetQuantity]);
+  }, [t, currentLanguage, user, stockQuantities, handleSetQuantity]);
 
   const { filteredCategories, filteredItems } = useMemo(() => {
     const searchLower = searchText.toLowerCase();
@@ -324,22 +309,11 @@ const CategoriesGrid = ({
               currentLanguage 
             }) || extractNameFromMultilingual(normalizedItem.categoryName, currentLanguage) || 'Unknown Category';
             
-            // Get real-time stock quantity
-            const stockQuantity = stockQuantities[normalizedItem._id] ?? normalizedItem.quantity ?? 0;
-            
-            // Debug logging for stock data flow disabled to prevent infinite logs
-            // const nameForLogging = typeof normalizedItem.name === 'string' ? normalizedItem.name : 
-            //                      normalizedItem.name?.en || normalizedItem.name?.ar || '';
-            // if (nameForLogging && nameForLogging.toLowerCase().includes('test')) { // Only log for test items
-            //   console.log(`[CategoriesGrid] ${nameForLogging}: stockContext[${normalizedItem._id}]=${stockQuantities[normalizedItem._id]}, item.quantity=${normalizedItem.quantity}, final=${stockQuantity}`);
-            // }
-            
+            // Don't include stock calculation here - it will be handled separately
             return {
               ...normalizedItem,
-              quantity: stockQuantity, // Use real-time stock quantity
               displayName: translatedItemName, // Add display name for UI
               translatedCategoryName: translatedCategoryName, // Add translated category name
-              stockUpdated: false, // Remove wasRecentlyUpdated since it's not available
             };
           } catch (error) {
             console.warn('Error processing item:', error, item);
@@ -391,21 +365,35 @@ const CategoriesGrid = ({
         });
       return { filteredCategories: cats, filteredItems: [] };
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categories, allItems, showItemsMode, searchText, t, currentLanguage, stockQuantities, forceUpdateKey]);
+  }, [categories, allItems, showItemsMode, searchText, t, currentLanguage]);
+
+  // Separate memoization for items with stock data - only recalculates when stock changes
+  const itemsWithStock = useMemo(() => {
+    return filteredItems.map((item) => {
+      // Get real-time stock quantity with fallback to API data
+      const stockQuantity = stockQuantities[item._id] ?? item.quantity ?? 0;
+      
+      return {
+        ...item,
+        quantity: stockQuantity, // Use real-time stock quantity
+      };
+    });
+  }, [filteredItems, stockQuantities]);
 
   // Memoize items with cart quantities separately for better performance
   const itemsWithCartQuantities = useMemo(() => {
-    return filteredItems.map((item) => {
+    return itemsWithStock.map((item) => {
       const itemKey = getCartKey(item);
       const cartQuantity = cartItems[itemKey] || 0;
       
       return {
         ...item,
         cartQuantity,
+        // Add a stable key for better React reconciliation
+        stableKey: item._id || itemKey,
       };
     });
-  }, [filteredItems, cartItems]);
+  }, [itemsWithStock, cartItems]);
 
   useEffect(() => {
     if (onFilteredCountChange) {
@@ -434,23 +422,12 @@ const CategoriesGrid = ({
     // Use cartQuantity from the item (already calculated in itemsWithCartQuantities)
     const cartQuantity = item.cartQuantity;
     
-    // Debug logging to verify this function is being used (disabled to prevent infinite logs)
-    // console.log(`[CategoriesGrid] renderItemCard called for ${item.name}: quantity=${cartQuantity}`);
-
     // Only apply stock validation for buyer users
     let maxReached = false;
     let outOfStock = false;
     if (isBuyer(user)) {
-      // Get real-time stock quantity for validation with fallback to API data
-      const realTimeStock = getStockQuantity(item._id, item.quantity);
-      const currentStock = realTimeStock !== undefined ? realTimeStock : item.quantity;
-      
-      // Debug logging disabled to prevent infinite logs
-      // console.log(`[CategoriesGrid] Render stock for ${getTranslatedName(t, item?.name, 'subcategories', { categoryName: item?.categoryName, currentLanguage })}:`, {
-      //   realTimeStock: getStockQuantity(item._id),
-      //   fallbackStock: item.quantity,
-      //   finalStock: currentStock
-      // });
+      // Use the quantity that's already been calculated with real-time data
+      const currentStock = item.quantity;
       
       maxReached = isMaxStockReached({ ...item, quantity: currentStock }, cartQuantity);
       outOfStock = isOutOfStock({ quantity: currentStock });
@@ -461,7 +438,7 @@ const CategoriesGrid = ({
 
     return (
       <ItemCard
-        key={`${itemKey}-${item.quantity || 0}-${cartQuantity}-${lastUpdated?.getTime() || 0}`}
+        key={itemKey}
         item={{
           ...item,
           // Pass the display name to ItemCard so it shows translated text
@@ -511,15 +488,13 @@ const CategoriesGrid = ({
 
           // Additional comprehensive stock validation for buyer users
           if (isBuyer(user)) {
-            const currentStock = getStockQuantity(item._id, item.quantity);
-            const stockQuantity = currentStock !== undefined ? currentStock : item.quantity;
+            // Use the pre-calculated stock quantity from the item
+            const stockQuantity = item.quantity;
             const currentCartQuantity = cartQuantity;
             const newTotalQuantity = currentCartQuantity + step;
             
             console.log(`[CategoriesGrid] Stock validation for ${translatedItemName}:`, {
-              realTimeStock: getStockQuantity(item._id),
-              fallbackStock: item.quantity,
-              finalStock: stockQuantity,
+              stockQuantity,
               currentCart: currentCartQuantity,
               requestedAdd: step,
               newTotal: newTotalQuantity
@@ -557,9 +532,8 @@ const CategoriesGrid = ({
             const addResult = await handleIncreaseQuantity(item);
             
             if (addResult === false) {
-              // Show stock error message
-              const currentStock = getStockQuantity(item._id);
-              const stockQuantity = currentStock !== undefined ? currentStock : item.quantity;
+              // Show stock error message using pre-calculated stock
+              const stockQuantity = item.quantity;
               showMaxStockMessage(
                 translatedItemName,
                 stockQuantity,
@@ -662,8 +636,8 @@ const CategoriesGrid = ({
 
           // Additional comprehensive stock validation for buyer users
           if (isBuyer(user)) {
-            const currentStock = getStockQuantity(item._id);
-            const stockQuantity = currentStock !== undefined ? currentStock : item.quantity;
+            // Use the pre-calculated stock quantity from the item
+            const stockQuantity = item.quantity;
             const currentCartQuantity = cartQuantity;
             const newTotalQuantity = currentCartQuantity + fastStep;
 
@@ -720,9 +694,8 @@ const CategoriesGrid = ({
             const addResult = await handleFastIncreaseQuantity(item);
             
             if (addResult === false) {
-              // Show stock error message
-              const currentStock = getStockQuantity(item._id);
-              const stockQuantity = currentStock !== undefined ? currentStock : item.quantity;
+              // Show stock error message using pre-calculated stock
+              const stockQuantity = item.quantity;
               showMaxStockMessage(
                 translatedItemName,
                 stockQuantity,
@@ -782,7 +755,7 @@ const CategoriesGrid = ({
         }}
       />
     );
-  }, [user, t, currentLanguage, getStockQuantity, handleIncreaseQuantity, handleDecreaseQuantity, handleFastIncreaseQuantity, handleFastDecreaseQuantity, handleManualInput, pendingOperations, setPendingOperations, lastUpdated]);
+  }, [user, t, currentLanguage, handleIncreaseQuantity, handleDecreaseQuantity, handleFastIncreaseQuantity, handleFastDecreaseQuantity, handleManualInput, pendingOperations, setPendingOperations]);
   
   if (loading) {
     return (
@@ -845,10 +818,10 @@ const CategoriesGrid = ({
     <FadeInView delay={0}>
       {showItemsMode ? (
         <KeyboardAwareFlatList
-          key={`items-${forceUpdateKey}`}
+          key="items-list"
           style={styles.itemsScrollContainer}
           data={itemsWithCartQuantities}
-          keyExtractor={(item) => getCartKey(item) || `${item?.name || 'unknown'}`}
+          keyExtractor={(item) => item.stableKey || item._id || getCartKey(item)}
           renderItem={renderItemCard}
           refreshControl={
             <RefreshControl
@@ -868,19 +841,15 @@ const CategoriesGrid = ({
           extraScrollHeight={70}
           keyboardShouldPersistTaps="handled"
           // Enhanced performance optimizations to reduce unnecessary remounting
-          removeClippedSubviews={false} // Disable to prevent frequent mounting/unmounting
-          maxToRenderPerBatch={12}
-          updateCellsBatchingPeriod={150}
-          initialNumToRender={15}
-          windowSize={10} // Increased window size to keep more items in memory
+          removeClippedSubviews={true} // Re-enable to improve performance
+          maxToRenderPerBatch={8}
+          updateCellsBatchingPeriod={100}
+          initialNumToRender={10}
+          windowSize={8} // Reduced window size for better performance
           getItemLayout={null} // Let FlatList handle layout calculations
-          maintainVisibleContentPosition={{
-            minIndexForVisible: 0,
-            autoscrollToTopThreshold: 10
-          }}
-          // Optimized extraData to prevent unnecessary re-renders with backend rate limiting
-          // Include forceUpdateKey to ensure re-renders when stock changes
-          extraData={`${Object.keys(cartItems).length}-${pendingOperations.size}-${lastUpdated?.getTime() || 0}-${forceUpdateKey}`}
+          // Optimized extraData to prevent unnecessary re-renders
+          // Only include essential data that affects the entire list structure
+          extraData={itemsWithCartQuantities.length}
         />
       ) : (
         <FlatList

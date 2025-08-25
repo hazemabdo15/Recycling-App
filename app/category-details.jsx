@@ -4,11 +4,11 @@ import { useLocalSearchParams, useNavigation } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next"; // Add this import
 import {
-    RefreshControl,
-    StatusBar,
-    Text,
-    TouchableOpacity,
-    View,
+  RefreshControl,
+  StatusBar,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { KeyboardAwareFlatList } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -23,16 +23,16 @@ import { useThemedStyles } from "../hooks/useThemedStyles";
 import { getLayoutStyles } from "../styles/components/commonStyles";
 import { spacing } from "../styles/theme";
 import {
-    CartMessageTypes,
-    showCartMessage,
-    showMaxStockMessage,
+  CartMessageTypes,
+  showCartMessage,
+  showMaxStockMessage,
 } from "../utils/cartMessages";
 import {
-    calculateCartStats,
-    getCartKey,
-    getDisplayKey,
-    getIncrementStep,
-    normalizeItemData,
+  calculateCartStats,
+  getCartKey,
+  getDisplayKey,
+  getIncrementStep,
+  normalizeItemData,
 } from "../utils/cartUtils";
 import { isBuyer } from "../utils/roleUtils";
 import { scaleSize } from "../utils/scale";
@@ -72,7 +72,6 @@ const CategoryDetails = () => {
 
   const { items, loading, error, refetch } = useCategoryItems(categoryNameForAPI);
   const [refreshing, setRefreshing] = useState(false);
-  const [forceUpdateKey, setForceUpdateKey] = useState(0); // Force re-render key
   
   // Track pending operations to prevent spam clicking
   const [pendingOperations, setPendingOperations] = useState(new Map());
@@ -106,8 +105,8 @@ const CategoryDetails = () => {
     if (!subscribeToStockUpdates) return;
     
     const unsubscribe = subscribeToStockUpdates((timestamp) => {
-      // Force update when stock changes to ensure components reflect new data
-      setForceUpdateKey(prev => prev + 1);
+      // Stock updates will be handled through the useMemo dependencies
+      console.log('[CategoryDetails] Stock updated at:', timestamp);
     });
     
     return unsubscribe;
@@ -115,11 +114,6 @@ const CategoryDetails = () => {
   
   // Debug stock context state
   console.log('[CategoryDetails] Stock context has', Object.keys(stockQuantities || {}).length, 'items');
-
-  // Force re-render when stock quantities change
-  useEffect(() => {
-    setForceUpdateKey(prev => prev + 1);
-  }, [stockQuantities]);
 
   // Additional effect to listen for stock updates and force refresh
   useEffect(() => {
@@ -133,22 +127,24 @@ const CategoryDetails = () => {
   const itemsWithRealTimeStock = useMemo(() => {
     if (!items) return items;
     
+    // Only log when items change, not on every stock update
     console.log('[CategoryDetails] Updating items with real-time stock data');
     return items.map(item => {
-      const realTimeStock = getStockQuantity(item._id);
+      // Get stock directly from stockQuantities to avoid function reference issues
+      const realTimeStock = stockQuantities[item._id];
       const updatedItem = {
         ...item,
         quantity: realTimeStock !== undefined ? realTimeStock : (item.quantity ?? 0)
       };
       
-      // Debug individual item stock update
+      // Debug individual item stock update (simplified to reduce logs)
       if (realTimeStock !== undefined && realTimeStock !== item.quantity) {
         console.log(`[CategoryDetails] Updated ${item._id}: API=${item.quantity ?? 'undefined'} -> RealTime=${realTimeStock}`);
       }
       
       return updatedItem;
     });
-  }, [items, getStockQuantity]);
+  }, [items, stockQuantities]);
 
   // Memoize the processed items separately from cart quantities for better performance
   const processedItems = useMemo(() => {
@@ -798,7 +794,7 @@ const CategoryDetails = () => {
         <KeyboardAwareFlatList
           data={mergedItems}
           renderItem={renderItem}
-          keyExtractor={(item) => getDisplayKey(item)}
+          keyExtractor={(item) => item._id || getDisplayKey(item)}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             gap: 16,
@@ -807,7 +803,7 @@ const CategoryDetails = () => {
             paddingHorizontal: scaleSize(spacing.sm),
             paddingTop: scaleSize(spacing.md),
           }}
-          extraData={`${Object.keys(cartItems).length}-${pendingOperations.size}-${forceUpdateKey}`}
+          extraData={mergedItems.length}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -822,10 +818,10 @@ const CategoryDetails = () => {
           keyboardShouldPersistTaps="handled"
           // Performance optimizations for large lists
           removeClippedSubviews={true}
-          maxToRenderPerBatch={10}
-          updateCellsBatchingPeriod={50}
-          initialNumToRender={15}
-          windowSize={10}
+          maxToRenderPerBatch={8}
+          updateCellsBatchingPeriod={100}
+          initialNumToRender={10}
+          windowSize={8}
           getItemLayout={undefined} // Let FlatList calculate automatically
         />
       )}

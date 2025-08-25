@@ -24,19 +24,38 @@ const QuantityControls = ({
     itemName = 'Item', // item name for toast messages
     disabled = false, // Add disabled prop
     pendingAction = null, // Add pendingAction prop
+    componentKey = null, // Unique identifier to prevent state cross-contamination
 }) => {
     const { colors, isDarkMode } = useThemedStyles();
     const quantityControlsStyles = getQuantityControlsStyles(isDarkMode);
-    const [inputValue, setInputValue] = React.useState(quantity?.toString() || '');
+    
+    // Initialize with a unique reference to prevent cross-contamination
+    const [inputValue, setInputValue] = React.useState(() => {
+        const value = quantity?.toString() || '';
+        return quantity === 0 ? '0' : value;
+    });
+    
     const inputRef = useRef(null);
-    const lastValidValue = useRef(quantity?.toString() || '');
+    const lastValidValue = useRef(() => {
+        const value = quantity?.toString() || '';
+        return quantity === 0 ? '0' : value;
+    });
+    
+    // Use a ref to track the previous quantity to prevent unnecessary updates
+    const previousQuantity = useRef(quantity);
     
     React.useEffect(() => {
-        // Always sync input and last valid value to prop, including zero
-        setInputValue((quantity === 0 ? '0' : quantity?.toString()) || '');
-        // Only update lastValidValue if the prop matches the input (cart update succeeded)
-        lastValidValue.current = (quantity === 0 ? '0' : quantity?.toString()) || '';
-    }, [quantity]);
+        // Only update if the quantity actually changed for THIS component
+        if (previousQuantity.current !== quantity) {
+            const newValue = quantity === 0 ? '0' : (quantity?.toString() || '');
+            setInputValue(newValue);
+            lastValidValue.current = newValue;
+            previousQuantity.current = quantity;
+            
+            // Log for debugging (will be removed later)
+            console.log(`[QuantityControls-${componentKey}] Quantity updated from ${previousQuantity.current} to ${quantity}`);
+        }
+    }, [quantity, componentKey]);
 
     // Only update local state on change, validate on end editing
     const handleInputChange = (val) => {
@@ -243,4 +262,18 @@ const QuantityControls = ({
     );
 };
 
-export default QuantityControls;
+export default React.memo(QuantityControls, (prevProps, nextProps) => {
+    // Prevent unnecessary re-renders by comparing only relevant props
+    return (
+        prevProps.quantity === nextProps.quantity &&
+        prevProps.disabled === nextProps.disabled &&
+        prevProps.pendingAction === nextProps.pendingAction &&
+        prevProps.maxReached === nextProps.maxReached &&
+        prevProps.outOfStock === nextProps.outOfStock &&
+        prevProps.disableDecrease === nextProps.disableDecrease &&
+        prevProps.componentKey === nextProps.componentKey &&
+        prevProps.maxQuantity === nextProps.maxQuantity &&
+        prevProps.measurementUnit === nextProps.measurementUnit &&
+        prevProps.unitDisplay === nextProps.unitDisplay
+    );
+});
