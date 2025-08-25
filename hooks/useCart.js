@@ -192,7 +192,7 @@ export const useCart = (user = null) => {
         await handleRemoveFromCart(_id);
         logger.success('Item removed from cart (quantity decreased to 0)', { itemId: _id }, 'CART');
       } else {
-        const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit, 'user-interaction');
+        const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit, 'user-interaction', processedItem);
         
         if (result && result.success) {
           logger.success('Quantity decreased successfully', { itemId: _id, newQuantity }, 'CART');
@@ -352,7 +352,7 @@ export const useCart = (user = null) => {
         const cartItem = createCartItem(processedItem, formattedQuantity);
         await handleAddSingleItem(cartItem);
       } else {
-        const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit, 'rapid-updates');
+        const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit, 'rapid-updates', processedItem);
         
         if (result && result.success) {
           logger.success('Rapid quantity update succeeded', { itemId: _id, newQuantity }, 'CART');
@@ -393,7 +393,7 @@ export const useCart = (user = null) => {
         await handleRemoveFromCart(_id);
         logger.success('Item removed from cart (rapid decrease to 0)', { itemId: _id }, 'CART');
       } else {
-        const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit, 'rapid-updates');
+        const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit, 'rapid-updates', processedItem);
         
         if (result && result.success) {
           logger.success('Rapid quantity decrease succeeded', { itemId: _id, newQuantity }, 'CART');
@@ -487,7 +487,7 @@ export const useCart = (user = null) => {
       } else {
         // Item exists in cart, update quantity
         console.log('useCart handleSetQuantity: updating existing item quantity');
-        const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit, 'user-interaction');
+        const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit, 'user-interaction', processedItem);
         console.log('useCart handleSetQuantity: handleUpdateQuantity result:', result);
         
         if (result && result.success) {

@@ -286,22 +286,55 @@ export const CartProvider = ({ children }) => {
     try {
       let itemDetails = cartItemDetails[itemId];
       
+      // If not found by itemId, try to find using getCartKey with itemData
+      if (!itemDetails && itemData) {
+        const alternateKey = getCartKey(itemData);
+        itemDetails = cartItemDetails[alternateKey];
+        logger.cart('Trying alternate key lookup', { itemId, alternateKey, found: !!itemDetails });
+      }
+      
+      // Debug logging
+      logger.cart('HandleUpdateQuantity called', { 
+        itemId, 
+        quantity, 
+        hasItemDetails: !!itemDetails, 
+        hasItemData: !!itemData,
+        itemDataKeys: itemData ? Object.keys(itemData) : null,
+        cartItemDetailsCount: Object.keys(cartItemDetails).length 
+      });
+      
       // If item doesn't exist in cart yet, create it from provided itemData
       if (!itemDetails && itemData) {
         logger.cart('Creating new item entry for update operation', { itemId, quantity });
         const cartItem = createCartItem(itemData, quantity);
         itemDetails = cartItem;
       } else if (!itemDetails) {
+        // More detailed error message
+        logger.cart('Item details not found and no valid itemData provided', { 
+          itemId, 
+          hasItemData: !!itemData,
+          cartItemDetailsKeys: Object.keys(cartItemDetails).slice(0, 5), // Show first 5 keys
+          availableKeys: Object.keys(cartItemDetails).length,
+          itemData: itemData ? { _id: itemData._id, name: itemData.name } : 'null'
+        }, 'ERROR');
         throw new Error("Item details not found in cart and no itemData provided");
       }
 
       // Store original state for potential rollback
       const originalQuantity = cartItems[itemId] || 0;
+      const originalItemDetails = cartItemDetails[itemId];
 
       // Optimistic update for immediate UI feedback
       const optimisticUpdate = { ...cartItems };
       optimisticUpdate[itemId] = quantity;
       setCartItems(optimisticUpdate);
+
+      // Also update cartItemDetails if we have itemDetails
+      if (itemDetails && !originalItemDetails) {
+        const optimisticDetails = { ...cartItemDetails };
+        optimisticDetails[itemId] = itemDetails;
+        setCartItemDetails(optimisticDetails);
+      }
 
       // Define rollback function
       const rollbackOptimisticUpdate = () => {
@@ -309,6 +342,14 @@ export const CartProvider = ({ children }) => {
           ...prevItems,
           [itemId]: originalQuantity
         }));
+        // Rollback item details if we added them optimistically
+        if (itemDetails && !originalItemDetails) {
+          setCartItemDetails(prevDetails => {
+            const updated = { ...prevDetails };
+            delete updated[itemId];
+            return updated;
+          });
+        }
         refreshCart(); // Sync with backend to be safe
       };
 
