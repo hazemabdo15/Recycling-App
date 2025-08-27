@@ -2,13 +2,12 @@ import { StatusBar } from 'expo-status-bar';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 
 export default function DynamicStatusBar() {
-  const { isDarkMode, colors } = useThemedStyles();
-  
+  const { isDarkMode } = useThemedStyles();
+
   return (
-    <StatusBar 
+    <StatusBar
       style={isDarkMode ? "light" : "dark"}
-      backgroundColor={colors.background}
-      translucent={false}
+      // Removed backgroundColor and translucent props to avoid conflicts with edge-to-edge
     />
   );
 }

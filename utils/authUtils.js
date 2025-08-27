@@ -1,5 +1,5 @@
 ﻿import * as SecureStore from 'expo-secure-store';
-import apiService from '../services/api/apiService';
+// Removed circular dependency: import apiService from '../services/api/apiService';
 
 export async function getAccessToken() {
   try {
@@ -13,12 +13,8 @@ export async function setAccessToken(token) {
   try {
     await SecureStore.setItemAsync('accessToken', token);
 
-    try {
-      await apiService.setAccessToken(token);
-      console.log('[authUtils] Token set in both SecureStore and APIService');
-    } catch (error) {
-      console.warn('[authUtils] Could not update APIService token:', error.message);
-    }
+    // Removed circular dependency call: apiService.setAccessToken(token)
+    // The API service will get the token when needed via getAccessToken()
   } catch {}
 }
 
@@ -27,26 +23,18 @@ export async function getLoggedInUser() {
     const userString = await SecureStore.getItemAsync('user');
     if (userString) {
       const user = JSON.parse(userString);
-      console.log('[authUtils] Retrieved user from SecureStore:', user);
-      console.log('[authUtils] Retrieved user role:', user?.role);
       return user;
     }
-    console.log('[authUtils] No user found in SecureStore');
     return null;
-  } catch (error) {
-    console.error('[authUtils] Error retrieving user:', error);
+  } catch (_error) {
     return null;
   }
 }
 
 export async function setLoggedInUser(user, deliveryStatus = null) {
   try {
-    console.log('[authUtils] Storing user in SecureStore:', user);
-    console.log('[authUtils] User role being stored:', user?.role);
-    console.log('[authUtils] Delivery status being stored:', deliveryStatus);
-    
     if (user?.role === 'delivery') {
-      const userWithStatus = { 
+      const userWithStatus = {
         ...user, 
         deliveryStatus: deliveryStatus || user.deliveryStatus || 'pending' 
       };

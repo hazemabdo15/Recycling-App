@@ -581,7 +581,7 @@ const Cart = () => {
     
     const validationError = cartValidationErrors[item._id];
     const hasError = !!validationError;
-    const isOutOfStock = validationError?.type === 'out_of_stock' || currentStock === 0;
+    const isOutOfStock = isBuyer(user) && (validationError?.type === 'out_of_stock' || currentStock === 0);
     const exceedsStock = validationError?.type === 'exceeds_stock' || quantity > currentStock;
 
     const totalValue = value !== null ? value * quantity : null;
@@ -597,7 +597,7 @@ const Cart = () => {
             marginBottom: spacing.md,
             marginTop: spacing.sm,
             shadowOpacity: 0.18,
-            opacity: isOutOfStock ? 0.6 : 1,
+            opacity: isBuyer(user) && isOutOfStock ? 0.6 : 1,
           },
           hasError && styles.cartCardError,
         ]}
