@@ -122,8 +122,6 @@ export default function RegisterScreen() {
     setLoading(true);
     
     try {
-      console.log('Registering:', userData);
-      
       // Handle Google registration
       if (userData.provider === 'google') {
         if (!userData.name || !userData.email) {

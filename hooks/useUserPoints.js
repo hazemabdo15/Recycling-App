@@ -4,7 +4,6 @@ import apiService from '../services/api/apiService';
 
 export function useUserPoints({ userId, name, email }) {
   const { isLoggedIn } = useAuth();
-  console.log('useUserPoints hook: userId =', userId, 'isLoggedIn =', isLoggedIn);
   const [userPoints, setUserPoints] = useState(null);
   const [totalRecycled, setTotalRecycled] = useState(0);
   const [pointsLoading, setPointsLoading] = useState(false);
@@ -13,7 +12,6 @@ export function useUserPoints({ userId, name, email }) {
   const getUserPoints = useCallback(async () => {
 
     if (!isLoggedIn) {
-      console.log('getUserPoints: User not logged in, clearing points');
       setUserPoints(null);
       setError(null);
       setPointsLoading(false);
@@ -21,64 +19,48 @@ export function useUserPoints({ userId, name, email }) {
     }
 
     if (!userId) {
-      console.log('getUserPoints: No userId provided, clearing points and skipping fetch');
       setUserPoints(null);
       setError(null);
       setPointsLoading(false);
       return;
     }
 
-    console.log('getUserPoints: Starting fetch for userId:', userId);
-    
     try {
-      console.log('getUserPoints: About to fetch points for userId:', userId);
       setPointsLoading(true);
       setError(null);
 
       if (!isLoggedIn) {
-        console.log('getUserPoints: User logged out during fetch, aborting');
         setUserPoints(null);
         setPointsLoading(false);
         return;
       }
 
-      console.log(`Making API call to: /users/${userId}/points`);
-      
       const res = await apiService.get(`/users/${userId}/points`);
-      console.log('getUserPoints: API response received:', res);
       if (!isLoggedIn) {
-        console.log('getUserPoints: User logged out after API call, ignoring response');
         setUserPoints(null);
         setPointsLoading(false);
         return;
       }
 
-      // Defensive logging and checks
-      console.log('getUserPoints: Full API response:', res);
       if (!res) {
-        console.log('getUserPoints: API response is undefined or null:', res);
         setUserPoints(0);
         return;
       }
       if (!res.data) {
-        console.log('getUserPoints: API response missing data property:', res);
         setUserPoints(0);
         return;
       }
       if (typeof res.data.totalPoints === 'undefined') {
-        console.log('getUserPoints: API response missing totalPoints property:', res.data);
         setUserPoints(0);
         setTotalRecycled(0);
         return;
       }
       setUserPoints(res.data.totalPoints);
       setTotalRecycled(res.data.totalRecycled ?? 0);
-      console.log('getUserPoints: Successfully set user points:', res.data.totalPoints, 'totalRecycled:', res.data.totalRecycled);
     } catch (err) {
       console.error('Error fetching user points:', err);
 
       if (!isLoggedIn) {
-        console.log('getUserPoints: User logged out, ignoring error');
         setUserPoints(null);
         setPointsLoading(false);
         return;
@@ -93,23 +75,19 @@ export function useUserPoints({ userId, name, email }) {
       } else {
         console.error('Error message:', err.message);
       }
-      
-      setError(err);
 
-  setUserPoints(0);
-  setTotalRecycled(0);
+      setError(err);
+      setUserPoints(0);
+      setTotalRecycled(0);
     } finally {
       setPointsLoading(false);
-      console.log('getUserPoints: Finished loading');
     }
   }, [userId, isLoggedIn]);
 
   useEffect(() => {
     if (isLoggedIn && userId) {
-      console.log('useUserPoints: userId changed and user is logged in, auto-fetching points');
       getUserPoints();
     } else if (!isLoggedIn) {
-      console.log('useUserPoints: User logged out, clearing points');
       setUserPoints(null);
       setError(null);
     }

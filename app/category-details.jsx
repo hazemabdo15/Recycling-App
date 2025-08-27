@@ -106,29 +106,23 @@ const CategoryDetails = () => {
     
     const unsubscribe = subscribeToStockUpdates((timestamp) => {
       // Stock updates will be handled through the useMemo dependencies
-      console.log('[CategoryDetails] Stock updated at:', timestamp);
     });
     
     return unsubscribe;
   }, [subscribeToStockUpdates]);
   
   // Debug stock context state
-  console.log('[CategoryDetails] Stock context has', Object.keys(stockQuantities || {}).length, 'items');
+  // Removed excessive logging to prevent console spam
 
   // Additional effect to listen for stock updates and force refresh
   useEffect(() => {
-    // Log when stock quantities change
-    if (stockQuantities && Object.keys(stockQuantities).length > 0) {
-      console.log('[CategoryDetails] Stock quantities available:', Object.keys(stockQuantities).length);
-    }
+    // Removed excessive logging to prevent console spam
   }, [stockQuantities]);
 
   // Update items with real-time stock data
   const itemsWithRealTimeStock = useMemo(() => {
     if (!items) return items;
-    
-    // Only log when items change, not on every stock update
-    console.log('[CategoryDetails] Updating items with real-time stock data');
+
     return items.map(item => {
       // Get stock directly from stockQuantities to avoid function reference issues
       const realTimeStock = stockQuantities[item._id];
@@ -136,12 +130,7 @@ const CategoryDetails = () => {
         ...item,
         quantity: realTimeStock !== undefined ? realTimeStock : (item.quantity ?? 0)
       };
-      
-      // Debug individual item stock update (simplified to reduce logs)
-      if (realTimeStock !== undefined && realTimeStock !== item.quantity) {
-        console.log(`[CategoryDetails] Updated ${item._id}: API=${item.quantity ?? 'undefined'} -> RealTime=${realTimeStock}`);
-      }
-      
+
       return updatedItem;
     });
   }, [items, stockQuantities]);
@@ -195,14 +184,11 @@ const CategoryDetails = () => {
   );
 
   const handleManualInput = useCallback(async (itemOrValue, valueMaybe) => {
-    console.log("handleManualInput called with:", { itemOrValue, valueMaybe });
-
     // itemOrValue can be item or value depending on call
     let item, value;
     if (typeof valueMaybe === "undefined") {
       // Called as onManualInput(item)
       item = itemOrValue;
-      console.log("Called with just item, returning early");
       return; // Do nothing on just focus/click
     } else {
       // Called as onManualInput(value) from QuantityControls
@@ -210,14 +196,7 @@ const CategoryDetails = () => {
       value = valueMaybe;
     }
 
-    console.log("Processing manual input:", {
-      item: item?.displayName || item?.name,
-      value,
-      itemQuantity: item?.quantity,
-    });
-
     if (!item) {
-      console.log("No item found, returning");
       return;
     }
 
@@ -231,7 +210,6 @@ const CategoryDetails = () => {
     // For pieces (measurement_unit === 2), round fractional values to nearest integer
     if (measurementUnit === 2 && value !== Math.floor(value)) {
       value = Math.round(value);
-      console.log("Rounded fractional value for pieces to:", value);
     }
     
     if (value > 0) {
@@ -260,13 +238,6 @@ const CategoryDetails = () => {
       const currentStock = getStockQuantity(item._id, item.quantity);
       const stockQuantity = currentStock !== undefined ? currentStock : item.quantity;
       
-      console.log(`[CategoryDetails] Manual input validation for ${itemDisplayName}:`, {
-        realTimeStock: getStockQuantity(item._id),
-        fallbackStock: item.quantity,
-        finalStock: stockQuantity,
-        requestedValue: value
-      });
-      
       if (value > stockQuantity) {
         showCartMessage(CartMessageTypes.STOCK_ERROR, {
           itemName: itemDisplayName,
@@ -279,12 +250,7 @@ const CategoryDetails = () => {
       }
     }
     try {
-      console.log("Calling handleSetQuantity with:", {
-        item: itemDisplayName,
-        value,
-      });
       const result = await handleSetQuantity(item, value);
-      console.log("handleSetQuantity result:", result);
 
       // Only show removal message when quantity is set to 0
       if (value === 0) {
@@ -296,7 +262,6 @@ const CategoryDetails = () => {
         });
       }
     } catch (_err) {
-      console.log("handleSetQuantity error:", _err);
       showCartMessage(CartMessageTypes.OPERATION_FAILED, {
         itemName: itemDisplayName,
         measurementUnit: item.measurement_unit,
@@ -322,12 +287,6 @@ const CategoryDetails = () => {
       // Get real-time stock with fallback to API data
       const currentStock = getStockQuantity(item._id, item.quantity);
       const stockQuantity = currentStock !== undefined ? currentStock : item.quantity;
-      
-      console.log(`[CategoryDetails] Render stock for ${itemDisplayName}:`, {
-        realTimeStock: getStockQuantity(item._id),
-        fallbackStock: item.quantity,
-        finalStock: stockQuantity
-      });
       
       // Use updated stock quantity for validation
       const itemWithCurrentStock = { ...item, quantity: stockQuantity };
@@ -357,7 +316,6 @@ const CategoryDetails = () => {
         onIncrease={async () => {
           // Prevent spam clicking
           if (pendingOperations.has(itemKey)) {
-            console.log(`[CategoryDetails] Blocking rapid click for ${item.name} - operation pending`);
             return;
           }
 
@@ -506,7 +464,6 @@ const CategoryDetails = () => {
         onFastIncrease={async () => {
           // Prevent spam clicking
           if (pendingOperations.has(itemKey)) {
-            console.log(`[CategoryDetails] Blocking rapid click for ${item.name} - fast operation pending`);
             return;
           }
 
@@ -662,7 +619,7 @@ const CategoryDetails = () => {
   ]);
 
   const handleAddItem = () => {
-    console.log("Add item to", translatedCategoryName);
+    // Add item functionality can be implemented here
   };
 
   // Hero Header Component

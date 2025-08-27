@@ -28,7 +28,6 @@ const Index = () => {
   }, [refreshNotifications]);
 
   const handleNotificationPress = () => {
-    console.log("Navigate to notifications");
     router.push("/notifications");
   };
 

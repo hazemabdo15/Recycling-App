@@ -126,24 +126,18 @@ const Cart = () => {
   // Stock validation for cart items
   const validateCartStock = useCallback(() => {
     if (!isBuyer(user)) return {}; // Only validate for buyers
-    
-    console.log("[validateCartStock] Running validation...");
-    console.log("[validateCartStock] cartItems:", cartItems);
-    console.log("[validateCartStock] cartItemDetails keys:", Object.keys(cartItemDetails));
-    
+
     const errors = {};
-    
+
     // Use cartItems and cartItemDetails directly instead of cartArray to avoid stale closures
     Object.entries(cartItems).forEach(([itemId, quantity]) => {
       const itemDetails = cartItemDetails[itemId];
       if (!itemDetails || !quantity || quantity <= 0) return;
-      
+
       const realTimeStock = getStockQuantity(itemId, itemDetails.availableStock || itemDetails.quantity);
       const currentStock = realTimeStock !== undefined ? realTimeStock : (itemDetails.availableStock || itemDetails.quantity || 0);
       const cartQuantity = quantity || 0;
-      
-      console.log(`[validateCartStock] ${itemDetails.name}: cart=${cartQuantity}, stock=${currentStock}, realTime=${realTimeStock}`);
-      
+
       if (currentStock <= 0) {
         errors[itemId] = {
           type: 'out_of_stock',
@@ -151,7 +145,6 @@ const Cart = () => {
           currentStock: 0,
           cartQuantity
         };
-        console.log(`[validateCartStock] ERROR: ${itemDetails.name} is out of stock`);
       } else if (cartQuantity > currentStock) {
         errors[itemId] = {
           type: 'exceeds_stock',
@@ -159,31 +152,20 @@ const Cart = () => {
           currentStock,
           cartQuantity
         };
-        console.log(`[validateCartStock] ERROR: ${itemDetails.name} exceeds stock (${cartQuantity} > ${currentStock})`);
-      } else {
-        console.log(`[validateCartStock] OK: ${itemDetails.name} is valid (${cartQuantity} <= ${currentStock})`);
       }
     });
-    
-    console.log("[validateCartStock] Final validation result:", Object.keys(errors).length, "errors");
+
     return errors;
   }, [cartItems, cartItemDetails, getStockQuantity, user]);
 
   // Update validation errors when cart or stock changes - using direct cart state for immediate updates
   useEffect(() => {
-    console.log("[Cart Validation] Effect triggered");
-    console.log("[Cart Validation] cartItems:", cartItems);
-    console.log("[Cart Validation] cartItemDetails keys:", Object.keys(cartItemDetails));
-    
     const errors = validateCartStock();
-    console.log("[Cart Validation] Setting errors:", errors);
     setCartValidationErrors(errors);
   }, [validateCartStock, lastUpdated]); // Removed cartArray dependency, using cartItems/cartItemDetails from validateCartStock dependencies
 
   // Check if cart has any validation errors
   const hasValidationErrors = Object.keys(cartValidationErrors).length > 0;
-  console.log("[Cart Status] hasValidationErrors:", hasValidationErrors);
-  console.log("[Cart Status] cartValidationErrors:", cartValidationErrors);
 
   // Helper function to get translated item names consistently
   const getTranslatedItemName = (item) => {
@@ -207,12 +189,6 @@ const Cart = () => {
   // Cart is already synced via CartContext, no need for manual refresh on focus
 
   useEffect(() => {
-    console.log(
-      "[Cart] Items loading state changed:",
-      itemsLoading,
-      "current loading:",
-      loading
-    );
     if (!itemsLoading) {
       setLoading(false);
     }
@@ -220,13 +196,7 @@ const Cart = () => {
 
   // Debug logging for cart items
   useEffect(() => {
-    console.log("[Cart] Cart state changed:", {
-      cartItemsCount: Object.keys(cartItems).length,
-      cartItemsDetailsCount: Object.keys(cartItemDetails).length,
-      cartItems: cartItems,
-      cartItemDetails: cartItemDetails,
-      isLoggedIn: isLoggedIn,
-    });
+    // Removed excessive logging to prevent console spam
   }, [cartItems, cartItemDetails, isLoggedIn]);
 
   const safeAllItems = useMemo(() => {
@@ -234,39 +204,24 @@ const Cart = () => {
   }, [allItems]);
 
   const cartArray = useMemo(() => {
-    console.log("[Cart] Recalculating cartArray...");
-    console.log("[Cart] cartItems keys:", Object.keys(cartItems));
-    console.log("[Cart] cartItemDetails keys:", Object.keys(cartItemDetails));
-
     if (Object.keys(cartItems).length === 0) {
-      console.log("[Cart] No cartItems, returning empty array");
       return [];
     }
 
     const result = Object.entries(cartItems)
       .map(([itemId, quantity]) => {
-        console.log("[Cart] Processing item:", itemId, "quantity:", quantity);
         const itemFromDetails = cartItemDetails[itemId];
 
         if (itemFromDetails) {
-          console.log("[Cart] Found item in details:", itemFromDetails.name);
           return {
             ...itemFromDetails,
             quantity: quantity,
           };
         }
 
-        console.log(
-          "[Cart] Item not in details, searching in allItems for:",
-          itemId
-        );
         const item = safeAllItems.find(
           (item) => item._id === itemId || item.categoryId === itemId
         );
-
-        if (!item) {
-          console.log("[Cart] Item not found in allItems, creating basic item");
-        }
 
         const combinedItem = {
           ...(item || {}),
@@ -290,28 +245,13 @@ const Cart = () => {
           ? normalizeItemData(combinedItem)
           : combinedItem;
 
-        console.log(
-          "[Cart] Final processed item:",
-          result.name,
-          "quantity:",
-          result.quantity
-        );
         return result;
       })
       .filter((item) => {
         const hasQuantity = item && item.quantity > 0;
-        console.log(
-          "[Cart] Filter check for:",
-          item?.name,
-          "quantity:",
-          item?.quantity,
-          "passes:",
-          hasQuantity
-        );
         return hasQuantity;
       });
 
-    console.log("[Cart] Final cartArray length:", result.length);
     return result;
   }, [cartItems, cartItemDetails, safeAllItems]);
 
@@ -360,18 +300,8 @@ const Cart = () => {
           item.stock_quantity ??
           item.quantity_available ?? 0;
         
-        console.log(`🔍 [Cart Debug - Increase] Item ${item._id} search in ${safeAllItems.length} items`);
-        console.log(`🔍 [Cart Debug - Increase] Found originalItem:`, !!originalItem, originalItem ? {
-          _id: originalItem._id,
-          categoryId: originalItem.categoryId,
-          quantity: originalItem.quantity,
-          available_quantity: originalItem.available_quantity
-        } : 'not found');
-        console.log(`🔍 [Cart Debug - Increase] Final apiStockQuantity: ${apiStockQuantity}`);
-        
         // Get real-time stock quantity from StockContext with API fallback
         const actualStockQuantity = getItemStock(item._id, apiStockQuantity);
-        console.log(`✅ [Cart Fix - Increase] Item ${item._id} - API: ${apiStockQuantity}, Final: ${actualStockQuantity}, New Qty: ${newQuantity}`);
 
         // Stock validation - check against real-time stock quantity
         if (newQuantity > actualStockQuantity) {
@@ -578,18 +508,8 @@ const Cart = () => {
           item.stock_quantity ??
           item.quantity_available ?? 0;
         
-        console.log(`🔍 [Cart Debug - Manual] Item ${item._id} search in ${safeAllItems.length} items`);
-        console.log(`🔍 [Cart Debug - Manual] Found originalItem:`, !!originalItem, originalItem ? {
-          _id: originalItem._id,
-          categoryId: originalItem.categoryId,
-          quantity: originalItem.quantity,
-          available_quantity: originalItem.available_quantity
-        } : 'not found');
-        console.log(`🔍 [Cart Debug - Manual] Final apiStockQuantity: ${apiStockQuantity}`);
-        
         // Get real-time stock quantity from StockContext with API fallback
         const actualStockQuantity = getItemStock(item._id, apiStockQuantity);
-        console.log(`✅ [Cart Fix - Manual] Item ${item._id} - API: ${apiStockQuantity}, Final: ${actualStockQuantity}, Parsed Qty: ${parsedValue}`);
 
         // Stock validation - check against real-time stock quantity
         if (parsedValue > actualStockQuantity) {
