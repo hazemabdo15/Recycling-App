@@ -394,7 +394,7 @@ export const CartProvider = ({ children }) => {
     testMinimalPostRequest,
     testCartPerformance,
     clearAuth,
-    loading: cartQuery.isLoading || updateCartMutation.isPending || addItemMutation.isPending || removeItemMutation.isPending,
+    loading: cartQuery.isLoading,
     error: cartQuery.error || updateCartMutation.error || addItemMutation.error || removeItemMutation.error,
     removingItems,
     // React Query specific exports
