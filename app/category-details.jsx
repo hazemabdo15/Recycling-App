@@ -436,6 +436,13 @@ const CategoryDetails = () => {
           });
 
           try {
+            // Clear pending operation immediately after optimistic update starts
+            setPendingOperations(prev => {
+              const newMap = new Map(prev);
+              newMap.delete(itemKey);
+              return newMap;
+            });
+
             const itemWithCorrectId = { ...item, _id: itemKey };
             const addResult = await handleIncreaseQuantity(itemWithCorrectId);
             if (addResult === false) {
@@ -456,13 +463,6 @@ const CategoryDetails = () => {
               measurementUnit: item.measurement_unit,
               isBuyer: user?.role === "buyer",
               t
-            });
-          } finally {
-            // Always clear pending operation
-            setPendingOperations(prev => {
-              const newMap = new Map(prev);
-              newMap.delete(itemKey);
-              return newMap;
             });
           }
         }}
@@ -585,6 +585,13 @@ const CategoryDetails = () => {
           });
 
           try {
+            // Clear pending operation immediately after optimistic update starts
+            setPendingOperations(prev => {
+              const newMap = new Map(prev);
+              newMap.delete(itemKey);
+              return newMap;
+            });
+
             await handleFastIncreaseQuantity(item);
           } catch (err) {
             console.error(
@@ -596,13 +603,6 @@ const CategoryDetails = () => {
               measurementUnit: item.measurement_unit,
               isBuyer: user?.role === "buyer",
               t
-            });
-          } finally {
-            // Always clear pending operation
-            setPendingOperations(prev => {
-              const newMap = new Map(prev);
-              newMap.delete(itemKey);
-              return newMap;
             });
           }
         }}
