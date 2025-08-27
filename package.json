@@ -33,6 +33,7 @@
     "@react-navigation/bottom-tabs": "^7.3.10",
     "@react-navigation/elements": "^2.3.8",
     "@react-navigation/native": "^7.1.6",
+    "@tanstack/react-query": "^5.85.5",
     "axios": "^1.11.0",
     "date-fns": "^4.1.0",
     "expo": "53.0.20",
@@ -42,6 +43,7 @@
     "expo-camera": "^16.1.11",
     "expo-clipboard": "~7.1.5",
     "expo-constants": "~17.1.7",
+    "expo-dev-client": "~5.2.4",
     "expo-dotenv": "^0.1.0",
     "expo-font": "~13.3.2",
     "expo-haptics": "~14.1.4",
@@ -76,8 +78,7 @@
     "react-native-vector-icons": "^10.3.0",
     "react-native-web": "~0.20.0",
     "react-native-webview": "13.13.5",
-    "socket.io-client": "^4.8.1",
-    "expo-dev-client": "~5.2.4"
+    "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

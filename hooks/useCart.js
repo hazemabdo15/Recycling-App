@@ -10,10 +10,8 @@ export const useCart = (user = null) => {
   const {
     cartItems,
     cartItemDetails,
-    updateTrigger,
     getItemQuantity,
     handleAddToCart,
-    handleAddSingleItem,
     handleUpdateQuantity,
     handleBatchUpdate,
     handleAddAIResults,
@@ -350,7 +348,7 @@ export const useCart = (user = null) => {
           formattedQuantity = parseFloat(newQuantity.toFixed(2));
         }
         const cartItem = createCartItem(processedItem, formattedQuantity);
-        await handleAddSingleItem(cartItem);
+        await handleAddToCart(cartItem);
       } else {
         const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit, 'rapid-updates', processedItem);
         
@@ -481,8 +479,8 @@ export const useCart = (user = null) => {
         // Item doesn't exist in cart, add it
         console.log('useCart handleSetQuantity: adding new item to cart');
         const cartItem = createCartItem(processedItem, newQuantity);
-        const result = await handleAddSingleItem(cartItem);
-        console.log('useCart handleSetQuantity: handleAddSingleItem result:', result);
+        const result = await handleAddToCart(cartItem);
+        console.log('useCart handleSetQuantity: handleAddToCart result:', result);
         return result || { success: true };
       } else {
         // Item exists in cart, update quantity
@@ -515,7 +513,6 @@ export const useCart = (user = null) => {
   return {
     cartItems,
     cartItemDetails,
-    updateTrigger,
     getItemQuantity,
     handleIncreaseQuantity,
     handleDecreaseQuantity,

@@ -41,6 +41,8 @@ async function getSessionId() {
   }
 }
 
+export { getSessionId };
+
 async function getAccessToken() {
   try {
     const now = Date.now();
