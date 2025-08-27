@@ -78,7 +78,6 @@ const Index = () => {
           </View>
 
           <View style={styles.heroContent}>
-            <Text style={styles.welcomeText}>{t('home.welcomeTitle')}</Text>
             <Text style={styles.heroTitle}>{t('home.welcomeMessage')}</Text>
             <Text style={styles.heroSubtitle}>
               {tRole("home.callToAction", user?.role)}

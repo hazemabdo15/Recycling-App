@@ -128,14 +128,32 @@ export const normalizeItemData = (item) => {
         measurement_unit: item.measurement_unit
     });
     
+    // Helper function to ensure bilingual format
+    const ensureBilingual = (nameValue, fallbackName = 'Unknown Item') => {
+        if (!nameValue) return { en: fallbackName, ar: fallbackName };
+        
+        // If it's already a bilingual object, return it
+        if (typeof nameValue === 'object' && nameValue.en && nameValue.ar) {
+            return nameValue;
+        }
+        
+        // If it's a string, create bilingual object
+        if (typeof nameValue === 'string') {
+            return { en: nameValue, ar: nameValue };
+        }
+        
+        // Fallback
+        return { en: String(nameValue), ar: String(nameValue) };
+    };
+    
     return {
         _id: item._id || item.itemId,
         categoryId: item.categoryId,
-        name: item.name || item.material || 'Unknown Item',
+        name: ensureBilingual(item.name, item.material || 'Unknown Item'),
         image: item.image || '',
         points: item.points || 0,
         price: item.price || item.value || 0,
-        categoryName: item.categoryName || '',
+        categoryName: ensureBilingual(item.categoryName, ''),
         measurement_unit: item.measurement_unit || item.unit || 2,
         quantity: item.quantity || 1,
         ...item

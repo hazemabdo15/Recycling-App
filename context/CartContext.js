@@ -113,13 +113,56 @@ export const CartProvider = ({ children }) => {
   // Add item mutation
   const addItemMutation = useMutation({
     mutationFn: ({ item, isLoggedIn }) => addItemToCart(item, isLoggedIn),
-    onSuccess: (data) => {
-      // Update cache with new cart data
-      queryClient.setQueryData(['cart', isLoggedIn ? user?._id : sessionId], data);
-      logger.cart('Item added to cart successfully', { itemId: data._id });
+    onMutate: async ({ item }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['cart', isLoggedIn ? user?._id : sessionId] });
+
+      // Snapshot the previous value
+      const previousCart = queryClient.getQueryData(['cart', isLoggedIn ? user?._id : sessionId]);
+
+      // Optimistically update the cache by adding the new item
+      queryClient.setQueryData(['cart', isLoggedIn ? user?._id : sessionId], (old) => {
+        const newItem = {
+          _id: item._id,
+          categoryId: item.categoryId,
+          categoryName: item.categoryName,
+          name: item.name,
+          image: item.image,
+          points: item.points,
+          price: item.price,
+          measurement_unit: item.measurement_unit,
+          quantity: item.quantity,
+        };
+
+        if (!old?.items) {
+          return { ...old, items: [newItem] };
+        }
+
+        // Check if item already exists (shouldn't happen, but just in case)
+        const existingIndex = old.items.findIndex(cartItem => cartItem._id === item._id);
+        if (existingIndex >= 0) {
+          // Update existing item
+          const updatedItems = [...old.items];
+          updatedItems[existingIndex] = { ...updatedItems[existingIndex], quantity: item.quantity };
+          return { ...old, items: updatedItems };
+        } else {
+          // Add new item
+          return { ...old, items: [...old.items, newItem] };
+        }
+      });
+
+      return { previousCart };
     },
-    onError: (error) => {
-      logger.cart('Failed to add item to cart', { error: error.message }, 'ERROR');
+    onError: (err, variables, context) => {
+      // Rollback on error
+      if (context?.previousCart) {
+        queryClient.setQueryData(['cart', isLoggedIn ? user?._id : sessionId], context.previousCart);
+      }
+      logger.cart('Failed to add item to cart', { error: err.message, itemId: variables.item._id }, 'ERROR');
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure cache consistency
+      queryClient.invalidateQueries({ queryKey: ['cart', isLoggedIn ? user?._id : sessionId] });
     },
   });
 
@@ -182,19 +225,42 @@ export const CartProvider = ({ children }) => {
   // Legacy compatibility functions
   const handleUpdateQuantity = async (itemId, quantity, measurementUnit = null, context = 'user-interaction', itemData = null) => {
     try {
-      const item = itemData || cartItemDetails[itemId];
-      if (!item) {
-        throw new Error(`Item ${itemId} not found in cart`);
+      // Check if this is a new item (itemData provided and item not in cart)
+      const isNewItem = itemData && !cartItemDetails[itemId];
+      
+      if (isNewItem) {
+        // Use addItemMutation for new items - more efficient than updateCartItem
+        console.log(`[CartContext] Adding new item to cart: ${itemData.name?.en || itemData.name}`);
+        
+        // Prepare item data for addItemToCart
+        const itemToAdd = {
+          ...itemData,
+          quantity: quantity,
+          measurement_unit: measurementUnit || itemData.measurement_unit
+        };
+        
+        await addItemMutation.mutateAsync({
+          item: itemToAdd,
+          isLoggedIn
+        });
+        
+        return { success: true };
+      } else {
+        // Use updateCartMutation for existing items
+        const item = itemData || cartItemDetails[itemId];
+        if (!item) {
+          throw new Error(`Item ${itemId} not found in cart`);
+        }
+
+        await updateCartMutation.mutateAsync({
+          itemId,
+          item,
+          quantity,
+          measurementUnit: measurementUnit || item.measurement_unit
+        });
+
+        return { success: true };
       }
-
-      await updateCartMutation.mutateAsync({
-        itemId,
-        item,
-        quantity,
-        measurementUnit: measurementUnit || item.measurement_unit
-      });
-
-      return { success: true };
     } catch (error) {
       return { success: false, error: error.message };
     }
