@@ -141,7 +141,6 @@ const TopRecycledSection = memo(() => {
       setLoading(true);
       setError(null);
       const res = await orderService.getTopMaterials();
-      console.log("Top Recycled Items Response:", res);
 
       if (res?.success) {
         setTopItems(res.data || []);
