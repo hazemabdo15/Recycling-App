@@ -27,8 +27,9 @@ const isDevelopment = __DEV__;
 class Logger {
   constructor() {
 
-    this.logLevel = isProduction ? LOG_LEVELS.ERROR : LOG_LEVELS.DEBUG;
-    this.enableConsole = isDevelopment;
+    this.logLevel = isProduction ? LOG_LEVELS.ERROR : LOG_LEVELS.ERROR; // Only show errors in development
+    this.enableConsole = false; // Completely disable console logging
+    this.enableRemoteLogging = isProduction;
     this.enableRemoteLogging = isProduction;
     this.logs = [];
     this.maxLogHistory = isProduction ? 50 : 100;

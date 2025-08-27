@@ -414,8 +414,7 @@ const CategoryDetails = () => {
                 t
               );
             }
-          } catch (err) {
-            console.error("[CategoryDetails] Error increasing quantity:", err);
+          } catch (_err) {
             showCartMessage(CartMessageTypes.OPERATION_FAILED, {
               itemName: itemDisplayName,
               measurementUnit: item.measurement_unit,
@@ -451,8 +450,7 @@ const CategoryDetails = () => {
           try {
             const itemWithCorrectId = { ...item, _id: itemKey };
             await handleDecreaseQuantity(itemWithCorrectId);
-          } catch (err) {
-            console.error("[CategoryDetails] Error decreasing quantity:", err);
+          } catch (_err) {
             showCartMessage(CartMessageTypes.OPERATION_FAILED, {
               itemName: itemDisplayName,
               measurementUnit: item.measurement_unit,
@@ -550,11 +548,7 @@ const CategoryDetails = () => {
             });
 
             await handleFastIncreaseQuantity(item);
-          } catch (err) {
-            console.error(
-              "[CategoryDetails] Error fast increasing quantity:",
-              err
-            );
+          } catch (_err) {
             showCartMessage(CartMessageTypes.OPERATION_FAILED, {
               itemName: itemDisplayName,
               measurementUnit: item.measurement_unit,
@@ -589,11 +583,7 @@ const CategoryDetails = () => {
 
           try {
             await handleFastDecreaseQuantity(item);
-          } catch (err) {
-            console.error(
-              "[CategoryDetails] Error fast decreasing quantity:",
-              err
-            );
+          } catch (_err) {
             showCartMessage(CartMessageTypes.OPERATION_FAILED, {
               itemName: itemDisplayName,
               measurementUnit: item.measurement_unit,

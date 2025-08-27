@@ -72,8 +72,6 @@ export const useCart = (user = null) => {
         }
       }
       
-      console.log(`🔍 [useCart Debug] Item ${_id} search in ${safeAllItems.length} items`);
-      
       if (safeAllItems.length > 0) {
         const originalItem = safeAllItems.find(
           (originalItem) =>
@@ -82,13 +80,6 @@ export const useCart = (user = null) => {
             originalItem.categoryId === _id ||
             originalItem.categoryId === processedItem.categoryId
         );
-        
-        console.log(`🔍 [useCart Debug] Found originalItem:`, !!originalItem, originalItem ? {
-          _id: originalItem._id,
-          categoryId: originalItem.categoryId,
-          quantity: originalItem.quantity,
-          available_quantity: originalItem.available_quantity
-        } : 'not found');
         
         // Get the most reliable stock value from the original item if found
         if (originalItem) {
@@ -103,10 +94,7 @@ export const useCart = (user = null) => {
         }
       }
       
-      console.log(`🔍 [useCart Debug] Final apiStockQuantity: ${apiStockQuantity}`);
-      
       const fallbackStock = getStockQuantity(_id, apiStockQuantity);
-      console.log(`✅ [Cart Fix] Item ${_id} - API: ${apiStockQuantity}, Fallback: ${fallbackStock}, New Qty: ${newQuantity}`);
       
       const stockQuantitiesWithFallback = {
         [_id]: fallbackStock // Use fallback to API data
@@ -120,13 +108,6 @@ export const useCart = (user = null) => {
         cartItems,
         { [_id]: processedItem }
       );
-      
-      console.log(`🔍 [Cart Validation] Result:`, {
-        canProceed: validation.canProceed,
-        reason: validation.reason,
-        availableStock: validation.availableStock,
-        requestedQuantity: validation.requestedQuantity
-      });
       
       if (!validation.canProceed) {
         if (typeof showError === 'function') {
@@ -151,13 +132,11 @@ export const useCart = (user = null) => {
       }
       
       if (result && !result.success && result.reason === 'Operation already pending') {
-        console.log('⏸️ [useCart] Update skipped - operation already pending');
         return;
       }
       
       return true;
-    } catch (error) {
-      console.error('[useCart] handleIncreaseQuantity error:', error);
+    } catch (_error) {
       return false;
     }
   };
@@ -197,12 +176,11 @@ export const useCart = (user = null) => {
         }
 
         if (result && !result.success && result.reason === 'Operation already pending') {
-          console.log('⏸️ [useCart] Update skipped - operation already pending');
           return;
         }
       }
-    } catch (error) {
-      console.error('[useCart] handleDecreaseQuantity error:', error);
+    } catch (_error) {
+      // Handle error silently
     }
   };
 
@@ -246,7 +224,6 @@ export const useCart = (user = null) => {
         }
         
         const fallbackStock = getStockQuantity(_id, apiStockQuantity);
-        console.log(`🔍 [Fast Cart Validation - New Item] Item ${_id} - Current: ${currentQuantity}, New: ${newQuantity}, API Stock: ${apiStockQuantity}, Fallback Stock: ${fallbackStock}`);
         
         const stockQuantitiesWithFallback = {
           [_id]: fallbackStock // Use fallback to API data
@@ -260,13 +237,6 @@ export const useCart = (user = null) => {
           cartItems,
           { [_id]: processedItem }
         );
-        
-        console.log(`🔍 [Fast Cart Validation - New Item] Result:`, {
-          canProceed: validation.canProceed,
-          reason: validation.reason,
-          availableStock: validation.availableStock,
-          requestedQuantity: validation.requestedQuantity
-        });
         
         if (!validation.canProceed) {
           if (typeof showError === 'function') {
@@ -311,7 +281,6 @@ export const useCart = (user = null) => {
         }
         
         const fallbackStock = getStockQuantity(_id, apiStockQuantity);
-        console.log(`🔍 [Fast Cart Validation - Existing Item] Item ${_id} - Current: ${currentQuantity}, New: ${newQuantity}, API Stock: ${apiStockQuantity}, Fallback Stock: ${fallbackStock}`);
         
         const stockQuantitiesWithFallback = {
           [_id]: fallbackStock // Use fallback to API data
@@ -325,13 +294,6 @@ export const useCart = (user = null) => {
           cartItems,
           { [_id]: processedItem }
         );
-        
-        console.log(`🔍 [Fast Cart Validation - Existing Item] Result:`, {
-          canProceed: validation.canProceed,
-          reason: validation.reason,
-          availableStock: validation.availableStock,
-          requestedQuantity: validation.requestedQuantity
-        });
         
         if (!validation.canProceed) {
           if (typeof showError === 'function') {
@@ -357,13 +319,11 @@ export const useCart = (user = null) => {
         }
         
         if (result && !result.success && result.reason === 'Operation already pending') {
-          console.log('⏸️ [useCart] Fast update skipped - operation already pending');
           return;
         }
       }
       return true;
-    } catch (error) {
-      console.error('[useCart] handleFastIncreaseQuantity error:', error);
+    } catch (_error) {
       return false;
     }
   };
@@ -398,26 +358,22 @@ export const useCart = (user = null) => {
         }
         
         if (result && !result.success && result.reason === 'Operation already pending') {
-          console.log('⏸️ [useCart] Fast decrease skipped - operation already pending');
           return;
         }
       }
-    } catch (error) {
-      console.error('[useCart] handleFastDecreaseQuantity error:', error);
+    } catch (_error) {
+      // Handle error silently or log through proper logger if needed
     }
   };
 
   // Set quantity directly (for manual input)
   const handleSetQuantity = async (item, newQuantity) => {
-    console.log('useCart handleSetQuantity called with:', { item: item?.name, newQuantity });
     const needsNormalization = !item._id || !item.categoryId || !item.image || item.measurement_unit === undefined;
     const processedItem = needsNormalization ? normalizeItemData(item) : item;
     const { _id, measurement_unit } = processedItem;
     const currentQuantity = getItemQuantity(_id);
-    console.log('useCart handleSetQuantity processed:', { _id, measurement_unit, newQuantity, currentQuantity });
     
     if (newQuantity <= 0) {
-      console.log('useCart handleSetQuantity: removing item (quantity <= 0)');
       await handleRemoveFromCart(_id);
       logger.success('Item removed from cart (set quantity to 0)', { itemId: _id }, 'CART');
       return { success: true };
@@ -465,7 +421,6 @@ export const useCart = (user = null) => {
       );
       
       if (!validation.canProceed) {
-        console.log('useCart handleSetQuantity: stock validation failed:', validation.reason);
         return { 
           success: false, 
           error: validation.reason,
@@ -477,16 +432,12 @@ export const useCart = (user = null) => {
     try {
       if (currentQuantity === 0) {
         // Item doesn't exist in cart, add it
-        console.log('useCart handleSetQuantity: adding new item to cart');
         const cartItem = createCartItem(processedItem, newQuantity);
         const result = await handleAddToCart(cartItem);
-        console.log('useCart handleSetQuantity: handleAddToCart result:', result);
         return result || { success: true };
       } else {
         // Item exists in cart, update quantity
-        console.log('useCart handleSetQuantity: updating existing item quantity');
         const result = await handleUpdateQuantity(_id, newQuantity, measurement_unit, 'user-interaction', processedItem);
-        console.log('useCart handleSetQuantity: handleUpdateQuantity result:', result);
         
         if (result && result.success) {
           logger.success('Set quantity succeeded', { itemId: _id, newQuantity }, 'CART');
@@ -495,7 +446,6 @@ export const useCart = (user = null) => {
         return result;
       }
     } catch (error) {
-      console.error('useCart handleSetQuantity error:', error);
       return { success: false, error: error.message };
     }
   };

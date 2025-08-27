@@ -175,30 +175,27 @@ const SplashController = ({ children, onDataLoaded }) => {
   }, [authLoading, isLoggedIn, user, fetchBackendCart, cartLoading, updateProgress]);
 
   useEffect(() => {
-
-    if (__DEV__) {
-      hasInitialized.current = false;
-      logger.info('Development mode: Resetting splash initialization for hot reload', null, 'SPLASH');
+    // Only reset initialization flag once when component mounts in development
+    if (__DEV__ && !hasInitialized.current) {
+      // Don't reset hasInitialized here as it causes infinite loops
+      // The flag will be managed properly by the initializeApp function
     }
 
     const hideNativeSplash = async () => {
       try {
         await SplashScreen.hideAsync();
-        logger.info('Native splash screen hidden, showing custom splash', null, 'SPLASH');
-      } catch (error) {
-        logger.warn('Failed to hide native splash screen', { error: error.message }, 'SPLASH');
+      } catch (_error) {
+        // Silent fail for splash screen hiding
       }
     };
     
     hideNativeSplash();
 
     const initTimer = setTimeout(() => {
-      logger.info('Starting splash initialization timer', null, 'SPLASH');
       initializeApp();
     }, __DEV__ ? 500 : 100);
 
     return () => {
-      logger.info('Cleaning up splash initialization timer', null, 'SPLASH');
       clearTimeout(initTimer);
       if (progressTimer.current) {
         clearInterval(progressTimer.current);

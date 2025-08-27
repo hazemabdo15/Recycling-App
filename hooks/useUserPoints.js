@@ -58,22 +58,10 @@ export function useUserPoints({ userId, name, email }) {
       setUserPoints(res.data.totalPoints);
       setTotalRecycled(res.data.totalRecycled ?? 0);
     } catch (err) {
-      console.error('Error fetching user points:', err);
-
       if (!isLoggedIn) {
         setUserPoints(null);
         setPointsLoading(false);
         return;
-      }
-
-      if (err.response) {
-        console.error('Error response data:', err.response.data);
-        console.error('Error response status:', err.response.status);
-        console.error('Error response headers:', err.response.headers);
-      } else if (err.request) {
-        console.error('Error request:', err.request);
-      } else {
-        console.error('Error message:', err.message);
       }
 
       setError(err);

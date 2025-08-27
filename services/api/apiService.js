@@ -253,9 +253,6 @@ class OptimizedAPIService {
 
       if (this.accessToken) {
         headers.Authorization = `Bearer ${this.accessToken}`;
-        console.log(`[API] Using access token for ${endpoint}: ${this.accessToken.substring(0, 20)}...`);
-      } else {
-        console.log(`[API] No access token available for ${endpoint}`);
       }
 
       let body = getBody();
