@@ -602,7 +602,7 @@
       "name": "بلاسيتك",
       "description": "مجموعة من العناصر"
     },
-    "e-wasted": {
+    "e-waste": {
       "name": "نفايات الكترونية",
       "description": "بعض من النفايات الالكترونية"
     },
@@ -629,7 +629,7 @@
       "books": "كتب",
       "news-paper": "جرائد"
     },
-    "e-wasted": {
+    "e-waste": {
       "router": "راوتر",
       "mobile": "موبايل",
       "laptop": "لاب توب",

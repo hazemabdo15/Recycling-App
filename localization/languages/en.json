@@ -544,8 +544,8 @@
       "name": "plastic",
       "description": "variety of plastic items"
     },
-    "e-wasted": {
-      "name": "E-Wasted",
+    "e-waste": {
+      "name": "E-Waste",
       "description": "e wasted items"
     },
     "spare-parts": {
@@ -571,7 +571,7 @@
       "books": "books",
       "news-paper": "news papers"
     },
-    "e-wasted": {
+    "e-waste": {
       "router": "router",
       "mobile": "mobile",
       "laptop": "laptop",
