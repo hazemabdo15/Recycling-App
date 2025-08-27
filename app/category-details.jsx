@@ -36,18 +36,25 @@ import {
 } from "../utils/cartUtils";
 import { isBuyer } from "../utils/roleUtils";
 import { scaleSize } from "../utils/scale";
-import { isMaxStockReached, isOutOfStock, canAddToCart as stockCanAddToCart } from "../utils/stockUtils";
-import { extractNameFromMultilingual, getTranslatedName } from "../utils/translationHelpers";
+import {
+  isMaxStockReached,
+  isOutOfStock,
+  canAddToCart as stockCanAddToCart,
+} from "../utils/stockUtils";
+import {
+  extractNameFromMultilingual,
+  getTranslatedName,
+} from "../utils/translationHelpers";
 
 const CategoryDetails = () => {
   const { categoryName: categoryNameParam } = useLocalSearchParams();
   const navigation = useNavigation();
   const { user } = useAuth();
   const { tRole, currentLanguage } = useLocalization();
-  const { t } = useTranslation(); // Add translation hook
+  const { t } = useTranslation();
   const { colors, isDarkMode } = useThemedStyles();
   const layoutStyles = getLayoutStyles(isDarkMode);
-  
+
   // Parse the category name if it's a JSON string, otherwise use as-is
   let categoryName;
   try {
@@ -55,27 +62,51 @@ const CategoryDetails = () => {
   } catch {
     categoryName = categoryNameParam;
   }
-  
-  // Get translated category name for display (use shared helper)
-  const translatedCategoryName = getTranslatedName(t, categoryName, 'categories', { 
-    currentLanguage 
-  });
+
+  // Get translated category name for display
+  const translatedCategoryName = useMemo(() => {
+    if (!categoryName) return "";
+
+    // If categoryName is already a multilingual object, extract the name directly
+    if (typeof categoryName === "object") {
+      return extractNameFromMultilingual(categoryName, currentLanguage);
+    }
+
+    // If it's a string, try translation lookup first, then fallback to the string itself
+    const translatedName = getTranslatedName(t, categoryName, "categories", {
+      currentLanguage,
+    });
+
+    // If translation returns the same key pattern (like "categories.e-waste.name"),
+    // it means translation failed, so return the original string
+    if (
+      translatedName &&
+      translatedName.startsWith("categories.") &&
+      translatedName.endsWith(".name")
+    ) {
+      return categoryName;
+    }
+
+    return translatedName || categoryName;
+  }, [categoryName, currentLanguage, t]);
 
   useEffect(() => {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
 
   // For API calls, use the English name or fallback to the original string
-  const categoryNameForAPI = typeof categoryName === 'object' 
-    ? (categoryName.en || categoryName.ar || Object.values(categoryName)[0])
-    : categoryName;
+  const categoryNameForAPI =
+    typeof categoryName === "object"
+      ? categoryName.en || categoryName.ar || Object.values(categoryName)[0]
+      : categoryName;
 
-  const { items, loading, error, refetch } = useCategoryItems(categoryNameForAPI);
+  const { items, loading, error, refetch } =
+    useCategoryItems(categoryNameForAPI);
   const [refreshing, setRefreshing] = useState(false);
-  
+
   // Track pending operations to prevent spam clicking
   const [pendingOperations, setPendingOperations] = useState(new Map());
-  
+
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
@@ -93,24 +124,21 @@ const CategoryDetails = () => {
     handleFastDecreaseQuantity,
     handleSetQuantity,
   } = useCart(user);
-  
-  const {
-    stockQuantities,
-    getStockQuantity,
-    subscribeToStockUpdates,
-  } = useStock();
-  
+
+  const { stockQuantities, getStockQuantity, subscribeToStockUpdates } =
+    useStock();
+
   // Enhanced real-time stock update subscription for category page
   useEffect(() => {
     if (!subscribeToStockUpdates) return;
-    
+
     const unsubscribe = subscribeToStockUpdates((timestamp) => {
       // Stock updates will be handled through the useMemo dependencies
     });
-    
+
     return unsubscribe;
   }, [subscribeToStockUpdates]);
-  
+
   // Debug stock context state
   // Removed excessive logging to prevent console spam
 
@@ -123,12 +151,13 @@ const CategoryDetails = () => {
   const itemsWithRealTimeStock = useMemo(() => {
     if (!items) return items;
 
-    return items.map(item => {
+    return items.map((item) => {
       // Get stock directly from stockQuantities to avoid function reference issues
       const realTimeStock = stockQuantities[item._id];
       const updatedItem = {
         ...item,
-        quantity: realTimeStock !== undefined ? realTimeStock : (item.quantity ?? 0)
+        quantity:
+          realTimeStock !== undefined ? realTimeStock : item.quantity ?? 0,
       };
 
       return updatedItem;
@@ -146,8 +175,11 @@ const CategoryDetails = () => {
       const processedItem = needsNormalization ? normalizeItemData(item) : item;
 
       // Handle multilingual item name - extract from the item name structure
-      const itemDisplayName = extractNameFromMultilingual(processedItem.name, currentLanguage);
-      
+      const itemDisplayName = extractNameFromMultilingual(
+        processedItem.name,
+        currentLanguage
+      );
+
       // Add translated name to item (fallback to translation system if multilingual data not available)
       const translatedItemName = getTranslatedName(
         t,
@@ -183,430 +215,449 @@ const CategoryDetails = () => {
     cartItems
   );
 
-  const handleManualInput = useCallback(async (itemOrValue, valueMaybe) => {
-    // itemOrValue can be item or value depending on call
-    let item, value;
-    if (typeof valueMaybe === "undefined") {
-      // Called as onManualInput(item)
-      item = itemOrValue;
-      return; // Do nothing on just focus/click
-    } else {
-      // Called as onManualInput(value) from QuantityControls
-      item = itemOrValue;
-      value = valueMaybe;
-    }
+  const handleManualInput = useCallback(
+    async (itemOrValue, valueMaybe) => {
+      // itemOrValue can be item or value depending on call
+      let item, value;
+      if (typeof valueMaybe === "undefined") {
+        // Called as onManualInput(item)
+        item = itemOrValue;
+        return; // Do nothing on just focus/click
+      } else {
+        // Called as onManualInput(value) from QuantityControls
+        item = itemOrValue;
+        value = valueMaybe;
+      }
 
-    if (!item) {
-      return;
-    }
-
-    // Use translated item name in messages
-    const itemDisplayName = item.displayName || item.name;
-
-    // Validate minimum quantity based on measurement unit
-    const measurementUnit =
-      item.measurement_unit || (item.unit === "KG" ? 1 : 2);
-    
-    // For pieces (measurement_unit === 2), round fractional values to nearest integer
-    if (measurementUnit === 2 && value !== Math.floor(value)) {
-      value = Math.round(value);
-    }
-    
-    if (value > 0) {
-      if (measurementUnit === 1 && value < 0.25) {
-        showCartMessage(CartMessageTypes.INVALID_QUANTITY, {
-          itemName: itemDisplayName,
-          measurementUnit: measurementUnit,
-          isBuyer: user?.role === "buyer",
-          t
-        });
-        return;
-      } else if (measurementUnit === 2 && value < 1) {
-        showCartMessage(CartMessageTypes.INVALID_QUANTITY, {
-          itemName: itemDisplayName,
-          measurementUnit: measurementUnit,
-          isBuyer: user?.role === "buyer",
-          t
-        });
+      if (!item) {
         return;
       }
-    }
 
-    // Only check stock for buyer users
-    if (isBuyer(user)) {
-      // Get real-time stock quantity with fallback to API data
-      const currentStock = getStockQuantity(item._id, item.quantity);
-      const stockQuantity = currentStock !== undefined ? currentStock : item.quantity;
-      
-      if (value > stockQuantity) {
-        showCartMessage(CartMessageTypes.STOCK_ERROR, {
+      // Use translated item name in messages
+      const itemDisplayName = item.displayName || item.name;
+
+      // Validate minimum quantity based on measurement unit
+      const measurementUnit =
+        item.measurement_unit || (item.unit === "KG" ? 1 : 2);
+
+      // For pieces (measurement_unit === 2), round fractional values to nearest integer
+      if (measurementUnit === 2 && value !== Math.floor(value)) {
+        value = Math.round(value);
+      }
+
+      if (value > 0) {
+        if (measurementUnit === 1 && value < 0.25) {
+          showCartMessage(CartMessageTypes.INVALID_QUANTITY, {
+            itemName: itemDisplayName,
+            measurementUnit: measurementUnit,
+            isBuyer: user?.role === "buyer",
+            t,
+          });
+          return;
+        } else if (measurementUnit === 2 && value < 1) {
+          showCartMessage(CartMessageTypes.INVALID_QUANTITY, {
+            itemName: itemDisplayName,
+            measurementUnit: measurementUnit,
+            isBuyer: user?.role === "buyer",
+            t,
+          });
+          return;
+        }
+      }
+
+      // Only check stock for buyer users
+      if (isBuyer(user)) {
+        // Get real-time stock quantity with fallback to API data
+        const currentStock = getStockQuantity(item._id, item.quantity);
+        const stockQuantity =
+          currentStock !== undefined ? currentStock : item.quantity;
+
+        if (value > stockQuantity) {
+          showCartMessage(CartMessageTypes.STOCK_ERROR, {
+            itemName: itemDisplayName,
+            maxStock: stockQuantity,
+            measurementUnit: item.measurement_unit,
+            isBuyer: true,
+            t,
+          });
+          return;
+        }
+      }
+      try {
+        const result = await handleSetQuantity(item, value);
+
+        // Only show removal message when quantity is set to 0
+        if (value === 0) {
+          showCartMessage(CartMessageTypes.MANUAL_REMOVED, {
+            itemName: itemDisplayName,
+            measurementUnit: item.measurement_unit,
+            isBuyer: user?.role === "buyer",
+            t,
+          });
+        }
+      } catch (_err) {
+        showCartMessage(CartMessageTypes.OPERATION_FAILED, {
           itemName: itemDisplayName,
-          maxStock: stockQuantity,
           measurementUnit: item.measurement_unit,
-          isBuyer: true,
-          t
-        });
-        return;
-      }
-    }
-    try {
-      const result = await handleSetQuantity(item, value);
-
-      // Only show removal message when quantity is set to 0
-      if (value === 0) {
-        showCartMessage(CartMessageTypes.MANUAL_REMOVED, {
-          itemName: itemDisplayName,
-          measurementUnit: item.measurement_unit,
           isBuyer: user?.role === "buyer",
-          t
+          t,
         });
+      } finally {
       }
-    } catch (_err) {
-      showCartMessage(CartMessageTypes.OPERATION_FAILED, {
-        itemName: itemDisplayName,
-        measurementUnit: item.measurement_unit,
-        isBuyer: user?.role === "buyer",
-        t
-      });
-    } finally {
-    }
-  }, [user, getStockQuantity, handleSetQuantity, t]);
+    },
+    [user, getStockQuantity, handleSetQuantity, t]
+  );
 
   // Memoized render function to prevent unnecessary re-renders of individual items
-  const renderItem = useCallback(({ item, index }) => {
-    const itemKey = getCartKey(item);
-    // Use displayName if available (already translated), otherwise extract from multilingual name
-    const itemDisplayName = item.displayName || extractNameFromMultilingual(item.name, currentLanguage);
+  const renderItem = useCallback(
+    ({ item, index }) => {
+      const itemKey = getCartKey(item);
+      // Use displayName if available (already translated), otherwise extract from multilingual name
+      const itemDisplayName =
+        item.displayName ||
+        extractNameFromMultilingual(item.name, currentLanguage);
 
-    // Stock logic - only for buyer users
-    let maxReached = false;
-    let outOfStock = false;
-    let canAddToCart = () => true; // Default to always allow for non-buyers
+      // Stock logic - only for buyer users
+      let maxReached = false;
+      let outOfStock = false;
+      let canAddToCart = () => true; // Default to always allow for non-buyers
 
-    if (isBuyer(user)) {
-      // Get real-time stock with fallback to API data
-      const currentStock = getStockQuantity(item._id, item.quantity);
-      const stockQuantity = currentStock !== undefined ? currentStock : item.quantity;
-      
-      // Use updated stock quantity for validation
-      const itemWithCurrentStock = { ...item, quantity: stockQuantity };
-      maxReached = isMaxStockReached(itemWithCurrentStock, item.cartQuantity);
-      outOfStock = isOutOfStock(itemWithCurrentStock);
-      canAddToCart = stockCanAddToCart;
-    }
+      if (isBuyer(user)) {
+        // Get real-time stock with fallback to API data
+        const currentStock = getStockQuantity(item._id, item.quantity);
+        const stockQuantity =
+          currentStock !== undefined ? currentStock : item.quantity;
 
-    // Check if this item has pending operations
-    const hasPendingOperation = pendingOperations.has(itemKey);
+        // Use updated stock quantity for validation
+        const itemWithCurrentStock = { ...item, quantity: stockQuantity };
+        maxReached = isMaxStockReached(itemWithCurrentStock, item.cartQuantity);
+        outOfStock = isOutOfStock(itemWithCurrentStock);
+        canAddToCart = stockCanAddToCart;
+      }
 
-    return (
-      <ItemCard
-        item={{
-          ...item,
-          // Pass the display name to ItemCard so it shows translated text
-          name: itemDisplayName,
-        }}
-        quantity={item.cartQuantity}
-        disabled={hasPendingOperation}
-        pendingAction={hasPendingOperation ? pendingOperations.get(itemKey) : null}
-        index={index}
-        maxReached={maxReached}
-        outOfStock={outOfStock}
-        user={user}
-        onManualInput={(val) => handleManualInput(item, val)}
-        onIncrease={async () => {
-          // Prevent spam clicking
-          if (pendingOperations.has(itemKey)) {
-            return;
+      // Check if this item has pending operations
+      const hasPendingOperation = pendingOperations.has(itemKey);
+
+      return (
+        <ItemCard
+          item={{
+            ...item,
+            // Pass the display name to ItemCard so it shows translated text
+            name: itemDisplayName,
+          }}
+          quantity={item.cartQuantity}
+          disabled={hasPendingOperation}
+          pendingAction={
+            hasPendingOperation ? pendingOperations.get(itemKey) : null
           }
-
-          // Set pending operation
-          setPendingOperations(prev => new Map(prev).set(itemKey, 'increase'));
-
-          // Pre-compute values for instant feedback
-          const normalizedItem = normalizeItemData(item);
-          const step = getIncrementStep(normalizedItem.measurement_unit);
-
-          // Comprehensive stock validation for buyer users before showing optimistic UI
-          if (isBuyer(user)) {
-            if (outOfStock) {
-              showCartMessage(CartMessageTypes.STOCK_ERROR, {
-                itemName: itemDisplayName,
-                maxStock: 0,
-                measurementUnit: item.measurement_unit,
-                isBuyer: true,
-                t
-              });
-              // Clear pending operation
-              setPendingOperations(prev => {
-                const newMap = new Map(prev);
-                newMap.delete(itemKey);
-                return newMap;
-              });
+          index={index}
+          maxReached={maxReached}
+          outOfStock={outOfStock}
+          user={user}
+          onManualInput={(val) => handleManualInput(item, val)}
+          onIncrease={async () => {
+            // Prevent spam clicking
+            if (pendingOperations.has(itemKey)) {
               return;
             }
 
-            // Check if adding step would exceed available stock
-            const currentStock = getStockQuantity(item._id);
-            const stockQuantity = currentStock !== undefined ? currentStock : item.quantity;
-            const currentCartQuantity = item.cartQuantity;
-            const newTotalQuantity = currentCartQuantity + step;
+            // Set pending operation
+            setPendingOperations((prev) =>
+              new Map(prev).set(itemKey, "increase")
+            );
 
-            if (newTotalQuantity > stockQuantity) {
-              showMaxStockMessage(
-                itemDisplayName,
-                stockQuantity,
-                item.measurement_unit,
-                t
-              );
-              // Clear pending operation
-              setPendingOperations(prev => {
-                const newMap = new Map(prev);
-                newMap.delete(itemKey);
-                return newMap;
-              });
-              return;
+            // Pre-compute values for instant feedback
+            const normalizedItem = normalizeItemData(item);
+            const step = getIncrementStep(normalizedItem.measurement_unit);
+
+            // Comprehensive stock validation for buyer users before showing optimistic UI
+            if (isBuyer(user)) {
+              if (outOfStock) {
+                showCartMessage(CartMessageTypes.STOCK_ERROR, {
+                  itemName: itemDisplayName,
+                  maxStock: 0,
+                  measurementUnit: item.measurement_unit,
+                  isBuyer: true,
+                  t,
+                });
+                // Clear pending operation
+                setPendingOperations((prev) => {
+                  const newMap = new Map(prev);
+                  newMap.delete(itemKey);
+                  return newMap;
+                });
+                return;
+              }
+
+              // Check if adding step would exceed available stock
+              const currentStock = getStockQuantity(item._id);
+              const stockQuantity =
+                currentStock !== undefined ? currentStock : item.quantity;
+              const currentCartQuantity = item.cartQuantity;
+              const newTotalQuantity = currentCartQuantity + step;
+
+              if (newTotalQuantity > stockQuantity) {
+                showMaxStockMessage(
+                  itemDisplayName,
+                  stockQuantity,
+                  item.measurement_unit,
+                  t
+                );
+                // Clear pending operation
+                setPendingOperations((prev) => {
+                  const newMap = new Map(prev);
+                  newMap.delete(itemKey);
+                  return newMap;
+                });
+                return;
+              }
+
+              if (maxReached) {
+                showMaxStockMessage(
+                  itemDisplayName,
+                  item.quantity,
+                  item.measurement_unit,
+                  t
+                );
+                // Clear pending operation
+                setPendingOperations((prev) => {
+                  const newMap = new Map(prev);
+                  newMap.delete(itemKey);
+                  return newMap;
+                });
+                return;
+              }
             }
 
-            if (maxReached) {
-              showMaxStockMessage(
-                itemDisplayName,
-                item.quantity,
-                item.measurement_unit,
-                t
-              );
-              // Clear pending operation
-              setPendingOperations(prev => {
-                const newMap = new Map(prev);
-                newMap.delete(itemKey);
-                return newMap;
-              });
-              return;
-            }
-          }
-
-          // Show toast instantly (only after stock checks pass)
-          showCartMessage(CartMessageTypes.ADD_SINGLE, {
-            itemName: itemDisplayName,
-            quantity: step,
-            measurementUnit: normalizedItem.measurement_unit,
-            isBuyer: user?.role === "buyer",
-            t
-          });
-
-          try {
-            // Clear pending operation immediately after optimistic update starts
-            setPendingOperations(prev => {
-              const newMap = new Map(prev);
-              newMap.delete(itemKey);
-              return newMap;
-            });
-
-            const itemWithCorrectId = { ...item, _id: itemKey };
-            const addResult = await handleIncreaseQuantity(itemWithCorrectId);
-            if (addResult === false) {
-              // Show maxStock toast with fallback stock quantity
-              const currentStock = getStockQuantity(item._id, true); // Use fallback
-              const stockQuantity = currentStock !== undefined ? currentStock : item.quantity;
-              showMaxStockMessage(
-                itemDisplayName,
-                stockQuantity,
-                item.measurement_unit,
-                t
-              );
-            }
-          } catch (_err) {
-            showCartMessage(CartMessageTypes.OPERATION_FAILED, {
-              itemName: itemDisplayName,
-              measurementUnit: item.measurement_unit,
-              isBuyer: user?.role === "buyer",
-              t
-            });
-          }
-        }}
-        onDecrease={async () => {
-          // Show toast instantly
-          const normalizedItem = normalizeItemData(item);
-          const step = getIncrementStep(normalizedItem.measurement_unit);
-          const remainingQuantity = item.cartQuantity - step;
-
-          if (remainingQuantity > 0) {
-            showCartMessage(CartMessageTypes.REMOVE_SINGLE, {
+            // Show toast instantly (only after stock checks pass)
+            showCartMessage(CartMessageTypes.ADD_SINGLE, {
               itemName: itemDisplayName,
               quantity: step,
               measurementUnit: normalizedItem.measurement_unit,
-              remainingQuantity: remainingQuantity,
               isBuyer: user?.role === "buyer",
-              t
+              t,
             });
-          } else {
-            showCartMessage(CartMessageTypes.ITEM_REMOVED, {
-              itemName: itemDisplayName,
-              measurementUnit: normalizedItem.measurement_unit,
-              isBuyer: user?.role === "buyer",
-              t
-            });
-          }
 
-          try {
-            const itemWithCorrectId = { ...item, _id: itemKey };
-            await handleDecreaseQuantity(itemWithCorrectId);
-          } catch (_err) {
-            showCartMessage(CartMessageTypes.OPERATION_FAILED, {
-              itemName: itemDisplayName,
-              measurementUnit: item.measurement_unit,
-              isBuyer: user?.role === "buyer",
-              t
-            });
-          }
-        }}
-        onFastIncrease={async () => {
-          // Prevent spam clicking
-          if (pendingOperations.has(itemKey)) {
-            return;
-          }
-
-          // Set pending operation
-          setPendingOperations(prev => new Map(prev).set(itemKey, 'fastIncrease'));
-
-          // Pre-compute values for instant feedback
-          const fastStep = 5;
-          const normalizedItem = normalizeItemData(item);
-
-          // Comprehensive stock validation for buyer users before showing optimistic UI
-          if (isBuyer(user)) {
-            if (outOfStock) {
-              showMaxStockMessage(
-                itemDisplayName,
-                0,
-                item.measurement_unit,
-                t
-              );
-              // Clear pending operation
-              setPendingOperations(prev => {
+            try {
+              // Clear pending operation immediately after optimistic update starts
+              setPendingOperations((prev) => {
                 const newMap = new Map(prev);
                 newMap.delete(itemKey);
                 return newMap;
               });
-              return;
-            }
 
-            // Check if adding fast step would exceed available stock
-            const currentStock = getStockQuantity(item._id);
-            const stockQuantity = currentStock !== undefined ? currentStock : item.quantity;
-            const currentCartQuantity = item.cartQuantity;
-            const newTotalQuantity = currentCartQuantity + fastStep;
-
-            if (newTotalQuantity > stockQuantity) {
-              showMaxStockMessage(
-                itemDisplayName,
-                stockQuantity,
-                item.measurement_unit,
-                t
-              );
-              // Clear pending operation
-              setPendingOperations(prev => {
-                const newMap = new Map(prev);
-                newMap.delete(itemKey);
-                return newMap;
+              const itemWithCorrectId = { ...item, _id: itemKey };
+              const addResult = await handleIncreaseQuantity(itemWithCorrectId);
+              if (addResult === false) {
+                // Show maxStock toast with fallback stock quantity
+                const currentStock = getStockQuantity(item._id, true); // Use fallback
+                const stockQuantity =
+                  currentStock !== undefined ? currentStock : item.quantity;
+                showMaxStockMessage(
+                  itemDisplayName,
+                  stockQuantity,
+                  item.measurement_unit,
+                  t
+                );
+              }
+            } catch (_err) {
+              showCartMessage(CartMessageTypes.OPERATION_FAILED, {
+                itemName: itemDisplayName,
+                measurementUnit: item.measurement_unit,
+                isBuyer: user?.role === "buyer",
+                t,
               });
-              return;
             }
+          }}
+          onDecrease={async () => {
+            // Show toast instantly
+            const normalizedItem = normalizeItemData(item);
+            const step = getIncrementStep(normalizedItem.measurement_unit);
+            const remainingQuantity = item.cartQuantity - step;
 
-            // Use the existing canAddToCart function as additional validation
-            if (!canAddToCart(item, item.cartQuantity, fastStep)) {
-              showMaxStockMessage(
-                itemDisplayName,
-                item.quantity,
-                item.measurement_unit,
-                t
-              );
-              // Clear pending operation
-              setPendingOperations(prev => {
-                const newMap = new Map(prev);
-                newMap.delete(itemKey);
-                return newMap;
+            if (remainingQuantity > 0) {
+              showCartMessage(CartMessageTypes.REMOVE_SINGLE, {
+                itemName: itemDisplayName,
+                quantity: step,
+                measurementUnit: normalizedItem.measurement_unit,
+                remainingQuantity: remainingQuantity,
+                isBuyer: user?.role === "buyer",
+                t,
               });
+            } else {
+              showCartMessage(CartMessageTypes.ITEM_REMOVED, {
+                itemName: itemDisplayName,
+                measurementUnit: normalizedItem.measurement_unit,
+                isBuyer: user?.role === "buyer",
+                t,
+              });
+            }
+
+            try {
+              const itemWithCorrectId = { ...item, _id: itemKey };
+              await handleDecreaseQuantity(itemWithCorrectId);
+            } catch (_err) {
+              showCartMessage(CartMessageTypes.OPERATION_FAILED, {
+                itemName: itemDisplayName,
+                measurementUnit: item.measurement_unit,
+                isBuyer: user?.role === "buyer",
+                t,
+              });
+            }
+          }}
+          onFastIncrease={async () => {
+            // Prevent spam clicking
+            if (pendingOperations.has(itemKey)) {
               return;
             }
-          }
 
-          // Show toast instantly (only after stock checks pass)
-          showCartMessage(CartMessageTypes.ADD_FAST, {
-            itemName: itemDisplayName,
-            quantity: fastStep,
-            measurementUnit: normalizedItem.measurement_unit,
-            isBuyer: user?.role === "buyer",
-            t
-          });
+            // Set pending operation
+            setPendingOperations((prev) =>
+              new Map(prev).set(itemKey, "fastIncrease")
+            );
 
-          try {
-            // Clear pending operation immediately after optimistic update starts
-            setPendingOperations(prev => {
-              const newMap = new Map(prev);
-              newMap.delete(itemKey);
-              return newMap;
-            });
+            // Pre-compute values for instant feedback
+            const fastStep = 5;
+            const normalizedItem = normalizeItemData(item);
 
-            await handleFastIncreaseQuantity(item);
-          } catch (_err) {
-            showCartMessage(CartMessageTypes.OPERATION_FAILED, {
-              itemName: itemDisplayName,
-              measurementUnit: item.measurement_unit,
-              isBuyer: user?.role === "buyer",
-              t
-            });
-          }
-        }}
-        onFastDecrease={async () => {
-          // Show toast instantly
-          const normalizedItem = normalizeItemData(item);
-          const fastStep = 5;
-          const remainingQuantity = item.cartQuantity - fastStep;
+            // Comprehensive stock validation for buyer users before showing optimistic UI
+            if (isBuyer(user)) {
+              if (outOfStock) {
+                showMaxStockMessage(
+                  itemDisplayName,
+                  0,
+                  item.measurement_unit,
+                  t
+                );
+                // Clear pending operation
+                setPendingOperations((prev) => {
+                  const newMap = new Map(prev);
+                  newMap.delete(itemKey);
+                  return newMap;
+                });
+                return;
+              }
 
-          if (remainingQuantity > 0) {
-            showCartMessage(CartMessageTypes.REMOVE_FAST, {
+              // Check if adding fast step would exceed available stock
+              const currentStock = getStockQuantity(item._id);
+              const stockQuantity =
+                currentStock !== undefined ? currentStock : item.quantity;
+              const currentCartQuantity = item.cartQuantity;
+              const newTotalQuantity = currentCartQuantity + fastStep;
+
+              if (newTotalQuantity > stockQuantity) {
+                showMaxStockMessage(
+                  itemDisplayName,
+                  stockQuantity,
+                  item.measurement_unit,
+                  t
+                );
+                // Clear pending operation
+                setPendingOperations((prev) => {
+                  const newMap = new Map(prev);
+                  newMap.delete(itemKey);
+                  return newMap;
+                });
+                return;
+              }
+
+              // Use the existing canAddToCart function as additional validation
+              if (!canAddToCart(item, item.cartQuantity, fastStep)) {
+                showMaxStockMessage(
+                  itemDisplayName,
+                  item.quantity,
+                  item.measurement_unit,
+                  t
+                );
+                // Clear pending operation
+                setPendingOperations((prev) => {
+                  const newMap = new Map(prev);
+                  newMap.delete(itemKey);
+                  return newMap;
+                });
+                return;
+              }
+            }
+
+            // Show toast instantly (only after stock checks pass)
+            showCartMessage(CartMessageTypes.ADD_FAST, {
               itemName: itemDisplayName,
               quantity: fastStep,
               measurementUnit: normalizedItem.measurement_unit,
-              remainingQuantity: remainingQuantity,
               isBuyer: user?.role === "buyer",
-              t
+              t,
             });
-          } else {
-            showCartMessage(CartMessageTypes.ITEM_REMOVED, {
-              itemName: itemDisplayName,
-              measurementUnit: normalizedItem.measurement_unit,
-              isBuyer: user?.role === "buyer",
-              t
-            });
-          }
 
-          try {
-            await handleFastDecreaseQuantity(item);
-          } catch (_err) {
-            showCartMessage(CartMessageTypes.OPERATION_FAILED, {
-              itemName: itemDisplayName,
-              measurementUnit: item.measurement_unit,
-              isBuyer: user?.role === "buyer",
-              t
-            });
-          }
-        }}
-      />
-    );
-  }, [
-    currentLanguage,
-    user,
-    pendingOperations,
-    handleManualInput,
-    getStockQuantity,
-    handleIncreaseQuantity,
-    handleDecreaseQuantity,
-    handleFastIncreaseQuantity,
-    handleFastDecreaseQuantity,
-    setPendingOperations,
-    t
-  ]);
+            try {
+              // Clear pending operation immediately after optimistic update starts
+              setPendingOperations((prev) => {
+                const newMap = new Map(prev);
+                newMap.delete(itemKey);
+                return newMap;
+              });
+
+              await handleFastIncreaseQuantity(item);
+            } catch (_err) {
+              showCartMessage(CartMessageTypes.OPERATION_FAILED, {
+                itemName: itemDisplayName,
+                measurementUnit: item.measurement_unit,
+                isBuyer: user?.role === "buyer",
+                t,
+              });
+            }
+          }}
+          onFastDecrease={async () => {
+            // Show toast instantly
+            const normalizedItem = normalizeItemData(item);
+            const fastStep = 5;
+            const remainingQuantity = item.cartQuantity - fastStep;
+
+            if (remainingQuantity > 0) {
+              showCartMessage(CartMessageTypes.REMOVE_FAST, {
+                itemName: itemDisplayName,
+                quantity: fastStep,
+                measurementUnit: normalizedItem.measurement_unit,
+                remainingQuantity: remainingQuantity,
+                isBuyer: user?.role === "buyer",
+                t,
+              });
+            } else {
+              showCartMessage(CartMessageTypes.ITEM_REMOVED, {
+                itemName: itemDisplayName,
+                measurementUnit: normalizedItem.measurement_unit,
+                isBuyer: user?.role === "buyer",
+                t,
+              });
+            }
+
+            try {
+              await handleFastDecreaseQuantity(item);
+            } catch (_err) {
+              showCartMessage(CartMessageTypes.OPERATION_FAILED, {
+                itemName: itemDisplayName,
+                measurementUnit: item.measurement_unit,
+                isBuyer: user?.role === "buyer",
+                t,
+              });
+            }
+          }}
+        />
+      );
+    },
+    [
+      currentLanguage,
+      user,
+      pendingOperations,
+      handleManualInput,
+      getStockQuantity,
+      handleIncreaseQuantity,
+      handleDecreaseQuantity,
+      handleFastIncreaseQuantity,
+      handleFastDecreaseQuantity,
+      setPendingOperations,
+      t,
+    ]
+  );
 
   const handleAddItem = () => {
     // Add item functionality can be implemented here
@@ -632,7 +683,9 @@ const CategoryDetails = () => {
           />
         </TouchableOpacity>
 
-        <Text style={[heroStyles.heroTitle, { color: colors.title }]}>{translatedCategoryName}</Text>
+        <Text style={[heroStyles.heroTitle, { color: colors.title }]}>
+          {translatedCategoryName}
+        </Text>
 
         <View style={heroStyles.spacer} />
       </View>
@@ -651,8 +704,12 @@ const CategoryDetails = () => {
               size={20}
               color={colors.title}
             />
-            <Text style={[heroStyles.statValue, { color: colors.title }]}>{totalItems}</Text>
-            <Text style={[heroStyles.statLabel, { color: colors.title }]}>{t("common.items")}</Text>
+            <Text style={[heroStyles.statValue, { color: colors.title }]}>
+              {totalItems}
+            </Text>
+            <Text style={[heroStyles.statLabel, { color: colors.title }]}>
+              {t("common.items")}
+            </Text>
           </View>
 
           {!isBuyer(user) && (
@@ -662,8 +719,12 @@ const CategoryDetails = () => {
                 size={20}
                 color={colors.title}
               />
-              <Text style={[heroStyles.statValue, { color: colors.title }]}>{totalPoints}</Text>
-              <Text style={[heroStyles.statLabel, { color: colors.title }]}>{t("common.points")}</Text>
+              <Text style={[heroStyles.statValue, { color: colors.title }]}>
+                {totalPoints}
+              </Text>
+              <Text style={[heroStyles.statLabel, { color: colors.title }]}>
+                {t("common.points")}
+              </Text>
             </View>
           )}
 
@@ -673,7 +734,9 @@ const CategoryDetails = () => {
               size={20}
               color={colors.title}
             />
-            <Text style={[heroStyles.statValue, { color: colors.title }]}>{totalValue} {t("units.egp")}</Text>
+            <Text style={[heroStyles.statValue, { color: colors.title }]}>
+              {totalValue} {t("units.egp")}
+            </Text>
             <Text style={[heroStyles.statLabel, { color: colors.title }]}>
               {tRole("money", user?.role)}
             </Text>
