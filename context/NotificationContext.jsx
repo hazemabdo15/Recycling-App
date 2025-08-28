@@ -185,12 +185,22 @@ export const NotificationProvider = ({ children }) => {
 
   const doConnect = useCallback(async () => {
     try {
+      console.log('🔍 [NotificationSocket] doConnect called');
+      console.log('🔍 [NotificationSocket] isConnecting.current:', isConnecting.current);
+      console.log('🔍 [NotificationSocket] currentSocket.current:', currentSocket.current ? 'exists' : 'null');
+      
       if (isConnecting.current || currentSocket.current) {
         console.log('🔒 Already connecting or connected, skipping...');
         return;
       }
 
+      // Add delay to avoid interfering with stock socket
+      console.log('⏳ [NotificationSocket] Waiting 3 seconds before connecting to avoid interference...');
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
       let token = accessToken || await AsyncStorage.getItem('accessToken');
+      console.log('🔍 [NotificationSocket] Token obtained:', token ? 'present' : 'null', 'length:', token?.length || 0);
+      
       if (!token || isTokenExpired(token)) {
         console.log('🔄 Token expired or missing, attempting to refresh...');
         token = await refreshAccessToken();
@@ -202,6 +212,17 @@ export const NotificationProvider = ({ children }) => {
 
       isConnecting.current = true;
       console.log('🔌 Connecting to notification server at:', SOCKET_URL);
+      console.log('🔍 [NotificationSocket] Auth token first 20 chars:', token.substring(0, 20));
+      console.log('🔍 [NotificationSocket] Comparing with stock socket - both using same URL:', SOCKET_URL);
+
+      console.log('🔍 [NotificationSocket] Creating socket with config:', {
+        url: SOCKET_URL,
+        auth: { token: `${token.substring(0, 30)}...` },
+        transports: ['websocket', 'polling'],
+        timeout: 15000
+      });
+
+      console.log('🔍 [NotificationSocket] Attempting connection to default namespace first...');
 
       const socketConnection = io(SOCKET_URL, {
         auth: { 
@@ -215,15 +236,42 @@ export const NotificationProvider = ({ children }) => {
         reconnectionDelay: 5000,
       });
 
+      console.log('🔍 [NotificationSocket] Socket connection object created');
+      console.log('🔍 [NotificationSocket] Initial socket state:', {
+        connected: socketConnection.connected,
+        connecting: socketConnection.connecting,
+        disconnected: socketConnection.disconnected,
+        id: socketConnection.id
+      });
+      console.log('🔍 [NotificationSocket] Setting up event listeners...');
+
+      // Add comprehensive event debugging
+      socketConnection.onAny((eventName, ...args) => {
+        console.log(`🔍 [NotificationSocket] Event received: ${eventName}`, args);
+      });
+
+      // Log connection state changes
+      const originalEmit = socketConnection.emit;
+      socketConnection.emit = function(...args) {
+        console.log('📤 [NotificationSocket] Emitting:', args[0], args.slice(1));
+        return originalEmit.apply(this, args);
+      };
+
       socketConnection.on('connect', () => {
         console.log('✅🔥 Connected to notification server!');
         console.log('✅🔥 Socket ID:', socketConnection.id);
         console.log('✅🔥 Socket is ready to receive notifications');
+        clearTimeout(connectionTimeout);
         setIsConnected(true);
         isConnecting.current = false;
         currentSocket.current = socketConnection;
 
         socketConnection.emit('test-connection', { userId: user?._id });
+        
+        // Test if backend responds to our test events
+        socketConnection.emit('ping', { timestamp: Date.now(), userId: user?._id });
+        
+        console.log('📤 [NotificationSocket] Emitted test-connection and ping for user:', user?._id);
 
         const heartbeatInterval = setInterval(() => {
           if (socketConnection.connected) {
@@ -237,6 +285,20 @@ export const NotificationProvider = ({ children }) => {
           clearInterval(heartbeatInterval);
         });
       });
+
+      // Add connection timeout after setting up listeners
+      const connectionTimeout = setTimeout(() => {
+        if (isConnecting.current && !currentSocket.current) {
+          console.warn('⏰ [NotificationSocket] Connection timeout - no response after 20 seconds');
+          console.warn('⏰ [NotificationSocket] Socket state:', {
+            connected: socketConnection.connected,
+            connecting: socketConnection.connecting,
+            disconnected: socketConnection.disconnected
+          });
+          isConnecting.current = false;
+          socketConnection.disconnect();
+        }
+      }, 20000);
 
       socketConnection.on('disconnect', (reason) => {
         console.log('❌ Disconnected from notification server. Reason:', reason);
@@ -255,8 +317,11 @@ export const NotificationProvider = ({ children }) => {
       });
 
       socketConnection.on('connect_error', async (error) => {
-        console.error('❌ Socket connection failed:', error.message || error);
-        console.error('❌ Socket URL attempted:', SOCKET_URL);
+        console.error('❌ [NotificationSocket] Socket connection failed:', error.message || error);
+        console.error('❌ [NotificationSocket] Error details:', JSON.stringify(error, null, 2));
+        console.error('❌ [NotificationSocket] Socket URL attempted:', SOCKET_URL);
+        console.error('❌ [NotificationSocket] Auth token used:', token ? `${token.substring(0, 30)}...` : 'null');
+        clearTimeout(connectionTimeout);
         setIsConnected(false);
         currentSocket.current = null;
         isConnecting.current = false;

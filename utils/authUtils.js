@@ -3,19 +3,26 @@
 
 export async function getAccessToken() {
   try {
-    return await SecureStore.getItemAsync('accessToken');
-  } catch {
+    const token = await SecureStore.getItemAsync('accessToken');
+    console.log(`[authUtils] Retrieved access token: ${token ? 'present' : 'null'} (length: ${token?.length || 0})`);
+    return token;
+  } catch (error) {
+    console.error('[authUtils] Error retrieving access token:', error);
     return null;
   }
 }
 
 export async function setAccessToken(token) {
   try {
+    const tokenSize = token.length;
+    console.log(`[authUtils] Access token size: ${tokenSize} bytes`);
     await SecureStore.setItemAsync('accessToken', token);
 
     // Removed circular dependency call: apiService.setAccessToken(token)
     // The API service will get the token when needed via getAccessToken()
-  } catch {}
+  } catch (error) {
+    console.error('[authUtils] Error storing access token:', error);
+  }
 }
 
 export async function getLoggedInUser() {
@@ -33,18 +40,79 @@ export async function getLoggedInUser() {
 
 export async function setLoggedInUser(user, deliveryStatus = null) {
   try {
+    // Calculate data size before creating optimized version
+    const fullSize = JSON.stringify(user).length;
+    console.log(`[authUtils] Full user data size: ${fullSize} bytes`);
+    
+    // Create a very lightweight version of user data for storage
+    const essentialUserData = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      phoneNumber: user.phoneNumber,
+      role: user.role,
+      isApproved: user.isApproved,
+      totalPoints: user.totalPoints,
+      imgUrl: user.imgUrl,
+      // Only include the most essential data, no large arrays
+      attachments: user.attachments ? {
+        balance: user.attachments.balance,
+        processedAt: user.attachments.processedAt,
+        // Only keep last 3 transactions to minimize size
+        transactions: user.attachments.transactions?.slice(-3) || []
+      } : null,
+      // Only keep last 5 points history entries
+      pointsHistory: user.pointsHistory?.slice(-5) || [],
+      voiceUsageCount: user.voiceUsageCount,
+      voiceUsageLimit: user.voiceUsageLimit,
+      lastActiveAt: user.lastActiveAt
+    };
+
+    // Check if delivery user needs status
     if (user?.role === 'delivery') {
-      const userWithStatus = {
-        ...user, 
-        deliveryStatus: deliveryStatus || user.deliveryStatus || 'pending' 
+      essentialUserData.deliveryStatus = deliveryStatus || user.deliveryStatus || 'pending';
+    }
+
+    const optimizedSize = JSON.stringify(essentialUserData).length;
+    console.log(`[authUtils] Optimized user data size: ${optimizedSize} bytes`);
+    
+    // If still too large, use ultra-minimal version
+    if (optimizedSize > 1800) {
+      const minimalUser = {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isApproved: user.isApproved,
+        totalPoints: user.totalPoints,
+        imgUrl: user.imgUrl,
+        deliveryStatus: user?.role === 'delivery' ? (deliveryStatus || user.deliveryStatus || 'pending') : undefined
       };
-      await SecureStore.setItemAsync('user', JSON.stringify(userWithStatus));
-      console.log('[authUtils] Stored delivery user with status:', userWithStatus.deliveryStatus);
+      const minimalSize = JSON.stringify(minimalUser).length;
+      console.log(`[authUtils] Using minimal user data size: ${minimalSize} bytes`);
+      await SecureStore.setItemAsync('user', JSON.stringify(minimalUser));
+      console.log('[authUtils] Stored minimal user data to avoid size limit');
     } else {
-      await SecureStore.setItemAsync('user', JSON.stringify(user));
+      await SecureStore.setItemAsync('user', JSON.stringify(essentialUserData));
+      console.log('[authUtils] User data stored successfully (size optimized)');
     }
   } catch (error) {
     console.error('[authUtils] Error storing user:', error);
+    // Ultimate fallback: store only authentication essentials
+    try {
+      const ultraMinimalUser = {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isApproved: user.isApproved,
+        totalPoints: user.totalPoints
+      };
+      await SecureStore.setItemAsync('user', JSON.stringify(ultraMinimalUser));
+      console.log('[authUtils] Stored ultra-minimal user data as fallback');
+    } catch (fallbackError) {
+      console.error('[authUtils] Failed to store even ultra-minimal user data:', fallbackError);
+    }
   }
 }
 
