@@ -26,6 +26,7 @@
       }
     },
     "android": {
+      "icon": "./assets/images/Karakeeb-logo.png",
       "package": "com.recyclecrew.karakeeb",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/Karakeeb-logo.png",
@@ -47,7 +48,7 @@
           "autoVerify": true,
           "data": [
             {
-              "scheme": "recyclingapp"
+              "scheme": "karakeebapp"
             }
           ],
           "category": [
