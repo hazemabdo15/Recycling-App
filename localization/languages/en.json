@@ -653,7 +653,11 @@
     "example4": "Tin cans and aluminum",
     "recording": "Tap to record",
     "stopRecording": "Stop recording",
-    "send": "Send to AI"
+    "send": "Send to AI",
+    "usage": "Voice uses: {{count}}/{{limit}}",
+    "remaining": "remaining today",
+    "limitExceeded": "Daily voice limit reached",
+    "resetTime": "Resets in {{hours}} hours"
   },
   "chat": {
     "title": "Chat",

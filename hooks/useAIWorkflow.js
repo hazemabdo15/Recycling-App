@@ -11,7 +11,7 @@ export const useAIWorkflow = () => {
   const [extractedMaterials, setExtractedMaterials] = useState([]);
   const [verifiedMaterials, setVerifiedMaterials] = useState([]);
   
-  const { transcribe, isLoading: isTranscribing, error: transcriptionError } = useTranscription();
+  const { transcribe, isLoading: isTranscribing, error: transcriptionError, usageInfo, isLoadingUsage, fetchCurrentUsage } = useTranscription();
 
   const processAudioToMaterials = useCallback(async (audioURI) => {
     setIsProcessing(true);
@@ -80,6 +80,10 @@ export const useAIWorkflow = () => {
     error,
     extractedMaterials,
     verifiedMaterials,
+    usageInfo, // Expose usage info
+    isLoadingUsage, // Expose usage loading state
+    transcriptionError, // Expose transcription error
+    fetchCurrentUsage, // Expose function to refresh usage
     reset,
   };
 };
