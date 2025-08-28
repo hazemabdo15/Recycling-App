@@ -37,7 +37,7 @@ export const useCart = (user = null) => {
   const debounceRefs = useRef(new Map());
 
   // Simple debounce function
-  const debounce = useCallback((key, func, delay = 200) => {
+  const debounce = useCallback((key, func, delay = 125) => {
     const existingTimeout = debounceRefs.current.get(key);
     if (existingTimeout) {
       clearTimeout(existingTimeout);
