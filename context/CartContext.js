@@ -1,17 +1,18 @@
-﻿import { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { categoriesAPI } from "../services/api";
+﻿import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import {
   addItemToCart,
   clearCart as apiClearCart,
   clearAuthData,
   getCart,
   getSessionId,
+  removeItemFromCart,
+  saveCart,
   testBackendConnectivity,
   testMinimalPost,
   updateCartItem,
 } from "../services/api/cart.js";
-import { createCartItem, getCartKey, normalizeItemData, validateQuantity } from "../utils/cartUtils";
-import { simpleCartManager } from "../utils/debouncedCartOperations";
+import { normalizeItemData, validateQuantity } from "../utils/cartUtils";
 import logger from '../utils/logger';
 import { useAuth } from "./AuthContext";
 
@@ -21,590 +22,328 @@ export const useCartContext = () => useContext(CartContext);
 
 export const CartProvider = ({ children }) => {
   const { isLoggedIn, user, loading: authLoading } = useAuth();
-  const [cartItems, setCartItems] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const queryClient = useQueryClient();
   const [removingItems, setRemovingItems] = useState(new Set());
-  const [updateTrigger, setUpdateTrigger] = useState(0);
-  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
-  const [cartItemDetails, setCartItemDetails] = useState({});
+  // Get session ID for guest users
+  const getSessionIdQuery = useQuery({
+    queryKey: ['sessionId'],
+    queryFn: getSessionId,
+    enabled: !isLoggedIn,
+    staleTime: Infinity, // Session ID doesn't change often
+  });
 
-  useEffect(() => {
-    let didCancel = false;
+  const sessionId = getSessionIdQuery.data;
 
-    if (authLoading) {
-      return;
-    }
-    console.log('[CartContext] Auth state changed, isLoggedIn:', isLoggedIn, 'user:', user, 'authLoading:', authLoading);
+  // Cart query - fetches cart data with React Query
+  const cartQuery = useQuery({
+    queryKey: ['cart', isLoggedIn ? user?._id : sessionId],
+    queryFn: () => getCart(isLoggedIn),
+    enabled: !authLoading && (isLoggedIn || sessionId !== null),
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    refetchOnWindowFocus: false,
+    retry: 2,
+  });
 
-    if (!isLoggedIn && !authLoading) {
-      console.log('[CartContext] User logged out, clearing cart state and session');
-      setCartItems({});
-      setCartItemDetails({});
-      setError(null);
-      setRemovingItems(new Set());
-      setLoading(false);
-      setHasLoadedOnce(false);
+  // Process cart data into the format expected by components
+  const processCartData = useCallback((cartData) => {
+    if (!cartData?.items) return { cartItems: {}, cartItemDetails: {} };
 
-      clearAuthData();
-      return;
-    }
+    const cartItems = {};
+    const cartItemDetails = {};
 
-    if (isLoggedIn && !authLoading) {
-      setLoading(true);
-      (async () => {
-        try {
-          // Add a small delay to ensure auth state is fully settled
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
-          console.log('[CartContext] Loading authenticated cart...');
-          const cart = await getCart(isLoggedIn);
-          if (didCancel) return;
+    cartData.items.forEach((item) => {
+      const itemKey = item._id;
+      cartItems[itemKey] = item.quantity;
+      cartItemDetails[itemKey] = {
+        _id: item._id,
+        categoryId: item.categoryId,
+        name: item.name,
+        image: item.image,
+        points: item.points,
+        price: item.price,
+        categoryName: item.categoryName,
+        measurement_unit: item.measurement_unit,
+        quantity: item.quantity,
+      };
+    });
 
-          console.log('[CartContext] Raw cart response:', cart);
-          const itemsObj = {};
-          const itemDetailsObj = {};
-          const cartItems = cart.data?.data?.items || cart.data?.items || cart.items || [];
-          console.log('[CartContext] Parsed cart items array:', cartItems);
+    return { cartItems, cartItemDetails };
+  }, []);
 
-          if (cartItems.length === 0) {
-            console.log('[CartContext] No items found in authenticated cart');
-            // Only clear cart state if we haven't loaded successfully before
-            if (!hasLoadedOnce) {
-              console.log('[CartContext] First load with empty cart, clearing state');
-              setCartItems({});
-              setCartItemDetails({});
-            } else {
-              console.log('[CartContext] Already loaded before, keeping existing cart state');
-            }
-            setError(null);
-            setLoading(false);
-            return;
-          }
+  const { cartItems, cartItemDetails } = processCartData(cartQuery.data);
 
-          const hasCompleteData = cartItems.length > 0 && cartItems.every(item => 
-            item.categoryId && item.image && item.measurement_unit !== undefined
-          );
-          
-          if (hasCompleteData) {
-            console.log('[CartContext] Backend cart items have complete data, using directly');
+  // Update cart item mutation
+  const updateCartMutation = useMutation({
+    mutationFn: ({ item, quantity, measurementUnit }) =>
+      updateCartItem(item, quantity, isLoggedIn, measurementUnit),
+    onMutate: async ({ itemId, quantity }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['cart', isLoggedIn ? user?._id : sessionId] });
 
-            for (const cartItem of cartItems) {
-              try {
-                const itemKey = cartItem._id;
-                
-                if (!itemKey) {
-                  console.error('[CartContext] Item missing _id field:', cartItem);
-                  continue;
-                }
+      // Snapshot the previous value
+      const previousCart = queryClient.getQueryData(['cart', isLoggedIn ? user?._id : sessionId]);
 
-                itemsObj[itemKey] = cartItem.quantity || 0;
-                itemDetailsObj[itemKey] = cartItem;
-                
-                console.log('[CartContext] Processed cart item:', cartItem.name, 'quantity:', cartItem.quantity);
-              } catch (itemError) {
-                console.error('[CartContext] Error processing cart item:', itemError.message, cartItem);
-              }
-            }
-          } else {
-            console.log('[CartContext] Cart items missing essential data, fetching full item details...');
+      // Optimistically update the cache
+      queryClient.setQueryData(['cart', isLoggedIn ? user?._id : sessionId], (old) => {
+        if (!old?.items) return old;
 
-            const needsFullItemData = cartItems.some(item => 
-              !item.categoryId || !item.image || item.measurement_unit === undefined
-            );
-            
-            let allItemsData = null;
-            if (needsFullItemData) {
-              try {
-                const response = await categoriesAPI.getAllItems(user?.role || "customer");
-                allItemsData = response.data?.items || response.data || response.items || response;
-                console.log('[CartContext] Fetched', allItemsData?.length || 0, 'items for cart merging');
-              } catch (itemsError) {
-                console.warn('[CartContext] Failed to fetch full item data:', itemsError.message);
-              }
-            }
-            
-            for (const cartItem of cartItems) {
-              try {
-                let itemToUse = cartItem;
+        const updatedItems = old.items.map(cartItem =>
+          cartItem._id === itemId ? { ...cartItem, quantity } : cartItem
+        );
 
-                if (needsFullItemData && allItemsData && Array.isArray(allItemsData)) {
-                  const fullItemData = allItemsData.find(item => item._id === cartItem._id);
-                  if (fullItemData) {
-                    itemToUse = {
-                      ...fullItemData,
-                      quantity: cartItem.quantity,
-                    };
-                    console.log('[CartContext] Merged cart item with full data:', fullItemData.name);
-                  } else {
-                    itemToUse = normalizeItemData(cartItem);
-                  }
-                } else {
-                  const isIncomplete = !cartItem.categoryId || !cartItem.image || cartItem.measurement_unit === undefined;
-                  if (isIncomplete) {
-                    itemToUse = normalizeItemData(cartItem);
-                  }
-                }
+        return { ...old, items: updatedItems };
+      });
 
-                const itemKey = itemToUse._id;
-                
-                if (!itemKey) {
-                  console.error('[CartContext] Item missing _id field:', cartItem);
-                  continue;
-                }
+      return { previousCart };
+    },
+    onError: (err, variables, context) => {
+      // Rollback on error
+      if (context?.previousCart) {
+        queryClient.setQueryData(['cart', isLoggedIn ? user?._id : sessionId], context.previousCart);
+      }
+      logger.cart('Failed to update cart item', { error: err.message, itemId: variables.itemId }, 'ERROR');
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure cache consistency
+      queryClient.invalidateQueries({ queryKey: ['cart', isLoggedIn ? user?._id : sessionId] });
+    },
+  });
 
-                itemsObj[itemKey] = itemToUse.quantity || 0;
-                itemDetailsObj[itemKey] = itemToUse;
-                
-                console.log('[CartContext] Processed cart item:', itemToUse.name, 'quantity:', itemToUse.quantity);
-              } catch (itemError) {
-                console.error('[CartContext] Error processing cart item:', itemError.message, cartItem);
-              }
-            }
-          }
-          
-          // Set the authenticated cart
-          setCartItems(itemsObj);
-          setCartItemDetails(itemDetailsObj);
-          setError(null);
-          console.log('[CartContext] Authenticated cart loaded successfully, items:', Object.keys(itemsObj).length);
-          console.log('[CartContext] Cart items:', Object.keys(itemsObj));
-          console.log('[CartContext] Cart quantities:', Object.values(itemsObj));
+  // Add item mutation
+  const addItemMutation = useMutation({
+    mutationFn: ({ item, isLoggedIn }) => addItemToCart(item, isLoggedIn),
+    onMutate: async ({ item }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['cart', isLoggedIn ? user?._id : sessionId] });
 
-          // Force a re-render by updating the trigger
-          setUpdateTrigger(prev => prev + 1);
-          setHasLoadedOnce(true);
+      // Snapshot the previous value
+      const previousCart = queryClient.getQueryData(['cart', isLoggedIn ? user?._id : sessionId]);
 
-        } catch (err) {
-          if (didCancel) return;
-          console.warn(
-            "Failed to fetch cart from backend, using empty cart:",
-            err.message
-          );
-          setCartItems({});
-          setCartItemDetails({});
-          setError(null);
-        } finally {
-          if (didCancel) return;
-          setLoading(false);
+      // Optimistically update the cache by adding the new item
+      queryClient.setQueryData(['cart', isLoggedIn ? user?._id : sessionId], (old) => {
+        const newItem = {
+          _id: item._id,
+          categoryId: item.categoryId,
+          categoryName: item.categoryName,
+          name: item.name,
+          image: item.image,
+          points: item.points,
+          price: item.price,
+          measurement_unit: item.measurement_unit,
+          quantity: item.quantity,
+        };
+
+        if (!old?.items) {
+          return { ...old, items: [newItem] };
         }
-      })();
-    }
-    return () => {
-      didCancel = true;
-    };
-  }, [isLoggedIn, user, authLoading, hasLoadedOnce]);
-  const handleAddSingleItem = async (item) => {
-    const normalizedItem = normalizeItemData(item);
 
-    const cartItem = createCartItem(normalizedItem, normalizedItem.quantity || 1);
-    
-    try {
-      validateQuantity(cartItem);
-    } catch (err) {
-      setError(err.message);
-      return { success: false, error: err.message };
-    }
+        // Check if item already exists (shouldn't happen, but just in case)
+        const existingIndex = old.items.findIndex(cartItem => cartItem._id === item._id);
+        if (existingIndex >= 0) {
+          // Update existing item
+          const updatedItems = [...old.items];
+          updatedItems[existingIndex] = { ...updatedItems[existingIndex], quantity: item.quantity };
+          return { ...old, items: updatedItems };
+        } else {
+          // Add new item
+          return { ...old, items: [...old.items, newItem] };
+        }
+      });
 
+      return { previousCart };
+    },
+    onError: (err, variables, context) => {
+      // Rollback on error
+      if (context?.previousCart) {
+        queryClient.setQueryData(['cart', isLoggedIn ? user?._id : sessionId], context.previousCart);
+      }
+      logger.cart('Failed to add item to cart', { error: err.message, itemId: variables.item._id }, 'ERROR');
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure cache consistency
+      queryClient.invalidateQueries({ queryKey: ['cart', isLoggedIn ? user?._id : sessionId] });
+    },
+  });
+
+  // Remove item mutation
+  const removeItemMutation = useMutation({
+    mutationFn: ({ itemId, isLoggedIn }) => removeItemFromCart(itemId, isLoggedIn),
+    onMutate: async ({ itemId }) => {
+      setRemovingItems(prev => new Set([...prev, itemId]));
+
+      await queryClient.cancelQueries({ queryKey: ['cart', isLoggedIn ? user?._id : sessionId] });
+      const previousCart = queryClient.getQueryData(['cart', isLoggedIn ? user?._id : sessionId]);
+
+      queryClient.setQueryData(['cart', isLoggedIn ? user?._id : sessionId], (old) => {
+        if (!old?.items) return old;
+        return { ...old, items: old.items.filter(item => item._id !== itemId) };
+      });
+
+      return { previousCart };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousCart) {
+        queryClient.setQueryData(['cart', isLoggedIn ? user?._id : sessionId], context.previousCart);
+      }
+      logger.cart('Failed to remove item', { error: err.message, itemId: variables.itemId }, 'ERROR');
+    },
+    onSettled: (data, error, variables) => {
+      setRemovingItems(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(variables.itemId);
+        return newSet;
+      });
+      queryClient.invalidateQueries({ queryKey: ['cart', isLoggedIn ? user?._id : sessionId] });
+    },
+  });
+
+  // Clear cart mutation
+  const clearCartMutation = useMutation({
+    mutationFn: ({ isLoggedIn }) => apiClearCart(isLoggedIn),
+    onSuccess: () => {
+      queryClient.setQueryData(['cart', isLoggedIn ? user?._id : sessionId], { items: [] });
+      logger.cart('Cart cleared successfully');
+    },
+    onError: (error) => {
+      logger.cart('Failed to clear cart', { error: error.message }, 'ERROR');
+    },
+  });
+
+  // Batch update mutation
+  const batchUpdateMutation = useMutation({
+    mutationFn: ({ cartItems, isLoggedIn }) => saveCart(cartItems, isLoggedIn),
+    onSuccess: (data) => {
+      queryClient.setQueryData(['cart', isLoggedIn ? user?._id : sessionId], data);
+      logger.cart('Batch update completed successfully');
+    },
+    onError: (error) => {
+      logger.cart('Batch update failed', { error: error.message }, 'ERROR');
+    },
+  });
+
+  // Legacy compatibility functions
+  const handleUpdateQuantity = async (itemId, quantity, measurementUnit = null, context = 'user-interaction', itemData = null) => {
     try {
-      // Direct API call - add item to cart
-      const result = await addItemToCart(cartItem, isLoggedIn);
+      // Check if this is a new item (itemData provided and item not in cart)
+      const isNewItem = itemData && !cartItemDetails[itemId];
       
-      // Refresh cart from backend to get accurate state
-      await refreshCart();
-      
-      setError(null);
-      return { success: true, result };
-    } catch (err) {
-      setError(err.message || "Failed to add item");
-      return { success: false, error: err.message };
+      if (isNewItem) {
+        // Use addItemMutation for new items - more efficient than updateCartItem
+        console.log(`[CartContext] Adding new item to cart: ${itemData.name?.en || itemData.name}`);
+        
+        // Prepare item data for addItemToCart
+        const itemToAdd = {
+          ...itemData,
+          quantity: quantity,
+          measurement_unit: measurementUnit || itemData.measurement_unit
+        };
+        
+        await addItemMutation.mutateAsync({
+          item: itemToAdd,
+          isLoggedIn
+        });
+        
+        return { success: true };
+      } else {
+        // Use updateCartMutation for existing items
+        const item = itemData || cartItemDetails[itemId];
+        if (!item) {
+          throw new Error(`Item ${itemId} not found in cart`);
+        }
+
+        await updateCartMutation.mutateAsync({
+          itemId,
+          item,
+          quantity,
+          measurementUnit: measurementUnit || item.measurement_unit
+        });
+
+        return { success: true };
+      }
+    } catch (error) {
+      return { success: false, error: error.message };
     }
   };
 
   const handleAddToCart = async (itemOrItems) => {
-    setLoading(true);
-    setError(null);
-
     try {
       const items = Array.isArray(itemOrItems) ? itemOrItems : [itemOrItems];
       const normalizedItems = items.map(normalizeItemData);
-      
-      // Validate items
-      normalizedItems.forEach(validateQuantity);
 
-      // Add items directly without optimistic updates
       for (const item of normalizedItems) {
-        logger.cart('Adding item to cart directly', { itemId: item._id, quantity: item.quantity });
-        
-        const itemKey = item._id;
-        const currentQuantity = cartItems[itemKey] || 0;
-        
-        if (currentQuantity > 0) {
-          // Update existing item
-          const newQuantity = currentQuantity + item.quantity;
-          await updateCartItem(item, newQuantity, isLoggedIn, item.measurement_unit);
-        } else {
-          // Add new item
-          await addItemToCart(item, isLoggedIn);
-        }
+        validateQuantity(item);
+        await addItemMutation.mutateAsync({ item, isLoggedIn });
       }
 
-      // Refresh cart from backend to get the latest state
-      await refreshCart();
-      
-      logger.success('Items added to cart successfully', { count: normalizedItems.length }, 'CART');
-      return { success: true };
-
-    } catch (err) {
-      logger.cart('Failed to add items to cart', { error: err.message }, 'ERROR');
-      setError(err.message || "Failed to add items");
-      
-      // Refresh cart to ensure consistency
-      try {
-        await refreshCart();
-      } catch (refreshError) {
-        logger.cart('Failed to refresh cart after error', { error: refreshError.message }, 'ERROR');
-      }
-      
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleUpdateQuantity = async (
-    itemId,
-    quantity,
-    measurementUnit = null,
-    context = 'user-interaction',
-    itemData = null
-  ) => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      let itemDetails = cartItemDetails[itemId];
-      
-      // If not found by itemId, try to find using getCartKey with itemData
-      if (!itemDetails && itemData) {
-        const alternateKey = getCartKey(itemData);
-        itemDetails = cartItemDetails[alternateKey];
-        logger.cart('Trying alternate key lookup', { itemId, alternateKey, found: !!itemDetails });
-      }
-      
-      // Debug logging
-      logger.cart('HandleUpdateQuantity called', { 
-        itemId, 
-        quantity, 
-        hasItemDetails: !!itemDetails, 
-        hasItemData: !!itemData,
-        itemDataKeys: itemData ? Object.keys(itemData) : null,
-        cartItemDetailsCount: Object.keys(cartItemDetails).length 
-      });
-      
-      // If item doesn't exist in cart yet, create it from provided itemData
-      if (!itemDetails && itemData) {
-        logger.cart('Creating new item entry for update operation', { itemId, quantity });
-        const cartItem = createCartItem(itemData, quantity);
-        itemDetails = cartItem;
-      } else if (!itemDetails) {
-        // More detailed error message
-        logger.cart('Item details not found and no valid itemData provided', { 
-          itemId, 
-          hasItemData: !!itemData,
-          cartItemDetailsKeys: Object.keys(cartItemDetails).slice(0, 5), // Show first 5 keys
-          availableKeys: Object.keys(cartItemDetails).length,
-          itemData: itemData ? { _id: itemData._id, name: itemData.name } : 'null'
-        }, 'ERROR');
-        throw new Error("Item details not found in cart and no itemData provided");
-      }
-
-      // Store original state for potential rollback
-      const originalQuantity = cartItems[itemId] || 0;
-      const originalItemDetails = cartItemDetails[itemId];
-
-      // Optimistic update for immediate UI feedback
-      const optimisticUpdate = { ...cartItems };
-      optimisticUpdate[itemId] = quantity;
-      setCartItems(optimisticUpdate);
-
-      // Also update cartItemDetails if we have itemDetails
-      if (itemDetails && !originalItemDetails) {
-        const optimisticDetails = { ...cartItemDetails };
-        optimisticDetails[itemId] = itemDetails;
-        setCartItemDetails(optimisticDetails);
-      }
-
-      // Define rollback function
-      const rollbackOptimisticUpdate = () => {
-        setCartItems(prevItems => ({
-          ...prevItems,
-          [itemId]: originalQuantity
-        }));
-        // Rollback item details if we added them optimistically
-        if (itemDetails && !originalItemDetails) {
-          setCartItemDetails(prevDetails => {
-            const updated = { ...prevDetails };
-            delete updated[itemId];
-            return updated;
-          });
-        }
-        refreshCart(); // Sync with backend to be safe
-      };
-
-      // Use SimpleCartManager for background sync with optimistic update
-      logger.cart('Updating item quantity with optimistic update', { itemId, quantity, measurementUnit });
-      
-      await simpleCartManager.updateQuantity(
-        itemId,
-        itemDetails,
-        quantity,
-        measurementUnit || itemDetails.measurement_unit,
-        isLoggedIn,
-        null, // onOptimisticUpdate already done above
-        rollbackOptimisticUpdate // onError rollback
-      );
-      
-      logger.success('Item quantity updated successfully', { itemId, quantity }, 'CART');
-      return { success: true };
-
-    } catch (error) {
-      logger.cart('Failed to update item quantity', {
-        itemId,
-        error: error.message
-      }, 'ERROR');
-      
-      setError(error.message || "Failed to update item");
-      return { success: false, error: error.message };
-    } finally {
-      setLoading(false);
-    }
-  };
-  const handleBatchUpdate = async (itemId, quantity, measurementUnit) => {
-    try {
-      // Direct API call with item update
-      await updateCartItem(itemId, quantity, measurementUnit, isLoggedIn);
-      
-      // Refresh cart from backend to get accurate state
-      await refreshCart();
-      
-      setError(null);
       return { success: true };
     } catch (error) {
-      setError(error.message || "Failed to update item");
-      return { success: false, error: error.message };
-    }
-  };
-
-  // NEW: Add AI Results handler for bulk operations
-  const handleAddAIResults = async (aiItems) => {
-    try {
-      // Process each AI item and add it to cart individually
-      for (const item of aiItems) {
-        const processedItem = normalizeItemData(item);
-        const cartItem = createCartItem(processedItem, item.quantity);
-        
-        // Direct API call for each item
-        await addItemToCart(cartItem, isLoggedIn);
-      }
-
-      // Refresh cart from backend to get accurate state
-      await refreshCart();
-      
-      setError(null);
-      logger.success(`Added ${aiItems.length} items from AI results`, null, 'CART');
-      return { success: true, itemCount: aiItems.length };
-      
-    } catch (error) {
-      setError('Failed to add AI results to cart');
       return { success: false, error: error.message };
     }
   };
 
   const handleRemoveFromCart = async (itemId, context = 'user-interaction') => {
-    // Set loading state
-    setRemovingItems((prev) => new Set([...prev, itemId]));
-
     try {
-      // Store original state for potential rollback
-      const originalCartItems = { ...cartItems };
-      const originalCartDetails = { ...cartItemDetails };
-
-      // Optimistic update for immediate UI feedback
-      const optimisticUpdate = { ...cartItems };
-      const optimisticDetails = { ...cartItemDetails };
-      delete optimisticUpdate[itemId];
-      delete optimisticDetails[itemId];
-      setCartItems(optimisticUpdate);
-      setCartItemDetails(optimisticDetails);
-
-      // Define rollback function
-      const rollbackOptimisticUpdate = () => {
-        setCartItems(originalCartItems);
-        setCartItemDetails(originalCartDetails);
-      };
-
-      // Use SimpleCartManager for background sync
-      await simpleCartManager.removeItem(
-        itemId,
-        isLoggedIn,
-        null, // onOptimisticUpdate already done above
-        rollbackOptimisticUpdate // onError rollback
-      );
-      
-      setError(null);
-    } catch (err) {
-      setError(err.message || "Failed to remove item");
-    } finally {
-      // Clear loading state
-      setRemovingItems((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(itemId);
-        return newSet;
-      });
+      await removeItemMutation.mutateAsync({ itemId, isLoggedIn });
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
     }
   };
 
   const handleClearCart = async () => {
-
-    setCartItems({});
-    setCartItemDetails({});
-
     try {
-      await apiClearCart(isLoggedIn);
-      setError(null);
-      console.log('[CartContext] Cart cleared successfully on backend');
-    } catch (err) {
-      console.warn('[CartContext] Backend cart clear failed, but keeping local cart cleared:', err.message);
-
-      setError(null);
+      await clearCartMutation.mutateAsync({ isLoggedIn });
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
     }
   };
 
-  const refreshCart = useCallback(async () => {
+  const handleBatchUpdate = async (itemId, quantity, measurementUnit) => {
     try {
-      console.log('[CartContext] Refreshing cart, isLoggedIn:', isLoggedIn);
-      const cart = await getCart(isLoggedIn);
-      const itemsObj = {};
-      const itemDetailsObj = {};
-      
-      const cartItems = cart.data?.data?.items || cart.data?.items || cart.items || [];
-      console.log('[CartContext] Refreshed cart items:', cartItems.length);
-      
-      // Handle complete vs incomplete data like in the main useEffect
-      const hasCompleteData = cartItems.length > 0 && cartItems.every(item => 
-        item.categoryId && item.image && item.measurement_unit !== undefined
-      );
-      
-      if (hasCompleteData) {
-        console.log('[CartContext] Refresh: Backend cart items have complete data');
-        cartItems.forEach((item) => {
-          const itemKey = item._id;
-          if (itemKey) {
-            itemsObj[itemKey] = item.quantity;
-            itemDetailsObj[itemKey] = {
-              ...item,
-              _id: itemKey,
-            };
-            console.log('[CartContext] Refresh processed item:', item.name, 'quantity:', item.quantity);
-          }
-        });
-      } else {
-        console.log('[CartContext] Refresh: Cart items missing essential data, using normalization');
-        cartItems.forEach((item) => {
-          const normalizedItem = normalizeItemData(item);
-          const itemKey = normalizedItem._id || getCartKey(normalizedItem);
-          if (itemKey) {
-            itemsObj[itemKey] = normalizedItem.quantity;
-            itemDetailsObj[itemKey] = {
-              ...normalizedItem,
-              _id: itemKey,
-            };
-            console.log('[CartContext] Refresh processed normalized item:', normalizedItem.name, 'quantity:', normalizedItem.quantity);
-          }
-        });
-      }
-      
-      // Direct update without preserving pending operations
-      setCartItems(itemsObj);
-      setCartItemDetails(itemDetailsObj);
-      
-      console.log('[CartContext] Cart refreshed successfully, total items:', Object.keys(itemsObj).length);
-    } catch (err) {
-      console.error('[CartContext] Error refreshing cart:', err.message);
-      throw err;
-    }
-  }, [isLoggedIn]);
+      // For batch updates, we'd need to construct the full cart items array
+      // This is a simplified version - you might want to enhance this
+      const updatedItems = cartQuery.data?.items?.map(item =>
+        item._id === itemId ? { ...item, quantity, measurement_unit: measurementUnit } : item
+      ) || [];
 
-  // Debug function to force cart refresh
-  const forceRefreshCart = useCallback(async () => {
-    console.log('[CartContext] Force refreshing cart...');
-    setLoading(true);
-    try {
-      await refreshCart();
-      console.log('[CartContext] Force refresh completed');
-      
-      // Force UI update by incrementing a counter
-      setUpdateTrigger(prev => prev + 1);
+      await batchUpdateMutation.mutateAsync({ cartItems: updatedItems, isLoggedIn });
+      return { success: true };
     } catch (error) {
-      console.error('[CartContext] Force refresh failed:', error.message);
-    } finally {
-      setLoading(false);
+      return { success: false, error: error.message };
     }
-  }, [refreshCart]);
+  };
 
+  const handleAddAIResults = async (aiItems) => {
+    try {
+      for (const item of aiItems) {
+        const normalizedItem = normalizeItemData(item);
+        validateQuantity(normalizedItem);
+        await addItemMutation.mutateAsync({ item: normalizedItem, isLoggedIn });
+      }
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Utility functions
   const getItemQuantity = (identifier) => {
-    // First, try direct lookup with the identifier
     if (cartItems[identifier] !== undefined) {
-      const quantity = cartItems[identifier];
-      logger.cart('Direct quantity lookup', { identifier, quantity }, 'DEBUG');
-      return quantity;
+      return cartItems[identifier];
     }
 
-    // FIXED: More precise matching to prevent cross-item contamination
-    // Only match by exact _id, not by category or loose matching
-    const matchingItemKey = Object.keys(cartItems).find(key => {
-      const item = cartItemDetails[key];
-      if (!item) return false;
-
-      // ONLY match by exact _id to prevent quantity cross-contamination
-      return item._id === identifier;
-    });
-    
-    const result = matchingItemKey ? cartItems[matchingItemKey] : 0;
-    logger.cart('Fallback quantity lookup', { 
-      identifier, 
-      matchingKey: matchingItemKey, 
-      quantity: result,
-      availableKeys: Object.keys(cartItems)
-    }, 'DEBUG');
-    
-    return result;
+    const matchingItemKey = Object.keys(cartItems).find(key => key === identifier);
+    return matchingItemKey ? cartItems[matchingItemKey] : 0;
   };
 
   const fetchBackendCart = async () => {
-
-    if (!isLoggedIn) {
-
-      let sessionId = null;
-      try {
-        sessionId = await getSessionId();
-      } catch {}
-      if (!sessionId) {
-
-        return { items: {} };
-      }
-    }
     try {
-      const cart = await getCart(isLoggedIn);
-      return cart;
+      await queryClient.invalidateQueries({ queryKey: ['cart', isLoggedIn ? user?._id : sessionId] });
+      return { success: true };
     } catch (error) {
-      console.warn(
-        "Error fetching backend cart, using local cart data:",
-        error.message
-      );
-      return { items: cartItems };
+      return { success: false, error: error.message };
     }
   };
 
@@ -618,63 +357,53 @@ export const CartProvider = ({ children }) => {
 
   const clearAuth = async () => {
     await clearAuthData();
+    queryClient.clear();
   };
 
   const testCartPerformance = async () => {
     const startTime = Date.now();
     try {
-      const testItem = {
-        categoryId: "perf-test-" + Date.now(),
-        name: "Performance Test Item",
-        quantity: 1,
-        measurement_unit: 1,
-        points: 10,
-        price: 5,
-        image: "test.jpg",
-      };
-
-      await handleAddToCart(testItem);
-      await handleUpdateQuantity(testItem.categoryId, 2);
-      await handleRemoveFromCart(testItem.categoryId);
-
+      await queryClient.invalidateQueries({ queryKey: ['cart', isLoggedIn ? user?._id : sessionId] });
       const endTime = Date.now();
-      const duration = endTime - startTime;
-      return {
-        success: true,
-        duration,
-        message: `Operations completed in ${duration}ms`,
-      };
-    } catch (err) {
-      return { success: false, error: err.message };
+      return { success: true, duration: endTime - startTime };
+    } catch (error) {
+      return { success: false, error: error.message };
     }
   };
 
+  // Clear cart on logout
+  useEffect(() => {
+    if (!authLoading && !isLoggedIn) {
+      queryClient.removeQueries({ queryKey: ['cart'] });
+      setRemovingItems(new Set());
+    }
+  }, [isLoggedIn, authLoading, queryClient]);
+
+  const value = {
+    cartItems,
+    cartItemDetails,
+    getItemQuantity,
+    handleAddToCart,
+    handleUpdateQuantity,
+    handleBatchUpdate,
+    handleAddAIResults,
+    handleRemoveFromCart,
+    handleClearCart,
+    fetchBackendCart,
+    testConnectivity,
+    testMinimalPostRequest,
+    testCartPerformance,
+    clearAuth,
+    loading: cartQuery.isLoading,
+    error: cartQuery.error || updateCartMutation.error || addItemMutation.error || removeItemMutation.error,
+    removingItems,
+    // React Query specific exports
+    isFetching: cartQuery.isFetching,
+    refetch: cartQuery.refetch,
+  };
+
   return (
-    <CartContext.Provider
-      value={{
-        cartItems,
-        cartItemDetails,
-        updateTrigger,
-        getItemQuantity,
-        handleAddToCart,
-        handleAddSingleItem,
-        handleUpdateQuantity,
-        handleBatchUpdate,
-        handleAddAIResults,
-        handleRemoveFromCart,
-        handleClearCart,
-        refreshCart,
-        forceRefreshCart,
-        fetchBackendCart,
-        testConnectivity,
-        testMinimalPostRequest,
-        testCartPerformance,
-        clearAuth,
-        loading,
-        error,
-        removingItems,
-      }}
-    >
+    <CartContext.Provider value={value}>
       {children}
     </CartContext.Provider>
   );

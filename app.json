@@ -4,7 +4,7 @@
     "slug": "Karakeeb",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logo.png",
+    "icon": "./assets/images/Karakeeb-logo.png",
     "scheme": "karakeebapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -26,9 +26,10 @@
       }
     },
     "android": {
+      "icon": "./assets/images/Karakeeb-logo.png",
       "package": "com.recyclecrew.karakeeb",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/Karakeeb-logo.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
@@ -47,7 +48,7 @@
           "autoVerify": true,
           "data": [
             {
-              "scheme": "recyclingapp"
+              "scheme": "karakeebapp"
             }
           ],
           "category": [
@@ -80,13 +81,14 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/logo.png",
+          "image": "./assets/images/Karakeeb-logo.png",
           "resizeMode": "cover",
           "backgroundColor": "#0E9F6E"
         }
       ],
       "expo-secure-store",
-      "expo-localization"
+      "expo-localization",
+      "@react-native-google-signin/google-signin"
     ],
     "experiments": {
       "typedRoutes": true

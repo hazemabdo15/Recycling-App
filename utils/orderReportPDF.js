@@ -6,7 +6,7 @@ export function generateOrderReportHTML({ order, user, currentLanguage = 'en', t
   if (!order || !user) return '';
   
   const isRTL = currentLanguage === 'ar';
-  const logoUrl = 'https://raw.githubusercontent.com/hazemabdo15/Recycling-App/main/assets/images/logo.png';
+  const logoUrl = 'https://raw.githubusercontent.com/hazemabdo15/Recycling-App/main/assets/images/Karakeeb-logo.png';
   const orderDate = new Date(order.createdAt).toLocaleString(currentLanguage === 'ar' ? 'ar-EG' : 'en-US');
   
   // Helper function to get translated item name

@@ -1,4 +1,4 @@
-﻿import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import UserAvatar from '../../components/common/UserAvatar';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 

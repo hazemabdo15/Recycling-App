@@ -1,4 +1,5 @@
-﻿import { Stack } from "expo-router";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Stack } from "expo-router";
 import DynamicStatusBar from '../components/common/DynamicStatusBar';
 import GlobalCartValidator from '../components/common/GlobalCartValidator';
 import GlobalToast from '../components/common/GlobalToast';
@@ -12,19 +13,34 @@ import { StockProvider } from '../context/StockContext';
 import { ThemeProvider } from '../context/ThemeContext';
 import '../localization/i18n'; // MUST BE THE FIRST IMPORT
 
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnWindowFocus: false,
+      retry: 2,
+    },
+    mutations: {
+      retry: 1,
+    },
+  },
+});
+
 export default function RootLayout() {
   return (
-    <ThemeProvider>
-      <LocalizationProvider>
-        <AuthProvider>
-          <StockProvider>
-            <CartProvider>
-              <NotificationProvider>
-                <ChatProvider>
-                  <SplashController>
-                    <DynamicStatusBar />
-                    <GlobalToast />
-                    <GlobalCartValidator />
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <LocalizationProvider>
+          <AuthProvider>
+            <StockProvider>
+              <CartProvider>
+                <NotificationProvider>
+                  <ChatProvider>
+                    <SplashController>
+                      <DynamicStatusBar />
+                      <GlobalToast />
+                      <GlobalCartValidator />
                 <Stack
                   screenOptions={{
                   headerShown: false,
@@ -128,5 +144,6 @@ export default function RootLayout() {
     </AuthProvider>
     </LocalizationProvider>
     </ThemeProvider>
+    </QueryClientProvider>
   );
 }

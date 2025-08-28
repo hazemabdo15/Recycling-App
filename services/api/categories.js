@@ -49,11 +49,6 @@ export const categoriesAPI = {
   getAllCategories: async (role = "customer") => {
     return measureApiCall(async () => {
       try {
-        console.log(
-          "[Categories API] Fetching categories for role:",
-          JSON.stringify({ role })
-        );
-        
         // Add a timeout promise to prevent long loading times
         const timeoutPromise = new Promise((_, reject) => {
           setTimeout(() => reject(new Error('Request timeout')), 5000);

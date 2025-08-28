@@ -1,4 +1,4 @@
-﻿import React, { useMemo } from "react";
+import React, { useMemo } from "react";
 import { StyleSheet, View } from "react-native";
 import { useLocalization } from "../../context/LocalizationContext";
 import { useStock } from "../../context/StockContext";

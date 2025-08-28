@@ -544,8 +544,8 @@
       "name": "plastic",
       "description": "variety of plastic items"
     },
-    "e-wasted": {
-      "name": "E-Wasted",
+    "e-waste": {
+      "name": "E-Waste",
       "description": "e wasted items"
     },
     "spare-parts": {
@@ -571,7 +571,7 @@
       "books": "books",
       "news-paper": "news papers"
     },
-    "e-wasted": {
+    "e-waste": {
       "router": "router",
       "mobile": "mobile",
       "laptop": "laptop",
@@ -653,7 +653,11 @@
     "example4": "Tin cans and aluminum",
     "recording": "Tap to record",
     "stopRecording": "Stop recording",
-    "send": "Send to AI"
+    "send": "Send to AI",
+    "usage": "Voice uses: {{count}}/{{limit}}",
+    "remaining": "remaining today",
+    "limitExceeded": "Daily voice limit reached",
+    "resetTime": "Resets in {{hours}} hours"
   },
   "chat": {
     "title": "Chat",

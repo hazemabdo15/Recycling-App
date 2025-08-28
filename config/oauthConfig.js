@@ -21,7 +21,7 @@ export const getCustomSchemeUri = () => {
 
 export const GOOGLE_CONSOLE_SETUP_INSTRUCTIONS = {
   step1: "Go to https://console.cloud.google.com/apis/credentials",
-  step2: "Find your OAuth 2.0 client ID: 330056808594-aqkfehg0apfa7v00hv8ndf7t30ikrjha.apps.googleusercontent.com",
+  step2: "Find your OAuth 2.0 client ID: 330056808594-l08q9ue5icgv47eh3iq2icak69bo0598.apps.googleusercontent.com",
   step3: "IMPORTANT: Only add this ONE redirect URI:",
   redirectUri: "https://auth.expo.io/@recyclecrew/Karakeeb",
   step4: "Remove any custom scheme URIs (com.recyclecrew.karakeeb://oauth)",

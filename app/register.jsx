@@ -1,4 +1,4 @@
-﻿import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, View } from 'react-native';
 import RegisterForm from '../components/auth/RegisterForm';
@@ -122,8 +122,6 @@ export default function RegisterScreen() {
     setLoading(true);
     
     try {
-      console.log('Registering:', userData);
-      
       // Handle Google registration
       if (userData.provider === 'google') {
         if (!userData.name || !userData.email) {

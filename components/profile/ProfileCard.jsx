@@ -19,8 +19,6 @@ export default function ProfileCard({ user, points = 0, tier = '', onLogout, onR
   const userTier = calculateUserTier(totalRecycles);
   const tierColors = getTierColors(userTier.name);
   const { t } = useLocalization();
-  
-  console.log('ProfileCard points prop:', points);
 
   const styles = getStyles(colors);
   

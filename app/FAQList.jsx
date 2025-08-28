@@ -2,20 +2,17 @@ import { useState } from 'react';
 import {
     I18nManager,
     LayoutAnimation,
-    Platform,
     StyleSheet,
     Text,
     TouchableOpacity,
-    UIManager,
     View
 } from 'react-native';
 import { useLocalization } from '../context/LocalizationContext';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 
-// Enable layout animations on Android
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
+// Removed deprecated setLayoutAnimationEnabledExperimental call
+// This is no longer needed in modern React Native and causes warnings in New Architecture
+// Layout animations work by default in RN 0.60+
 
 const FAQList = () => {
   const { t, language } = useLocalization();

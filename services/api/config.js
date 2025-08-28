@@ -42,6 +42,11 @@ export const API_ENDPOINTS = {
   ORDERS: `${API_BASE_URL}/api/orders`,
   NOTIFICATIONS: `${API_BASE_URL}/api/notifications`,
 
+  TRANSCRIPTION: {
+    TRANSCRIBE: `${API_BASE_URL}/api/transcription/transcribe`,
+    USAGE: `${API_BASE_URL}/api/transcription/usage`,
+  },
+
   ANALYTICS: {
     ORDER_ANALYTICS: `${API_BASE_URL}/api/orders/analytics`,
     TOP_CITIES: `${API_BASE_URL}/api/orders/analytics/top-cities`,

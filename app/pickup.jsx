@@ -1,4 +1,4 @@
-﻿import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Linking from "expo-linking";
 import { router, useFocusEffect } from "expo-router";
@@ -72,10 +72,8 @@ export default function Pickup() {
 
   useFocusEffect(
     useCallback(() => {
-      console.log("INFO", "Pickup screen focused");
       setIsFocused(true);
       return () => {
-        console.log("INFO", "Pickup screen unfocused");
         setIsFocused(false);
         setDialogShown(false);
       };
@@ -100,7 +98,6 @@ export default function Pickup() {
         }
 
         const authStatus = await isAuthenticated();
-        console.log("[Pickup] isAuthenticated() result:", authStatus);
 
         if (!authStatus) {
           setAuthError("TOKEN_EXPIRED");
@@ -149,19 +146,12 @@ export default function Pickup() {
         event.url.includes("cancelled=true");
 
       if (!isPaymentRelatedURL) {
-        console.log("INFO", "URL is not payment-related, ignoring");
         return;
       }
-
-      console.log("Processing payment deep link", {
-        paymentStatus,
-        paymentIntentId,
-      });
 
       if (paymentStatus === "success" || paymentIntentId) {
         // Prevent multiple processing of the same payment
         if (isProcessingPaymentRef.current) {
-          console.log("Payment already being processed, ignoring duplicate deep link");
           return;
         }
         
@@ -173,7 +163,6 @@ export default function Pickup() {
         // Add small delay to prevent race conditions with button clicks
         deepLinkTimeoutRef.current = setTimeout(async () => {
           if (isProcessingPaymentRef.current) {
-            console.log("Payment processing started during timeout, ignoring");
             return;
           }
           
@@ -196,7 +185,6 @@ export default function Pickup() {
               // Try to restore from saved workflow state
               const savedState = await workflowStateUtils.restoreWorkflowState();
               if (savedState && savedState.selectedAddress) {
-                console.log("Found saved address in workflow state:", savedState.selectedAddress);
                 addressToUse = savedState.selectedAddress;
                 setSelectedAddress(savedState.selectedAddress);
               } else {
@@ -204,7 +192,6 @@ export default function Pickup() {
                 // ✅ Fallback: Try to get the most recently created address
                 if (workflowHook && workflowHook.addresses && workflowHook.addresses.length > 0) {
                   const mostRecentAddress = workflowHook.addresses[workflowHook.addresses.length - 1];
-                  console.log("Using most recent address as fallback:", mostRecentAddress);
                   addressToUse = mostRecentAddress;
                   setSelectedAddress(mostRecentAddress);
                 } else {
@@ -289,8 +276,6 @@ export default function Pickup() {
     Linking.getInitialURL()
       .then((url) => {
         if (url) {
-          console.log("INFO", "Initial URL detected:", url);
-
           const isPaymentURL =
             url.includes("payment=") ||
             url.includes("payment_intent=") ||
@@ -328,22 +313,12 @@ export default function Pickup() {
   }, [handleDeepLink]);
 
   useEffect(() => {
-    console.log("INFO", "Phase changed to:", currentPhase.toString());
-    console.log(
-      "INFO",
-      "Selected address:",
-      selectedAddress ? "present" : "null"
-    );
+    // Phase changed - handle any side effects here if needed
   }, [currentPhase, selectedAddress]);
 
   // Debug order data changes
   useEffect(() => {
-    console.log("INFO", "Order data changed:", {
-      hasOrderData: !!orderData,
-      orderId: orderData?._id || orderData?.data?._id,
-      orderStatus: orderData?.status,
-      currentPhase
-    });
+    // Order data changed - handle any side effects here if needed
   }, [orderData, currentPhase]);
 
   // Animation effect for loading spinner in phase 3
@@ -379,7 +354,6 @@ export default function Pickup() {
           currentPhase,
           cartItemDetails: cartItemDetails || {}
         });
-        console.log("💾 [Pickup] Workflow state saved after address selection");
       } catch (error) {
         console.warn("⚠️ [Pickup] Failed to save workflow state after address selection:", error);
       }
@@ -580,8 +554,6 @@ export default function Pickup() {
   );
 
   const renderCurrentPhase = (phase = currentPhase) => {
-    console.log("[Pickup] Rendering phase:", phase);
-
     try {
       switch (phase) {
         case 1:

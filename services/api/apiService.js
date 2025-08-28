@@ -2,7 +2,7 @@
 import * as SecureStore from 'expo-secure-store';
 import { showGlobalToast } from "../../components/common/GlobalToast";
 import i18next from "../../localization/i18n";
-import { clearSession, getAccessToken } from "../../utils/authUtils";
+import { clearSession } from "../../utils/authUtils";
 import { API_CONFIG, BASE_URLS } from "./config";
 let notifyTokenExpired = null;
 
@@ -37,7 +37,7 @@ class OptimizedAPIService {
     if (this.isInitialized) return;
 
     try {
-      this.accessToken = await getAccessToken();
+      this.accessToken = await SecureStore.getItemAsync('accessToken');
       this.isInitialized = true;
     } catch (_error) {
       // console.error('API Service initialization failed:', _error);
@@ -45,7 +45,6 @@ class OptimizedAPIService {
   }
 
   async setAccessToken(token) {
-    console.log(`[API] Setting access token: ${token ? `${token.substring(0, 20)}...` : 'null'}`);
     this.accessToken = token;
     if (token) {
       // Only set to SecureStore directly to avoid circular calls
@@ -253,9 +252,6 @@ class OptimizedAPIService {
 
       if (this.accessToken) {
         headers.Authorization = `Bearer ${this.accessToken}`;
-        console.log(`[API] Using access token for ${endpoint}: ${this.accessToken.substring(0, 20)}...`);
-      } else {
-        console.log(`[API] No access token available for ${endpoint}`);
       }
 
       let body = getBody();

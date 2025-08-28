@@ -1,31 +1,31 @@
-﻿import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Audio } from "expo-av";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import { t } from "i18next";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Animated,
-  Dimensions,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Animated,
+    Dimensions,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import {
-  Gesture,
-  GestureDetector,
-  GestureHandlerRootView,
+    Gesture,
+    GestureDetector,
+    GestureHandlerRootView,
 } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAIWorkflow } from "../hooks/useAIWorkflow";
 import { useThemedStyles } from "../hooks/useThemedStyles";
 import {
-  borderRadius,
-  shadows,
-  spacing,
-  typography,
+    borderRadius,
+    shadows,
+    spacing,
+    typography,
 } from "../styles/theme";
 
 let Reanimated,
@@ -81,7 +81,7 @@ export default function VoiceModal() {
 
   const spinnerRotation = useSharedValue(0);
 
-  const { processAudioToMaterials, isProcessing } = useAIWorkflow();
+  const { processAudioToMaterials, isProcessing, usageInfo, isLoadingUsage, transcriptionError, fetchCurrentUsage } = useAIWorkflow();
 
   useEffect(() => {
     if (isProcessing) {
@@ -94,6 +94,11 @@ export default function VoiceModal() {
       spinnerRotation.value = 0;
     }
   }, [isProcessing, spinnerRotation]);
+
+  // Fetch current usage when modal opens
+  useEffect(() => {
+    fetchCurrentUsage();
+  }, [fetchCurrentUsage]);
 
   const spinnerStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${spinnerRotation.value}deg` }],
@@ -176,6 +181,13 @@ export default function VoiceModal() {
   }));
   const startRecording = async () => {
     try {
+      // Check if usage limit has been reached (but allow if still loading)
+      if (!isLoadingUsage && usageInfo.remaining <= 0) {
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        alert(t("voice.limitExceeded"));
+        return;
+      }
+
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       const { status } = await Audio.requestPermissionsAsync();
       if (status !== "granted") {
@@ -362,7 +374,43 @@ export default function VoiceModal() {
           ]}
         >
           <View style={styles.handleBar} />
-          <View style={styles.header}></View>
+          <View style={styles.header}>
+            {/* Voice Usage Display */}
+            <View style={styles.usageContainer}>
+              <View style={styles.usageInfo}>
+                <MaterialCommunityIcons
+                  name="microphone-variant"
+                  size={16}
+                  color={usageInfo.remaining > 0 ? colors.primary : colors.error}
+                />
+                {isLoadingUsage ? (
+                  <Text style={[styles.usageText, { color: colors.textSecondary }]}>
+                    Loading usage...
+                  </Text>
+                ) : (
+                  <>
+                    <Text style={[
+                      styles.usageText,
+                      { color: usageInfo.remaining > 0 ? colors.textSecondary : colors.error }
+                    ]}>
+                      {t("voice.usage", { count: usageInfo.count, limit: usageInfo.limit })}
+                    </Text>
+                    <Text style={[
+                      styles.remainingText,
+                      { color: usageInfo.remaining > 0 ? colors.success : colors.error }
+                    ]}>
+                      ({usageInfo.remaining} {t("voice.remaining")})
+                    </Text>
+                  </>
+                )}
+              </View>
+              {transcriptionError && (
+                <Text style={styles.usageError}>
+                  {transcriptionError}
+                </Text>
+              )}
+            </View>
+          </View>
           <View style={styles.visualizationContainer}>
             {isRecording ? (
               <View style={styles.waveformContainer}>
@@ -477,14 +525,18 @@ export default function VoiceModal() {
                         marginBottom: recordButtonMargin,
                         backgroundColor: isRecording
                           ? colors.accent
+                          : (!isLoadingUsage && usageInfo.remaining <= 0)
+                          ? colors.base300
                           : colors.primary,
+                        opacity: (!isLoadingUsage && usageInfo.remaining <= 0) ? 0.5 : 1,
                       },
                     ]}
                     onPress={isRecording ? stopRecording : startRecording}
-                    activeOpacity={0.8}
+                    activeOpacity={(!isLoadingUsage && usageInfo.remaining <= 0) ? 0.3 : 0.8}
+                    disabled={!isRecording && !isLoadingUsage && usageInfo.remaining <= 0}
                   >
                     <MaterialCommunityIcons
-                      name={isRecording ? "stop" : "microphone"}
+                      name={isRecording ? "stop" : usageInfo.remaining <= 0 ? "microphone-off" : "microphone"}
                       size={recordButtonSize * 0.41}
                       color={colors.white}
                     />
@@ -493,6 +545,8 @@ export default function VoiceModal() {
                 <Text style={styles.hint}>
                   {isRecording
                     ? t("voice.stopRecording")
+                    : usageInfo.remaining <= 0
+                    ? t("voice.limitExceeded")
                     : t("voice.recording")}
                 </Text>
               </View>
@@ -600,6 +654,39 @@ const getVoiceModalStyles = (colors) => StyleSheet.create({
     paddingVertical: spacing.sm,
     marginBottom: spacing.sm,
     alignItems: "center",
+  },
+  usageContainer: {
+    width: "100%",
+    padding: spacing.sm,
+    backgroundColor: colors.base50,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.xs,
+  },
+  usageInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.xs,
+  },
+  usageText: {
+    ...typography.body,
+    fontSize: 14,
+    fontWeight: "500",
+    color: colors.textSecondary,
+  },
+  remainingText: {
+    ...typography.body,
+    fontSize: 14,
+    fontWeight: "600",
+    color: colors.success,
+  },
+  usageError: {
+    ...typography.caption,
+    fontSize: 12,
+    color: colors.error,
+    textAlign: "center",
+    marginTop: spacing.xs,
+    paddingHorizontal: spacing.sm,
   },
   title: {
     ...typography.title,

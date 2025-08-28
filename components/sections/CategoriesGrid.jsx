@@ -1,6 +1,5 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useTranslation } from 'react-i18next'; // Add this import
 import {
   ActivityIndicator,
   FlatList,
@@ -127,8 +126,7 @@ const CategoriesGrid = ({
   showItemsMode = false,
   flatListBottomPadding = 0,
 }) => {
-  const { t } = useTranslation(); // Add translation hook
-  const { currentLanguage } = useLocalization(); // Add localization hook for current language
+  const { t, currentLanguage } = useLocalization(); // Add localization hook
   const { colors } = useThemedStyles(); // Add themed styles hook
   const styles = getCategoriesGridStyles(colors); // Generate dynamic styles
   const [refreshing, setRefreshing] = useState(false);
@@ -459,15 +457,15 @@ const CategoriesGrid = ({
             return;
           }
 
-          // Set pending operation
+          // Set pending operation briefly
           setPendingOperations(prev => new Map(prev).set(itemKey, 'increase'));
 
           // Pre-compute values for instant feedback
           const normalizedItem = normalizeItemData(item);
           const step = getIncrementStep(normalizedItem.measurement_unit);
-          const translatedItemName = getTranslatedName(t, normalizedItem?.name, 'subcategories', { 
-            categoryName: normalizedItem?.categoryName, 
-            currentLanguage 
+          const translatedItemName = getTranslatedName(t, normalizedItem?.name, 'subcategories', {
+            categoryName: normalizedItem?.categoryName,
+            currentLanguage
           });
 
           // Quick pre-checks for immediate feedback - prevent spam clicking on out of stock items
@@ -492,7 +490,7 @@ const CategoriesGrid = ({
             const stockQuantity = item.quantity;
             const currentCartQuantity = cartQuantity;
             const newTotalQuantity = currentCartQuantity + step;
-            
+
             console.log(`[CategoriesGrid] Stock validation for ${translatedItemName}:`, {
               stockQuantity,
               currentCart: currentCartQuantity,
@@ -528,9 +526,16 @@ const CategoriesGrid = ({
           });
 
           try {
+            // Clear pending operation immediately after optimistic update starts
+            setPendingOperations(prev => {
+              const newMap = new Map(prev);
+              newMap.delete(itemKey);
+              return newMap;
+            });
+
             // Direct cart operation for better performance
             const addResult = await handleIncreaseQuantity(item);
-            
+
             if (addResult === false) {
               // Show stock error message using pre-calculated stock
               const stockQuantity = item.quantity;
@@ -548,13 +553,6 @@ const CategoriesGrid = ({
               measurementUnit: normalizedItem.measurement_unit,
               isBuyer: user?.role === "buyer",
               t
-            });
-          } finally {
-            // Always clear pending operation
-            setPendingOperations(prev => {
-              const newMap = new Map(prev);
-              newMap.delete(itemKey);
-              return newMap;
             });
           }
         }}
@@ -690,6 +688,13 @@ const CategoriesGrid = ({
           });
 
           try {
+            // Clear pending operation immediately after optimistic update starts
+            setPendingOperations(prev => {
+              const newMap = new Map(prev);
+              newMap.delete(itemKey);
+              return newMap;
+            });
+
             // Direct cart operation for better performance
             const addResult = await handleFastIncreaseQuantity(item);
             
@@ -710,13 +715,6 @@ const CategoriesGrid = ({
               measurementUnit: normalizedItem.measurement_unit,
               isBuyer: user?.role === "buyer",
               t
-            });
-          } finally {
-            // Always clear pending operation
-            setPendingOperations(prev => {
-              const newMap = new Map(prev);
-              newMap.delete(itemKey);
-              return newMap;
             });
           }
         }}

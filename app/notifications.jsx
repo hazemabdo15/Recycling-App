@@ -1,17 +1,17 @@
-﻿import { Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
-  Alert,
-  FlatList,
-  RefreshControl,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Alert,
+    FlatList,
+    RefreshControl,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocalization } from "../context/LocalizationContext";
@@ -49,19 +49,12 @@ const NotificationsScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      console.log("📱 Notifications screen focused - refreshing notifications");
       refreshNotifications();
     }, [refreshNotifications])
   );
 
   useEffect(() => {
-    console.log(
-      "📱 Notifications updated:",
-      notifications.length,
-      "total,",
-      unreadCount,
-      "unread"
-    );
+    // Notifications updated - handle any side effects here if needed
   }, [notifications, unreadCount]);
 
   const handleRefresh = useCallback(async () => {
@@ -130,7 +123,6 @@ const NotificationsScreen = () => {
   };
 
   const handleMarkAsRead = async (notificationId) => {
-    console.log("🔄 Marking individual notification as read:", notificationId);
     await markNotificationAsRead(notificationId);
   };
 

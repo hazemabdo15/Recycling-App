@@ -1,4 +1,4 @@
-﻿import { Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useRef } from "react";
@@ -28,7 +28,6 @@ const Index = () => {
   }, [refreshNotifications]);
 
   const handleNotificationPress = () => {
-    console.log("Navigate to notifications");
     router.push("/notifications");
   };
 
@@ -78,7 +77,6 @@ const Index = () => {
           </View>
 
           <View style={styles.heroContent}>
-            <Text style={styles.welcomeText}>{t('home.welcomeTitle')}</Text>
             <Text style={styles.heroTitle}>{t('home.welcomeMessage')}</Text>
             <Text style={styles.heroSubtitle}>
               {tRole("home.callToAction", user?.role)}

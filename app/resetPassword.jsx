@@ -1,10 +1,10 @@
-import { router, useLocalSearchParams } from "expo-router";
-import { useState } from "react";
-import { Alert, StyleSheet, View, Text, TextInput, TouchableOpacity } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
+import { router, useLocalSearchParams } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { useState } from "react";
+import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { resetPassword } from "../services/auth";
 import { colors } from "../styles";
-import { StatusBar } from "expo-status-bar";
 
 export default function ResetPasswordScreen() {
   const { email, otpCode } = useLocalSearchParams();
@@ -51,7 +51,6 @@ export default function ResetPasswordScreen() {
     setLoading(true);
     
     try {
-      console.log("[ResetPassword] Resetting password for:", email);
       await resetPassword({
         email: String(email),
         otpCode: String(otpCode),

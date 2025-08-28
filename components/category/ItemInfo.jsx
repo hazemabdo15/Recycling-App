@@ -1,4 +1,4 @@
-﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { t } from 'i18next';
 import { Dimensions, Text, View } from 'react-native';
 import { useThemedStyles } from '../../hooks/useThemedStyles';

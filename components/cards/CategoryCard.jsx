@@ -1,4 +1,4 @@
-﻿import { memo, useCallback } from 'react';
+import { memo, useCallback } from 'react';
 import { Dimensions, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useLocalization } from '../../context/LocalizationContext';
 import { useThemedStyles } from '../../hooks/useThemedStyles';

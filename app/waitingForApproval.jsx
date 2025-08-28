@@ -1,17 +1,17 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  ActivityIndicator,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-  Alert,
-} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../context/AuthContext';
+import { useCallback, useEffect, useState } from 'react';
+import {
+    ActivityIndicator,
+    Alert,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
+import { useAuth } from '../context/AuthContext';
 
 const WaitingForApprovalScreen = () => {
   const router = useRouter();
@@ -45,7 +45,6 @@ const WaitingForApprovalScreen = () => {
       if (raw) {
         const parsed = JSON.parse(raw);
         setSessionDeliveryData(parsed);
-        console.log('Loaded session delivery data:', parsed);
       }
     } catch (error) {
       console.warn('Failed to load session data:', error);
@@ -68,22 +67,14 @@ const WaitingForApprovalScreen = () => {
       return;
     }
     
-    console.log('Starting status check for:', user.email);
-    console.log('Current token:', token ? 'exists' : 'none');
-    console.log('IsApprovedLocally:', isApprovedLocally);
-    
     setIsRefreshing(true);
     try {
       let statusData;
       if (!token) {
-        console.log('Using public status check');
         statusData = await checkPublicDeliveryStatus(user.email);
       } else {
-        console.log('Using authenticated status refresh');
         statusData = await refreshDeliveryStatus();
       }
-
-      console.log('Raw status data received:', statusData);
       
       // Handle different response formats
       let newStatus;
@@ -98,10 +89,7 @@ const WaitingForApprovalScreen = () => {
         newStatus = 'pending'; // fallback
       }
 
-      console.log('Parsed delivery status:', newStatus);
-
       if (newStatus === 'approved') {
-        console.log('Status: APPROVED - updating state');
         setIsApprovedLocally(true);
         setDeliveryStatus('approved');
         // Clear session data for approved users
@@ -109,14 +97,12 @@ const WaitingForApprovalScreen = () => {
         setSessionDeliveryData(null);
         Alert.alert('Great News!', 'Your application has been approved! You can now login to start delivering.');
       } else if (newStatus === 'declined') {
-        console.log('Status: DECLINED - updating state');
         setUser({ ...user, isApproved: false });
         setDeliveryStatus('declined');
         setSessionDeliveryData(statusData);
         await AsyncStorage.setItem('deliveryUserData', JSON.stringify(statusData));
         Alert.alert('Application Update', 'Your application status has been updated.');
       } else {
-        console.log('Status: PENDING - no change');
         setDeliveryStatus('pending');
         // Update session data for pending status
         const pendingData = {

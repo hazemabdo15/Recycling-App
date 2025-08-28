@@ -1,9 +1,7 @@
-﻿import * as SplashScreen from 'expo-splash-screen';
+import * as SplashScreen from 'expo-splash-screen';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
-import { useCartContext } from '../../context/CartContext';
-import { addressService, categoriesAPI, orderService } from '../../services/api';
 import apiService from '../../services/api/apiService';
 import { isAuthenticated } from '../../services/auth';
 import logger from '../../utils/logger';
@@ -20,7 +18,6 @@ const SplashController = ({ children, onDataLoaded }) => {
   const [error, setError] = useState(null);
   
   const { loading: authLoading, user, isLoggedIn } = useAuth();
-  const { loading: cartLoading, fetchBackendCart } = useCartContext();
   
   const hasInitialized = useRef(false);
   const progressTimer = useRef(null);
@@ -89,66 +86,10 @@ const SplashController = ({ children, onDataLoaded }) => {
       }
       await new Promise(resolve => setTimeout(resolve, __DEV__ ? 500 : 200));
 
-      updateProgress(70, 'Loading categories...');
-      try {
-
-        const dataPromises = [
-          categoriesAPI.getAllCategories(user?.role || 'customer'),
-          categoriesAPI.getAllItems(user?.role || 'customer'),
-        ];
-
-        if (isLoggedIn && user.role === 'customer' || user.role === 'buyer') {
-          updateProgress(75, 'Loading your data...');
-
-          try {
-
-            const userDataPromises = [
-              addressService.getUserAddresses().catch(err => {
-                logger.warn('Failed to preload addresses', { error: err.message }, 'SPLASH');
-                return null;
-              }),
-              orderService.getUserOrders({ limit: 10 }).catch(err => {
-                logger.warn('Failed to preload recent orders', { error: err.message }, 'SPLASH');
-                return null;
-              })
-            ];
-            
-            dataPromises.push(...userDataPromises);
-          } catch (userDataError) {
-            logger.warn('Failed to load user-specific data', { error: userDataError.message }, 'SPLASH');
-          }
-        }
-        
-        const results = await Promise.allSettled(dataPromises);
-
-        results.forEach((result, index) => {
-          if (result.status === 'fulfilled') {
-            logger.info(`Data load ${index + 1} completed successfully`, null, 'SPLASH');
-          } else {
-            logger.warn(`Data load ${index + 1} failed`, { error: result.reason?.message }, 'SPLASH');
-          }
-        });
-        
-        logger.info('Essential data loading completed', null, 'SPLASH');
-      } catch (dataError) {
-        logger.warn('Failed to load some essential data', { error: dataError.message }, 'SPLASH');
-      }
+      updateProgress(70, 'Preparing app...');
       await new Promise(resolve => setTimeout(resolve, __DEV__ ? 500 : 200));
 
-      if (isLoggedIn && user) {
-        updateProgress(85, 'Syncing your cart...');
-        try {
-          await fetchBackendCart();
-          let cartWaitCounter = 0;
-          while (cartLoading && cartWaitCounter < 30) {
-            await new Promise(resolve => setTimeout(resolve, 100));
-            cartWaitCounter++;
-          }
-        } catch (cartError) {
-          logger.warn('Failed to load cart during splash', { error: cartError.message }, 'SPLASH');
-        }
-      }
-      await new Promise(resolve => setTimeout(resolve, __DEV__ ? 500 : 200));
+      updateProgress(95, 'Almost ready...');
 
       updateProgress(95, 'Almost ready...');
 
@@ -172,33 +113,30 @@ const SplashController = ({ children, onDataLoaded }) => {
       setError(error);
       setTimeout(() => setIsAppReady(true), 2000);
     }
-  }, [authLoading, isLoggedIn, user, fetchBackendCart, cartLoading, updateProgress]);
+  }, [authLoading, isLoggedIn, user, updateProgress]);
 
   useEffect(() => {
-
-    if (__DEV__) {
-      hasInitialized.current = false;
-      logger.info('Development mode: Resetting splash initialization for hot reload', null, 'SPLASH');
+    // Only reset initialization flag once when component mounts in development
+    if (__DEV__ && !hasInitialized.current) {
+      // Don't reset hasInitialized here as it causes infinite loops
+      // The flag will be managed properly by the initializeApp function
     }
 
     const hideNativeSplash = async () => {
       try {
         await SplashScreen.hideAsync();
-        logger.info('Native splash screen hidden, showing custom splash', null, 'SPLASH');
-      } catch (error) {
-        logger.warn('Failed to hide native splash screen', { error: error.message }, 'SPLASH');
+      } catch (_error) {
+        // Silent fail for splash screen hiding
       }
     };
     
     hideNativeSplash();
 
     const initTimer = setTimeout(() => {
-      logger.info('Starting splash initialization timer', null, 'SPLASH');
       initializeApp();
     }, __DEV__ ? 500 : 100);
 
     return () => {
-      logger.info('Cleaning up splash initialization timer', null, 'SPLASH');
       clearTimeout(initTimer);
       if (progressTimer.current) {
         clearInterval(progressTimer.current);
