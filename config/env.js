@@ -142,7 +142,7 @@ export const APP_CONFIG = {
   API: getApiConfig(),
   GROQ_API_KEY: getSecureApiKey(),
   GOOGLE_MOBILE_CLIENT_ID:
-    "330056808594-aqkfehg0apfa7v00hv8ndf7t30ikrjha.apps.googleusercontent.com",
+    "330056808594-l08q9ue5icgv47eh3iq2icak69bo0598.apps.googleusercontent.com",
 };
 
 export const configureLogging = () => {
