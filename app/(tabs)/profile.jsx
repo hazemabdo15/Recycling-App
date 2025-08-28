@@ -1,4 +1,4 @@
-﻿import * as ImagePicker from "expo-image-picker";
+import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from "react";

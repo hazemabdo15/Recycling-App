@@ -1,6 +1,5 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useTranslation } from 'react-i18next'; // Add this import
 import {
   ActivityIndicator,
   FlatList,
@@ -127,8 +126,7 @@ const CategoriesGrid = ({
   showItemsMode = false,
   flatListBottomPadding = 0,
 }) => {
-  const { t } = useTranslation(); // Add translation hook
-  const { currentLanguage } = useLocalization(); // Add localization hook for current language
+  const { t, currentLanguage } = useLocalization(); // Add localization hook
   const { colors } = useThemedStyles(); // Add themed styles hook
   const styles = getCategoriesGridStyles(colors); // Generate dynamic styles
   const [refreshing, setRefreshing] = useState(false);

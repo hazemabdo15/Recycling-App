@@ -1,4 +1,4 @@
-﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { getErrorStateStyles, getLoadingStateStyles } from '../../styles/components/commonStyles';

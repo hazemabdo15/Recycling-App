@@ -1,8 +1,7 @@
-﻿import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next"; // Add this import
 import {
   RefreshControl,
   StatusBar,
@@ -50,8 +49,7 @@ const CategoryDetails = () => {
   const { categoryName: categoryNameParam } = useLocalSearchParams();
   const navigation = useNavigation();
   const { user } = useAuth();
-  const { tRole, currentLanguage } = useLocalization();
-  const { t } = useTranslation();
+  const { t, tRole, currentLanguage } = useLocalization();
   const { colors, isDarkMode } = useThemedStyles();
   const layoutStyles = getLayoutStyles(isDarkMode);
 

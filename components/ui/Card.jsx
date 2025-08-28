@@ -1,4 +1,4 @@
-﻿import { Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { getCardStyles } from '../../styles/components/commonStyles';
 const Card = ({

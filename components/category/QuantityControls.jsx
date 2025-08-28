@@ -1,4 +1,4 @@
-﻿import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import React, { useRef } from "react";
 import {
   Dimensions,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useLocalization } from "../../context/LocalizationContext";
 import { useThemedStyles } from "../../hooks/useThemedStyles";
 import { getQuantityControlsStyles } from "../../styles/components/categoryStyles";
 import { showMaxStockMessage } from "../../utils/cartMessages";
@@ -33,6 +34,7 @@ const QuantityControls = ({
   componentKey = null, // Unique identifier to prevent state cross-contamination
 }) => {
   const { colors, isDarkMode } = useThemedStyles();
+  const { t } = useLocalization();
   const quantityControlsStyles = getQuantityControlsStyles(isDarkMode);
 
   // Initialize with a unique reference to prevent cross-contamination
@@ -94,7 +96,7 @@ const QuantityControls = ({
       // Stock validation
       if (typeof maxQuantity === "number" && num > maxQuantity) {
         // Show stock error message for buyers
-        showMaxStockMessage(itemName, maxQuantity, measurementUnit);
+        showMaxStockMessage(itemName, maxQuantity, measurementUnit, t);
         // Instant reversion - no setTimeout delay
         setInputValue(lastValidValue.current);
         return;
@@ -125,7 +127,7 @@ const QuantityControls = ({
       // Stock validation
       if (typeof maxQuantity === "number" && num > maxQuantity) {
         // Show stock error message for buyers
-        showMaxStockMessage(itemName, maxQuantity, measurementUnit);
+        showMaxStockMessage(itemName, maxQuantity, measurementUnit, t);
         // Instant reversion - no setTimeout delay
         setInputValue(lastValidValue.current);
         return;

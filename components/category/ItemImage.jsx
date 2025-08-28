@@ -1,4 +1,4 @@
-﻿import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image, Text, View } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
