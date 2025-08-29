@@ -146,8 +146,15 @@ export const StockProvider = ({ children }) => {
       return;
     }
 
+    // Only buyers need stock socket connection
+    if (user.role !== 'buyer') {
+      console.log(`🔒 User role '${user.role}' doesn't need stock socket connection`);
+      return;
+    }
+
     try {
       isConnectingRef.current = true;
+      console.log('🔍 Connecting stock socket for buyer user...');
       
       let token = accessToken || await AsyncStorage.getItem('accessToken');
       if (!token || isTokenExpired(token)) {
@@ -155,8 +162,28 @@ export const StockProvider = ({ children }) => {
         token = await refreshAccessToken();
         if (!token) {
           console.log('❌ Failed to refresh token for stock socket');
+          isConnectingRef.current = false;
           return;
         }
+      }
+      
+      // Verify token belongs to current user
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+        const decoded = atob(padded);
+        const payload = JSON.parse(decoded);
+        
+        if (payload.userId !== user._id) {
+          console.log('❌ [StockSocket] Token user mismatch. Expected:', user._id, 'Got:', payload.userId);
+          isConnectingRef.current = false;
+          return;
+        }
+      } catch (tokenError) {
+        console.error('❌ [StockSocket] Error validating token:', tokenError);
+        isConnectingRef.current = false;
+        return;
       }
 
       console.log('🔌 Connecting to stock socket at:', SOCKET_URL);
@@ -455,19 +482,28 @@ export const StockProvider = ({ children }) => {
     }
   }, [accessToken, user, isLoggedIn, loadCachedStockData, saveStockDataToCache, throttledStockUpdate]);
 
-  // Disconnect socket
+  // Disconnect socket with improved cleanup
   const disconnectSocket = useCallback(() => {
     if (socketRef.current) {
       console.log('🔌 Disconnecting from stock socket');
+      
+      // Remove all listeners before disconnecting
+      socketRef.current.removeAllListeners();
       socketRef.current.disconnect();
       socketRef.current = null;
     }
     setIsConnected(false);
     isConnectingRef.current = false;
+    isSubscribedRef.current = false;
   }, []);
 
   // Get stock quantity for a specific item with fallback support
   const getStockQuantity = useCallback((itemId, fallbackQuantity = undefined) => {
+    // Stock functionality only available for buyers
+    if (!user || user.role !== 'buyer') {
+      return fallbackQuantity; // Return fallback for non-buyers
+    }
+    
     const realTimeStock = stockQuantities[itemId];
     
     // Return real-time stock if available
@@ -483,10 +519,16 @@ export const StockProvider = ({ children }) => {
     
     // No real-time data available
     return undefined;
-  }, [stockQuantities, isConnected]);
+  }, [stockQuantities, isConnected, user]);
 
   // Update local stock (optimistic update)
   const updateLocalStock = useCallback((itemId, newQuantity) => {
+    // Stock functionality only available for buyers
+    if (!user || user.role !== 'buyer') {
+      console.log(`🔒 User role '${user?.role || 'unknown'}' cannot update stock`);
+      return;
+    }
+    
     setStockQuantities(prev => {
       const updated = {
         ...prev,
@@ -494,10 +536,16 @@ export const StockProvider = ({ children }) => {
       };
       return updated;
     });
-  }, []);
+  }, [user]);
 
   // Bulk update stock quantities
   const updateBulkStock = useCallback((stockUpdates) => {
+    // Stock functionality only available for buyers
+    if (!user || user.role !== 'buyer') {
+      console.log(`🔒 User role '${user?.role || 'unknown'}' cannot update bulk stock`);
+      return;
+    }
+    
     setStockQuantities(prev => {
       const updated = { ...prev, ...stockUpdates };
       setLastUpdated(new Date());
@@ -507,16 +555,27 @@ export const StockProvider = ({ children }) => {
       
       return updated;
     });
-  }, []);
+  }, [user]);
 
   // Check if item is in stock
   const isInStock = useCallback((itemId, requestedQuantity = 1) => {
+    // Stock functionality only available for buyers
+    if (!user || user.role !== 'buyer') {
+      return true; // Always allow for non-buyers (no stock restrictions)
+    }
+    
     const currentStock = stockQuantities[itemId] || 0;
     return currentStock >= requestedQuantity;
-  }, [stockQuantities]);
+  }, [stockQuantities, user]);
 
   // Force refresh stock data from server
   const forceRefreshStock = useCallback(() => {
+    // Stock functionality only available for buyers
+    if (!user || user.role !== 'buyer') {
+      console.log(`🔒 User role '${user?.role || 'unknown'}' doesn't need stock refresh`);
+      return;
+    }
+    
     if (socketRef.current?.connected && user) {
       console.log('🔄 Force refreshing stock data from server...');
       
@@ -558,13 +617,23 @@ export const StockProvider = ({ children }) => {
 
   // Handle authentication state changes
   useEffect(() => {
-    const shouldConnect = isLoggedIn && user && !user.isGuest && accessToken;
+    const shouldConnect = isLoggedIn && user && !user.isGuest && accessToken && user.role === 'buyer';
     
     if (shouldConnect && !socketRef.current?.connected) {
-      console.log('🚀 Auth ready, connecting to stock socket...');
-      connectSocket();
+      console.log('🚀 Auth ready, connecting to stock socket for buyer...');
+      console.log(`🔍 User role: ${user.role}, connecting stock socket`);
+      // Add small delay to ensure auth state is stable and avoid race conditions
+      const connectionTimeout = setTimeout(() => {
+        connectSocket();
+      }, 200);
+      
+      return () => clearTimeout(connectionTimeout);
     } else if (!shouldConnect && socketRef.current) {
-      console.log('🔒 Auth lost, disconnecting from stock socket...');
+      if (user && user.role !== 'buyer') {
+        console.log(`🔒 User role '${user.role}' doesn't need stock socket, disconnecting...`);
+      } else {
+        console.log('🔒 Auth lost, disconnecting from stock socket...');
+      }
       disconnectSocket();
       setStockQuantities({});
     }
@@ -579,9 +648,11 @@ export const StockProvider = ({ children }) => {
   // Load cached data on initial mount for faster startup
   useEffect(() => {
     const loadInitialData = async () => {
-      if (isLoggedIn && user && !user.isGuest && Object.keys(stockQuantities).length === 0) {
-        console.log('🔄 Loading cached stock data for faster startup...');
+      if (isLoggedIn && user && !user.isGuest && user.role === 'buyer' && Object.keys(stockQuantities).length === 0) {
+        console.log('🔄 Loading cached stock data for buyer startup...');
         await loadCachedStockData();
+      } else if (user && user.role !== 'buyer') {
+        console.log(`🔍 User role '${user.role}' doesn't need stock data, skipping cache load`);
       }
     };
 
@@ -609,6 +680,8 @@ export const StockProvider = ({ children }) => {
     reconnect: connectSocket,
     // Add socket connection status for better debugging
     stockSocketConnected: isConnected,
+    // Helper to check if user role supports stock functionality
+    isStockAvailable: user?.role === 'buyer',
   };
 
   return (

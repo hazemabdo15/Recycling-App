@@ -99,21 +99,56 @@ export const NotificationProvider = ({ children }) => {
     const isAuthenticated = isLoggedIn && user && !user.isGuest && accessToken;
     const authKey = isAuthenticated ? `${user._id}-${accessToken.substring(0, 20)}` : null;
     
+    console.log('📱 [NotificationContext] Auth state check:');
+    console.log('  - isLoggedIn:', isLoggedIn);
+    console.log('  - user present:', !!user);
+    console.log('  - user ID:', user?._id);
+    console.log('  - user isGuest:', user?.isGuest);
+    console.log('  - accessToken present:', !!accessToken);
+    console.log('  - isAuthenticated:', isAuthenticated);
+    console.log('  - authKey:', authKey);
+    console.log('  - hasInitialized.current:', hasInitialized.current);
+    console.log('  - authKey changed:', hasInitialized.current !== authKey);
+    
     if (isAuthenticated && (!hasInitialized.current || hasInitialized.current !== authKey)) {
       console.log('🚀 First time auth ready - initializing notifications');
       hasInitialized.current = authKey;
 
-      // Small delay to ensure auth state is stable
+      // Stagger notification socket connection to avoid conflicts with stock socket
       setTimeout(() => {
+        console.log('🔗 [NotificationContext] Starting delayed initialization...');
+        console.log('🔗 [NotificationContext] Current auth state:', {
+          isLoggedIn,
+          userId: user?._id,
+          hasToken: !!accessToken,
+          tokenLength: accessToken?.length
+        });
         doFetch();
         doConnect();
-      }, 300);
+      }, 1000); // Increased delay to ensure stock socket is fully established
+      
+      // Watchdog timer: Force connection check after 5 seconds
+      setTimeout(() => {
+        if (!currentSocket.current?.connected && isLoggedIn && user && !user.isGuest && accessToken) {
+          console.log('⏰ [NotificationContext] Watchdog: Socket not connected, forcing retry...');
+          console.log('⏰ [NotificationContext] Current socket state:', {
+            exists: !!currentSocket.current,
+            connected: currentSocket.current?.connected,
+            connecting: isConnecting.current
+          });
+          if (!isConnecting.current) {
+            doConnect();
+          }
+        }
+      }, 6000);
       
     } else if (!isAuthenticated && hasInitialized.current) {
       console.log('🔒 Auth lost - cleaning up notifications');
       hasInitialized.current = null;
 
       if (currentSocket.current) {
+        console.log('🧹 Cleaning up notification socket...');
+        currentSocket.current.removeAllListeners();
         currentSocket.current.disconnect();
         currentSocket.current = null;
         setIsConnected(false);
@@ -121,10 +156,13 @@ export const NotificationProvider = ({ children }) => {
       isConnecting.current = false;
       setNotifications([]);
       setUnreadCount(0);
+    } else {
+      console.log('📋 [NotificationContext] No action needed - auth state unchanged');
     }
 
     return () => {
       if (currentSocket.current) {
+        currentSocket.current.removeAllListeners();
         currentSocket.current.disconnect();
         currentSocket.current = null;
         setIsConnected(false);
@@ -190,13 +228,28 @@ export const NotificationProvider = ({ children }) => {
       console.log('🔍 [NotificationSocket] isConnecting.current:', isConnecting.current);
       console.log('🔍 [NotificationSocket] currentSocket.current:', currentSocket.current ? 'exists' : 'null');
       
-      if (isConnecting.current || currentSocket.current) {
-        console.log('🔒 Already connecting or connected, skipping...');
+      // Ensure any existing connection is fully cleaned up first
+      if (currentSocket.current) {
+        console.log('🧹 [NotificationSocket] Cleaning up existing connection before creating new one');
+        currentSocket.current.removeAllListeners();
+        currentSocket.current.disconnect();
+        currentSocket.current = null;
+        setIsConnected(false);
+      }
+      
+      if (isConnecting.current) {
+        console.log('🔒 Already connecting, skipping...');
         return;
       }
 
       let token = accessToken || await AsyncStorage.getItem('accessToken');
       console.log('🔍 [NotificationSocket] Token obtained:', token ? 'present' : 'null', 'length:', token?.length || 0);
+      
+      // Validate that we have the current user's data and token matches
+      if (!user || !user._id) {
+        console.log('❌ [NotificationSocket] No valid user data, aborting connection');
+        return;
+      }
       
       if (!token || isTokenExpired(token)) {
         console.log('🔄 Token expired or missing, attempting to refresh...');
@@ -205,6 +258,28 @@ export const NotificationProvider = ({ children }) => {
           Alert.alert('Session expired', 'Please log in again.');
           return;
         }
+      }
+      
+      // Verify token belongs to current user (decode and check userId)
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+        const decoded = atob(padded);
+        const payload = JSON.parse(decoded);
+        
+        console.log('🔍 [NotificationSocket] Token validation:');
+        console.log('  - Token userId:', payload.userId);
+        console.log('  - Current user._id:', user._id);
+        console.log('  - Match:', payload.userId === user._id);
+        
+        if (payload.userId !== user._id) {
+          console.log('⚠️ [NotificationSocket] Token user mismatch - proceeding anyway as token might be updating');
+          // Don't abort connection, just log the mismatch as it might resolve itself
+        }
+      } catch (tokenError) {
+        console.error('❌ [NotificationSocket] Error validating token (proceeding anyway):', tokenError.message);
+        // Don't abort connection due to token parsing errors
       }
 
       isConnecting.current = true;
@@ -431,8 +506,18 @@ export const NotificationProvider = ({ children }) => {
       currentSocket.current = socketConnection;
     } catch (error) {
       console.error('❌ Error in socket connection setup:', error.message || error);
+      console.error('❌ Full error details:', error);
       setIsConnected(false);
       isConnecting.current = false;
+      
+      // Retry connection after a delay
+      if (user && accessToken && !user.isGuest) {
+        console.log('🔄 Retrying notification socket connection in 3 seconds...');
+        setTimeout(() => {
+          console.log('🔄 Attempting retry connection...');
+          doConnect();
+        }, 3000);
+      }
     }
   }, [accessToken, user, getLocalizedNotification]);
 
