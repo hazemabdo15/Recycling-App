@@ -677,6 +677,11 @@
     "limitExceeded": "Daily voice limit reached",
     "resetTime": "Resets in {{hours}} hours",
     "checkingUsage": "Checking usage..."
+  ,
+  "loginRequiredTitle": "Sign in to use voice assistant",
+  "loginRequiredSubtitle": "Sign in to record and save AI-processed results.",
+  "login": "Login",
+  "maybeLater": "Maybe later"
   },
   "chat": {
     "title": "Chat",

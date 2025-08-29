@@ -19,6 +19,7 @@ import {
   GestureHandlerRootView,
 } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useAuth } from "../context/AuthContext";
 import { useAIWorkflow } from "../hooks/useAIWorkflow";
 import { useThemedStyles } from "../hooks/useThemedStyles";
 import {
@@ -82,6 +83,7 @@ export default function VoiceModal() {
   const spinnerRotation = useSharedValue(0);
 
   const { processAudioToMaterials, isProcessing, usageInfo, isLoadingUsage, transcriptionError, fetchCurrentUsage } = useAIWorkflow();
+  const { user, isLoggedIn } = useAuth();
 
   useEffect(() => {
     if (isProcessing) {
@@ -379,247 +381,281 @@ export default function VoiceModal() {
             { paddingTop: insets.top + 20 },
           ]}
         >
-          <View style={styles.handleBar} />
-          <View style={styles.header}>
-            {/* Voice Usage Display */}
-            <View style={styles.usageContainer}>
-              <View style={styles.usageInfo}>
+          {(!isLoggedIn || !user) ? (
+            <View style={styles.loginRequiredWrapper}>
+              <View style={styles.handleBar} />
+              <View style={styles.loginRequiredContent}>
                 <MaterialCommunityIcons
-                  name="microphone-variant"
-                  size={16}
-                  color={usageInfo.remaining > 0 ? colors.primary : colors.error}
+                  name="lock"
+                  size={56}
+                  color={colors.primary}
                 />
-                {isLoadingUsage ? (
-                  <Text style={[styles.usageText, { color: colors.textSecondary }]}>
-                    Loading usage...
-                  </Text>
-                ) : (
-                  <>
-                    <Text style={[
-                      styles.usageText,
-                      { color: usageInfo.remaining > 0 ? colors.textSecondary : colors.error }
-                    ]}>
-                      {t("voice.usage", { count: usageInfo.count, limit: usageInfo.limit })}
-                    </Text>
-                    <Text style={[
-                      styles.remainingText,
-                      { color: usageInfo.remaining > 0 ? colors.success : colors.error }
-                    ]}>
-                      ({usageInfo.remaining} {t("voice.remaining")})
-                    </Text>
-                  </>
-                )}
+                <Text style={styles.loginRequiredTitle}>{t('voice.loginRequiredTitle') || 'Login required'}</Text>
+                <Text style={styles.loginRequiredSubtitle}>{t('voice.loginRequiredSubtitle') || 'You need to sign in to use the voice assistant and save your results.'}</Text>
+                <View style={styles.loginButtonsRow}>
+                  <TouchableOpacity
+                    style={[styles.sendButton, { minWidth: 140 }]}
+                    onPress={() => router.push('/login')}
+                  >
+                    <MaterialCommunityIcons name="login" size={18} color={colors.white} />
+                    <Text style={styles.sendButtonText}>{t('voice.login') || 'Login'}</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.controlButton, { marginLeft: spacing.md }]}
+                    onPress={dismissModal}
+                  >
+                    <Text style={[styles.hint, { color: colors.neutral }]}>{t('voice.maybeLater') || 'Maybe later'}</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-              {transcriptionError && (
-                <Text style={styles.usageError}>
-                  {transcriptionError}
-                </Text>
-              )}
             </View>
-          </View>
-          <View style={styles.visualizationContainer}>
-            {isRecording ? (
-              <View style={styles.waveformContainer}>
-                <View style={styles.recordingStatus}>
-                  <MaterialCommunityIcons
-                    name="microphone"
-                    size={24}
-                    color={colors.white}
-                  />
-                  <Text style={styles.listeningText}>
-                    {t("voice.listening")}
-                  </Text>
-                </View>
-                <View style={styles.waveform}>
-                  {waveformData.map((height, index) => (
-                    <Animated.View
-                      key={index}
-                      style={[
-                        styles.waveformBar,
-                        {
-                          height: Math.max(4, height * 0.8),
-                          backgroundColor: colors.primary,
-                        },
-                      ]}
+          ) : (
+            // ...existing full modal content for authenticated users
+            <>
+              <View style={styles.handleBar} />
+              <View style={styles.header}>
+                {/* Voice Usage Display */}
+                <View style={styles.usageContainer}>
+                  <View style={styles.usageInfo}>
+                    <MaterialCommunityIcons
+                      name="microphone-variant"
+                      size={16}
+                      color={usageInfo.remaining > 0 ? colors.primary : colors.error}
                     />
-                  ))}
-                </View>
-                <Text style={styles.recordingIndicator}>● REC</Text>
-              </View>
-            ) : (
-              <View style={styles.promptContainer}>
-                <View style={styles.aiAvatar}>
-                  <MaterialCommunityIcons
-                    name="robot"
-                    size={36}
-                    color={colors.primary}
-                  />
-                </View>
-                <Text style={styles.promptTitle}>
-                  {t("voice.title")}
-                </Text>
-                <View style={styles.examplesContainer}>
-                  <Text style={styles.examplesLabel}>
-                    {t("voice.subtitle")}
-                  </Text>
-                  <View style={styles.examplesList}>
-                    <View style={styles.examplesRow}>
-                      <View style={styles.exampleItem}>
-                        <MaterialCommunityIcons
-                          name="bottle-soda"
-                          size={16}
-                          color={colors.primary}
-                        />
-                        <Text style={styles.exampleText}>
-                          &ldquo;{t("voice.example2")}&rdquo;
+                    {isLoadingUsage ? (
+                      <Text style={[styles.usageText, { color: colors.textSecondary }]}> 
+                        Loading usage...
+                      </Text>
+                    ) : (
+                      <>
+                        <Text style={[
+                          styles.usageText,
+                          { color: usageInfo.remaining > 0 ? colors.textSecondary : colors.error }
+                        ]}>
+                          {t("voice.usage", { count: usageInfo.count, limit: usageInfo.limit })}
                         </Text>
-                      </View>
-                      <View style={styles.exampleItem}>
-                        <MaterialCommunityIcons
-                          name="newspaper"
-                          size={16}
-                          color={colors.primary}
-                        />
-                        <Text style={styles.exampleText}>
-                          &ldquo;{t("voice.example1")}&rdquo;
+                        <Text style={[
+                          styles.remainingText,
+                          { color: usageInfo.remaining > 0 ? colors.success : colors.error }
+                        ]}>
+                          ({usageInfo.remaining} {t("voice.remaining")})
                         </Text>
-                      </View>
-                    </View>
-                    <View style={styles.examplesRow}>
-                      <View style={styles.exampleItem}>
-                        <MaterialCommunityIcons
-                          name="silverware"
-                          size={16}
-                          color={colors.primary}
-                        />
-                        <Text style={styles.exampleText}>
-                          &ldquo;{t("voice.example4")}&rdquo;
-                        </Text>
-                      </View>
-                      <View style={styles.exampleItem}>
-                        <MaterialCommunityIcons
-                          name="bottle-wine"
-                          size={16}
-                          color={colors.primary}
-                        />
-                        <Text style={styles.exampleText}>
-                          &ldquo;{t("voice.example3")}&rdquo;
-                        </Text>
-                      </View>
-                    </View>
+                      </>
+                    )}
                   </View>
-                </View>
-              </View>
-            )}
-            {recordingDuration > 0 && isRecording && (
-              <Text style={styles.duration}>
-                {formatDuration(recordingDuration)}
-              </Text>
-            )}
-          </View>
-          <View style={styles.controlsContainer}>
-            {!recordedURI ? (
-              <View style={styles.recordingControls}>
-                <Reanimated.View style={recordingButtonStyle}>
-                  <TouchableOpacity
-                    style={[
-                      styles.recordButton,
-                      {
-                        width: recordButtonSize,
-                        height: recordButtonSize,
-                        borderRadius: recordButtonSize / 2,
-                        marginBottom: recordButtonMargin,
-                        backgroundColor: isRecording
-                          ? colors.accent
-                          : (isLoadingUsage || usageInfo.remaining <= 0)
-                          ? colors.base300
-                          : colors.primary,
-                        opacity: (isLoadingUsage || usageInfo.remaining <= 0) ? 0.5 : 1,
-                      },
-                    ]}
-                    onPress={isRecording ? stopRecording : startRecording}
-                    activeOpacity={(isLoadingUsage || usageInfo.remaining <= 0) ? 0.3 : 0.8}
-                    disabled={!isRecording && (isLoadingUsage || usageInfo.remaining <= 0)}
-                  >
-                    <MaterialCommunityIcons
-                      name={isRecording ? "stop" : (isLoadingUsage || usageInfo.remaining <= 0) ? "microphone-off" : "microphone"}
-                      size={recordButtonSize * 0.41}
-                      color={colors.white}
-                    />
-                  </TouchableOpacity>
-                </Reanimated.View>
-                <Text style={styles.hint}>
-                  {isRecording
-                    ? t("voice.stopRecording")
-                    : isLoadingUsage
-                    ? t("voice.checkingUsage")
-                    : usageInfo.remaining <= 0
-                    ? t("voice.limitExceeded")
-                    : t("voice.recording")}
-                </Text>
-              </View>
-            ) : (
-              <View style={styles.playbackContainer}>
-                <View style={styles.playbackControls}>
-                  <TouchableOpacity
-                    style={styles.controlButton}
-                    onPress={isPlaying ? stopPlayback : playRecording}
-                  >
-                    <MaterialCommunityIcons
-                      name={isPlaying ? "pause" : "play"}
-                      size={28}
-                      color={colors.primary}
-                    />
-                  </TouchableOpacity>
-                  <View style={styles.durationContainer}>
-                    <Text style={styles.playbackDuration}>
-                      {formatDuration(recordingDuration)}
+                  {transcriptionError && (
+                    <Text style={styles.usageError}>
+                      {transcriptionError}
                     </Text>
-                  </View>
-                  <TouchableOpacity
-                    style={styles.controlButton}
-                    onPress={deleteRecording}
-                  >
-                    <MaterialCommunityIcons
-                      name="delete-outline"
-                      size={28}
-                      color={colors.error}
-                    />
-                  </TouchableOpacity>
+                  )}
                 </View>
-                <TouchableOpacity
-                  style={[
-                    styles.sendButton,
-                    isProcessing && styles.sendButtonDisabled,
-                  ]}
-                  onPress={sendRecording}
-                  disabled={isProcessing}
-                >
-                  {isProcessing ? (
-                    <>
-                      <Reanimated.View style={spinnerStyle}>
-                        <MaterialCommunityIcons
-                          name="reload"
-                          size={20}
-                          color={colors.white}
-                        />
-                      </Reanimated.View>
-                      <Text style={styles.sendButtonText}>{t("voice.processing")}</Text>
-                    </>
-                  ) : (
-                    <>
+              </View>
+              <View style={styles.visualizationContainer}>
+                {isRecording ? (
+                  <View style={styles.waveformContainer}>
+                    <View style={styles.recordingStatus}>
                       <MaterialCommunityIcons
-                        name="send"
-                        size={20}
+                        name="microphone"
+                        size={24}
                         color={colors.white}
                       />
-                      <Text style={styles.sendButtonText}>{t("voice.send")}</Text>
-                    </>
-                  )}
-                </TouchableOpacity>
+                      <Text style={styles.listeningText}>
+                        {t("voice.listening")}
+                      </Text>
+                    </View>
+                    <View style={styles.waveform}>
+                      {waveformData.map((height, index) => (
+                        <Animated.View
+                          key={index}
+                          style={[
+                            styles.waveformBar,
+                            {
+                              height: Math.max(4, height * 0.8),
+                              backgroundColor: colors.primary,
+                            },
+                          ]}
+                        />
+                      ))}
+                    </View>
+                    <Text style={styles.recordingIndicator}>● REC</Text>
+                  </View>
+                ) : (
+                  <View style={styles.promptContainer}>
+                    <View style={styles.aiAvatar}>
+                      <MaterialCommunityIcons
+                        name="robot"
+                        size={36}
+                        color={colors.primary}
+                      />
+                    </View>
+                    <Text style={styles.promptTitle}>
+                      {t("voice.title")}
+                    </Text>
+                    <View style={styles.examplesContainer}>
+                      <Text style={styles.examplesLabel}>
+                        {t("voice.subtitle")}
+                      </Text>
+                      <View style={styles.examplesList}>
+                        <View style={styles.examplesRow}>
+                          <View style={styles.exampleItem}>
+                            <MaterialCommunityIcons
+                              name="bottle-soda"
+                              size={16}
+                              color={colors.primary}
+                            />
+                            <Text style={styles.exampleText}>
+                              &ldquo;{t("voice.example2")}&rdquo;
+                            </Text>
+                          </View>
+                          <View style={styles.exampleItem}>
+                            <MaterialCommunityIcons
+                              name="newspaper"
+                              size={16}
+                              color={colors.primary}
+                            />
+                            <Text style={styles.exampleText}>
+                              &ldquo;{t("voice.example1")}&rdquo;
+                            </Text>
+                          </View>
+                        </View>
+                        <View style={styles.examplesRow}>
+                          <View style={styles.exampleItem}>
+                            <MaterialCommunityIcons
+                              name="silverware"
+                              size={16}
+                              color={colors.primary}
+                            />
+                            <Text style={styles.exampleText}>
+                              &ldquo;{t("voice.example4")}&rdquo;
+                            </Text>
+                          </View>
+                          <View style={styles.exampleItem}>
+                            <MaterialCommunityIcons
+                              name="bottle-wine"
+                              size={16}
+                              color={colors.primary}
+                            />
+                            <Text style={styles.exampleText}>
+                              &ldquo;{t("voice.example3")}&rdquo;
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+                    </View>
+                  </View>
+                )}
+                {recordingDuration > 0 && isRecording && (
+                  <Text style={styles.duration}>
+                    {formatDuration(recordingDuration)}
+                  </Text>
+                )}
               </View>
-            )}
-          </View>
+              <View style={styles.controlsContainer}>
+                {!recordedURI ? (
+                  <View style={styles.recordingControls}>
+                    <Reanimated.View style={recordingButtonStyle}>
+                      <TouchableOpacity
+                        style={[
+                          styles.recordButton,
+                          {
+                            width: recordButtonSize,
+                            height: recordButtonSize,
+                            borderRadius: recordButtonSize / 2,
+                            marginBottom: recordButtonMargin,
+                            backgroundColor: isRecording
+                              ? colors.accent
+                              : (isLoadingUsage || usageInfo.remaining <= 0)
+                              ? colors.base300
+                              : colors.primary,
+                            opacity: (isLoadingUsage || usageInfo.remaining <= 0) ? 0.5 : 1,
+                          },
+                        ]}
+                        onPress={isRecording ? stopRecording : startRecording}
+                        activeOpacity={(isLoadingUsage || usageInfo.remaining <= 0) ? 0.3 : 0.8}
+                        disabled={!isRecording && (isLoadingUsage || usageInfo.remaining <= 0)}
+                      >
+                        <MaterialCommunityIcons
+                          name={isRecording ? "stop" : (isLoadingUsage || usageInfo.remaining <= 0) ? "microphone-off" : "microphone"}
+                          size={recordButtonSize * 0.41}
+                          color={colors.white}
+                        />
+                      </TouchableOpacity>
+                    </Reanimated.View>
+                    <Text style={styles.hint}>
+                      {isRecording
+                        ? t("voice.stopRecording")
+                        : isLoadingUsage
+                        ? t("voice.checkingUsage")
+                        : usageInfo.remaining <= 0
+                        ? t("voice.limitExceeded")
+                        : t("voice.recording")}
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={styles.playbackContainer}>
+                    <View style={styles.playbackControls}>
+                      <TouchableOpacity
+                        style={styles.controlButton}
+                        onPress={isPlaying ? stopPlayback : playRecording}
+                      >
+                        <MaterialCommunityIcons
+                          name={isPlaying ? "pause" : "play"}
+                          size={28}
+                          color={colors.primary}
+                        />
+                      </TouchableOpacity>
+                      <View style={styles.durationContainer}>
+                        <Text style={styles.playbackDuration}>
+                          {formatDuration(recordingDuration)}
+                        </Text>
+                      </View>
+                      <TouchableOpacity
+                        style={styles.controlButton}
+                        onPress={deleteRecording}
+                      >
+                        <MaterialCommunityIcons
+                          name="delete-outline"
+                          size={28}
+                          color={colors.error}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                    <TouchableOpacity
+                      style={[
+                        styles.sendButton,
+                        isProcessing && styles.sendButtonDisabled,
+                      ]}
+                      onPress={sendRecording}
+                      disabled={isProcessing}
+                    >
+                      {isProcessing ? (
+                        <>
+                          <Reanimated.View style={spinnerStyle}>
+                            <MaterialCommunityIcons
+                              name="reload"
+                              size={20}
+                              color={colors.white}
+                            />
+                          </Reanimated.View>
+                          <Text style={styles.sendButtonText}>{t("voice.processing")}</Text>
+                        </>
+                      ) : (
+                        <>
+                          <MaterialCommunityIcons
+                            name="send"
+                            size={20}
+                            color={colors.white}
+                          />
+                          <Text style={styles.sendButtonText}>{t("voice.send")}</Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            </>
+          )}
         </Reanimated.View>
       </GestureDetector>
     </GestureHandlerRootView>
@@ -922,5 +958,41 @@ const getVoiceModalStyles = (colors) => StyleSheet.create({
     fontWeight: "600",
     marginLeft: spacing.sm,
     fontSize: 16,
+  },
+  /* Login required full-screen preview styles */
+  loginRequiredWrapper: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+  },
+  loginRequiredContent: {
+    alignItems: 'center',
+    backgroundColor: colors.base50,
+    padding: spacing.lg,
+    borderRadius: borderRadius.lg,
+    ...shadows.medium,
+  },
+  loginRequiredTitle: {
+    ...typography.title,
+    fontSize: 20,
+    fontWeight: '700',
+    marginTop: spacing.sm,
+    color: colors.black,
+    textAlign: 'center',
+  },
+  loginRequiredSubtitle: {
+    ...typography.body,
+    fontSize: 14,
+    color: colors.neutral,
+    textAlign: 'center',
+    marginTop: spacing.xs,
+    marginBottom: spacing.md,
+  },
+  loginButtonsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: spacing.sm,
   },
 });
