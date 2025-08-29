@@ -114,20 +114,23 @@ export const NotificationProvider = ({ children }) => {
       console.log('🚀 First time auth ready - initializing notifications');
       hasInitialized.current = authKey;
 
-      // Stagger notification socket connection to avoid conflicts with stock socket
+      // Reduced delay for faster connection (optimization 3: Pre-connect)
       setTimeout(() => {
-        console.log('🔗 [NotificationContext] Starting delayed initialization...');
+        console.log('🔗 [NotificationContext] Starting optimized initialization...');
         console.log('🔗 [NotificationContext] Current auth state:', {
           isLoggedIn,
           userId: user?._id,
           hasToken: !!accessToken,
           tokenLength: accessToken?.length
         });
-        doFetch();
-        doConnect();
-      }, 1000); // Increased delay to ensure stock socket is fully established
+        
+        // Optimization 1: Parallel Operations - Run fetch and connect simultaneously
+        console.log('🔄 [Optimization] Starting parallel operations: fetch + connect');
+        doFetch(); // Start fetching notifications
+        doConnect(); // Start socket connection simultaneously
+      }, 300); // Reduced from 1000ms to 300ms for faster pre-connection
       
-      // Watchdog timer: Force connection check after 5 seconds
+      // Adjusted watchdog timer for faster retry (optimization 3: Pre-connect)
       setTimeout(() => {
         if (!currentSocket.current?.connected && isLoggedIn && user && !user.isGuest && accessToken) {
           console.log('⏰ [NotificationContext] Watchdog: Socket not connected, forcing retry...');
@@ -140,7 +143,7 @@ export const NotificationProvider = ({ children }) => {
             doConnect();
           }
         }
-      }, 6000);
+      }, 3000); // Reduced from 6000ms to 3000ms for faster retry
       
     } else if (!isAuthenticated && hasInitialized.current) {
       console.log('🔒 Auth lost - cleaning up notifications');
@@ -228,6 +231,13 @@ export const NotificationProvider = ({ children }) => {
       console.log('🔍 [NotificationSocket] isConnecting.current:', isConnecting.current);
       console.log('🔍 [NotificationSocket] currentSocket.current:', currentSocket.current ? 'exists' : 'null');
       
+      // Prevent duplicate connections
+      if (currentSocket.current?.connected) {
+        console.log('🔒 [NotificationSocket] Already connected, skipping...');
+        setIsConnected(true);
+        return;
+      }
+      
       // Ensure any existing connection is fully cleaned up first
       if (currentSocket.current) {
         console.log('🧹 [NotificationSocket] Cleaning up existing connection before creating new one');
@@ -291,7 +301,7 @@ export const NotificationProvider = ({ children }) => {
         url: SOCKET_URL,
         auth: { token: `${token.substring(0, 30)}...` },
         transports: ['websocket', 'polling'],
-        timeout: 15000
+        timeout: 12000 // Reduced from 15000ms to 12000ms for consistency
       });
 
       console.log('🔍 [NotificationSocket] Attempting connection to default namespace first...');
@@ -301,11 +311,11 @@ export const NotificationProvider = ({ children }) => {
           token: token
         },
         transports: ['websocket', 'polling'],
-        timeout: 15000,
+        timeout: 12000, // Reduced from 15000ms to 12000ms for consistency
 
         reconnection: true,
         reconnectionAttempts: 5,
-        reconnectionDelay: 5000,
+        reconnectionDelay: 2000, // Reduced from 5000ms to 2000ms for faster reconnection
       });
 
       console.log('🔍 [NotificationSocket] Socket connection object created');
@@ -338,12 +348,58 @@ export const NotificationProvider = ({ children }) => {
         isConnecting.current = false;
         currentSocket.current = socketConnection;
 
+        // Emit notification-specific events
+        socketConnection.emit('join-notifications', { userId: user?._id });
         socketConnection.emit('test-connection', { userId: user?._id });
         
         // Test if backend responds to our test events
         socketConnection.emit('ping', { timestamp: Date.now(), userId: user?._id });
         
-        console.log('📤 [NotificationSocket] Emitted test-connection and ping for user:', user?._id);
+        console.log('📤 [NotificationSocket] Emitted join-notifications, test-connection and ping for user:', user?._id);
+
+        // Set up notification event listeners
+        socketConnection.on('notification:new', (notification) => {
+          console.log('📨 [NotificationSocket] Received new notification:', notification);
+          // Handle incoming notification - refresh to get latest data
+          refreshNotifications();
+        });
+
+        socketConnection.on('notification:joined', (data) => {
+          console.log('🎯 [NotificationSocket] Successfully joined notification channel:', data);
+        });
+
+        socketConnection.on('notification-count', (data) => {
+          console.log('📊 [NotificationSocket] Received notification count:', data);
+          if (data.unreadCount !== undefined) {
+            setUnreadCount(data.unreadCount);
+          }
+        });
+
+        socketConnection.on('pong', (data) => {
+          console.log('🏓 [NotificationSocket] Received pong:', {
+            clientTimestamp: data.timestamp,
+            serverTime: data.serverTime,
+            roundTrip: Date.now() - (data.timestamp || 0)
+          });
+        });
+
+        // Listen for order status updates
+        socketConnection.on('order_status', (data) => {
+          console.log('📋 [NotificationSocket] Received order status update:', data);
+          refreshNotifications();
+        });
+
+        // Listen for system notifications
+        socketConnection.on('system', (data) => {
+          console.log('🔔 [NotificationSocket] Received system notification:', data);
+          refreshNotifications();
+        });
+
+        // Legacy event listeners for backward compatibility
+        socketConnection.on('notification', (notification) => {
+          console.log('📨 [NotificationSocket] Received legacy notification:', notification);
+          refreshNotifications();
+        });
 
         const heartbeatInterval = setInterval(() => {
           if (socketConnection.connected) {
@@ -358,10 +414,10 @@ export const NotificationProvider = ({ children }) => {
         });
       });
 
-      // Add connection timeout after setting up listeners
+      // Add connection timeout after setting up listeners (optimization 2: Reduced timeout)
       const connectionTimeout = setTimeout(() => {
         if (isConnecting.current && !currentSocket.current) {
-          console.warn('⏰ [NotificationSocket] Connection timeout - no response after 20 seconds');
+          console.warn('⏰ [NotificationSocket] Connection timeout - no response after 12 seconds');
           console.warn('⏰ [NotificationSocket] Socket state:', {
             connected: socketConnection.connected,
             connecting: socketConnection.connecting,
@@ -370,7 +426,7 @@ export const NotificationProvider = ({ children }) => {
           isConnecting.current = false;
           socketConnection.disconnect();
         }
-      }, 20000);
+      }, 12000); // Reduced from 20000ms to 12000ms (12 seconds)
 
       socketConnection.on('disconnect', (reason) => {
         console.log('❌ Disconnected from notification server. Reason:', reason);
@@ -519,7 +575,7 @@ export const NotificationProvider = ({ children }) => {
         }, 3000);
       }
     }
-  }, [accessToken, user, getLocalizedNotification]);
+  }, [accessToken, user, getLocalizedNotification, refreshNotifications]);
 
   const markAsRead = useCallback(async () => {
     if (!user || user.isGuest || !accessToken) {
