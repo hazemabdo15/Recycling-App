@@ -715,7 +715,8 @@
     "usage": "استخدامات الصوت: {{count}}/{{limit}}",
     "remaining": "متبقي اليوم",
     "limitExceeded": "تم الوصول للحد اليومي للصوت",
-    "resetTime": "يتجدد خلال {{hours}} ساعة"
+    "resetTime": "يتجدد خلال {{hours}} ساعة",
+    "checkingUsage": "جارٍ التحقق من الاستخدام..."
   },
   "chat": {
     "title": "الدردشة",

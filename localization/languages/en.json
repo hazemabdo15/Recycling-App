@@ -657,7 +657,8 @@
     "usage": "Voice uses: {{count}}/{{limit}}",
     "remaining": "remaining today",
     "limitExceeded": "Daily voice limit reached",
-    "resetTime": "Resets in {{hours}} hours"
+    "resetTime": "Resets in {{hours}} hours",
+    "checkingUsage": "Checking usage..."
   },
   "chat": {
     "title": "Chat",

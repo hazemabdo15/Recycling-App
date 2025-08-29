@@ -5,27 +5,27 @@ import { router } from "expo-router";
 import { t } from "i18next";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    Dimensions,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Animated,
+  Dimensions,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import {
-    Gesture,
-    GestureDetector,
-    GestureHandlerRootView,
+  Gesture,
+  GestureDetector,
+  GestureHandlerRootView,
 } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAIWorkflow } from "../hooks/useAIWorkflow";
 import { useThemedStyles } from "../hooks/useThemedStyles";
 import {
-    borderRadius,
-    shadows,
-    spacing,
-    typography,
+  borderRadius,
+  shadows,
+  spacing,
+  typography,
 } from "../styles/theme";
 
 let Reanimated,
@@ -181,8 +181,14 @@ export default function VoiceModal() {
   }));
   const startRecording = async () => {
     try {
-      // Check if usage limit has been reached (but allow if still loading)
-      if (!isLoadingUsage && usageInfo.remaining <= 0) {
+      // Don't allow recording if still loading usage or if limit exceeded
+      if (isLoadingUsage) {
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        alert("Please wait while we check your usage limit...");
+        return;
+      }
+      
+      if (usageInfo.remaining <= 0) {
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         alert(t("voice.limitExceeded"));
         return;
@@ -525,18 +531,18 @@ export default function VoiceModal() {
                         marginBottom: recordButtonMargin,
                         backgroundColor: isRecording
                           ? colors.accent
-                          : (!isLoadingUsage && usageInfo.remaining <= 0)
+                          : (isLoadingUsage || usageInfo.remaining <= 0)
                           ? colors.base300
                           : colors.primary,
-                        opacity: (!isLoadingUsage && usageInfo.remaining <= 0) ? 0.5 : 1,
+                        opacity: (isLoadingUsage || usageInfo.remaining <= 0) ? 0.5 : 1,
                       },
                     ]}
                     onPress={isRecording ? stopRecording : startRecording}
-                    activeOpacity={(!isLoadingUsage && usageInfo.remaining <= 0) ? 0.3 : 0.8}
-                    disabled={!isRecording && !isLoadingUsage && usageInfo.remaining <= 0}
+                    activeOpacity={(isLoadingUsage || usageInfo.remaining <= 0) ? 0.3 : 0.8}
+                    disabled={!isRecording && (isLoadingUsage || usageInfo.remaining <= 0)}
                   >
                     <MaterialCommunityIcons
-                      name={isRecording ? "stop" : usageInfo.remaining <= 0 ? "microphone-off" : "microphone"}
+                      name={isRecording ? "stop" : (isLoadingUsage || usageInfo.remaining <= 0) ? "microphone-off" : "microphone"}
                       size={recordButtonSize * 0.41}
                       color={colors.white}
                     />
@@ -545,6 +551,8 @@ export default function VoiceModal() {
                 <Text style={styles.hint}>
                   {isRecording
                     ? t("voice.stopRecording")
+                    : isLoadingUsage
+                    ? t("voice.checkingUsage")
                     : usageInfo.remaining <= 0
                     ? t("voice.limitExceeded")
                     : t("voice.recording")}
