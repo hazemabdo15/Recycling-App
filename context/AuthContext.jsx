@@ -1,7 +1,7 @@
 ﻿import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import optimizedApiService from "../services/api/apiService";
 import { isAuthenticated, logoutUser } from "../services/auth";
-import { getAccessToken, getLoggedInUser, setLoggedInUser, setAccessToken as storeAccessToken } from '../utils/authUtils';
+import { clearSession, getAccessToken, getLoggedInUser, setLoggedInUser, setAccessToken as storeAccessToken } from '../utils/authUtils';
 
 const AuthContext = createContext(null);
 
@@ -264,6 +264,10 @@ export function AuthProvider({ children }) {
       await optimizedApiService.setAccessToken(null);
       console.log("[AuthContext] API service cleared");
 
+      // Clear all session data including session ID
+      await clearSession();
+      console.log("[AuthContext] Session data cleared");
+
       await logoutUser();
       
       console.log("[AuthContext] Logout completed successfully");
@@ -274,6 +278,14 @@ export function AuthProvider({ children }) {
       setUser(null);
       setAccessToken(null);
       setIsLoggedIn(false);
+      
+      // Ensure session is cleared even on error
+      try {
+        await clearSession();
+        console.log("[AuthContext] Session data cleared despite error");
+      } catch (clearError) {
+        console.error("[AuthContext] Error clearing session:", clearError);
+      }
       
       console.log("[AuthContext] Logout completed with errors (local state cleared)");
     }
