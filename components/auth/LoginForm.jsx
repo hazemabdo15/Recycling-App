@@ -2,7 +2,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Dimensions, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Dimensions, I18nManager, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalization } from '../../context/LocalizationContext';
@@ -66,7 +66,10 @@ export default function LoginForm({ onSubmit, loading, onGoogleLogin, handleForg
               <View style={styles.inputWrapper}>
                 <Ionicons name="mail-outline" size={scaleSize(20)} color={colors.neutral} style={styles.inputIcon} />
                 <TextInput
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    { textAlign: I18nManager.isRTL ? 'right' : 'left', writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr' },
+                  ]}
                   placeholder={t('auth.enterEmail')}
                   placeholderTextColor={colors.neutral}
                   value={email}
@@ -79,7 +82,10 @@ export default function LoginForm({ onSubmit, loading, onGoogleLogin, handleForg
               <View style={[styles.inputWrapper, { marginBottom: 0 }]}>
                 <Ionicons name="lock-closed-outline" size={scaleSize(20)} color={colors.neutral} style={styles.inputIcon} />
                 <TextInput
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    { textAlign: I18nManager.isRTL ? 'right' : 'left', writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr' },
+                  ]}
                   placeholder={t('auth.enterPassword')}
                   placeholderTextColor={colors.neutral}
                   secureTextEntry={!showPassword}
