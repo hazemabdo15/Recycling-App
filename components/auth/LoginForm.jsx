@@ -7,8 +7,9 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalization } from '../../context/LocalizationContext';
 import { colors } from '../../styles/theme';
+import LanguageSelector from '../ui/LanguageSelector';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const scaleSize = (size) => (SCREEN_WIDTH / 375) * size;
 
 export default function LoginForm({ onSubmit, loading, onGoogleLogin, handleForgotPassword }) {
@@ -46,6 +47,11 @@ export default function LoginForm({ onSubmit, loading, onGoogleLogin, handleForg
 
         {/* Top decorative section */}
         <View style={[styles.topSection, { paddingTop: insets.top + scaleSize(40) }]}> 
+          {/* Language Selector */}
+          <View style={styles.languageSelectorContainer}>
+            <LanguageSelector />
+          </View>
+          
           <View style={styles.logoContainer}>
             <MaterialCommunityIcons name="recycle" size={scaleSize(60)} color={colors.white} />
           </View>
@@ -160,6 +166,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: scaleSize(20),
+  },
+  languageSelectorContainer: {
+    position: 'absolute',
+    top: scaleSize(50),
+    right: scaleSize(20),
+    zIndex: 1,
   },
   logoContainer: {
     width: scaleSize(100),
