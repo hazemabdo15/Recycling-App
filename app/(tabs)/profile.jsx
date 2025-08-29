@@ -9,6 +9,7 @@ import ProfileCard from "../../components/profile/ProfileCard";
 import ProfileMenu from "../../components/profile/ProfileMenu";
 import { useAuth } from "../../context/AuthContext";
 import { useLocalization } from "../../context/LocalizationContext";
+import { useTheme } from "../../context/ThemeContext";
 import { useThemedStyles } from "../../hooks/useThemedStyles";
 import { useUserPoints } from "../../hooks/useUserPoints";
 import apiService from "../../services/api/apiService";
@@ -27,7 +28,8 @@ function ProfileContent() {
   const PROFILE_CARD_HEIGHT = 220;
   const insets = useSafeAreaInsets();
   const { user, logout, isLoggedIn } = useAuth();
-  const { t } = useLocalization();
+  const { t, changeLanguage, currentLanguage } = useLocalization();
+  const { isDarkMode, toggleTheme } = useTheme();
   const { colors } = useThemedStyles();
   const styles = getStyles(colors, insets, windowWidth);
   const router = useRouter();
@@ -168,29 +170,46 @@ function ProfileContent() {
                 <Text style={styles.guestIconText}>👤</Text>
               </View>
               <View style={styles.cardHeaderText}>
-                <Text style={styles.guestTitle}>Welcome, Guest!</Text>
-                <Text style={styles.guestSubtitle}>You&apos;re browsing in guest mode</Text>
+                <Text style={styles.guestTitle}>{t('profile.guest.title')}</Text>
+                <Text style={styles.guestSubtitle}>{t('profile.guest.subtitle')}</Text>
+              </View>
+              <View style={styles.headerActions}>
+                <TouchableOpacity
+                  onPress={() => {
+                    const next = (currentLanguage && currentLanguage.startsWith('ar')) ? 'en' : 'ar';
+                    changeLanguage(next);
+                  }}
+                  style={styles.headerButton}
+                >
+                  <Text style={styles.headerButtonText}>{(currentLanguage || 'en').slice(0,2).toUpperCase()}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => toggleTheme()}
+                  style={styles.headerButton}
+                >
+                  <Text style={styles.headerButtonText}>{isDarkMode ? '🌙' : '☀️'}</Text>
+                </TouchableOpacity>
               </View>
             </View>
 
             <View style={styles.benefitsContainer}>
-              <Text style={styles.benefitsTitle}>Join us to enjoy:</Text>
+              <Text style={styles.benefitsTitle}>{t('profile.guest.joinTitle')}</Text>
               <View style={styles.benefitsGrid}>
                 <View style={styles.benefitItem}>
                   <Text style={styles.benefitIcon}>♻️</Text>
-                  <Text style={styles.benefitText}>Track your recycling impact</Text>
+                  <Text style={styles.benefitText}>{t('profile.guest.benefits.trackImpact')}</Text>
                 </View>
                 <View style={styles.benefitItem}>
                   <Text style={styles.benefitIcon}>🎯</Text>
-                  <Text style={styles.benefitText}>Earn points for every order</Text>
+                  <Text style={styles.benefitText}>{t('profile.guest.benefits.earnPoints')}</Text>
                 </View>
                 <View style={styles.benefitItem}>
                   <Text style={styles.benefitIcon}>📱</Text>
-                  <Text style={styles.benefitText}>Manage orders easily</Text>
+                  <Text style={styles.benefitText}>{t('profile.guest.benefits.manageOrders')}</Text>
                 </View>
                 <View style={styles.benefitItem}>
                   <Text style={styles.benefitIcon}>🏆</Text>
-                  <Text style={styles.benefitText}>Unlock membership tiers</Text>
+                  <Text style={styles.benefitText}>{t('profile.guest.benefits.unlockTiers')}</Text>
                 </View>
               </View>
             </View>
@@ -200,21 +219,21 @@ function ProfileContent() {
                 onPress={() => router.push("/login")}
                 style={styles.loginButton}
               >
-                <Text style={styles.loginButtonText}>Login</Text>
+                <Text style={styles.loginButtonText}>{t('profile.guest.login')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => router.push("/register")}
                 style={styles.signupButton}
               >
-                <Text style={styles.signupButtonText}>Create Account</Text>
+                <Text style={styles.signupButtonText}>{t('profile.guest.createAccount')}</Text>
               </TouchableOpacity>
             </View>
           </View>
 
           <View style={styles.guestBrowse}>
-            <Text style={styles.guestBrowseText}>Or continue browsing as guest</Text>
+            <Text style={styles.guestBrowseText}>{t('profile.guest.browseText')}</Text>
             <TouchableOpacity onPress={() => router.push("/home")} style={styles.browseButton}>
-              <Text style={styles.browseButtonText}>Browse Services</Text>
+              <Text style={styles.browseButtonText}>{t('profile.guest.browseButton')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -565,6 +584,23 @@ const getStyles = (colors, insets = { bottom: 0 }, windowWidth = 360) => {
   },
   cardHeaderText: {
     flex: 1,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: scaleSize(8),
+  },
+  headerButton: {
+    backgroundColor: colors.primaryLight,
+    paddingHorizontal: scaleSize(8),
+    paddingVertical: scaleSize(6),
+    borderRadius: scaleSize(8),
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  headerButtonText: {
+    fontSize: scaleSize(12),
+    fontWeight: '700',
+    color: colors.primary,
   },
   benefitsGrid: {
     flexDirection: 'row',

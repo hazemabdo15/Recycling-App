@@ -202,6 +202,22 @@
     "cannotUndo": "This action cannot be undone.",
     "member": "Member",
     "noEmailAvailable": "No email available"
+    ,
+    "guest": {
+      "title": "Guest",
+      "subtitle": "You're browsing in guest mode",
+      "joinTitle": "Join us to enjoy:",
+      "benefits": {
+        "trackImpact": "Track your recycling impact",
+        "earnPoints": "Earn points for every order",
+        "manageOrders": "Manage orders easily",
+        "unlockTiers": "Unlock membership tiers"
+      },
+      "login": "Login",
+      "createAccount": "Create Account",
+      "browseText": "Or continue browsing as guest",
+      "browseButton": "Browse Services"
+    }
   },
   "cart": {
     "title": {

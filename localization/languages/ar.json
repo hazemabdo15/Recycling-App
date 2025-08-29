@@ -218,6 +218,22 @@
     "cannotUndo": "لا يمكن التراجع عن هذا الإجراء.",
     "member": "عضو",
     "noEmailAvailable": "لا يوجد بريد إلكتروني متاح"
+    ,
+    "guest": {
+      "title": "زائر",
+      "subtitle": "أنت تتصفح في وضع الضيف",
+      "joinTitle": "انضم إلينا للاستفادة من:",
+      "benefits": {
+        "trackImpact": "تتبع تأثير إعادة التدوير الخاص بك",
+        "earnPoints": "اكسب نقاطًا عند كل طلب",
+        "manageOrders": "إدارة الطلبات بسهولة",
+        "unlockTiers": "افتح مستويات العضوية"
+      },
+      "login": "تسجيل الدخول",
+      "createAccount": "إنشاء حساب",
+      "browseText": "أو الاستمرار في التصفح كضيف",
+      "browseButton": "تصفح الخدمات"
+    }
   },
   "cart": {
     "title": {
