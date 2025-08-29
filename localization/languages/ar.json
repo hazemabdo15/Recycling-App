@@ -128,6 +128,8 @@
     "createAccount": "إنشاء حساب",
     "enterEmail": "أدخل بريدك الإلكتروني",
     "enterPassword": "أدخل كلمة المرور",
+  "continueWithGoogle": "المتابعة عبر Google",
+  "continueAsGuest": "المتابعة كزائر",
     "enterName": "أدخل اسمك",
     "fullName": "الاسم الكامل",
     "phoneNumber": "رقم الهاتف",

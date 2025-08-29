@@ -112,6 +112,8 @@
     "createAccount": "Create Account",
     "enterEmail": "Enter your email",
     "enterPassword": "Enter your password",
+  "continueWithGoogle": "Continue with Google",
+  "continueAsGuest": "Continue as Guest",
     "enterName": "Enter your name",
     "fullName": "Full Name",
     "phoneNumber": "Phone Number",

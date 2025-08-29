@@ -142,11 +142,12 @@ export default function LoginForm({ onSubmit, loading, onGoogleLogin, handleForg
                 android_ripple={{ color: 'rgba(0,0,0,0.1)' }}
               >
                 <MaterialCommunityIcons name="google" size={scaleSize(20)} color="#DB4437" />
-                <Text style={styles.googleButtonText}>Continue with Google</Text>
+                <Text style={styles.googleButtonText}>{t('auth.continueWithGoogle')}</Text>
               </Pressable>
 
-              <Pressable onPress={handleSkip} style={styles.skipButton}>
-                <Text style={styles.skipText}>Continue as Guest</Text>
+              <Pressable onPress={handleSkip} style={styles.skipButton} accessibilityLabel={t('auth.continueAsGuest')}>
+                <Ionicons name="person-outline" size={scaleSize(18)} color={colors.neutral} style={styles.skipIcon} />
+                <Text style={styles.skipText}>{t('auth.continueAsGuest')}</Text>
               </Pressable>
             </View>
           </View>
@@ -317,30 +318,42 @@ const styles = StyleSheet.create({
     color: colors.neutral,
   },
   skipButton: {
-    paddingVertical: scaleSize(12),
-    paddingHorizontal: scaleSize(24),
-    borderRadius: scaleSize(12),
-    borderWidth: 1,
-    borderColor: colors.base200,
-    backgroundColor: colors.base50,
+  flexDirection: 'row',
+  alignItems: 'center',
+  paddingVertical: scaleSize(12),
+  paddingHorizontal: scaleSize(24),
+  borderRadius: scaleSize(12),
+  borderWidth: 1,
+  borderColor: colors.base200,
+  backgroundColor: colors.base50,
   },
   skipText: {
     color: colors.neutral,
     fontSize: scaleSize(14),
     fontWeight: '500',
   },
+  skipIcon: {
+    marginRight: scaleSize(8),
+  },
   googleButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.base200,
-    borderRadius: scaleSize(12),
-    paddingVertical: scaleSize(12),
-    paddingHorizontal: scaleSize(24),
-    marginVertical: scaleSize(8),
-    width: '100%',
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'center',
+  backgroundColor: colors.white,
+  borderWidth: 1,
+  borderColor: colors.base200,
+  borderRadius: scaleSize(12),
+  paddingVertical: scaleSize(12),
+  paddingHorizontal: scaleSize(24),
+  marginVertical: scaleSize(8),
+  width: '100%',
+  /* shadow for iOS */
+  shadowColor: colors.black,
+  shadowOffset: { width: 0, height: scaleSize(6) },
+  shadowOpacity: 0.08,
+  shadowRadius: scaleSize(12),
+  /* elevation for Android */
+  elevation: 6,
   },
   googleButtonText: {
     color: colors.dark,
