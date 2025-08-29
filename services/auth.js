@@ -1,18 +1,26 @@
-﻿import { Alert } from 'react-native';
+﻿import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Alert } from 'react-native';
 import { clearSession, setAccessToken, setDeliveryStatus } from '../utils/authUtils';
 import apiService from './api/apiService';
 import { API_ENDPOINTS } from './api/config';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const loginUser = async ({ email, password }) => {
   try {
     console.log('[Auth] Sending login request for:', email);
 
-    const response = await apiService.post(API_ENDPOINTS.AUTH.LOGIN, {
-      email,
-      password,
-    });
-
+    // Ensure login request is sent without any stale Authorization header.
+    const previousToken = apiService.accessToken;
+    let response = null;
+    try {
+      apiService.accessToken = null;
+      response = await apiService.post(API_ENDPOINTS.AUTH.LOGIN, {
+        email,
+        password,
+      });
+    } finally {
+      // always restore previous token
+      apiService.accessToken = previousToken;
+    }
     console.log('[Auth] Login successful');
     console.log('[Auth] Full login response:', JSON.stringify(response, null, 2));
 
@@ -67,8 +75,11 @@ export const loginUser = async ({ email, password }) => {
       deliveryStatus,
     };
   } catch (error) {
-    console.error('[Auth] Login error:', error.message);
-    throw error;
+  // Avoid noisy console.error for expected login failures (wrong credentials).
+  // Log as a warning for developers but do not treat it as a crash-level error.
+  console.warn('[Auth] Login failed');
+  // Re-throw the original error so callers can handle it and show friendly UI messages.
+  throw error;
   }
 };
 

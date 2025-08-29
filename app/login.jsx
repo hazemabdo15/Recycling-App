@@ -233,11 +233,10 @@ export default function LoginScreen() {
         router.replace("/home");
       }
     } catch (_error) {
-
-      Alert.alert(
-        "Login failed",
-        "Please check your credentials and try again."
-      );
+  // Provide a friendly message for authentication failures and avoid spamming the console.
+  const err = _error || {};
+  const msg = err.response?.data?.message || err.message || 'Please check your credentials and try again.';
+  Alert.alert('Login failed', msg);
     } finally {
       setLoading(false);
     }
