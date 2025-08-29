@@ -103,10 +103,11 @@ export const NotificationProvider = ({ children }) => {
       console.log('🚀 First time auth ready - initializing notifications');
       hasInitialized.current = authKey;
 
+      // Small delay to ensure auth state is stable
       setTimeout(() => {
         doFetch();
         doConnect();
-      }, 1000);
+      }, 300);
       
     } else if (!isAuthenticated && hasInitialized.current) {
       console.log('🔒 Auth lost - cleaning up notifications');
@@ -193,10 +194,6 @@ export const NotificationProvider = ({ children }) => {
         console.log('🔒 Already connecting or connected, skipping...');
         return;
       }
-
-      // Add delay to avoid interfering with stock socket
-      console.log('⏳ [NotificationSocket] Waiting 3 seconds before connecting to avoid interference...');
-      await new Promise(resolve => setTimeout(resolve, 3000));
 
       let token = accessToken || await AsyncStorage.getItem('accessToken');
       console.log('🔍 [NotificationSocket] Token obtained:', token ? 'present' : 'null', 'length:', token?.length || 0);
