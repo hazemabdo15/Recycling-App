@@ -910,7 +910,7 @@ const Cart = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingBottom: insets.bottom }] }>
       <StatusBar
         barStyle="light-content"
         backgroundColor="transparent"
@@ -1045,13 +1045,16 @@ const Cart = () => {
           data={cartArray}
           renderItem={renderCartItem}
           keyExtractor={(item) => getDisplayKey(item)}
-          contentContainerStyle={[styles.listContainerModern]}
+          contentContainerStyle={[
+            styles.listContainerModern,
+            { paddingBottom: Math.max(insets.bottom + 24, 100) },
+          ]}
           showsVerticalScrollIndicator={false}
           extraData={cartItems}
           enableOnAndroid
           extraScrollHeight={100}
           keyboardShouldPersistTaps="handled"
-          ListFooterComponent={<View style={{ height: 100 }} />}
+          ListFooterComponent={<View style={{ height: Math.max(insets.bottom + 24, 100) }} />}
         />
       </View>
       

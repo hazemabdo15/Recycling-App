@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from "../../context/AuthContext";
 import { useLocalization } from "../../context/LocalizationContext";
 import { useCart } from "../../hooks/useCart";
@@ -38,7 +39,8 @@ const ReviewPhase = ({
 }) => {
   const { t, currentLanguage } = useLocalization();
   const { colors } = useThemedStyles();
-  const styles = getReviewPhaseStyles(colors);
+  const insets = useSafeAreaInsets();
+  const styles = getReviewPhaseStyles(colors, insets);
   const [allItems, setAllItems] = useState([]);
   const [itemsLoaded, setItemsLoaded] = useState(false);
   const [cartItemsDisplay, setCartItemsDisplay] = useState([]);
@@ -964,7 +966,7 @@ const ReviewPhase = ({
 };
 
 // Dynamic styles function for ReviewPhase
-const getReviewPhaseStyles = (colors) => StyleSheet.create({
+const getReviewPhaseStyles = (colors, insets) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -1276,6 +1278,7 @@ const getReviewPhaseStyles = (colors) => StyleSheet.create({
   footer: {
     flexDirection: "row",
     padding: spacing.xl,
+    paddingBottom: Math.max(insets.bottom + spacing.md, spacing.xl),
     backgroundColor: colors.surface,
     borderTopWidth: 1,
     borderTopColor: colors.border,

@@ -1177,7 +1177,32 @@
       "deleting": "Deleting...",
       "deleteAlertTitle": "Delete Review",
       "deleteAlertMessage": "Are you sure you want to delete your review?",
-      "deleteFailedMessage": "Failed to delete review"
+      "deleteFailedMessage": "Failed to delete review",
+      "modal": {
+        "title": {
+          "edit": "Edit Your Review",
+          "create": "Rate Your Experience"
+        },
+        "subtitle": {
+          "edit": "Update your feedback for this delivery",
+          "create": "Help us improve by sharing your feedback"
+        },
+        "orderNumber": "Order #{{orderNumber}}",
+        "itemCount": "{{count}} item(s)",
+        "question": "How was your delivery?",
+        "ratingText": "You rated this {{rating}} out of 5",
+        "commentsLabel": "Additional Comments (Optional)",
+        "commentsPlaceholder": "Tell us about your experience...",
+        "charCount": "{{current}}/{{max}}",
+        "buttons": {
+          "cancel": "Cancel",
+          "submit": "Submit Review",
+          "update": "Update Review"
+        },
+        "errors": {
+          "selectRating": "Please select a rating before submitting your review."
+        }
+      }
     },
     "orderStatus": {
       "status": "Status",

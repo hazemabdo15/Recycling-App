@@ -221,7 +221,11 @@ export default function AIResultsModal() {
   }, [safeMaterials]);
 
   const hasMaterials = materials && materials.length > 0;
-  const styles = getAIResultsModalStyles(colors);
+  // Get responsive dimensions
+  const { height: screenHeight, width: screenWidth } = Dimensions.get('window');
+  const isSmallScreen = screenHeight < 700 || screenWidth < 400;
+  
+  const styles = getAIResultsModalStyles(colors, isSmallScreen);
 
   const dismissModal = useCallback(() => {
     translateY.value = withTiming(MODAL_HEIGHT, { duration: 300 });
@@ -672,7 +676,13 @@ export default function AIResultsModal() {
       <GestureHandlerRootView style={styles.container}>
         <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
         <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={() => router.back()} />
-        <View style={[styles.modal, { paddingTop: insets.top + 20 }]}>
+        <View style={[
+          styles.modal, 
+          { 
+            paddingTop: Math.max(insets.top + 20, 40),
+            paddingBottom: Math.max(insets.bottom + spacing.lg, spacing.xl),
+          }
+        ]}>
           <View style={styles.handleBar} />
           <View style={styles.header}>
             <Text style={styles.title}>{t('aiResults.noMaterialsFound')}</Text>
@@ -703,7 +713,14 @@ export default function AIResultsModal() {
       />
 
       <Reanimated.View 
-        style={[styles.modal, animatedModalStyle, { paddingTop: insets.top + 20 }]}
+        style={[
+          styles.modal, 
+          animatedModalStyle, 
+          { 
+            paddingTop: Math.max(insets.top + 20, 40),
+            paddingBottom: Math.max(insets.bottom + spacing.lg, spacing.xl),
+          }
+        ]}
       >
         <GestureDetector gesture={panGesture}>
           <View>
@@ -813,7 +830,7 @@ export default function AIResultsModal() {
   );
 }
 
-const getAIResultsModalStyles = (colors) => StyleSheet.create({
+const getAIResultsModalStyles = (colors, isSmallScreen = false) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -832,7 +849,7 @@ const getAIResultsModalStyles = (colors) => StyleSheet.create({
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
     paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.xl,
+    // paddingBottom will be set dynamically in the component to account for safe areas
 
     shadowColor: colors.black,
     shadowOffset: {
@@ -914,7 +931,7 @@ const getAIResultsModalStyles = (colors) => StyleSheet.create({
   },
   materialsContainer: {
     flex: 1,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md, // Reduced margin
   },
   flatListContainer: {
     flex: 1,
@@ -1143,7 +1160,9 @@ const getAIResultsModalStyles = (colors) => StyleSheet.create({
   },
   actionsContainer: {
     flexDirection: 'row',
-    gap: spacing.md,
+    gap: isSmallScreen ? spacing.sm : spacing.md, // Responsive gap
+    marginTop: 'auto', // Push to bottom
+    paddingTop: spacing.md,
   },
   browseButton: {
     flex: 1,
@@ -1154,15 +1173,17 @@ const getAIResultsModalStyles = (colors) => StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.primary,
     borderRadius: borderRadius.lg,
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.md,
+    paddingVertical: isSmallScreen ? spacing.md : spacing.lg, // Responsive padding
+    paddingHorizontal: spacing.sm, // Reduced horizontal padding for better responsiveness
+    minHeight: isSmallScreen ? 48 : 52, // Responsive minimum height
   },
   browseButtonText: {
     ...typography.subtitle,
-    fontSize: 15,
+    fontSize: 14, // Slightly smaller for better fit
     color: colors.primary,
     fontWeight: '600',
-    marginLeft: spacing.sm,
+    marginLeft: spacing.xs, // Reduced margin
+    textAlign: 'center',
   },
   addToCartButton: {
     flex: 1,
@@ -1171,25 +1192,28 @@ const getAIResultsModalStyles = (colors) => StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colors.primary,
     borderRadius: borderRadius.xl,
-    paddingVertical: spacing.xl,
-    paddingHorizontal: spacing.lg,
+    paddingVertical: isSmallScreen ? spacing.md : spacing.lg, // Responsive padding
+    paddingHorizontal: spacing.sm, // Reduced horizontal padding for better responsiveness
+    minHeight: isSmallScreen ? 48 : 52, // Responsive minimum height
 
     shadowColor: colors.primary,
     shadowOffset: {
       width: 0,
-      height: 6,
+      height: 4, // Reduced shadow for smaller screens
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowOpacity: 0.2, // Reduced shadow opacity
+    shadowRadius: 6, // Reduced shadow radius
+    elevation: 4, // Reduced elevation
   },
   addToCartButtonText: {
     ...typography.subtitle,
-    fontSize: 16,
+    fontSize: 14, // Smaller font for better fit on smaller screens
     color: colors.white,
     fontWeight: '700',
-    letterSpacing: 0.3,
-    marginLeft: spacing.sm,
+    letterSpacing: 0.2, // Reduced letter spacing
+    marginLeft: spacing.xs, // Reduced margin
+    textAlign: 'center',
+    flexShrink: 1, // Allow text to shrink if needed
   },
   errorContainer: {
     flex: 1,

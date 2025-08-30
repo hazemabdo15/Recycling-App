@@ -189,11 +189,11 @@
       "customer": "الاستلام",
       "buyer": "السلة"
     },
-    "profile": "الملف الشخصي"
+    "profile": "صفحتي"
   },
   "profile": {
-    "title": "الملف الشخصي",
-    "editProfile": "تعديل الملف الشخصي",
+    "title": "صفحتي",
+    "editProfile": "تعديل صفحتي",
     "settings": "الإعدادات",
     "help": "المساعدة والدعم",
     "about": "حول",
@@ -1235,7 +1235,32 @@
       "deleting": "جاري الحذف...",
       "deleteAlertTitle": "حذف التقييم",
       "deleteAlertMessage": "هل أنت متأكد من أنك تريد حذف تقييمك؟",
-      "deleteFailedMessage": "فشل في حذف التقييم"
+      "deleteFailedMessage": "فشل في حذف التقييم",
+      "modal": {
+        "title": {
+          "edit": "تعديل تقييمك",
+          "create": "قيم تجربتك"
+        },
+        "subtitle": {
+          "edit": "قم بتحديث ملاحظاتك حول هذا التسليم",
+          "create": "ساعدنا على التحسين من خلال مشاركة ملاحظاتك"
+        },
+        "orderNumber": "طلب رقم {{orderNumber}}",
+        "itemCount": "{{count}} عنصر",
+        "question": "كيف كان التسليم؟",
+        "ratingText": "لقد قيمت هذا {{rating}} من أصل 5",
+        "commentsLabel": "تعليقات إضافية (اختياري)",
+        "commentsPlaceholder": "أخبرنا عن تجربتك...",
+        "charCount": "{{current}}/{{max}}",
+        "buttons": {
+          "cancel": "إلغاء",
+          "submit": "إرسال التقييم",
+          "update": "تحديث التقييم"
+        },
+        "errors": {
+          "selectRating": "يرجى اختيار تقييم قبل إرسال مراجعتك."
+        }
+      }
     },
     "orderStatus": {
       "status": "الحالة",
