@@ -1,7 +1,7 @@
 ﻿import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import optimizedApiService from "../services/api/apiService";
 import { isAuthenticated, logoutUser } from "../services/auth";
-import { getAccessToken, getLoggedInUser, setLoggedInUser } from '../utils/authUtils';
+import { clearSession, getAccessToken, getLoggedInUser, setLoggedInUser, setAccessToken as storeAccessToken } from '../utils/authUtils';
 
 const AuthContext = createContext(null);
 
@@ -77,13 +77,21 @@ export function AuthProvider({ children }) {
   }
 };
 
-  const handleTokenExpired = useCallback(() => {
+  const handleTokenExpired = useCallback(async () => {
     console.log('[AuthContext] handleTokenExpired() called - clearing auth state');
     console.log('[AuthContext] Stack trace:', new Error().stack);
     
     setUser(null);
     setAccessToken(null);
     setIsLoggedIn(false);
+    
+    // Clear token from API service
+    try {
+      await optimizedApiService.setAccessToken(null);
+      console.log('[AuthContext] API service token cleared in handleTokenExpired');
+    } catch (error) {
+      console.error('[AuthContext] Error clearing API service token:', error);
+    }
   }, [setUser]);
 
   useEffect(() => {
@@ -96,10 +104,14 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const loadStoredUser = async () => {
       try {
+        console.log('[AuthContext] Loading stored auth state...');
         const [storedUser, storedToken] = await Promise.all([
           getLoggedInUser(),
           getAccessToken(),
         ]);
+
+        console.log('[AuthContext] Retrieved stored user:', storedUser ? 'present' : 'null');
+        console.log('[AuthContext] Retrieved stored token:', storedToken ? 'present' : 'null', 'length:', storedToken?.length || 0);
 
         // Normalize user object: ensure _id exists
         let normalizedUser = storedUser;
@@ -111,7 +123,13 @@ export function AuthProvider({ children }) {
         console.log('[AuthContext] Loading stored user:', normalizedUser);
         console.log('[AuthContext] Stored user role:', normalizedUser?.role);
         if (normalizedUser && storedToken) {
+          console.log('[AuthContext] Both user and token found, setting auth state');
           console.log('[AuthContext] About to set user from storage. User:', normalizedUser);
+          
+          // Update API service with the stored token
+          await optimizedApiService.setAccessToken(storedToken);
+          console.log('[AuthContext] API service updated with stored token');
+          
           setUser(normalizedUser);
           setAccessToken(storedToken);
           setIsLoggedIn(true);
@@ -121,6 +139,10 @@ export function AuthProvider({ children }) {
             console.log('[AuthContext] Setting delivery status from stored user:', normalizedUser.deliveryStatus);
             setDeliveryStatus(normalizedUser.deliveryStatus);
           }
+        } else {
+          console.log('[AuthContext] Missing user or token, staying logged out');
+          console.log('[AuthContext] - User present:', !!normalizedUser);
+          console.log('[AuthContext] - Token present:', !!storedToken);
         }
       } catch (error) {
         console.error("[AuthContext] Error loading stored user:", error);
@@ -198,14 +220,25 @@ export function AuthProvider({ children }) {
     try {
       console.log('[AuthContext] Login called with userData:', userData);
       console.log('[AuthContext] User role from login:', userData?.role);
+      console.log('[AuthContext] Access token provided:', token ? 'yes' : 'no', 'length:', token?.length || 0);
       console.log('[AuthContext] Full user data:', JSON.stringify(userData, null, 2));
 
       await setLoggedInUser(userData, deliveryStatus);
-      await setAccessToken(token);
+      console.log('[AuthContext] User data stored successfully');
+      
+      await storeAccessToken(token);
+      console.log('[AuthContext] Access token stored in SecureStore');
+
+      // Update API service with the new token
+      await optimizedApiService.setAccessToken(token);
+      console.log('[AuthContext] API service updated with new token');
 
       setUser(userData);
       setAccessToken(token);
+      console.log('[AuthContext] User and token set in state');
+      
       setIsLoggedIn(true);
+      console.log('[AuthContext] Login state set to true');
       
       console.log('[AuthContext] Login completed successfully');
       console.log('[AuthContext] Final user state:', userData);
@@ -227,6 +260,14 @@ export function AuthProvider({ children }) {
       setAccessToken(null);
       setIsLoggedIn(false);
 
+      // Clear token from API service
+      await optimizedApiService.setAccessToken(null);
+      console.log("[AuthContext] API service cleared");
+
+      // Clear all session data including session ID
+      await clearSession();
+      console.log("[AuthContext] Session data cleared");
+
       await logoutUser();
       
       console.log("[AuthContext] Logout completed successfully");
@@ -238,13 +279,29 @@ export function AuthProvider({ children }) {
       setAccessToken(null);
       setIsLoggedIn(false);
       
+      // Ensure session is cleared even on error
+      try {
+        await clearSession();
+        console.log("[AuthContext] Session data cleared despite error");
+      } catch (clearError) {
+        console.error("[AuthContext] Error clearing session:", clearError);
+      }
+      
       console.log("[AuthContext] Logout completed with errors (local state cleared)");
     }
   };
 
-  const updateToken = useCallback((newToken) => {
+  const updateToken = useCallback(async (newToken) => {
     if (newToken !== accessToken) {
       console.log('[AuthContext] Updating token:', newToken ? `${newToken.substring(0, 20)}...` : 'null');
+      
+      // Update both SecureStore and API service
+      if (newToken) {
+        await storeAccessToken(newToken);
+        await optimizedApiService.setAccessToken(newToken);
+        console.log('[AuthContext] Token updated in storage and API service');
+      }
+      
       setAccessToken(newToken);
     }
   }, [accessToken]);

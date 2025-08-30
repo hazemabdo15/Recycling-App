@@ -2,13 +2,14 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Dimensions, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Dimensions, I18nManager, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalization } from '../../context/LocalizationContext';
 import { colors } from '../../styles/theme';
+import LanguageSelector from '../ui/LanguageSelector';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const scaleSize = (size) => (SCREEN_WIDTH / 375) * size;
 
 export default function LoginForm({ onSubmit, loading, onGoogleLogin, handleForgotPassword }) {
@@ -46,6 +47,11 @@ export default function LoginForm({ onSubmit, loading, onGoogleLogin, handleForg
 
         {/* Top decorative section */}
         <View style={[styles.topSection, { paddingTop: insets.top + scaleSize(40) }]}> 
+          {/* Language Selector */}
+          <View style={styles.languageSelectorContainer}>
+            <LanguageSelector />
+          </View>
+          
           <View style={styles.logoContainer}>
             <MaterialCommunityIcons name="recycle" size={scaleSize(60)} color={colors.white} />
           </View>
@@ -60,7 +66,10 @@ export default function LoginForm({ onSubmit, loading, onGoogleLogin, handleForg
               <View style={styles.inputWrapper}>
                 <Ionicons name="mail-outline" size={scaleSize(20)} color={colors.neutral} style={styles.inputIcon} />
                 <TextInput
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    { textAlign: I18nManager.isRTL ? 'right' : 'left', writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr' },
+                  ]}
                   placeholder={t('auth.enterEmail')}
                   placeholderTextColor={colors.neutral}
                   value={email}
@@ -73,7 +82,10 @@ export default function LoginForm({ onSubmit, loading, onGoogleLogin, handleForg
               <View style={[styles.inputWrapper, { marginBottom: 0 }]}>
                 <Ionicons name="lock-closed-outline" size={scaleSize(20)} color={colors.neutral} style={styles.inputIcon} />
                 <TextInput
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    { textAlign: I18nManager.isRTL ? 'right' : 'left', writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr' },
+                  ]}
                   placeholder={t('auth.enterPassword')}
                   placeholderTextColor={colors.neutral}
                   secureTextEntry={!showPassword}
@@ -136,11 +148,12 @@ export default function LoginForm({ onSubmit, loading, onGoogleLogin, handleForg
                 android_ripple={{ color: 'rgba(0,0,0,0.1)' }}
               >
                 <MaterialCommunityIcons name="google" size={scaleSize(20)} color="#DB4437" />
-                <Text style={styles.googleButtonText}>Continue with Google</Text>
+                <Text style={styles.googleButtonText}>{t('auth.continueWithGoogle')}</Text>
               </Pressable>
 
-              <Pressable onPress={handleSkip} style={styles.skipButton}>
-                <Text style={styles.skipText}>Continue as Guest</Text>
+              <Pressable onPress={handleSkip} style={styles.skipButton} accessibilityLabel={t('auth.continueAsGuest')}>
+                <Ionicons name="person-outline" size={scaleSize(18)} color={colors.neutral} style={styles.skipIcon} />
+                <Text style={styles.skipText}>{t('auth.continueAsGuest')}</Text>
               </Pressable>
             </View>
           </View>
@@ -160,6 +173,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: scaleSize(20),
+  },
+  languageSelectorContainer: {
+    position: 'absolute',
+    top: scaleSize(50),
+    right: scaleSize(20),
+    zIndex: 1,
   },
   logoContainer: {
     width: scaleSize(100),
@@ -305,30 +324,42 @@ const styles = StyleSheet.create({
     color: colors.neutral,
   },
   skipButton: {
-    paddingVertical: scaleSize(12),
-    paddingHorizontal: scaleSize(24),
-    borderRadius: scaleSize(12),
-    borderWidth: 1,
-    borderColor: colors.base200,
-    backgroundColor: colors.base50,
+  flexDirection: 'row',
+  alignItems: 'center',
+  paddingVertical: scaleSize(12),
+  paddingHorizontal: scaleSize(24),
+  borderRadius: scaleSize(12),
+  borderWidth: 1,
+  borderColor: colors.base200,
+  backgroundColor: colors.base50,
   },
   skipText: {
     color: colors.neutral,
     fontSize: scaleSize(14),
     fontWeight: '500',
   },
+  skipIcon: {
+    marginRight: scaleSize(8),
+  },
   googleButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.base200,
-    borderRadius: scaleSize(12),
-    paddingVertical: scaleSize(12),
-    paddingHorizontal: scaleSize(24),
-    marginVertical: scaleSize(8),
-    width: '100%',
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'center',
+  backgroundColor: colors.white,
+  borderWidth: 1,
+  borderColor: colors.base200,
+  borderRadius: scaleSize(12),
+  paddingVertical: scaleSize(12),
+  paddingHorizontal: scaleSize(24),
+  marginVertical: scaleSize(8),
+  width: '100%',
+  /* shadow for iOS */
+  shadowColor: colors.black,
+  shadowOffset: { width: 0, height: scaleSize(6) },
+  shadowOpacity: 0.08,
+  shadowRadius: scaleSize(12),
+  /* elevation for Android */
+  elevation: 6,
   },
   googleButtonText: {
     color: colors.dark,

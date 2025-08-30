@@ -336,11 +336,19 @@ class OptimizedAPIService {
             `[API] ${endpoint}: Known category validation error detected - error handled by enhanced verification system`
           );
         } else {
-          console.error(`[API] ${endpoint}:`, error.message);
+          // Avoid noisy error logs for expected authentication failures like invalid credentials
+          const isAuthFailure = error.status === 401;
+          if (isAuthFailure && !this.accessToken) {
+            // Login attempt failed - don't treat as session expiration or clear tokens.
+            console.warn(`[API] ${endpoint}: ${error.message}`);
+          } else {
+            console.error(`[API] ${endpoint}:`, error.message);
+          }
         }
       }
 
-      if (error.message === "Session expired" || error.status === 401) {
+      // Only treat 401 as session expiration when we had an access token (user was authenticated).
+      if (error.message === "Session expired" || (error.status === 401 && this.accessToken)) {
         await this.clearTokens();
         const message = i18next.t ? i18next.t('toast.auth.sessionExpired') : "Session expired, please log in again.";
         showGlobalToast(message, 1200);

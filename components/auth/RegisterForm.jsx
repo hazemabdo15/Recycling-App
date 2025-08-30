@@ -2,7 +2,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Dimensions, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Dimensions, I18nManager, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalization } from '../../context/LocalizationContext';
@@ -59,7 +59,11 @@ const RegisterForm = ({ onSubmit, loading, initialData = {} }) => {
                     <View style={styles.inputWrapper}>
                         <Ionicons name="person-outline" size={scaleSize(20)} color={colors.neutral} style={styles.inputIcon} />
                         <TextInput
-                            style={[styles.input, isGoogleRegistration && styles.inputReadonly]}
+                            style={[
+                                styles.input,
+                                isGoogleRegistration && styles.inputReadonly,
+                                { textAlign: I18nManager.isRTL ? 'right' : 'left', writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr' },
+                            ]}
                             placeholder={t('auth.enterName')}
                             placeholderTextColor={colors.neutral}
                             value={name}
@@ -77,7 +81,10 @@ const RegisterForm = ({ onSubmit, loading, initialData = {} }) => {
                     <View style={styles.inputWrapper}>
                         <Ionicons name="call-outline" size={scaleSize(20)} color={colors.neutral} style={styles.inputIcon} />
                         <TextInput
-                            style={styles.input}
+                            style={[
+                                styles.input,
+                                { textAlign: I18nManager.isRTL ? 'right' : 'left', writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr' },
+                            ]}
                             placeholder={t('auth.enterPhone')}
                             placeholderTextColor={colors.neutral}
                             value={number}
@@ -90,7 +97,11 @@ const RegisterForm = ({ onSubmit, loading, initialData = {} }) => {
                     <View style={styles.inputWrapper}>
                         <Ionicons name="mail-outline" size={scaleSize(20)} color={colors.neutral} style={styles.inputIcon} />
                         <TextInput
-                            style={[styles.input, isGoogleRegistration && styles.inputReadonly]}
+                            style={[
+                                styles.input,
+                                isGoogleRegistration && styles.inputReadonly,
+                                { textAlign: I18nManager.isRTL ? 'right' : 'left', writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr' },
+                            ]}
                             placeholder={t('auth.enterEmail')}
                             placeholderTextColor={colors.neutral}
                             value={email}
@@ -111,7 +122,10 @@ const RegisterForm = ({ onSubmit, loading, initialData = {} }) => {
                     <View style={styles.inputWrapper}>
                         <Ionicons name="lock-closed-outline" size={scaleSize(20)} color={colors.neutral} style={styles.inputIcon} />
                         <TextInput
-                            style={styles.input}
+                            style={[
+                                styles.input,
+                                { textAlign: I18nManager.isRTL ? 'right' : 'left', writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr' },
+                            ]}
                             placeholder={t('auth.enterPassword')}
                             placeholderTextColor={colors.neutral}
                             secureTextEntry={!showPassword}
@@ -133,7 +147,10 @@ const RegisterForm = ({ onSubmit, loading, initialData = {} }) => {
                     <View style={styles.inputWrapper}>
                         <Ionicons name="lock-closed-outline" size={scaleSize(20)} color={colors.neutral} style={styles.inputIcon} />
                         <TextInput
-                            style={styles.input}
+                            style={[
+                                styles.input,
+                                { textAlign: I18nManager.isRTL ? 'right' : 'left', writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr' },
+                            ]}
                             placeholder={t('auth.confirmPassword')}
                             placeholderTextColor={colors.neutral}
                             secureTextEntry={!confirmShowPassword}

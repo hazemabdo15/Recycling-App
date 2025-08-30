@@ -112,6 +112,8 @@
     "createAccount": "Create Account",
     "enterEmail": "Enter your email",
     "enterPassword": "Enter your password",
+  "continueWithGoogle": "Continue with Google",
+  "continueAsGuest": "Continue as Guest",
     "enterName": "Enter your name",
     "fullName": "Full Name",
     "phoneNumber": "Phone Number",
@@ -202,6 +204,22 @@
     "cannotUndo": "This action cannot be undone.",
     "member": "Member",
     "noEmailAvailable": "No email available"
+    ,
+    "guest": {
+      "title": "Guest",
+      "subtitle": "You're browsing in guest mode",
+      "joinTitle": "Join us to enjoy:",
+      "benefits": {
+        "trackImpact": "Track your recycling impact",
+        "earnPoints": "Earn points for every order",
+        "manageOrders": "Manage orders easily",
+        "unlockTiers": "Unlock membership tiers"
+      },
+      "login": "Login",
+      "createAccount": "Create Account",
+      "browseText": "Or continue browsing as guest",
+      "browseButton": "Browse Services"
+    }
   },
   "cart": {
     "title": {
@@ -657,7 +675,13 @@
     "usage": "Voice uses: {{count}}/{{limit}}",
     "remaining": "remaining today",
     "limitExceeded": "Daily voice limit reached",
-    "resetTime": "Resets in {{hours}} hours"
+    "resetTime": "Resets in {{hours}} hours",
+    "checkingUsage": "Checking usage..."
+  ,
+  "loginRequiredTitle": "Sign in to use voice assistant",
+  "loginRequiredSubtitle": "Sign in to record and save AI-processed results.",
+  "login": "Login",
+  "maybeLater": "Maybe later"
   },
   "chat": {
     "title": "Chat",
@@ -1153,7 +1177,32 @@
       "deleting": "Deleting...",
       "deleteAlertTitle": "Delete Review",
       "deleteAlertMessage": "Are you sure you want to delete your review?",
-      "deleteFailedMessage": "Failed to delete review"
+      "deleteFailedMessage": "Failed to delete review",
+      "modal": {
+        "title": {
+          "edit": "Edit Your Review",
+          "create": "Rate Your Experience"
+        },
+        "subtitle": {
+          "edit": "Update your feedback for this delivery",
+          "create": "Help us improve by sharing your feedback"
+        },
+        "orderNumber": "Order #{{orderNumber}}",
+        "itemCount": "{{count}} item(s)",
+        "question": "How was your delivery?",
+        "ratingText": "You rated this {{rating}} out of 5",
+        "commentsLabel": "Additional Comments (Optional)",
+        "commentsPlaceholder": "Tell us about your experience...",
+        "charCount": "{{current}}/{{max}}",
+        "buttons": {
+          "cancel": "Cancel",
+          "submit": "Submit Review",
+          "update": "Update Review"
+        },
+        "errors": {
+          "selectRating": "Please select a rating before submitting your review."
+        }
+      }
     },
     "orderStatus": {
       "status": "Status",

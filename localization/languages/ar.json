@@ -128,6 +128,8 @@
     "createAccount": "إنشاء حساب",
     "enterEmail": "أدخل بريدك الإلكتروني",
     "enterPassword": "أدخل كلمة المرور",
+  "continueWithGoogle": "المتابعة عبر Google",
+  "continueAsGuest": "المتابعة كزائر",
     "enterName": "أدخل اسمك",
     "fullName": "الاسم الكامل",
     "phoneNumber": "رقم الهاتف",
@@ -187,11 +189,11 @@
       "customer": "الاستلام",
       "buyer": "السلة"
     },
-    "profile": "الملف الشخصي"
+    "profile": "صفحتي"
   },
   "profile": {
-    "title": "الملف الشخصي",
-    "editProfile": "تعديل الملف الشخصي",
+    "title": "صفحتي",
+    "editProfile": "تعديل صفحتي",
     "settings": "الإعدادات",
     "help": "المساعدة والدعم",
     "about": "حول",
@@ -218,6 +220,22 @@
     "cannotUndo": "لا يمكن التراجع عن هذا الإجراء.",
     "member": "عضو",
     "noEmailAvailable": "لا يوجد بريد إلكتروني متاح"
+    ,
+    "guest": {
+      "title": "زائر",
+      "subtitle": "أنت تتصفح في وضع الضيف",
+      "joinTitle": "انضم إلينا للاستفادة من:",
+      "benefits": {
+        "trackImpact": "تتبع تأثير إعادة التدوير الخاص بك",
+        "earnPoints": "اكسب نقاطًا عند كل طلب",
+        "manageOrders": "إدارة الطلبات بسهولة",
+        "unlockTiers": "افتح مستويات العضوية"
+      },
+      "login": "تسجيل الدخول",
+      "createAccount": "إنشاء حساب",
+      "browseText": "أو الاستمرار في التصفح كضيف",
+      "browseButton": "تصفح الخدمات"
+    }
   },
   "cart": {
     "title": {
@@ -588,7 +606,7 @@
     "itemCard": {
       "outOfStock": "نفد المخزون",
       "stock": "المخزون ({{count}})",
-      "lowStock": "المخزون منخفض ({{count}})"
+      "lowStock": "كمية قليلة ({{count}})"
     },
     "errors": {
       "notEnoughStock": "لا توجد كمية كافية في المخزون لإضافة هذا العنصر.",
@@ -715,7 +733,13 @@
     "usage": "استخدامات الصوت: {{count}}/{{limit}}",
     "remaining": "متبقي اليوم",
     "limitExceeded": "تم الوصول للحد اليومي للصوت",
-    "resetTime": "يتجدد خلال {{hours}} ساعة"
+    "resetTime": "يتجدد خلال {{hours}} ساعة",
+    "checkingUsage": "جارٍ التحقق من الاستخدام..."
+  ,
+  "loginRequiredTitle": "سجل الدخول لاستخدام المساعد الصوتي",
+  "loginRequiredSubtitle": "سجل الدخول لتسجيل الأصوات وحفظ نتائج معالجة الذكاء الاصطناعي.",
+  "login": "تسجيل الدخول",
+  "maybeLater": "لاحقاً"
   },
   "chat": {
     "title": "الدردشة",
@@ -1211,7 +1235,32 @@
       "deleting": "جاري الحذف...",
       "deleteAlertTitle": "حذف التقييم",
       "deleteAlertMessage": "هل أنت متأكد من أنك تريد حذف تقييمك؟",
-      "deleteFailedMessage": "فشل في حذف التقييم"
+      "deleteFailedMessage": "فشل في حذف التقييم",
+      "modal": {
+        "title": {
+          "edit": "تعديل تقييمك",
+          "create": "قيم تجربتك"
+        },
+        "subtitle": {
+          "edit": "قم بتحديث ملاحظاتك حول هذا التسليم",
+          "create": "ساعدنا على التحسين من خلال مشاركة ملاحظاتك"
+        },
+        "orderNumber": "طلب رقم {{orderNumber}}",
+        "itemCount": "{{count}} عنصر",
+        "question": "كيف كان التسليم؟",
+        "ratingText": "لقد قيمت هذا {{rating}} من أصل 5",
+        "commentsLabel": "تعليقات إضافية (اختياري)",
+        "commentsPlaceholder": "أخبرنا عن تجربتك...",
+        "charCount": "{{current}}/{{max}}",
+        "buttons": {
+          "cancel": "إلغاء",
+          "submit": "إرسال التقييم",
+          "update": "تحديث التقييم"
+        },
+        "errors": {
+          "selectRating": "يرجى اختيار تقييم قبل إرسال مراجعتك."
+        }
+      }
     },
     "orderStatus": {
       "status": "الحالة",

@@ -22,7 +22,7 @@ export const isStaging = () => getCurrentEnv() === ENV.STAGING;
 
 const API_CONFIGS = {
   [ENV.DEVELOPMENT]: {
-    baseUrl: "https://recycling-backend-2vxx.onrender.com", //"http://192.168.0.165:5000"
+    baseUrl: "https://recycling-backend-2vxx.onrender.com", //"http://192.168.0.165:5000", //"https://recycling-backend-2vxx.onrender.com"
     timeout: 15000,
     retries: 2,
     debug: true,
@@ -142,7 +142,9 @@ export const APP_CONFIG = {
   API: getApiConfig(),
   GROQ_API_KEY: getSecureApiKey(),
   GOOGLE_MOBILE_CLIENT_ID:
-    "330056808594-l08q9ue5icgv47eh3iq2icak69bo0598.apps.googleusercontent.com",
+    "330056808594-l08q9ue5icgv47eh3iq2icak69bo0598.apps.googleusercontent.com", // Android OAuth client
+  GOOGLE_WEB_CLIENT_ID:
+    "330056808594-7m8k48fm0s673e7cgvt1t80443vd4qdv.apps.googleusercontent.com", // TODO: Replace with actual Web OAuth client ID
 };
 
 export const configureLogging = () => {

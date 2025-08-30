@@ -4,13 +4,14 @@ import { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   FlatList,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '../../context/AuthContext';
 import { useLocalization } from '../../context/LocalizationContext';
@@ -31,7 +32,8 @@ const AddressPhase = ({ onNext, onAddressSelect, onBack, pickupWorkflow }) => {
   const { isLoggedIn, user } = useAuth();
   const { tRole } = useLocalization();
   const { colors } = useThemedStyles();
-  const styles = getAddressPhaseStyles(colors);
+  const insets = useSafeAreaInsets();
+  const styles = getAddressPhaseStyles(colors, insets);
   const hasFetchedAddresses = useRef(false);
   const [showForm, setShowForm] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
@@ -212,115 +214,128 @@ const AddressPhase = ({ onNext, onAddressSelect, onBack, pickupWorkflow }) => {
 
   if (showForm) {
     return (
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        <View style={styles.formContainer}>
-          <Text style={styles.formTitle}>
-            {editingAddress ? t('pickup.reviewPhase.editAddress') : t('pickup.reviewPhase.addAddress')}
-          </Text>
+      <View style={styles.container}>
+        <KeyboardAwareScrollView 
+          style={styles.formScrollView}
+          showsVerticalScrollIndicator={false}
+          enableOnAndroid={true}
+          extraHeight={150}
+          keyboardShouldPersistTaps="handled"
+          enableResetScrollToCoords={false}
+          keyboardOpeningTime={100}
+        >
+          <View style={styles.formContainer}>
+            <Text style={styles.formTitle}>
+              {editingAddress ? t('pickup.reviewPhase.editAddress') : t('pickup.reviewPhase.addAddress')}
+            </Text>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>{t("pickup.reviewPhase.selectCity")}</Text>
-            <View style={styles.pickerContainer}>
-              <Picker
-                selectedValue={formData.city}
-                onValueChange={(value) => setFormData({ ...formData, city: value, area: '' })}
-                style={styles.picker}
-              >
-                <Picker.Item label={t("pickup.reviewPhase.selectCityLabel")} value="" />
-                {CITIES.map((city) => (
-                  <Picker.Item key={city} label={city} value={city} />
-                ))}
-              </Picker>
-            </View>
-          </View>
-
-          {formData.city && (
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>{t("pickup.reviewPhase.selectArea")}</Text>
+              <Text style={styles.label}>{t("pickup.reviewPhase.selectCity")}</Text>
               <View style={styles.pickerContainer}>
                 <Picker
-                  selectedValue={formData.area}
-                  onValueChange={(value) => setFormData({ ...formData, area: value })}
+                  selectedValue={formData.city}
+                  onValueChange={(value) => setFormData({ ...formData, city: value, area: '' })}
                   style={styles.picker}
                 >
-                  <Picker.Item label="-- Select Area --" value="" />
-                  {(AREAS[formData.city] || []).map((area) => (
-                    <Picker.Item key={area} label={area} value={area} />
+                  <Picker.Item label={t("pickup.reviewPhase.selectCityLabel")} value="" />
+                  {CITIES.map((city) => (
+                    <Picker.Item key={city} label={city} value={city} />
                   ))}
                 </Picker>
               </View>
             </View>
-          )}
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>{t("pickup.reviewPhase.streetAddress")}</Text>
-            <TextInput
-              style={styles.textInput}
-              value={formData.street}
-              onChangeText={(text) => setFormData({ ...formData, street: text })}
-              placeholder="e.g. El-Central street"
-              placeholderTextColor={colors.base300}
-            />
-          </View>
+            {formData.city && (
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>{t("pickup.reviewPhase.selectArea")}</Text>
+                <View style={styles.pickerContainer}>
+                  <Picker
+                    selectedValue={formData.area}
+                    onValueChange={(value) => setFormData({ ...formData, area: value })}
+                    style={styles.picker}
+                  >
+                    <Picker.Item label="-- Select Area --" value="" />
+                    {(AREAS[formData.city] || []).map((area) => (
+                      <Picker.Item key={area} label={area} value={area} />
+                    ))}
+                  </Picker>
+                </View>
+              </View>
+            )}
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>{t("pickup.reviewPhase.landmark")}</Text>
-            <TextInput
-              style={styles.textInput}
-              value={formData.landmark}
-              onChangeText={(text) => setFormData({ ...formData, landmark: text })}
-              placeholder="e.g. El-Asdekaa Market"
-              placeholderTextColor={colors.base300}
-            />
-          </View>
-
-          <View style={styles.row}>
-            <View style={[styles.inputGroup, { flex: 1, marginRight: spacing.sm }]}>
-              <Text style={styles.label}>{t("pickup.reviewPhase.building")}</Text>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>{t("pickup.reviewPhase.streetAddress")}</Text>
               <TextInput
                 style={styles.textInput}
-                value={formData.building}
-                onChangeText={(text) => setFormData({ ...formData, building: text })}
-                placeholder="Building"
+                value={formData.street}
+                onChangeText={(text) => setFormData({ ...formData, street: text })}
+                placeholder="e.g. El-Central street"
                 placeholderTextColor={colors.base300}
               />
             </View>
-            <View style={[styles.inputGroup, { flex: 1, marginLeft: spacing.sm }]}>
-              <Text style={styles.label}>{t("pickup.reviewPhase.floor")}</Text>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>{t("pickup.reviewPhase.landmark")}</Text>
               <TextInput
                 style={styles.textInput}
-                value={formData.floor}
-                onChangeText={(text) => setFormData({ ...formData, floor: text })}
-                placeholder="Floor"
+                value={formData.landmark}
+                onChangeText={(text) => setFormData({ ...formData, landmark: text })}
+                placeholder="e.g. El-Asdekaa Market"
                 placeholderTextColor={colors.base300}
-                keyboardType="numeric"
               />
+            </View>
+
+            <View style={styles.row}>
+              <View style={[styles.inputGroup, { flex: 1, marginRight: spacing.sm }]}>
+                <Text style={styles.label}>{t("pickup.reviewPhase.building")}</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={formData.building}
+                  onChangeText={(text) => setFormData({ ...formData, building: text })}
+                  placeholder="Building"
+                  placeholderTextColor={colors.base300}
+                />
+              </View>
+              <View style={[styles.inputGroup, { flex: 1, marginLeft: spacing.sm }]}>
+                <Text style={styles.label}>{t("pickup.reviewPhase.floor")}</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={formData.floor}
+                  onChangeText={(text) => setFormData({ ...formData, floor: text })}
+                  placeholder="Floor"
+                  placeholderTextColor={colors.base300}
+                  keyboardType="numeric"
+                />
+              </View>
+            </View>
+
+            <View style={styles.row}>
+              <View style={[styles.inputGroup, { flex: 1, marginRight: spacing.sm }]}>
+                <Text style={styles.label}>{t("pickup.reviewPhase.apartment")}</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={formData.apartment}
+                  onChangeText={(text) => setFormData({ ...formData, apartment: text })}
+                  placeholder="Apartment"
+                  placeholderTextColor={colors.base300}
+                />
+              </View>
+              <View style={[styles.inputGroup, { flex: 1, marginLeft: spacing.sm }]}>
+                <Text style={styles.label}>{t("pickup.reviewPhase.notes")}</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={formData.notes}
+                  onChangeText={(text) => setFormData({ ...formData, notes: text })}
+                  placeholder="e.g. Don't ring the bell"
+                  placeholderTextColor={colors.base300}
+                />
+              </View>
             </View>
           </View>
-
-          <View style={styles.row}>
-            <View style={[styles.inputGroup, { flex: 1, marginRight: spacing.sm }]}>
-              <Text style={styles.label}>{t("pickup.reviewPhase.apartment")}</Text>
-              <TextInput
-                style={styles.textInput}
-                value={formData.apartment}
-                onChangeText={(text) => setFormData({ ...formData, apartment: text })}
-                placeholder="Apartment"
-                placeholderTextColor={colors.base300}
-              />
-            </View>
-            <View style={[styles.inputGroup, { flex: 1, marginLeft: spacing.sm }]}>
-              <Text style={styles.label}>{t("pickup.reviewPhase.notes")}</Text>
-              <TextInput
-                style={styles.textInput}
-                value={formData.notes}
-                onChangeText={(text) => setFormData({ ...formData, notes: text })}
-                placeholder="e.g. Don't ring the bell"
-                placeholderTextColor={colors.base300}
-              />
-            </View>
-          </View>
-
+        </KeyboardAwareScrollView>
+        
+        {/* Fixed button container at bottom */}
+        <View style={styles.fixedButtonContainer}>
           <View style={styles.buttonRow}>
             <TouchableOpacity style={styles.cancelButton} onPress={handleCancelForm}>
               <Text style={styles.cancelButtonText}>{t("common.cancel")}</Text>
@@ -336,7 +351,7 @@ const AddressPhase = ({ onNext, onAddressSelect, onBack, pickupWorkflow }) => {
             </AnimatedButton>
           </View>
         </View>
-      </ScrollView>
+      </View>
     );
   }
 
@@ -406,7 +421,7 @@ const AddressPhase = ({ onNext, onAddressSelect, onBack, pickupWorkflow }) => {
 };
 
 // Dynamic styles function for AddressPhase
-const getAddressPhaseStyles = (colors) => StyleSheet.create({
+const getAddressPhaseStyles = (colors, insets) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -515,6 +530,7 @@ const getAddressPhaseStyles = (colors) => StyleSheet.create({
   },
   footer: {
     padding: spacing.xl,
+    paddingBottom: Math.max(insets.bottom + spacing.md, spacing.xl),
     backgroundColor: colors.surface,
     borderTopWidth: 1,
     borderTopColor: colors.border,
@@ -534,6 +550,23 @@ const getAddressPhaseStyles = (colors) => StyleSheet.create({
 
   formContainer: {
     padding: spacing.xl,
+  },
+  formScrollView: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  fixedButtonContainer: {
+    backgroundColor: colors.surface,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.lg,
+    paddingBottom: Math.max(insets.bottom + spacing.md, spacing.xl),
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 8,
   },
   formTitle: {
     ...typography.title,
@@ -578,7 +611,6 @@ const getAddressPhaseStyles = (colors) => StyleSheet.create({
   buttonRow: {
     flexDirection: 'row',
     gap: spacing.md,
-    marginTop: spacing.xl,
   },
   cancelButton: {
     flex: 1,

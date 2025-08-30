@@ -18,12 +18,51 @@ export async function clearAuthData() {
     cachedToken = null;
     tokenCacheTime = 0;
     
+    // Clear any remaining session cookies by generating a new session ID
+    try {
+      await AsyncStorage.removeItem("sessionId");
+      // Generate a new session ID to replace the old one
+      const newSessionId = generateNewSessionId();
+      await AsyncStorage.setItem("sessionId", newSessionId);
+      
+      // Make a request to clear server-side session cookies
+      try {
+        await fetch(`${BASE_URL}/clear-session`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Cookie': `sessionId=${newSessionId}` // Use new session ID
+          },
+          credentials: 'include' // Include cookies in request
+        });
+        
+        if (!isProduction) {
+          logger.auth('Server-side session cleared');
+        }
+      } catch (clearError) {
+        if (!isProduction) {
+          logger.auth('Could not clear server session (non-critical)', { error: clearError.message }, 'WARN');
+        }
+      }
+      
+      if (!isProduction) {
+        logger.auth('Session ID regenerated on logout');
+      }
+    } catch (sessionError) {
+      logger.auth('Error regenerating session ID', { error: sessionError.message }, 'WARN');
+    }
+    
     if (!isProduction) {
       logger.auth('Cart auth data cleared');
     }
   } catch (error) {
     logger.auth('Error clearing cart auth data', { error: error.message }, 'ERROR');
   }
+}
+
+// Generate a new session ID to prevent cart leakage between users
+function generateNewSessionId() {
+  return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 }
 
 async function getSessionId() {

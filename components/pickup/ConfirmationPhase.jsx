@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '../../context/AuthContext';
 import { useLocalization } from '../../context/LocalizationContext';
@@ -24,7 +25,8 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
   const { user } = useAuth();
   const { t, tRole } = useLocalization();
   const { colors } = useThemedStyles();
-  const styles = getConfirmationPhaseStyles(colors);
+  const insets = useSafeAreaInsets();
+  const styles = getConfirmationPhaseStyles(colors, insets);
   const { handleClearCart } = useCart(user);
   const [copied, setCopied] = useState(false);
   const rotateValue = useRef(new Animated.Value(0)).current;
@@ -316,7 +318,7 @@ const ConfirmationPhase = ({ order, onNewRequest, onFinish }) => {
 };
 
 // Dynamic styles function for ConfirmationPhase
-const getConfirmationPhaseStyles = (colors) => StyleSheet.create({
+const getConfirmationPhaseStyles = (colors, insets) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -537,6 +539,7 @@ const getConfirmationPhaseStyles = (colors) => StyleSheet.create({
 
   footer: {
     padding: spacing.xl,
+    paddingBottom: Math.max(insets.bottom + spacing.md, spacing.xl),
     backgroundColor: colors.surface,
     borderTopWidth: 1,
     borderTopColor: colors.border,

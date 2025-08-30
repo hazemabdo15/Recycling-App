@@ -1,16 +1,16 @@
 ﻿import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import {
-  addItemToCart,
-  clearCart as apiClearCart,
-  clearAuthData,
-  getCart,
-  getSessionId,
-  removeItemFromCart,
-  saveCart,
-  testBackendConnectivity,
-  testMinimalPost,
-  updateCartItem,
+    addItemToCart,
+    clearCart as apiClearCart,
+    clearAuthData,
+    getCart,
+    getSessionId,
+    removeItemFromCart,
+    saveCart,
+    testBackendConnectivity,
+    testMinimalPost,
+    updateCartItem,
 } from "../services/api/cart.js";
 import { normalizeItemData, validateQuantity } from "../utils/cartUtils";
 import logger from '../utils/logger';
@@ -374,8 +374,16 @@ export const CartProvider = ({ children }) => {
   // Clear cart on logout
   useEffect(() => {
     if (!authLoading && !isLoggedIn) {
-      queryClient.removeQueries({ queryKey: ['cart'] });
+      // Clear all cart queries regardless of user ID
+      queryClient.removeQueries({ 
+        predicate: (query) => query.queryKey[0] === 'cart' 
+      });
       setRemovingItems(new Set());
+      
+      // Clear cart auth data and session ID
+      clearAuthData().catch(error => 
+        console.error('[CartContext] Error clearing cart auth data:', error)
+      );
     }
   }, [isLoggedIn, authLoading, queryClient]);
 

@@ -1,19 +1,21 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from 'react-i18next';
 import {
-    ActivityIndicator,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { showGlobalToast } from "../../components/common/GlobalToast";
+import { useTheme } from "../../context/ThemeContext";
 import optimizedApiService from "../../services/api/apiService";
+import { colors, getColors } from "../../styles/theme";
 
 export default function DeliveryReviewModal({
   isOpen,
@@ -24,6 +26,8 @@ export default function DeliveryReviewModal({
   onSubmitted,
 }) {
   const { t } = useTranslation();
+  const { isDarkMode } = useTheme();
+  const colors = getColors(isDarkMode);
   const [rating, setRating] = useState(0);
   const [comments, setComments] = useState("");
   const [loading, setLoading] = useState(false);
@@ -100,46 +104,54 @@ export default function DeliveryReviewModal({
       onRequestClose={() => !loading && onClose()}
     >
       <View style={styles.backdrop}>
-        <View style={styles.modal}>
+        <View
+          style={[
+            styles.modal,
+            {
+              backgroundColor: colors.cardBackground,
+              shadowColor: colors.shadowColor || colors.shadow,
+            },
+          ]}
+        >
           <View style={styles.header}>
             <View>
-              <Text style={styles.title}>
-                {existingReview ? "Edit Your Review" : "Rate Your Experience"}
+              <Text style={[styles.title, { color: colors.text }] }>
+                {existingReview ? t("recyclingHistory.review.modal.title.edit") : t("recyclingHistory.review.modal.title.create")}
               </Text>
-              <Text style={styles.subtitle}>
+              <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
                 {existingReview
-                  ? "Update your feedback for this delivery"
-                  : "Help us improve by sharing your feedback"}
+                  ? t("recyclingHistory.review.modal.subtitle.edit")
+                  : t("recyclingHistory.review.modal.subtitle.create")}
               </Text>
             </View>
             <TouchableOpacity onPress={onClose} disabled={loading}>
-              <Ionicons name="close" size={20} color="#555" />
+              <Ionicons name="close" size={20} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
 
           <ScrollView style={styles.content}>
             {orderInfo && (
-              <View style={styles.orderInfo}>
-                <Text style={styles.orderText}>
-                  Order #{orderInfo.orderNumber || orderId?.slice(-8) || "N/A"}
+              <View style={[styles.orderInfo, { backgroundColor: colors.base100 }] }>
+                <Text style={[styles.orderText, { color: colors.textSecondary }]}>
+                  {t("recyclingHistory.review.modal.orderNumber", { orderNumber: orderInfo.orderNumber || orderId?.slice(-8) || "N/A" })}
                 </Text>
                 {orderInfo.itemCount && (
-                  <Text style={styles.orderText}>
-                    {orderInfo.itemCount} item(s)
+                  <Text style={[styles.orderText, { color: colors.textSecondary }]}>
+                    {t("recyclingHistory.review.modal.itemCount", { count: orderInfo.itemCount })}
                   </Text>
                 )}
                 {orderInfo.courierName && (
-                  <Text style={styles.orderText}>{orderInfo.courierName}</Text>
+                  <Text style={[styles.orderText, { color: colors.textSecondary }]}>{orderInfo.courierName}</Text>
                 )}
                 {orderInfo.orderDate && (
-                  <Text style={styles.orderText}>
+                  <Text style={[styles.orderText, { color: colors.textSecondary }]}>
                     {new Date(orderInfo.orderDate).toLocaleDateString()}
                   </Text>
                 )}
               </View>
             )}
 
-            <Text style={styles.question}>How was your delivery?</Text>
+            <Text style={styles.question}>{t("recyclingHistory.review.modal.question")}</Text>
             <View style={styles.stars}>
               {[1, 2, 3, 4, 5].map((star) => (
                 <TouchableOpacity
@@ -156,41 +168,49 @@ export default function DeliveryReviewModal({
               ))}
             </View>
             {rating > 0 && (
-              <Text style={styles.ratingText}>
-                You rated this {rating} out of 5
+              <Text style={[styles.ratingText, { color: colors.textSecondary }]}>
+                {t("recyclingHistory.review.modal.ratingText", { rating })}
               </Text>
             )}
 
-            <Text style={styles.label}>Additional Comments (Optional)</Text>
+            <Text style={styles.label}>{t("recyclingHistory.review.modal.commentsLabel")}</Text>
             <TextInput
-              style={styles.textarea}
-              placeholder="Tell us about your experience..."
+              style={[styles.textarea, { borderColor: colors.border, backgroundColor: colors.surface, color: colors.text }]}
+              placeholder={t("recyclingHistory.review.modal.commentsPlaceholder")}
+              placeholderTextColor={colors.textTertiary}
               value={comments}
               onChangeText={setComments}
               editable={!loading}
               multiline
               maxLength={1000}
             />
-            <Text style={styles.charCount}>{comments.length}/1000</Text>
+            <Text style={styles.charCount}>
+              {t("recyclingHistory.review.modal.charCount", { current: comments.length, max: 1000 })}
+            </Text>
 
             {submissionAttempted && rating === 0 && (
-              <Text style={styles.error}>
-                Please select a rating before submitting your review.
+              <Text style={[styles.error, { color: colors.error }] }>
+                {t("recyclingHistory.review.modal.errors.selectRating")}
               </Text>
             )}
 
             <View style={styles.buttonRow}>
               <TouchableOpacity
-                style={[styles.button, styles.cancelButton]}
+                style={[
+                  styles.button,
+                  styles.cancelButton,
+                  { backgroundColor: isDarkMode ? colors.base100 : '#f3f4f6' },
+                ]}
                 onPress={onClose}
                 disabled={loading}
               >
-                <Text style={styles.cancelText}>Cancel</Text>
+                <Text style={[styles.cancelText, { color: colors.text }]}>{t("recyclingHistory.review.modal.buttons.cancel")}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
                   styles.button,
                   rating === 0 ? styles.disabledButton : styles.submitButton,
+                  { backgroundColor: rating === 0 ? '#9ca3af' : colors.success },
                 ]}
                 onPress={handleSubmit}
                 disabled={loading || rating === 0}
@@ -198,8 +218,8 @@ export default function DeliveryReviewModal({
                 {loading ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text style={styles.submitText}>
-                    {existingReview ? "Update Review" : "Submit Review"}
+                  <Text style={[styles.submitText, { color: '#fff' }]}>
+                    {existingReview ? t("recyclingHistory.review.modal.buttons.update") : t("recyclingHistory.review.modal.buttons.submit")}
                   </Text>
                 )}
               </TouchableOpacity>
@@ -212,18 +232,32 @@ export default function DeliveryReviewModal({
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
-  modal: { backgroundColor: "#fff", borderTopLeftRadius: 12, borderTopRightRadius: 12, maxHeight: "90%", paddingBottom: 10 },
+  backdrop: { flex: 1, backgroundColor: "transparent", justifyContent: "flex-end", alignItems: 'stretch' },
+  modal: {
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    maxHeight: "90%",
+    paddingBottom: 10,
+    // keep full width like before (no horizontal margin)
+    // shadow for iOS
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    // elevation for Android
+    elevation: 8,
+  },
   header: { flexDirection: "row", justifyContent: "space-between", padding: 15, borderBottomWidth: 1, borderBottomColor: "#eee" },
   title: { fontSize: 16, fontWeight: "600", color: "#111" },
   subtitle: { fontSize: 12, color: "#666" },
   content: { paddingHorizontal: 15, paddingVertical: 10 },
   orderInfo: { backgroundColor: "#ecfdf5", padding: 10, borderRadius: 8, marginBottom: 15 },
   orderText: { fontSize: 12, color: "#555" },
-  question: { fontSize: 14, fontWeight: "500", marginBottom: 8 },
+  question: { fontSize: 14, fontWeight: "500", marginBottom: 8, color: colors.title },
   stars: { flexDirection: "row", justifyContent: "center", marginBottom: 5 },
   ratingText: { textAlign: "center", color: "#555", marginBottom: 10 },
-  label: { fontSize: 13, fontWeight: "500", marginBottom: 5 },
+  label: { fontSize: 13, fontWeight: "500", marginBottom: 5,color: colors.title },
   textarea: { borderWidth: 1, borderColor: "#ddd", borderRadius: 8, padding: 10, fontSize: 13, minHeight: 70, textAlignVertical: "top" },
   charCount: { fontSize: 10, color: "#888", textAlign: "right", marginTop: 3 },
   error: { color: "#dc2626", fontSize: 12, marginTop: 5 },

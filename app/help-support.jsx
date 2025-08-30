@@ -2,6 +2,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { KeyboardAwareFlatList } from 'react-native-keyboard-aware-scroll-view';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalization } from '../context/LocalizationContext';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { scaleSize } from '../utils/scale';
@@ -17,6 +18,7 @@ const HelpSupportScreen = () => {
   const router = useRouter();
   const { t } = useLocalization();
   const { colors } = useThemedStyles();
+  const insets = useSafeAreaInsets();
   const styles = getStyles(colors);
   const sections = [
     { key: 'header', render: () => (
@@ -53,6 +55,7 @@ const HelpSupportScreen = () => {
   return (
     <KeyboardAwareFlatList
       style={styles.container}
+      contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 16, 24) }}
       data={sections}
       keyExtractor={item => item.key}
       renderItem={({ item }) => item.render()}

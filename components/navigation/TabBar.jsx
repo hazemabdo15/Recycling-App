@@ -3,7 +3,7 @@ import { useLinkBuilder } from "@react-navigation/native";
 import { BlurView } from "expo-blur";
 import * as Haptics from 'expo-haptics';
 import React from "react";
-import { Dimensions, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
+import { Platform, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../../context/AuthContext";
 import { useLocalization } from "../../context/LocalizationContext";
@@ -15,10 +15,10 @@ import { scaleSize } from '../../utils/scale';
 const getTabBarStyles = (colors) => StyleSheet.create({
   container: {
     position: "absolute",
-    bottom: scaleSize(5),
+    bottom: scaleSize(4), // Slightly reduced bottom position for better consistency
     left: scaleSize(20),
     right: scaleSize(20),
-    height: scaleSize(95),
+    // height will be overridden inline for responsive behavior
     backgroundColor: 'transparent',
   },
   blurContainer: {
@@ -188,7 +188,8 @@ try {
   withSequence = (...values) => values[0];
 }
 
-const { width } = Dimensions.get("window");
+// width/height will be read from useWindowDimensions inside the component so the tab bar
+// responds to orientation and size changes automatically.
 
 const getIconName = (routeName, isFocused, userRole = 'customer') => {
 
@@ -218,6 +219,7 @@ export function TabBar({ state, descriptors, navigation }) {
   const { cartItems } = useCart(user);
   const { colors, isDarkMode } = useThemedStyles();
   const styles = getTabBarStyles(colors);
+  const { width, height } = useWindowDimensions();
 
   const getTabLabel = (routeName) => {
     // Map route names to translation keys
@@ -236,11 +238,37 @@ export function TabBar({ state, descriptors, navigation }) {
   }).length : 0;
   
   const activeIndex = useSharedValue(state.index);
-  const containerWidth = width - 40;
-  const availableWidth = containerWidth - 32;
-  const centerSpacerWidth = 90;
+  // Responsive sizing based on window dimensions
+  const horizontalMargin = Math.round(Math.max(12, Math.min(28, width * 0.025)));
+  const containerWidth = Math.max(300, width - horizontalMargin * 2);
+  // Improved container height calculation - ensures enough space for content
+  const minTabBarHeight = 80; // Minimum height for comfortable interaction
+  const maxTabBarHeight = 120; // Maximum height to prevent excessive size
+  const dynamicHeight = height * 0.11; // Slightly reduced multiplier
+  
+  // Adjust base height for 3-button navigation to compensate for different spacing
+  const baseHeight = isAndroid && isLikely3ButtonNav 
+    ? Math.round(Math.max(minTabBarHeight + 8, Math.min(maxTabBarHeight, dynamicHeight + 8)))
+    : Math.round(Math.max(minTabBarHeight, Math.min(maxTabBarHeight, dynamicHeight)));
+  
+  const baseContainerHeight = baseHeight;
+  
+  // Enhanced safe area handling for different Android navigation types
+  // Detect if we're likely using 3-button navigation (very small or zero bottom insets)
+  const isLikely3ButtonNav = insets.bottom < 10;
+  const isAndroid = Platform.OS === 'android';
+  
+  // For 3-button navigation, provide more generous padding
+  // For gesture navigation, use the provided insets
+  const safeBottomPadding = isAndroid && isLikely3ButtonNav 
+    ? Math.max(insets.bottom + 12, 16) // Extra padding for 3-button nav
+    : Math.max(insets.bottom, 8); // Standard padding for gesture nav or iOS
+  
+  // center spacer scales with width to keep main action centered
+  const centerSpacerWidth = Math.round(Math.max(60, Math.min(120, width * 0.18)));
+  const availableWidth = containerWidth - (horizontalMargin * 2);
   const sideWidth = (availableWidth - centerSpacerWidth) / 2;
-  const tabWidth = sideWidth / 2;
+  const tabWidth = Math.max(56, Math.floor(sideWidth / 2));
   const pulseScale = useSharedValue(1);
   React.useEffect(() => {
     activeIndex.value = withSpring(state.index, {
@@ -278,6 +306,14 @@ export function TabBar({ state, descriptors, navigation }) {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     openVoiceModal();
   };
+  // Make the main action (voice) button larger and more prominent across devices
+  const mainButtonSize = Math.round(Math.max(56, Math.min(92, width * 0.15)));
+  const mainButtonOffset = Math.round(mainButtonSize / 2);
+  
+  // Adjust button offset for different navigation types
+  const adjustedButtonOffset = isAndroid && isLikely3ButtonNav 
+    ? Math.round(mainButtonOffset * 0.85) // Slightly less offset for 3-button nav
+    : Math.round(mainButtonOffset * 0.9); // Standard offset for gesture nav
   const indicatorStyle = useAnimatedStyle(() => {
     const indicatorWidth = tabWidth * 0.8;
     const centerOffset = (tabWidth - indicatorWidth) / 2;
@@ -310,11 +346,18 @@ export function TabBar({ state, descriptors, navigation }) {
   const allowedTabs = ['home', 'explore', 'cart', 'profile'];
   const currentRoute = state.routes[state.index]?.name;
   return (
-    <View style={[styles.container, { paddingBottom: insets.bottom }]}> 
+    <View style={[
+      styles.container, 
+      { 
+        paddingBottom: safeBottomPadding, 
+        height: baseContainerHeight,
+        minHeight: minTabBarHeight + safeBottomPadding, // Ensure minimum usable height
+      }
+    ]}> 
       {allowedTabs.includes(currentRoute) && (
         <View pointerEvents="box-none" style={styles.voiceButtonWrapper}>
           <TouchableOpacity
-            style={styles.mainActionButtonContainer}
+            style={[styles.mainActionButtonContainer, { width: mainButtonSize, height: mainButtonSize, top: -adjustedButtonOffset, zIndex: 40 }]}
             onPress={handleMainActionPress}
             activeOpacity={1}
             accessible={true}
@@ -322,17 +365,18 @@ export function TabBar({ state, descriptors, navigation }) {
             accessibilityLabel="Voice input"
             accessibilityHint="Open voice recording to add recycling items"
           >
-            <Animated.View style={[styles.mainActionButton, mainButtonAnimatedStyle]}>
+            <Animated.View style={[styles.mainActionButton, mainButtonAnimatedStyle, { width: mainButtonSize, height: mainButtonSize, borderRadius: Math.round(mainButtonSize/2), borderWidth: Math.max(3, Math.round(mainButtonSize*0.06)) }]}
+            >
               <MaterialCommunityIcons
                 name="microphone"
-                size={28}
+                size={Math.round(mainButtonSize * 0.6)}
                 color={colors.white}
               />
             </Animated.View>
           </TouchableOpacity>
         </View>
       )}
-      <BlurView intensity={100} tint={isDarkMode ? "dark" : "light"} style={styles.blurContainer}>
+      <BlurView intensity={100} tint={isDarkMode ? "dark" : "light"} style={[styles.blurContainer, { height: baseContainerHeight }] }>
           {/* ...existing code... */}
           <View style={styles.notchIndicatorLeft} />
           <View style={styles.notchIndicatorRight} />
@@ -360,7 +404,7 @@ export function TabBar({ state, descriptors, navigation }) {
                 );
               })}
             </View>
-            <View style={styles.centerSpacer} />
+            <View style={[styles.centerSpacer, { width: centerSpacerWidth }]} />
             <View style={styles.sideTabsContainer}>
               {rightRoutes.map((route, originalIndex) => {
                 const index = originalIndex + 2;

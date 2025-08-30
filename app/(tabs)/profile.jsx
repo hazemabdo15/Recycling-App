@@ -9,6 +9,7 @@ import ProfileCard from "../../components/profile/ProfileCard";
 import ProfileMenu from "../../components/profile/ProfileMenu";
 import { useAuth } from "../../context/AuthContext";
 import { useLocalization } from "../../context/LocalizationContext";
+import { useTheme } from "../../context/ThemeContext";
 import { useThemedStyles } from "../../hooks/useThemedStyles";
 import { useUserPoints } from "../../hooks/useUserPoints";
 import apiService from "../../services/api/apiService";
@@ -22,13 +23,15 @@ export default function Profile() {
 
 function ProfileContent() {
   const windowHeight = Dimensions.get('window').height;
+  const windowWidth = Dimensions.get('window').width;
   // Estimate ProfileCard height (adjust as needed)
   const PROFILE_CARD_HEIGHT = 220;
   const insets = useSafeAreaInsets();
   const { user, logout, isLoggedIn } = useAuth();
-  const { t } = useLocalization();
+  const { t, changeLanguage, currentLanguage } = useLocalization();
+  const { isDarkMode, toggleTheme } = useTheme();
   const { colors } = useThemedStyles();
-  const styles = getStyles(colors);
+  const styles = getStyles(colors, insets, windowWidth);
   const router = useRouter();
   // const [allOrders, setAllOrders] = useState([]); // No longer used
   const [avatarUri, setAvatarUri] = useState(null);
@@ -161,63 +164,76 @@ function ProfileContent() {
     return (
       <View style={styles.guestContainer}>
         <View style={styles.guestContent}>
-          <View style={styles.guestIcon}>
-            <Text style={styles.guestIconText}>👤</Text>
+          <View style={styles.guestCard}>
+            <View style={styles.cardHeader}>
+              <View style={styles.guestIcon}>
+                <Text style={styles.guestIconText}>👤</Text>
+              </View>
+              <View style={styles.cardHeaderText}>
+                <Text style={styles.guestTitle}>{t('profile.guest.title')}</Text>
+                <Text style={styles.guestSubtitle}>{t('profile.guest.subtitle')}</Text>
+              </View>
+              <View style={styles.headerActions}>
+                <TouchableOpacity
+                  onPress={() => {
+                    const next = (currentLanguage && currentLanguage.startsWith('ar')) ? 'en' : 'ar';
+                    changeLanguage(next);
+                  }}
+                  style={styles.headerButton}
+                >
+                  <Text style={styles.headerButtonText}>{(currentLanguage || 'en').slice(0,2).toUpperCase()}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => toggleTheme()}
+                  style={styles.headerButton}
+                >
+                  <Text style={styles.headerButtonText}>{isDarkMode ? '🌙' : '☀️'}</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View style={styles.benefitsContainer}>
+              <Text style={styles.benefitsTitle}>{t('profile.guest.joinTitle')}</Text>
+              <View style={styles.benefitsGrid}>
+                <View style={styles.benefitItem}>
+                  <Text style={styles.benefitIcon}>♻️</Text>
+                  <Text style={styles.benefitText}>{t('profile.guest.benefits.trackImpact')}</Text>
+                </View>
+                <View style={styles.benefitItem}>
+                  <Text style={styles.benefitIcon}>🎯</Text>
+                  <Text style={styles.benefitText}>{t('profile.guest.benefits.earnPoints')}</Text>
+                </View>
+                <View style={styles.benefitItem}>
+                  <Text style={styles.benefitIcon}>📱</Text>
+                  <Text style={styles.benefitText}>{t('profile.guest.benefits.manageOrders')}</Text>
+                </View>
+                <View style={styles.benefitItem}>
+                  <Text style={styles.benefitIcon}>🏆</Text>
+                  <Text style={styles.benefitText}>{t('profile.guest.benefits.unlockTiers')}</Text>
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.guestActions}>
+              <TouchableOpacity
+                onPress={() => router.push("/login")}
+                style={styles.loginButton}
+              >
+                <Text style={styles.loginButtonText}>{t('profile.guest.login')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => router.push("/register")}
+                style={styles.signupButton}
+              >
+                <Text style={styles.signupButtonText}>{t('profile.guest.createAccount')}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-          <Text style={styles.guestTitle}>Welcome, Guest!</Text>
-          <Text style={styles.guestSubtitle}>
-            You&apos;re browsing in guest mode
-          </Text>
-          <View style={styles.benefitsContainer}>
-            <Text style={styles.benefitsTitle}>Join us to enjoy:</Text>
-            <View style={styles.benefitItem}>
-              <Text style={styles.benefitIcon}>♻️</Text>
-              <Text style={styles.benefitText}>
-                Track your recycling impact
-              </Text>
-            </View>
-            <View style={styles.benefitItem}>
-              <Text style={styles.benefitIcon}>🎯</Text>
-              <Text style={styles.benefitText}>
-                Earn points for every order
-              </Text>
-            </View>
-            <View style={styles.benefitItem}>
-              <Text style={styles.benefitIcon}>📱</Text>
-              <Text style={styles.benefitText}>Manage orders easily</Text>
-            </View>
-            <View style={styles.benefitItem}>
-              <Text style={styles.benefitIcon}>🏆</Text>
-              <Text style={styles.benefitText}>Unlock membership tiers</Text>
-            </View>
-          </View>
-          <View style={styles.guestActions}>
-            <TouchableOpacity
-              onPress={() => {
-                router.push("/login");
-              }}
-              style={styles.loginButton}
-            >
-              <Text style={styles.loginButtonText}>Login to Your Account</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => {
-                router.push("/register");
-              }}
-              style={styles.signupButton}
-            >
-              <Text style={styles.signupButtonText}>Create New Account</Text>
-            </TouchableOpacity>
-          </View>
+
           <View style={styles.guestBrowse}>
-            <Text style={styles.guestBrowseText}>
-              Or continue browsing as guest
-            </Text>
-            <TouchableOpacity
-              onPress={() => router.push("/home")}
-              style={styles.browseButton}
-            >
-              <Text style={styles.browseButtonText}>Browse Services</Text>
+            <Text style={styles.guestBrowseText}>{t('profile.guest.browseText')}</Text>
+            <TouchableOpacity onPress={() => router.push("/home")} style={styles.browseButton}>
+              <Text style={styles.browseButtonText}>{t('profile.guest.browseButton')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -290,7 +306,9 @@ function ProfileContent() {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors, insets = { bottom: 0 }, windowWidth = 360) => {
+  const TAB_BAR_HEIGHT = scaleSize(70); // Estimated tab bar height to avoid overlap
+  return StyleSheet.create({
   container: {
     padding: scaleSize(35),
     backgroundColor: colors.background,
@@ -483,115 +501,173 @@ const getStyles = (colors) => StyleSheet.create({
   },
   guestContainer: {
     backgroundColor: colors.background,
-    paddingHorizontal: scaleSize(30),
-    paddingVertical: scaleSize(10),
-    paddingBottom: scaleSize(40),
-    flexGrow: 1,
+  paddingHorizontal: scaleSize(18),
+  paddingVertical: scaleSize(12),
+  // include safe area bottom inset and estimated tab bar height so guest UI won't be hidden
+  paddingBottom: (insets?.bottom || 0) + TAB_BAR_HEIGHT,
+  flex: 1,
   },
   guestContent: {
-    alignItems: "center",
-    maxWidth: scaleSize(400),
-    alignSelf: "stretch",
+  alignItems: "center",
+  maxWidth: scaleSize(520),
+  alignSelf: "center",
+  flex: 1,
+  justifyContent: "center",
+  paddingVertical: scaleSize(6),
   },
   guestIcon: {
-    width: scaleSize(80),
-    height: scaleSize(80),
-    borderRadius: scaleSize(40),
-    backgroundColor: colors.infoLight,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: scaleSize(24),
-    borderWidth: 2,
-    borderColor: colors.infoBorder,
+  width: scaleSize(64),
+  height: scaleSize(64),
+  borderRadius: scaleSize(16),
+  backgroundColor: colors.infoLight,
+  alignItems: "center",
+  justifyContent: "center",
+  marginBottom: scaleSize(16),
+  borderWidth: 1,
+  borderColor: colors.infoBorder,
   },
   guestIconText: {
-    fontSize: scaleSize(40),
+  fontSize: scaleSize(28),
   },
   guestTitle: {
-    fontSize: scaleSize(28),
-    fontWeight: "700",
-    color: colors.text,
-    marginBottom: scaleSize(8),
-    textAlign: "center",
+  fontSize: scaleSize(20),
+  fontWeight: "700",
+  color: colors.text,
+  marginBottom: scaleSize(4),
+  textAlign: "center",
   },
   guestSubtitle: {
-    fontSize: scaleSize(16),
-    color: colors.textSecondary,
-    marginBottom: scaleSize(32),
-    textAlign: "center",
+  fontSize: scaleSize(13),
+  color: colors.textSecondary,
+  marginBottom: scaleSize(18),
+  textAlign: "center",
   },
   benefitsContainer: {
-    width: "100%",
-    backgroundColor: colors.cardBackground,
-    borderRadius: scaleSize(16),
-    padding: scaleSize(24),
-    marginBottom: scaleSize(32),
-    elevation: 2,
+  width: "100%",
+  backgroundColor: colors.cardBackground,
+  borderRadius: scaleSize(12),
+  paddingVertical: scaleSize(14),
+  paddingHorizontal: scaleSize(12),
+  marginBottom: scaleSize(20),
+  elevation: 2,
+  shadowColor: colors.shadow,
+  shadowOffset: { width: 0, height: scaleSize(2) },
+  shadowOpacity: 0.06,
+  shadowRadius: scaleSize(6),
+  borderWidth: 1,
+  borderColor: colors.border,
+  },
+  benefitsTitle: {
+  fontSize: scaleSize(14),
+  fontWeight: "600",
+  color: colors.text,
+  marginBottom: scaleSize(10),
+  textAlign: "center",
+  },
+  guestCard: {
+    width: '100%',
+    backgroundColor: colors.surface,
+    borderRadius: scaleSize(14),
+    padding: scaleSize(14),
+    borderWidth: 1,
+    borderColor: colors.border,
     shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: scaleSize(2) },
+    shadowOffset: { width: 0, height: scaleSize(4) },
     shadowOpacity: 0.06,
-    shadowRadius: scaleSize(4),
+    shadowRadius: scaleSize(8),
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: scaleSize(12),
+    marginBottom: scaleSize(8),
+  },
+  cardHeaderText: {
+    flex: 1,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: scaleSize(8),
+  },
+  headerButton: {
+    backgroundColor: colors.primaryLight,
+    paddingHorizontal: scaleSize(8),
+    paddingVertical: scaleSize(6),
+    borderRadius: scaleSize(8),
     borderWidth: 1,
     borderColor: colors.border,
   },
-  benefitsTitle: {
-    fontSize: scaleSize(18),
-    fontWeight: "600",
-    color: colors.text,
-    marginBottom: scaleSize(16),
-    textAlign: "center",
+  headerButtonText: {
+    fontSize: scaleSize(12),
+    fontWeight: '700',
+    color: colors.primary,
+  },
+  benefitsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -scaleSize(6),
   },
   benefitItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: scaleSize(12),
-    paddingHorizontal: scaleSize(8),
+  flexDirection: "row",
+  alignItems: "center",
+  marginBottom: scaleSize(10),
+  paddingHorizontal: scaleSize(8),
+  width: "50%",
   },
   benefitIcon: {
-    fontSize: scaleSize(20),
-    marginRight: scaleSize(12),
-    width: scaleSize(24),
+  fontSize: scaleSize(16),
+  marginRight: scaleSize(10),
+  width: scaleSize(20),
   },
   benefitText: {
-    fontSize: scaleSize(15),
-    color: colors.textSecondary,
-    flex: 1,
+  fontSize: scaleSize(13),
+  color: colors.textSecondary,
+  flex: 1,
   },
   guestActions: {
-    width: "100%",
-    gap: scaleSize(12),
-    marginBottom: scaleSize(24),
+  width: "100%",
+  marginBottom: scaleSize(16),
+  // keep buttons side-by-side on all screen sizes per request
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
   },
   loginButton: {
-    backgroundColor: colors.secondary,
-    paddingVertical: scaleSize(16),
-    paddingHorizontal: scaleSize(32),
-    borderRadius: scaleSize(12),
-    elevation: 2,
-    shadowColor: colors.primaryLight,
-    shadowOffset: { width: 0, height: scaleSize(2) },
-    shadowOpacity: 0.08,
-    shadowRadius: scaleSize(4),
+  backgroundColor: colors.primary,
+  paddingVertical: scaleSize(12),
+  paddingHorizontal: scaleSize(14),
+  borderRadius: scaleSize(10),
+  elevation: 1,
+  shadowColor: colors.primaryLight,
+  shadowOffset: { width: 0, height: scaleSize(1) },
+  shadowOpacity: 0.06,
+  shadowRadius: scaleSize(2),
+  // make both buttons share available space
+  flex: 1,
+  marginRight: scaleSize(10),
+  alignSelf: "stretch",
   },
   loginButtonText: {
-    color: colors.primaryDark,
-    fontSize: scaleSize(16),
-    fontWeight: "600",
-    textAlign: "center",
+  color: colors.onPrimary || colors.background,
+  fontSize: scaleSize(14),
+  fontWeight: "700",
+  textAlign: "center",
   },
   signupButton: {
-    backgroundColor: colors.infoLight,
-    paddingVertical: scaleSize(16),
-    paddingHorizontal: scaleSize(32),
-    borderRadius: scaleSize(12),
-    borderWidth: 2,
-    borderColor: colors.infoBorder,
+  backgroundColor: colors.surface,
+  paddingVertical: scaleSize(12),
+  paddingHorizontal: scaleSize(14),
+  borderRadius: scaleSize(10),
+  borderWidth: 1,
+  borderColor: colors.border,
+  flex: 1,
+  alignSelf: "stretch",
   },
   signupButtonText: {
-    color: colors.info,
-    fontSize: scaleSize(16),
-    fontWeight: "600",
-    textAlign: "center",
+  color: colors.primary,
+  fontSize: scaleSize(14),
+  fontWeight: "700",
+  textAlign: "center",
   },
   guestBrowse: {
     alignItems: "center",
@@ -667,4 +743,5 @@ const getStyles = (colors) => StyleSheet.create({
     fontSize: scaleSize(16),
     fontWeight: "700",
   },
-});
+  });
+};
