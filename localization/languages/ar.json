@@ -606,7 +606,7 @@
     "itemCard": {
       "outOfStock": "نفد المخزون",
       "stock": "المخزون ({{count}})",
-      "lowStock": "المخزون منخفض ({{count}})"
+      "lowStock": "كمية قليلة ({{count}})"
     },
     "errors": {
       "notEnoughStock": "لا توجد كمية كافية في المخزون لإضافة هذا العنصر.",
