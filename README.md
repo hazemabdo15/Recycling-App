@@ -1,7 +1,7 @@
 ﻿# 🌱 Karakeeb - Smart Recycling Platform
 
 <div align="center">
-<img src="./assets/images/Karakeeb-logo.pn" alt="Karakeeb Logo" width="120" height="120" style="border-radius: 20px;" />
+<img src="./assets/images/Karakeeb-logo.png" alt="Karakeeb Logo" width="120" height="120" style="border-radius: 20px;" />
 
 <p><strong>Transforming waste into wealth through intelligent recycling solutions</strong></p>
 
