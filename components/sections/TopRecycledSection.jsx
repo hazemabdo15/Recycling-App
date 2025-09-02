@@ -210,21 +210,6 @@ const TopRecycledSection = memo(() => {
   useEffect(() => {
     fetchTopMaterials();
   }, [fetchTopMaterials]);
-
-  // Network monitoring for auto-retry
-  useEffect(() => {
-    const handleNetworkChange = (isOnline) => {
-      console.log("[TopRecycledSection] Network status changed:", isOnline);
-      // Only retry if we previously failed and now have connection
-      if (isOnline && hasFailedOnce && !loading) {
-        console.log(
-          "[TopRecycledSection] Auto-retrying data fetch after reconnection"
-        );
-        fetchTopMaterials();
-      }
-    };
-  }, [hasFailedOnce, loading, fetchTopMaterials]);
-
   // Helper function to get translated item name
   const getTranslatedItemName = useCallback(
     (item) => {
@@ -323,39 +308,39 @@ const TopRecycledSection = memo(() => {
           {topItems.map((item, index) => {
             return (
               <TouchableOpacity
-                key={item._id || index}
-                style={[
-                  styles.itemCard,
-                  index === topItems.length - 1 && { marginRight: 0 },
-                ]}
-                onPress={() => handleItemPress(item)}
-                activeOpacity={0.8}
+              key={item._id || index}
+              style={[
+                styles.itemCard,
+                index === topItems.length - 1 && { marginRight: 0 },
+              ]}
+              onPress={() => handleItemPress(item)}
+              activeOpacity={0.8}
               >
-                <View style={styles.rankBadge}>
-                  <Text style={styles.rankText}>#{index + 1}</Text>
-                </View>
-                {item.image ? (
-                  <Image
-                    source={{ uri: item.image }}
-                    style={styles.itemImage}
-                    resizeMode="cover"
-                  />
-                ) : null}
-                <Text style={styles.itemName}>
-                  {getTranslatedItemName(item)}
+              <View style={styles.rankBadge}>
+                <Text style={styles.rankText}>#{index + 1}</Text>
+              </View>
+              {item.image ? (
+                <Image
+                source={{ uri: item.image }}
+                style={styles.itemImage}
+                resizeMode="cover"
+                />
+              ) : null}
+              <Text style={styles.itemName}>
+                {getTranslatedItemName(item)}
+              </Text>
+              <View style={styles.statsContainer}>
+                <View style={styles.statItem}>
+                <MaterialCommunityIcons
+                  name="recycle"
+                  size={14}
+                  color={colors.primary}
+                />
+                <Text style={styles.recycleCount}>
+                  {item.totalQuantity} • {item.unit === "kg" ? t("units.kg") : item.unit === "pieces" ? t("units.piece") : ''}
                 </Text>
-                <View style={styles.statsContainer}>
-                  <View style={styles.statItem}>
-                    <MaterialCommunityIcons
-                      name="recycle"
-                      size={14}
-                      color={colors.primary}
-                    />
-                    <Text style={styles.recycleCount}>
-                      {item.totalQuantity} • {item.unit ? item.unit.toUpperCase() : ''}
-                    </Text>
-                  </View>
                 </View>
+              </View>
               </TouchableOpacity>
             );
           })}

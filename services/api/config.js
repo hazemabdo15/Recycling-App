@@ -21,8 +21,6 @@ export const BASE_URLS = {
 
 export const API_ENDPOINTS = {
 
-  HEALTH: `${API_BASE_URL}/health`,
-
   AUTH: {
     LOGIN: `${API_BASE_URL}/api/auth/login`,
     REGISTER_INIT: `${API_BASE_URL}/api/auth/initiateSignup`,
@@ -109,13 +107,6 @@ export const validateEndpoint = (url) => {
   }
 };
 
-export const NETWORK_CONFIG = {
-  timeout: apiConfig.timeout,
-  retryAttempts: apiConfig.retries,
-  retryDelay: 1000,
-  offlineRetryDelay: 5000,
-  connectionCheckUrl: `${API_BASE_URL}/health`,
-};
 
 export default {
   API_BASE_URL,
@@ -124,5 +115,4 @@ export default {
   API_CONFIG,
   TOKEN_CONFIG,
   INTERCEPTOR_CONFIG,
-  NETWORK_CONFIG,
 };
