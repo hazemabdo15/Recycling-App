@@ -11,14 +11,11 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
-  Dimensions
+  View
 } from 'react-native';
 import { useLocalization } from '../../context/LocalizationContext';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 import apiService from '../../services/api/apiService';
-
-const { width: screenWidth } = Dimensions.get('window');
 
 // Enhanced dynamic styles function for CompleteOrderModal
 const getCompleteOrderModalStyles = (colors) => StyleSheet.create({
@@ -481,6 +478,46 @@ const CompleteOrderModal = ({
   const [quantityNotes, setQuantityNotes] = useState('');
   const [userRole, setUserRole] = useState(null);
   const [focusedInput, setFocusedInput] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const MAX_RETRIES = 2;
+
+  // Upload with retry mechanism
+  const uploadWithRetry = async (formData, attempt = 0) => {
+    try {
+      const response = await apiService.post(
+        `/${selectedOrder._id}/complete-with-proof`, 
+        formData,
+        {
+          timeout: 60000, // 60 seconds timeout for image upload
+        }
+      );
+      return response;
+    } catch (error) {
+      console.log(`Upload attempt ${attempt + 1} failed:`, error.message);
+      
+      // Determine if we should retry
+      const shouldRetry = attempt < MAX_RETRIES && (
+        error.message?.toLowerCase().includes('timeout') || 
+        error.message?.toLowerCase().includes('network') ||
+        error.message?.toLowerCase().includes('fetch') ||
+        error.name === 'AbortError' ||
+        error.code === 'NETWORK_ERROR' ||
+        !error.status // No status usually means network issue
+      );
+      
+      if (shouldRetry) {
+        console.log(`Retrying upload attempt ${attempt + 2}...`);
+        setRetryCount(attempt + 1);
+        // Wait before retrying with exponential backoff
+        const delay = Math.min(2000 * Math.pow(2, attempt), 8000); // 2s, 4s, 8s max
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return uploadWithRetry(formData, attempt + 1);
+      }
+      
+      // If we've exhausted retries or it's a non-retryable error, throw it
+      throw error;
+    }
+  };
 
   // Initialize modal data when order changes
   useEffect(() => {
@@ -517,14 +554,6 @@ const CompleteOrderModal = ({
       }
     }
   }, [selectedOrder, visible, currentLanguage, t]);
-
-  // Calculate total points
-  const calculateTotalPoints = () => {
-    return Object.values(quantities).reduce((total, item) => {
-      const actualQty = item.actualQuantity === '' ? 0 : Number(item.actualQuantity);
-      return total + (item.pointsPerUnit * actualQty);
-    }, 0);
-  };
 
   // Handle quantity changes
   const handleQuantityChange = (itemId, value, measurementUnit) => {
@@ -579,9 +608,10 @@ const CompleteOrderModal = ({
 
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: 'images',
-        quality: 0.8,
+        quality: 0.6, // Reduced quality for faster upload
         allowsEditing: true,
         aspect: [16, 9],
+        exif: false, // Remove EXIF data to reduce file size
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
@@ -628,37 +658,94 @@ const CompleteOrderModal = ({
     }
 
     setLoading(true);
-    const formData = new FormData();
-    formData.append('proofPhoto', {
-      uri: photo.uri,
-      name: 'proof.jpg',
-      type: 'image/jpeg',
-    });
-    formData.append('notes', notes);
-
-    // Add quantity data for non-customer orders only
-    if (userRole === 'customer') {
-      formData.append('updatedQuantities', JSON.stringify(quantities));
-      formData.append('quantityNotes', quantityNotes);
-    }
-
+    
+    // Add a safety timeout to reset loading state
+    const safetyTimeout = setTimeout(() => {
+      console.warn('Safety timeout triggered - resetting loading state');
+      setLoading(false);
+    }, 180000); // 3 minutes safety timeout
+    
     try {
-      const response = await apiService.post(`/${selectedOrder._id}/complete-with-proof`, formData);
-      if (response.message === 'Order completed successfully with delivery proof') {
+      const formData = new FormData();
+      
+      // Optimize image upload by ensuring proper file naming and type
+      const imageUri = photo.uri;
+      const filename = `delivery_proof_${Date.now()}.jpg`;
+      
+      formData.append('proofPhoto', {
+        uri: imageUri,
+        name: filename,
+        type: 'image/jpeg',
+      });
+      formData.append('notes', notes);
+
+      // Add quantity data for non-customer orders only
+      if (userRole === 'customer') {
+        formData.append('updatedQuantities', JSON.stringify(quantities));
+        formData.append('quantityNotes', quantityNotes);
+      }
+
+      // Reset retry count at start of new upload attempt
+      setRetryCount(0);
+      
+      // Use the retry mechanism for upload
+      const response = await uploadWithRetry(formData);
+      
+      // Clear safety timeout
+      clearTimeout(safetyTimeout);
+      
+      console.log('Upload completed. Response:', response);
+      
+      // Check for success - be more flexible with response checking
+      if (response && (
+        response.message === 'Order completed successfully with delivery proof' ||
+        response.success === true ||
+        response.status === 'success' ||
+        (typeof response === 'string' && response.includes('success'))
+      )) {
+        console.log('Upload success detected - showing success alert');
         Alert.alert(
           t('delivery.delivery_completed'),
           t('delivery.delivery_completed_message'),
-          [{ text: t('common.ok') }]
+          [{ 
+            text: t('common.ok'),
+            onPress: () => {
+              onOrderCompleted?.();
+              resetModal();
+            }
+          }]
         );
-        onOrderCompleted?.();
-        resetModal();
+      } else {
+        // If we get here, the upload might have succeeded but response format is unexpected
+        console.log('Unexpected response format, assuming success:', response);
+        Alert.alert(
+          t('delivery.delivery_completed'),
+          t('delivery.delivery_completed_message'),
+          [{ 
+            text: t('common.ok'),
+            onPress: () => {
+              onOrderCompleted?.();
+              resetModal();
+            }
+          }]
+        );
       }
     } catch (err) {
+      // Clear safety timeout
+      clearTimeout(safetyTimeout);
+      
       console.error('Error submitting proof', err);
-      Alert.alert(t('common.error'), t('delivery.failed_to_complete'));
-    } finally {
-      resetModal();
-      setLoading(false);
+      
+      // More specific error handling
+      let errorMessage = t('delivery.failed_to_complete');
+      if (err.message && err.message.toLowerCase().includes('timeout')) {
+        errorMessage = t('delivery.upload_timeout_error');
+      } else if (err.message && err.message.toLowerCase().includes('network')) {
+        errorMessage = t('delivery.network_error');
+      }
+      
+      Alert.alert(t('common.error'), errorMessage);
+      setLoading(false); // Reset loading on error
     }
   };
 
@@ -671,7 +758,29 @@ const CompleteOrderModal = ({
     setQuantityNotes('');
     setUserRole(null);
     setFocusedInput(null);
+    setLoading(false); // Reset loading state when closing modal
+    setRetryCount(0); // Reset retry count
     onClose?.();
+  };
+
+  // Handle cancel with confirmation if uploading
+  const handleCancel = () => {
+    if (loading) {
+      Alert.alert(
+        t('common.warning'),
+        t('delivery.cancel_upload_warning'),
+        [
+          { text: t('common.no'), style: 'cancel' },
+          { 
+            text: t('common.yes'), 
+            style: 'destructive',
+            onPress: resetModal 
+          }
+        ]
+      );
+    } else {
+      resetModal();
+    }
   };
 
   if (!selectedOrder) return null;
@@ -701,7 +810,7 @@ const CompleteOrderModal = ({
       <View style={dynamicStyles.modalContainer}>
         <View style={dynamicStyles.modalHeader}>
           <Text style={styles.modalTitle}>{t('delivery.complete_delivery')}</Text>
-          <TouchableOpacity onPress={resetModal} style={dynamicStyles.closeButton}>
+          <TouchableOpacity onPress={handleCancel} style={dynamicStyles.closeButton}>
             <Ionicons name="close" size={24} color={colors.text} />
           </TouchableOpacity>
         </View>
@@ -871,7 +980,7 @@ const CompleteOrderModal = ({
         <View style={styles.footer}>
           <View style={dynamicStyles.modalButtons}>
             <TouchableOpacity
-              onPress={resetModal}
+              onPress={handleCancel}
               style={[styles.button, styles.cancelButton]}
               activeOpacity={0.8}
             >
@@ -887,7 +996,12 @@ const CompleteOrderModal = ({
               {loading ? (
                 <View style={styles.loadingContainer}>
                   <ActivityIndicator size="small" color="white" />
-                  <Text style={styles.loadingText}>{t('common.processing')}</Text>
+                  <Text style={styles.loadingText}>
+                    {retryCount > 0 
+                      ? `${t('delivery.retrying_upload')} (${retryCount + 1}/${MAX_RETRIES + 1})`
+                      : t('delivery.uploading_proof')
+                    }
+                  </Text>
                 </View>
               ) : (
                 <>

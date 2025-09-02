@@ -23,19 +23,19 @@ export const isStaging = () => getCurrentEnv() === ENV.STAGING;
 const API_CONFIGS = {
   [ENV.DEVELOPMENT]: {
     baseUrl:  "https://recycling-backend-2vxx.onrender.com", //"http://192.168.0.165:5000",
-    timeout: 15000,
+    timeout: 30000, // Increased from 15000 to 30000 for better image upload handling
     retries: 2,
     debug: true,
   },
   [ENV.STAGING]: {
     baseUrl: "https://recycling-backend-2vxx.onrender.com",
-    timeout: 10000,
+    timeout: 25000, // Increased from 10000 to 25000
     retries: 1,
     debug: true,
   },
   [ENV.PRODUCTION]: {
     baseUrl: "https://recycling-backend-2vxx.onrender.com",
-    timeout: 8000,
+    timeout: 20000, // Increased from 8000 to 20000
     retries: 1,
     debug: false,
   },
