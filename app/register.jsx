@@ -32,6 +32,7 @@ export default function RegisterScreen() {
         image: params.image || '',
         provider: 'google',
         idToken: params.idToken,
+        serverAuthCode: params.serverAuthCode || null,
       };
     }
     return null;
@@ -47,6 +48,7 @@ export default function RegisterScreen() {
         image: params.image || '',
         provider: 'google',
         idToken: params.idToken,
+        serverAuthCode: params.serverAuthCode || null,
       });
     }
   }, [isGoogleRegistration, params, registrationData]);
@@ -63,24 +65,54 @@ export default function RegisterScreen() {
 
     if (loading) return;
 
-    // Basic validation
-    if (!name || !email || !password || !confirmPassword || !role || !number) {
-      Alert.alert("Invalid input", "Please fill all fields correctly.");
-      return;
+    console.log('[Register] handleInitialRegister called with:', { 
+      name, email, role, number, 
+      isGoogle: registrationData?.provider === 'google',
+      hasPassword: !!password,
+      hasConfirmPassword: !!confirmPassword 
+    });
+
+    const isGoogleRegistration = registrationData?.provider === 'google';
+
+    // Basic validation - different for Google vs regular registration
+    if (isGoogleRegistration) {
+      // For Google registration: only validate name, email, role, and number
+      if (!name || !email || !role || !number) {
+        console.log('[Register] Google registration validation failed - missing fields');
+        Alert.alert("Invalid input", "Please fill all required fields.");
+        return;
+      }
+    } else {
+      // For regular registration: validate all fields including passwords
+      if (!name || !email || !password || !confirmPassword || !role || !number) {
+        console.log('[Register] Regular registration validation failed - missing fields');
+        Alert.alert("Invalid input", "Please fill all fields correctly.");
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        Alert.alert("Password mismatch", "Passwords do not match.");
+        return;
+      }
+
+      if (!validateEmail(email) || !validatePassword(password)) {
+        Alert.alert("Invalid input", "Please enter valid email and password.");
+        return;
+      }
     }
 
-    if (password !== confirmPassword) {
-      Alert.alert("Password mismatch", "Passwords do not match.");
-      return;
-    }
-
-    if (!validateEmail(email) || !validatePassword(password)) {
-      Alert.alert("Invalid input", "Please enter valid email and password.");
+    // For Google registration, only validate email format (no password validation needed)
+    if (isGoogleRegistration && !validateEmail(email)) {
+      Alert.alert("Invalid input", "Please enter a valid email address.");
       return;
     }
 
     // Store registration data
-    const userData = { name, email, number, password, role };
+    const userData = isGoogleRegistration 
+      ? { ...registrationData, number, role } // For Google, merge with existing data
+      : { name, email, number, password, role }; // For regular, use form data
+
+    console.log('[Register] Final userData:', userData);
     setRegistrationData(userData);
 
     // If delivery role, show additional form
@@ -155,22 +187,26 @@ export default function RegisterScreen() {
         }
 
         console.log('[Register] Starting Google registration...');
-        const response = await registerWithGoogle(userData.idToken, {
-          name: userData.name,
-          email: userData.email,
-          phoneNumber: userData.number,
-          role: userData.role,
-          imgUrl: userData.image,
-          ...(userData.licenseNumber && {
-            attachments: {
-              licenseNumber: userData.licenseNumber,
-              vehicleType: userData.vehicleType,
-              nationalId: userData.nationalId,
-              emergencyNumber: userData.emergencyNumber,
-              hasDeliveryImages: true,
-            }
-          })
-        });
+        const response = await registerWithGoogle(
+          userData.idToken, 
+          {
+            name: userData.name,
+            email: userData.email,
+            phoneNumber: userData.number,
+            role: userData.role,
+            imgUrl: userData.image,
+            ...(userData.licenseNumber && {
+              attachments: {
+                licenseNumber: userData.licenseNumber,
+                vehicleType: userData.vehicleType,
+                nationalId: userData.nationalId,
+                emergencyNumber: userData.emergencyNumber,
+                hasDeliveryImages: true,
+              }
+            })
+          },
+          userData.serverAuthCode // Pass server auth code as third parameter
+        );
 
         // Login the user after successful registration
         const { user, accessToken } = response;

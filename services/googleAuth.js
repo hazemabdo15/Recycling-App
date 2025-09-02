@@ -86,6 +86,7 @@ export const useGoogleAuth = () => {
         params: {
           id_token: idToken,
           access_token: userData.id || userData.email, // Fallback to email if ID not available
+          server_auth_code: userInfo.data?.serverAuthCode || null, // Include server auth code for registration
         },
         userData: {
           email: userData.email,
@@ -205,15 +206,28 @@ export const useGoogleAuth = () => {
     }
   }, []);
 
-  const registerWithGoogle = React.useCallback(async (idToken, additionalInfo) => {
+  const registerWithGoogle = React.useCallback(async (idToken, additionalInfo, serverAuthCode = null) => {
     try {
       console.log('[GoogleAuth] Registering new user with Google...');
+      console.log('[GoogleAuth] Using serverAuthCode:', !!serverAuthCode, 'idToken:', !!idToken);
+      
       const registrationData = {
         ...additionalInfo,
         provider: 'google',
-        idToken,
+        // Backend requires idToken field, but we can also provide serverAuthCode
+        idToken: idToken,
+        ...(serverAuthCode && { serverAuthCode }),
       };
 
+      console.log('[GoogleAuth] Registration payload keys:', Object.keys(registrationData));
+      console.log('[GoogleAuth] Registration data preview:', {
+        provider: registrationData.provider,
+        hasServerAuthCode: !!registrationData.serverAuthCode,
+        hasIdToken: !!registrationData.idToken,
+        name: registrationData.name,
+        email: registrationData.email
+      });
+      
       const response = await optimizedApiService.post('/auth/register', registrationData);
       console.log('[GoogleAuth] Registration successful:', response);
       return response;

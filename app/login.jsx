@@ -71,10 +71,15 @@ export default function LoginScreen() {
         }
       };
 
+      // Reset processing flags when screen comes into focus
+      console.log('[LoginScreen] useFocusEffect - resetting processing flags');
+      processedGoogleOnceRef.current = false;
+      isProcessingRef.current = false;
+
       checkUser();
       
-      // Reset processing flags when screen comes into focus
       return () => {
+        console.log('[LoginScreen] useFocusEffect cleanup - resetting processing flags');
         processedGoogleOnceRef.current = false;
         isProcessingRef.current = false;
       };
@@ -123,6 +128,9 @@ export default function LoginScreen() {
           // New user, redirect to registration with Google data
           console.log('[LoginScreen] New Google user, redirecting to registration...');
           const idToken = authResponse.params?.id_token || authResponse.params?.access_token;
+          const serverAuthCode = authResponse.params?.server_auth_code;
+          
+          console.log('[LoginScreen] Available auth data - idToken:', !!idToken, 'serverAuthCode:', !!serverAuthCode);
           
           // Clear the response before navigation to prevent re-processing
           clearResponse?.();
@@ -135,6 +143,7 @@ export default function LoginScreen() {
               name: backendResponse.user.name,
               image: backendResponse.user.image,
               idToken: idToken,
+              serverAuthCode: serverAuthCode || '', // Pass server auth code
             },
           });
         }
@@ -213,9 +222,12 @@ export default function LoginScreen() {
   }, [processGoogleResponse, login, refreshDeliveryStatus, logout, recoverFromDismiss, getAuthState, extractTokensFromUrl, clearResponse]);
   
   useEffect(() => {
+    console.log('🔄 [LoginScreen] useEffect triggered with response:', response, 'processed flag:', processedGoogleOnceRef.current);
+    
     if (!response) {
       // Reset processing flag when response is cleared
       processedGoogleOnceRef.current = false;
+      console.log('🔄 [LoginScreen] Response is null, reset processed flag');
       return;
     }
     
@@ -298,6 +310,12 @@ export default function LoginScreen() {
     
     try {
       console.log('[LoginScreen] Starting Google login...');
+      
+      // Reset processing flags before starting new Google sign-in
+      console.log('[LoginScreen] Resetting processing flags before Google sign-in');
+      processedGoogleOnceRef.current = false;
+      isProcessingRef.current = false;
+      
       await handleGoogleLogin();
     } catch (error) {
       console.error('[LoginScreen] Google login initiation error:', error);

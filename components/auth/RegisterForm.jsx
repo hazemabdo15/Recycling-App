@@ -26,25 +26,27 @@ const RegisterForm = ({ onSubmit, loading, initialData = {} }) => {
 
     const isGoogleRegistration = initialData?.provider === 'google';
 
-    // Debug logging for initial data
-    console.log('[RegisterForm] Component rendered with initialData:', initialData);
-    console.log('[RegisterForm] Form field values - name:', name, 'email:', email, 'isGoogle:', isGoogleRegistration);
-
-    // Update form fields when initialData changes
+    // Debug logging for initial data (only log when initialData changes, not on every render)
     useEffect(() => {
-        if (initialData?.name) {
+        console.log('[RegisterForm] Component rendered with initialData:', initialData);
+        console.log('[RegisterForm] Form field values - name:', name, 'email:', email, 'isGoogle:', isGoogleRegistration);
+    }, [initialData, name, email, isGoogleRegistration]);
+
+    // Update form fields when initialData changes (optimize to prevent excessive updates)
+    useEffect(() => {
+        if (initialData?.name && name !== initialData.name) {
             console.log('[RegisterForm] Updating name field:', initialData.name);
             setName(initialData.name);
         }
-        if (initialData?.email) {
+        if (initialData?.email && email !== initialData.email) {
             console.log('[RegisterForm] Updating email field:', initialData.email);
             setEmail(initialData.email);
         }
-        if (initialData?.number) {
+        if (initialData?.number && number !== initialData.number) {
             console.log('[RegisterForm] Updating number field:', initialData.number);
             setNumber(initialData.number);
         }
-    }, [initialData?.name, initialData?.email, initialData?.number]);
+    }, [initialData?.name, initialData?.email, initialData?.number, name, email, number]);
 
     return (
         <View style={styles.container}>
@@ -247,7 +249,14 @@ const RegisterForm = ({ onSubmit, loading, initialData = {} }) => {
                     {/* Register Button */}
                     <Pressable
                         disabled={loading}
-                        onPress={() => onSubmit({ name, number, email, password, confirmPassword, role })}
+                        onPress={() => {
+                            console.log('[RegisterForm] Form submission - values:', { 
+                                name, number, email, password: password ? '***' : 'empty', 
+                                confirmPassword: confirmPassword ? '***' : 'empty', 
+                                role, isGoogleRegistration 
+                            });
+                            onSubmit({ name, number, email, password, confirmPassword, role });
+                        }}
                         style={[styles.registerButton, loading && styles.registerButtonDisabled]}
                         android_ripple={{ color: 'rgba(255,255,255,0.2)' }}
                     >
