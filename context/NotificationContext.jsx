@@ -37,6 +37,7 @@ export const NotificationProvider = ({ children }) => {
   const isConnecting = useRef(false);
   const hasInitialized = useRef(null);
   const lastRefreshTime = useRef(0);
+  const isInitializing = useRef(false);
 
   // Helper function to get localized notification content
   const getLocalizedNotification = useCallback((notification) => {
@@ -68,6 +69,11 @@ export const NotificationProvider = ({ children }) => {
     
     if (timeSinceLastRefresh < 5000) {
       console.log('🔒 Throttling refresh, too soon since last refresh');
+      return;
+    }
+
+    if (isInitializing.current) {
+      console.log('🔒 Skipping refresh during initialization');
       return;
     }
 
@@ -126,8 +132,15 @@ export const NotificationProvider = ({ children }) => {
         
         // Optimization 1: Parallel Operations - Run fetch and connect simultaneously
         console.log('🔄 [Optimization] Starting parallel operations: fetch + connect');
+        isInitializing.current = true; // Mark as initializing to prevent duplicate fetches
         doFetch(); // Start fetching notifications
         doConnect(); // Start socket connection simultaneously
+        
+        // Clear the initializing flag after a short delay
+        setTimeout(() => {
+          isInitializing.current = false;
+          console.log('✅ [Optimization] Initialization complete, socket events can now trigger refreshes');
+        }, 2000);
       }, 300); // Reduced from 1000ms to 300ms for faster pre-connection
       
       // Adjusted watchdog timer for faster retry (optimization 3: Pre-connect)
@@ -176,10 +189,12 @@ export const NotificationProvider = ({ children }) => {
 
   // Re-process notifications when language changes
   useEffect(() => {
-    if (notifications.length > 0) {
+    if (notifications.length > 0 && !isInitializing.current) {
       console.log('🌍 Language changed, re-processing notifications for language:', currentLanguage);
       // Re-fetch to get fresh localized content
       refreshNotifications();
+    } else if (isInitializing.current) {
+      console.log('🌍 Language effect skipped during initialization');
     }
   }, [currentLanguage, refreshNotifications, notifications.length]);
 
@@ -361,7 +376,11 @@ export const NotificationProvider = ({ children }) => {
         socketConnection.on('notification:new', (notification) => {
           console.log('📨 [NotificationSocket] Received new notification:', notification);
           // Handle incoming notification - refresh to get latest data
-          refreshNotifications();
+          if (!isInitializing.current) {
+            refreshNotifications();
+          } else {
+            console.log('🔒 [NotificationSocket] Skipping refresh during initialization');
+          }
         });
 
         socketConnection.on('notification:joined', (data) => {
@@ -386,19 +405,31 @@ export const NotificationProvider = ({ children }) => {
         // Listen for order status updates
         socketConnection.on('order_status', (data) => {
           console.log('📋 [NotificationSocket] Received order status update:', data);
-          refreshNotifications();
+          if (!isInitializing.current) {
+            refreshNotifications();
+          } else {
+            console.log('🔒 [NotificationSocket] Skipping refresh during initialization');
+          }
         });
 
         // Listen for system notifications
         socketConnection.on('system', (data) => {
           console.log('🔔 [NotificationSocket] Received system notification:', data);
-          refreshNotifications();
+          if (!isInitializing.current) {
+            refreshNotifications();
+          } else {
+            console.log('🔒 [NotificationSocket] Skipping refresh during initialization');
+          }
         });
 
         // Legacy event listeners for backward compatibility
         socketConnection.on('notification', (notification) => {
           console.log('📨 [NotificationSocket] Received legacy notification:', notification);
-          refreshNotifications();
+          if (!isInitializing.current) {
+            refreshNotifications();
+          } else {
+            console.log('🔒 [NotificationSocket] Skipping refresh during initialization');
+          }
         });
 
         const heartbeatInterval = setInterval(() => {
