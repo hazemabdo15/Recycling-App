@@ -359,12 +359,12 @@ export default function VoiceModal() {
       .toString()
       .padStart(2, "0")}`;
   };
-  
+
   // Improved responsive record button size and margin calculations
   const { height: screenHeight, width: screenWidth } = Dimensions.get("window");
   const isSmallScreen = screenHeight < 700 || screenWidth < 400;
   const isMediumScreen = screenHeight >= 700 && screenHeight < 900;
-  
+
   // Adaptive button sizing based on available space and screen size
   const recordButtonSize = isSmallScreen ? 60 : isMediumScreen ? 76 : 84;
   const recordButtonMargin = isSmallScreen ? 16 : isMediumScreen ? 20 : 24;
@@ -389,7 +389,7 @@ export default function VoiceModal() {
           style={[
             styles.modal,
             animatedModalStyle,
-            { 
+            {
               paddingTop: Math.max(insets.top + 20, 40), // Ensure minimum top padding
               paddingBottom: spacing.md, // Reduced since we handle bottom padding in controlsContainer
             },
@@ -598,13 +598,16 @@ export default function VoiceModal() {
                   </Text>
                 )}
               </View>
-              <View 
+              <View
                 style={[
                   styles.controlsContainer,
                   {
                     // Additional dynamic bottom padding to prevent overlap with navigation bar
-                    paddingBottom: Math.max(insets.bottom + spacing.lg, spacing.xl + 10),
-                  }
+                    paddingBottom: Math.max(
+                      insets.bottom + spacing.lg,
+                      spacing.xl + 10
+                    ),
+                  },
                 ]}
               >
                 {!recordedURI ? (
@@ -929,7 +932,7 @@ const getVoiceModalStyles = (colors, insets) =>
       paddingVertical: spacing.lg + 2,
       paddingHorizontal: spacing.xl,
       marginTop: spacing.md, // Add top margin for better spacing
-      marginBottom: spacing.md, // Add bottom margin to ensure clearance above navigation bar
+      marginBottom: spacing.md * 10000, // Add bottom margin to ensure clearance above navigation bar
       ...shadows.medium,
       elevation: 4,
     },
