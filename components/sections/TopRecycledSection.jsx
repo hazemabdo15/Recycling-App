@@ -361,7 +361,7 @@ const TopRecycledSection = memo(() => {
                       color={colors.primary}
                     />
                     <Text style={styles.recycleCount}>
-                      {item.totalQuantity}
+                      {item.totalQuantity} • {item.unit ? item.unit.toUpperCase() : ''}
                     </Text>
                   </View>
                 </View>
