@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from "expo-router";
+import { useEffect } from 'react';
 import DynamicStatusBar from '../components/common/DynamicStatusBar';
 import GlobalCartValidator from '../components/common/GlobalCartValidator';
 import GlobalToast from '../components/common/GlobalToast';
@@ -12,6 +13,7 @@ import { NotificationProvider } from '../context/NotificationContext';
 import { StockProvider } from '../context/StockContext';
 import { ThemeProvider } from '../context/ThemeContext';
 import '../localization/i18n'; // MUST BE THE FIRST IMPORT
+import { configureImagePerformance } from '../utils/imageOptimization';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -28,6 +30,11 @@ const queryClient = new QueryClient({
 });
 
 export default function RootLayout() {
+  // Initialize image performance optimizations
+  useEffect(() => {
+    configureImagePerformance();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>

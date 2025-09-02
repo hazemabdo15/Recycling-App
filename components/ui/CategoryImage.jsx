@@ -1,7 +1,8 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useState } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { getCategoryIcon } from '../../utils/categoryUtils';
+import { OptimizedImage } from '../../utils/imageOptimization';
 const borderRadius = {
   xs: 6,
   sm: 12,
@@ -39,10 +40,10 @@ const CategoryImage = ({
     return (
         <View style={[containerStyle, style]}>
             {imageUri && !imageError ? (
-                <Image
+                <OptimizedImage
                     source={{ uri: imageUri }}
                     style={styles.image}
-                    resizeMode="cover"
+                    contentFit="cover"
                     onError={handleImageError}
                     onLoad={handleImageLoad}
                 />
