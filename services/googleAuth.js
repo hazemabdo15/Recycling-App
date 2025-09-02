@@ -19,9 +19,20 @@ export const useGoogleAuth = () => {
   const [lastAuthError, setLastAuthError] = React.useState(null);
   const [isRetrying] = React.useState(false);
   const [response, setResponse] = React.useState(null);
+  
+  // Ref to prevent multiple simultaneous sign-in attempts
+  const isSigningInRef = React.useRef(false);
 
   // Native Google Sign-In function
-  const signIn = async () => {
+  const signIn = React.useCallback(async () => {
+    // Prevent multiple simultaneous sign-in attempts
+    if (isSigningInRef.current) {
+      console.log('🔄 [GoogleAuth] Sign-in already in progress, skipping');
+      return response;
+    }
+    
+    isSigningInRef.current = true;
+    
     try {
       console.log('🔄 [GoogleAuth] Starting native Google Sign-In...');
       
@@ -114,11 +125,14 @@ export const useGoogleAuth = () => {
       setLastAuthError(error);
       
       throw error;
+    } finally {
+      isSigningInRef.current = false;
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array is correct here as we don't want to recreate this function based on response state
 
   // Sign out function
-  const signOut = async () => {
+  const signOut = React.useCallback(async () => {
     try {
       await GoogleSignin.signOut();
       setResponse(null);
@@ -126,23 +140,103 @@ export const useGoogleAuth = () => {
     } catch (_error) {
       console.error('❌ [GoogleAuth] Sign out error:', _error);
     }
-  };
+  }, []);
 
   // Check if user is already signed in
-  const getCurrentUser = async () => {
+  const getCurrentUser = React.useCallback(async () => {
     try {
       const userInfo = await GoogleSignin.getCurrentUser();
       return userInfo;
     } catch (_error) {
       return null;
     }
-  };
+  }, []);
 
   // Legacy compatibility functions
   const handleGoogleLogin = signIn;
   const promptAsync = signIn;
 
   // Return the hook interface
+  const processGoogleResponse = React.useCallback(async (authResponse) => {
+    // Handle both normal success responses and extracted token responses
+    if (authResponse?.type !== 'success' && !authResponse?.userData) {
+      console.log('[GoogleAuth] Login cancelled or failed:', authResponse?.type);
+      return null;
+    }
+
+    try {
+      console.log('[GoogleAuth] Processing Google response...');
+      
+      // Handle extracted token response (from URL parsing)
+      if (authResponse.userData) {
+        console.log('[GoogleAuth] Processing extracted token response');
+        const { id_token } = authResponse.params;
+        
+        if (!id_token) {
+          throw new Error('No ID token in extracted response');
+        }
+
+        console.log('[GoogleAuth] Sending extracted ID token to backend...');
+        const backendResponse = await optimizedApiService.post('/auth/provider/google', {
+          idToken: id_token,
+        });
+
+        console.log('[GoogleAuth] Backend response for extracted token:', backendResponse);
+        return backendResponse;
+      }
+      
+      // Handle normal success response
+      const { id_token } = authResponse.params;
+      
+      if (!id_token) {
+        throw new Error('No ID token received from Google');
+      }
+
+      console.log('[GoogleAuth] Sending ID token to backend...');
+      const backendResponse = await optimizedApiService.post('/auth/provider/google', {
+        idToken: id_token,
+      });
+
+      console.log('[GoogleAuth] Backend response:', backendResponse);
+      return backendResponse;
+    } catch (error) {
+      console.error('[GoogleAuth] Error processing Google response:', error);
+      throw error;
+    }
+  }, []);
+
+  const registerWithGoogle = React.useCallback(async (idToken, additionalInfo) => {
+    try {
+      console.log('[GoogleAuth] Registering new user with Google...');
+      const registrationData = {
+        ...additionalInfo,
+        provider: 'google',
+        idToken,
+      };
+
+      const response = await optimizedApiService.post('/auth/register', registrationData);
+      console.log('[GoogleAuth] Registration successful:', response);
+      return response;
+    } catch (error) {
+      console.error('[GoogleAuth] Registration error:', error);
+      throw error;
+    }
+  }, []);
+
+  const getAuthState = React.useCallback(() => ({
+    attempts: authAttempts,
+    lastError: lastAuthError,
+    isRetrying
+  }), [authAttempts, lastAuthError, isRetrying]);
+
+  const recoverFromDismiss = signIn; // stable via useCallback
+  const extractTokensFromUrl = React.useCallback(() => null, []);
+  const clearResponse = React.useCallback(() => {
+    console.log('🧹 [GoogleAuth] Clearing response state');
+    setResponse(null);
+    setLastAuthError(null);
+  }, []);
+
   return {
     response,
     handleGoogleLogin,
@@ -150,78 +244,13 @@ export const useGoogleAuth = () => {
     signIn,
     signOut,
     getCurrentUser,
-    processGoogleResponse: async (authResponse) => {
-      // Handle both normal success responses and extracted token responses
-      if (authResponse?.type !== 'success' && !authResponse?.userData) {
-        console.log('[GoogleAuth] Login cancelled or failed:', authResponse?.type);
-        return null;
-      }
-
-      try {
-        console.log('[GoogleAuth] Processing Google response...');
-        
-        // Handle extracted token response (from URL parsing)
-        if (authResponse.userData) {
-          console.log('[GoogleAuth] Processing extracted token response');
-          const { id_token } = authResponse.params;
-          
-          if (!id_token) {
-            throw new Error('No ID token in extracted response');
-          }
-
-          console.log('[GoogleAuth] Sending extracted ID token to backend...');
-          const backendResponse = await optimizedApiService.post('/auth/provider/google', {
-            idToken: id_token,
-          });
-
-          console.log('[GoogleAuth] Backend response for extracted token:', backendResponse);
-          return backendResponse;
-        }
-        
-        // Handle normal success response
-        const { id_token } = authResponse.params;
-        
-        if (!id_token) {
-          throw new Error('No ID token received from Google');
-        }
-
-        console.log('[GoogleAuth] Sending ID token to backend...');
-        const backendResponse = await optimizedApiService.post('/auth/provider/google', {
-          idToken: id_token,
-        });
-
-        console.log('[GoogleAuth] Backend response:', backendResponse);
-        return backendResponse;
-      } catch (error) {
-        console.error('[GoogleAuth] Error processing Google response:', error);
-        throw error;
-      }
-    },
-    registerWithGoogle: async (idToken, additionalInfo) => {
-      try {
-        console.log('[GoogleAuth] Registering new user with Google...');
-        const registrationData = {
-          ...additionalInfo,
-          provider: 'google',
-          idToken,
-        };
-
-        const response = await optimizedApiService.post('/auth/register', registrationData);
-        console.log('[GoogleAuth] Registration successful:', response);
-        return response;
-      } catch (error) {
-        console.error('[GoogleAuth] Registration error:', error);
-        throw error;
-      }
-    },
-    getAuthState: () => ({
-      attempts: authAttempts,
-      lastError: lastAuthError,
-      isRetrying
-    }),
+    processGoogleResponse,
+    registerWithGoogle,
+    getAuthState,
     // Legacy compatibility
-    recoverFromDismiss: signIn,
-    extractTokensFromUrl: () => null, // Not needed with native implementation
+    recoverFromDismiss,
+    extractTokensFromUrl, // Not needed with native implementation
+    clearResponse,
   };
 };
 

@@ -1,7 +1,7 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Dimensions, I18nManager, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,6 +25,26 @@ const RegisterForm = ({ onSubmit, loading, initialData = {} }) => {
     const insets = useSafeAreaInsets();
 
     const isGoogleRegistration = initialData?.provider === 'google';
+
+    // Debug logging for initial data
+    console.log('[RegisterForm] Component rendered with initialData:', initialData);
+    console.log('[RegisterForm] Form field values - name:', name, 'email:', email, 'isGoogle:', isGoogleRegistration);
+
+    // Update form fields when initialData changes
+    useEffect(() => {
+        if (initialData?.name) {
+            console.log('[RegisterForm] Updating name field:', initialData.name);
+            setName(initialData.name);
+        }
+        if (initialData?.email) {
+            console.log('[RegisterForm] Updating email field:', initialData.email);
+            setEmail(initialData.email);
+        }
+        if (initialData?.number) {
+            console.log('[RegisterForm] Updating number field:', initialData.number);
+            setNumber(initialData.number);
+        }
+    }, [initialData?.name, initialData?.email, initialData?.number]);
 
     return (
         <View style={styles.container}>

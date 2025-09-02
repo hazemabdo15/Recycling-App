@@ -1,5 +1,5 @@
 import { router, useFocusEffect } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
 import LoginForm from "../components/auth/LoginForm";
 import { useAuth } from "../context/AuthContext";
@@ -17,8 +17,13 @@ export default function LoginScreen() {
     processGoogleResponse, 
     recoverFromDismiss, 
     getAuthState, 
-    extractTokensFromUrl 
+    extractTokensFromUrl,
+    clearResponse,
   } = useGoogleAuth();
+
+  // Track processed Google responses to avoid loops
+  const processedGoogleOnceRef = useRef(false);
+  const isProcessingRef = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -67,6 +72,12 @@ export default function LoginScreen() {
       };
 
       checkUser();
+      
+      // Reset processing flags when screen comes into focus
+      return () => {
+        processedGoogleOnceRef.current = false;
+        isProcessingRef.current = false;
+      };
     }, [deliveryStatus, isLoggedIn, refreshDeliveryStatus, user, logout])
   );
 
@@ -74,10 +85,18 @@ export default function LoginScreen() {
   const processGoogleAuthResponse = useCallback(async (authResponse) => {
     console.log('🔍 [LoginScreen] Processing auth response:', authResponse);
     
+    // Prevent concurrent processing
+    if (isProcessingRef.current) {
+      console.log('⚠️ [LoginScreen] Already processing a Google response, skipping');
+      return;
+    }
+    
     // Enhanced handling for success responses (including extracted token responses)
     if (authResponse?.type === 'success' || authResponse?.userData) {
       console.log('✅ [LoginScreen] Got successful Google response!');
+      isProcessingRef.current = true;
       setLoading(true);
+      
       try {
         console.log('[LoginScreen] Processing Google response...');
         const backendResponse = await processGoogleResponse(authResponse);
@@ -104,6 +123,10 @@ export default function LoginScreen() {
           // New user, redirect to registration with Google data
           console.log('[LoginScreen] New Google user, redirecting to registration...');
           const idToken = authResponse.params?.id_token || authResponse.params?.access_token;
+          
+          // Clear the response before navigation to prevent re-processing
+          clearResponse?.();
+          
           router.push({
             pathname: '/register',
             params: {
@@ -123,20 +146,26 @@ export default function LoginScreen() {
         );
       } finally {
         setLoading(false);
+        isProcessingRef.current = false;
+        // Clear response after handling to avoid re-processing loops
+        clearResponse?.();
       }
     } else if (authResponse?.type === 'error') {
       console.error('[LoginScreen] Google auth error:', authResponse.error);
       Alert.alert('Google Login Error', 'Authentication failed. Please try again.');
+      isProcessingRef.current = false;
     } else if (authResponse?.type === 'cancel') {
       console.log('⚠️ [LoginScreen] User cancelled Google login');
+      isProcessingRef.current = false;
     } else if (authResponse?.type === 'dismiss') {
       console.log('⚠️ [LoginScreen] Google login was dismissed - attempting recovery...');
       
       // Check if this is the special Metro disconnect case
       if (authResponse?.message === 'Metro disconnect detected') {
-  console.log('[LoginScreen] Metro disconnect case detected');
-  // No alert shown for Metro disconnect interruption
-  return;
+        console.log('[LoginScreen] Metro disconnect case detected');
+        isProcessingRef.current = false;
+        // No alert shown for Metro disconnect interruption
+        return;
       }
       
       // Enhanced dismiss handling with automatic recovery for cases with URL
@@ -150,13 +179,16 @@ export default function LoginScreen() {
             return await processGoogleAuthResponse(recoveredResponse);
           } else {
             console.log('[LoginScreen] Could not recover from dismissed auth');
+            isProcessingRef.current = false;
             // No alert shown for interrupted auth
           }
         } catch (recoveryError) {
           console.error('[LoginScreen] Error during dismiss recovery:', recoveryError);
+          isProcessingRef.current = false;
         }
       } else {
-  console.log('[LoginScreen] Dismiss without URL - development guidance (no alert)');
+        console.log('[LoginScreen] Dismiss without URL - development guidance (no alert)');
+        isProcessingRef.current = false;
       }
     } else if (authResponse) {
       console.log('🤔 [LoginScreen] Unexpected response type:', authResponse.type);
@@ -173,15 +205,34 @@ export default function LoginScreen() {
           return await processGoogleAuthResponse(extracted);
         }
       }
+      isProcessingRef.current = false;
     } else {
       console.log('🔍 [LoginScreen] Response is null/undefined');
+      isProcessingRef.current = false;
     }
-  }, [processGoogleResponse, login, refreshDeliveryStatus, logout, recoverFromDismiss, getAuthState, extractTokensFromUrl]);
+  }, [processGoogleResponse, login, refreshDeliveryStatus, logout, recoverFromDismiss, getAuthState, extractTokensFromUrl, clearResponse]);
   
   useEffect(() => {
-    if (response) {
-      processGoogleAuthResponse(response);
+    if (!response) {
+      // Reset processing flag when response is cleared
+      processedGoogleOnceRef.current = false;
+      return;
     }
+    
+    if (processedGoogleOnceRef.current) {
+      console.log('🔄 [LoginScreen] Google response already processed, skipping');
+      return;
+    }
+    
+    console.log('🔄 [LoginScreen] Processing new Google response');
+    processedGoogleOnceRef.current = true;
+    
+    processGoogleAuthResponse(response).catch((error) => {
+      console.error('[LoginScreen] Error in Google response processing:', error);
+      // Reset flag on error to allow retry
+      processedGoogleOnceRef.current = false;
+      isProcessingRef.current = false;
+    });
   }, [response, processGoogleAuthResponse]);
 
   const handleLogin = async ({ email, password }) => {

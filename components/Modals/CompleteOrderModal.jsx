@@ -826,7 +826,7 @@ const CompleteOrderModal = ({
           {/* Photo Section */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>
-              {userRole === 'customer' ? t('camera.collection_photo') : t('camera.delivery_photo')}
+              {userRole === 'customer' ? t('camera.collection_photo') : t('camera.take_delivery_photo')}
             </Text>
             
             {photo ? (

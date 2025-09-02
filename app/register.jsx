@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alert, View } from 'react-native';
 import RegisterForm from '../components/auth/RegisterForm';
 import { useAuth } from '../context/AuthContext';
@@ -15,14 +15,32 @@ export default function RegisterScreen() {
   const { registerWithGoogle } = useGoogleAuth();
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
-  const [registrationData, setRegistrationData] = useState(null);
+  
+  // Ref to prevent multiple registrations
+  const isProcessingRef = useRef(false);
 
   // Check if this is a Google registration flow
   const isGoogleRegistration = params?.provider === 'google';
-
-  useEffect(() => {
+  
+  // Initialize registration data immediately for Google registration
+  const [registrationData, setRegistrationData] = useState(() => {
     if (isGoogleRegistration && params) {
-      // Pre-fill registration data from Google
+      console.log('[RegisterScreen] Initializing Google registration data');
+      return {
+        name: params.name || '',
+        email: params.email || '',
+        image: params.image || '',
+        provider: 'google',
+        idToken: params.idToken,
+      };
+    }
+    return null;
+  });
+
+  // Fallback useEffect for any missing data (should rarely be needed now)
+  useEffect(() => {
+    if (isGoogleRegistration && params && !registrationData) {
+      console.log('[RegisterScreen] Setting up Google registration data via useEffect');
       setRegistrationData({
         name: params.name || '',
         email: params.email || '',
@@ -31,7 +49,7 @@ export default function RegisterScreen() {
         idToken: params.idToken,
       });
     }
-  }, [isGoogleRegistration, params]);
+  }, [isGoogleRegistration, params, registrationData]);
 
   const validateEmail = (email) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
@@ -119,6 +137,13 @@ export default function RegisterScreen() {
       return;
     }
 
+    // Prevent multiple simultaneous registration attempts
+    if (isProcessingRef.current) {
+      console.log('[Register] Registration already in progress, skipping');
+      return;
+    }
+
+    isProcessingRef.current = true;
     setLoading(true);
     
     try {
@@ -126,10 +151,10 @@ export default function RegisterScreen() {
       if (userData.provider === 'google') {
         if (!userData.name || !userData.email) {
           Alert.alert("Error", "Google registration data is incomplete. Please try again.");
-          setLoading(false);
           return;
         }
 
+        console.log('[Register] Starting Google registration...');
         const response = await registerWithGoogle(userData.idToken, {
           name: userData.name,
           email: userData.email,
@@ -151,6 +176,7 @@ export default function RegisterScreen() {
         const { user, accessToken } = response;
         await login(user, accessToken);
         
+        console.log('[Register] Google registration successful, redirecting...');
         if (user.role === "delivery") {
           router.replace("/waitingForApproval");
         } else {
@@ -188,6 +214,7 @@ export default function RegisterScreen() {
 
       Alert.alert("Success", "Registration initiated. Please check your email for the OTP.");
     } catch (error) {
+      console.error('[Register] Registration error:', error);
       const message = error?.response?.data?.message || error.message || '';
       if (message === "Email already registered") {
         Alert.alert("Error", "This email is already registered. Try logging in or use a different email.");
@@ -196,12 +223,14 @@ export default function RegisterScreen() {
       }
     } finally {
       setLoading(false);
+      isProcessingRef.current = false;
     }
   };
 
   const goBackToFirstStep = () => {
     setCurrentStep(1);
     setRegistrationData(null);
+    isProcessingRef.current = false; // Reset processing flag
   };
 
   return (
