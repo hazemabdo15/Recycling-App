@@ -13,7 +13,6 @@ import { useLocalization } from "../../context/LocalizationContext";
 import { useThemedStyles } from "../../hooks/useThemedStyles";
 import { orderService } from "../../services/api/orders";
 import coldStartHandler, { isColdStartError } from "../../utils/coldStartHandler";
-import networkUtils from "../../utils/networkUtils";
 import { scaleSize } from "../../utils/scale";
 import { extractNameFromMultilingual } from "../../utils/translationHelpers";
 
@@ -223,14 +222,6 @@ const TopRecycledSection = memo(() => {
         );
         fetchTopMaterials();
       }
-    };
-
-    // Start monitoring network status
-    networkUtils.startMonitoring();
-    const unsubscribe = networkUtils.addListener(handleNetworkChange);
-
-    return () => {
-      unsubscribe();
     };
   }, [hasFailedOnce, loading, fetchTopMaterials]);
 
