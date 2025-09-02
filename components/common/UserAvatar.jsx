@@ -1,4 +1,5 @@
-import { Image, Text, View } from 'react-native';
+import { Image } from 'expo-image';
+import { Text, View } from 'react-native';
 import { colors } from '../../styles/theme';
 
 const UserAvatar = ({ user, size = 40 }) => {
@@ -22,6 +23,10 @@ const UserAvatar = ({ user, size = 40 }) => {
                     borderRadius: size / 2,
                     backgroundColor: colors.base200,
                 }}
+                contentFit="cover"
+                cachePolicy="memory-disk"
+                placeholder={{ blurhash: 'LFE{?~%300_3~qRjRjof_3j[fQt7' }}
+                transition={200}
             />
         );
     }

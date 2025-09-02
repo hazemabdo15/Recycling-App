@@ -25,25 +25,7 @@ export async function clearAuthData() {
       const newSessionId = generateNewSessionId();
       await AsyncStorage.setItem("sessionId", newSessionId);
       
-      // Make a request to clear server-side session cookies
-      try {
-        await fetch(`${BASE_URL}/clear-session`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Cookie': `sessionId=${newSessionId}` // Use new session ID
-          },
-          credentials: 'include' // Include cookies in request
-        });
-        
-        if (!isProduction) {
-          logger.auth('Server-side session cleared');
-        }
-      } catch (clearError) {
-        if (!isProduction) {
-          logger.auth('Could not clear server session (non-critical)', { error: clearError.message }, 'WARN');
-        }
-      }
+      // Make a request to clear server-side session cookies  
       
       if (!isProduction) {
         logger.auth('Session ID regenerated on logout');

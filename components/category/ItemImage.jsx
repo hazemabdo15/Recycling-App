@@ -1,8 +1,9 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Image, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { getItemImageStyles } from '../../styles/components/categoryStyles';
+import { OptimizedImage } from '../../utils/imageOptimization';
 import { isBuyer } from '../../utils/roleUtils';
 
 const ItemImage = ({ imageUri, points, placeholder = "recycle" }) => {
@@ -13,10 +14,10 @@ const ItemImage = ({ imageUri, points, placeholder = "recycle" }) => {
     return (
         <View style={itemImageStyles.itemImageContainer}>
             {imageUri ? (
-                <Image
+                <OptimizedImage
                     source={{ uri: imageUri }}
                     style={itemImageStyles.itemImage}
-                    resizeMode="contain"
+                    contentFit="contain"
                 />
             ) : (
                 <View style={itemImageStyles.placeholderImage}>
