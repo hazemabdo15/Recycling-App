@@ -191,7 +191,8 @@ export const usePickupWorkflow = () => {
       cartItemCount: Object.keys(cartItemDetails || {}).length,
       orderOptions,
       isLocked: orderCreationLockRef.current,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      paymentIntentId: orderOptions.paymentIntentId // Track payment intent for duplicate prevention
     });
 
     if (!addressToUse) {
@@ -210,6 +211,22 @@ export const usePickupWorkflow = () => {
       const errorMsg = 'Cart is empty - cannot create order';
       console.error('[Pickup Workflow] Order creation failed - empty cart:', errorMsg);
       throw new Error(errorMsg);
+    }
+    
+    // ✅ Enhanced duplicate prevention for credit card payments
+    if (orderOptions.paymentIntentId) {
+      // Check if this payment intent has already been processed
+      if (!window.processedOrderIntents) {
+        window.processedOrderIntents = new Set();
+      }
+      
+      if (window.processedOrderIntents.has(orderOptions.paymentIntentId)) {
+        console.log('[Pickup Workflow] Order already created for payment intent:', orderOptions.paymentIntentId);
+        return; // Silently return without creating duplicate
+      }
+      
+      // Mark this payment intent as being processed
+      window.processedOrderIntents.add(orderOptions.paymentIntentId);
     }
     
     // Set the lock to prevent concurrent executions
@@ -317,7 +334,20 @@ export const usePickupWorkflow = () => {
     } finally {
       console.log('[Pickup Workflow] ==> Cleaning up order creation (finally block)');
       setLoading(false);
-      orderCreationLockRef.current = false; // Reset lock when done
+      
+      // ✅ Enhanced cleanup with delay for credit card payments
+      if (orderOptions.paymentIntentId) {
+        // For credit card payments, delay the lock reset to prevent rapid duplicate attempts
+        setTimeout(() => {
+          orderCreationLockRef.current = false;
+          console.log('[Pickup Workflow] ==> Order creation lock reset after delay');
+        }, 2000); // 2 second delay for credit card payments
+      } else {
+        // For other payment methods, reset immediately
+        orderCreationLockRef.current = false;
+        console.log('[Pickup Workflow] ==> Order creation lock reset immediately');
+      }
+      
       console.log('[Pickup Workflow] ==> Order creation cleanup completed');
     }
   }, [selectedAddress, user, cartItemDetails, currentPhase, stockQuantities]);

@@ -24,10 +24,10 @@ export const stripeService = {
       }
 
       const successUrl = Linking.createURL(
-        "pickup?phase=confirmation&payment=success"
+        "pickup?payment=success"
       );
       const cancelUrl = Linking.createURL(
-        "pickup?phase=review&payment=cancelled"
+        "pickup?payment=cancelled"
       );
 
       const payload = {

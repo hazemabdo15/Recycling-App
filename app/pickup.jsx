@@ -4,13 +4,13 @@ import * as Linking from "expo-linking";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    Alert,
-    Animated,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Animated,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -20,12 +20,11 @@ import ReviewPhase from "../components/pickup/ReviewPhase";
 import { useAuth } from "../context/AuthContext";
 import { useLocalization } from "../context/LocalizationContext";
 import { useCart } from "../hooks/useCart";
-import { useCartValidation } from "../hooks/useCartValidation";
 import { usePickupWorkflow } from "../hooks/usePickupWorkflow";
 import { useThemedStyles } from "../hooks/useThemedStyles";
 import { isAuthenticated } from "../services/auth";
 import { spacing, typography } from "../styles/theme";
-import { isBuyer } from "../utils/roleUtils";
+import { paymentDeduplicationManager } from "../utils/paymentDeduplication";
 import { scaleSize } from "../utils/scale";
 import { workflowStateUtils } from "../utils/workflowStateUtils";
 
@@ -42,23 +41,11 @@ export default function Pickup() {
   } = useAuth();
   const { cartItems } = useCart(user);
   
-  // Add cart validation for critical pickup screen - DISABLED during order flow to prevent conflicts
-  const { validateCart, quickValidateCart } = useCartValidation({
-    validateOnFocus: false, // Disabled to prevent interference with payment flow
-    validateOnAppActivation: false, // Disabled - handled by GlobalCartValidator with payment flow check
-    autoCorrect: false, // DISABLED - Don't auto-correct during order completion to prevent conflicts
-    showMessages: false, // DISABLED - Don't show messages during order flow to prevent confusion
-    source: 'pickupScreen'
-  });
-  
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState(null);
   const [dialogShown, setDialogShown] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
-  const [, setCreatingOrder] = useState(false);
   
-  // Add flag to prevent multiple deep link processing
-  const isProcessingPaymentRef = useRef(false);
   const deepLinkTimeoutRef = useRef(null);
 
   // Animation for loading spinner  
@@ -132,147 +119,186 @@ export default function Pickup() {
     cartItemDetails = {},
   } = workflowHook || {};
 
-  const handleDeepLink = useCallback(
-    async (event) => {
-      const urlObj = new URL(event.url);
-      const paymentStatus = urlObj.searchParams.get("payment");
-      const paymentIntentId = urlObj.searchParams.get("payment_intent");
+  // Stable refs for deep link handling to prevent multiple handlers
+  const deepLinkDataRef = useRef({
+    selectedAddress,
+    createOrder,
+    setCurrentPhase,
+    setSelectedAddress,
+    workflowHook
+  });
 
-      // Only process payment-related URLs
-      const isPaymentRelatedURL =
-        paymentStatus ||
-        paymentIntentId ||
-        event.url.includes("canceled=true") ||
-        event.url.includes("cancelled=true");
+  // Get cart clearing function
+  const { handleClearCart } = useCart(user);
 
-      if (!isPaymentRelatedURL) {
-        return;
-      }
+  // Update refs when dependencies change
+  useEffect(() => {
+    deepLinkDataRef.current = {
+      selectedAddress,
+      createOrder,
+      setCurrentPhase,
+      setSelectedAddress,
+      workflowHook,
+      handleClearCart
+    };
+  }, [selectedAddress, createOrder, setCurrentPhase, setSelectedAddress, workflowHook, handleClearCart]);
 
-      if (paymentStatus === "success" || paymentIntentId) {
-        // Prevent multiple processing of the same payment
-        if (isProcessingPaymentRef.current) {
-          return;
+  // Stable deep link handler that uses refs
+  const stableHandleDeepLink = useCallback(async (event) => {
+    const {
+      selectedAddress: currentSelectedAddress,
+      createOrder: currentCreateOrder,
+      setCurrentPhase: currentSetCurrentPhase,
+      setSelectedAddress: currentSetSelectedAddress,
+      handleClearCart: currentHandleClearCart,
+    } = deepLinkDataRef.current;
+
+    const urlObj = new URL(event.url);
+    const paymentStatus = urlObj.searchParams.get("payment");
+    const paymentIntentId = urlObj.searchParams.get("payment_intent");
+    const sessionId = urlObj.searchParams.get("session_id");
+
+    // Only process payment-related URLs
+    const isPaymentRelatedURL =
+      paymentStatus ||
+      paymentIntentId ||
+      sessionId ||
+      event.url.includes("canceled=true") ||
+      event.url.includes("cancelled=true");
+
+    if (!isPaymentRelatedURL) {
+      console.log("[Pickup] Non-payment URL, ignoring:", event.url);
+      return;
+    }
+
+    console.log("[Pickup] Processing payment deep link:", event.url);
+    console.log("[Pickup] Payment parameters:", { paymentStatus, paymentIntentId, sessionId });
+
+    // Generate payment key for deduplication
+    const paymentKey = paymentIntentId || sessionId || `${paymentStatus}_${Date.now()}`;
+
+    try {
+      paymentDeduplicationManager.startProcessing(paymentKey);
+      console.log("[Pickup] Processing payment deep link:", paymentKey);
+
+      if (paymentStatus === "success") {
+        // Successful payment - create order
+        console.log("[Pickup] Payment successful, creating order...");
+        
+        // ✅ Immediately set phase to confirmation to prevent ReviewPhase flash
+        if (currentSetCurrentPhase) {
+          console.log("[Pickup] Setting phase to confirmation immediately to prevent ReviewPhase flash");
+          currentSetCurrentPhase(3);
         }
         
-        // Clear any existing timeout
-        if (deepLinkTimeoutRef.current) {
-          clearTimeout(deepLinkTimeoutRef.current);
-        }
-        
-        // Add small delay to prevent race conditions with button clicks
-        deepLinkTimeoutRef.current = setTimeout(async () => {
-          if (isProcessingPaymentRef.current) {
-            return;
-          }
+        if (!currentSelectedAddress) {
+          console.log(
+            "[Pickup] No selected address found in deep link handler, attempting to restore from saved workflow state"
+          );
           
-          isProcessingPaymentRef.current = true;
-          
-          try {
-            setCreatingOrder(true);
-            
-            // ✅ Immediately set to confirmation phase for better UX
-            if (setCurrentPhase) {
-              setCurrentPhase(3);
+          const savedState = await workflowStateUtils.getWorkflowState();
+          if (savedState?.selectedAddress) {
+            console.log("[Pickup] Restored address from saved state:", savedState.selectedAddress);
+            if (currentSetSelectedAddress) {
+              currentSetSelectedAddress(savedState.selectedAddress);
             }
-
-            // ✅ Check if we have address in workflow state, if not try to restore from previous state
-            let addressToUse = selectedAddress;
-            if (!addressToUse) {
-              console.warn(
-                "No selected address found in deep link handler, attempting to restore from saved workflow state"
-              );
-              // Try to restore from saved workflow state
-              const savedState = await workflowStateUtils.restoreWorkflowState();
-              if (savedState && savedState.selectedAddress) {
-                addressToUse = savedState.selectedAddress;
-                setSelectedAddress(savedState.selectedAddress);
-              } else {
-                console.error("No address found in workflow state either");
-                // ✅ Fallback: Try to get the most recently created address
-                if (workflowHook && workflowHook.addresses && workflowHook.addresses.length > 0) {
-                  const mostRecentAddress = workflowHook.addresses[workflowHook.addresses.length - 1];
-                  addressToUse = mostRecentAddress;
-                  setSelectedAddress(mostRecentAddress);
-                } else {
-                  throw new Error("Please select your delivery address and try again");
+            // Use the restored address for order creation
+            try {
+              const orderResult = await currentCreateOrder({
+                address: savedState.selectedAddress,
+                paymentMethod: "credit-card",
+                paymentIntentId: paymentIntentId || sessionId, // Use either payment_intent or session_id
+              });
+              console.log("[Pickup] Deep link order created", orderResult);
+              
+              // Clear cart after successful order creation
+              if (currentHandleClearCart) {
+                console.log("[Pickup] Clearing cart after successful order creation");
+                try {
+                  await currentHandleClearCart();
+                  console.log("[Pickup] Cart cleared successfully");
+                } catch (clearError) {
+                  console.error("[Pickup] Failed to clear cart:", clearError);
                 }
               }
+            } catch (orderError) {
+              console.error("[Pickup] Order creation failed:", orderError);
+              // On error, go back to review phase
+              if (currentSetCurrentPhase) {
+                console.log("[Pickup] Order creation failed, returning to review phase");
+                currentSetCurrentPhase(2);
+              }
+              Alert.alert("Order Failed", "Failed to create order. Please try again.");
             }
-
-            // ✅ Single order creation call through unified workflow
-            // Only pass paymentMethod if user is a buyer
-            let orderOptions = {
-              paymentStatus: "success",
-              paymentIntentId,
-              address: addressToUse, // Pass the address directly
-            };
-            if (isBuyer(user)) {
-              orderOptions = {
-                ...orderOptions,
-                paymentMethod: "credit-card",
-              };
-            } else {
-              // Remove paymentMethod if present for customers
-              if (orderOptions.paymentMethod) delete orderOptions.paymentMethod;
+          } else {
+            console.error("[Pickup] No saved address state found, cannot proceed");
+            // On error, go back to review phase
+            if (currentSetCurrentPhase) {
+              console.log("[Pickup] No address found, returning to review phase");
+              currentSetCurrentPhase(2);
             }
-            console.log('[Pickup] Creating order with options:', orderOptions, 'User role:', user?.role);
-            const orderResult = await createOrder(orderOptions);
-
-            console.log("Deep link order created", {
-              orderId: orderResult?._id || orderResult?.data?._id,
-              hasOrderData: !!orderResult,
-            });
-
-            // ✅ Order data should now be properly stored in workflow hook
-            // Phase is already set to 3 at the beginning of this block
-          } catch (error) {
-            console.error("Deep link order failed", { error: error.message });
-
-            // Enhanced error handling for specific cases
-            if (error.message.includes("Please select an address first")) {
-              Alert.alert(
-                "Address Required",
-                "Please select your delivery address and try again.",
-                [
-                  {
-                    text: "Select Address",
-                    onPress: () => {
-                      if (setCurrentPhase) {
-                        setCurrentPhase(1); // Go back to address selection
-                      }
-                    },
-                  },
-                ]
-              );
-            } else {
-              Alert.alert(
-                "Order Status Unclear",
-                "There was an issue processing your order. Please check your order history.",
-                [{ text: "OK" }]
-              );
-            }
-          } finally {
-            setCreatingOrder(false);
-            isProcessingPaymentRef.current = false; // Reset the flag
+            Alert.alert(
+              "Error",
+              "Unable to complete order. Please try again."
+            );
           }
-        }, 300); // Small delay to prevent race conditions
+        } else {
+          try {
+            const orderResult = await currentCreateOrder({
+              address: currentSelectedAddress,
+              paymentMethod: "credit-card",
+              paymentIntentId: paymentIntentId || sessionId, // Use either payment_intent or session_id
+            });
+            console.log("[Pickup] Deep link order created", orderResult);
+            
+            // Clear cart after successful order creation
+            if (currentHandleClearCart) {
+              console.log("[Pickup] Clearing cart after successful order creation");
+              try {
+                await currentHandleClearCart();
+                console.log("[Pickup] Cart cleared successfully");
+              } catch (clearError) {
+                console.error("[Pickup] Failed to clear cart:", clearError);
+              }
+            }
+          } catch (orderError) {
+            console.error("[Pickup] Order creation failed:", orderError);
+            // On error, go back to review phase
+            if (currentSetCurrentPhase) {
+              console.log("[Pickup] Order creation failed, returning to review phase");
+              currentSetCurrentPhase(2);
+            }
+            Alert.alert("Order Failed", "Failed to create order. Please try again.");
+          }
+        }
       } else if (
+        paymentStatus === "cancelled" ||
         event.url.includes("canceled=true") ||
         event.url.includes("cancelled=true")
       ) {
         Alert.alert("Payment Cancelled", "Your payment was cancelled.");
-        if (setCurrentPhase) {
-          setCurrentPhase(2); // Back to review
+        if (currentSetCurrentPhase) {
+          currentSetCurrentPhase(2); // Back to review
         }
       }
-    },
-    [selectedAddress, user, createOrder, setCurrentPhase, setSelectedAddress, workflowHook]
-  );
 
+      paymentDeduplicationManager.completeProcessing(paymentKey, true);
+    } catch (error) {
+      console.error("[Pickup] Deep link processing error:", error);
+      paymentDeduplicationManager.completeProcessing(paymentKey, false);
+      
+      // Only show error if it's not a duplicate processing error
+      if (!error.message?.includes("already being processed")) {
+        Alert.alert("Error", "Failed to process payment. Please try again.");
+      }
+    }
+  }, []); // Empty dependency array - uses refs for data
+
+  // Set up deep link handler only once
   useEffect(() => {
-    console.log("INFO", "Setting up deep link handler");
+    console.log("INFO", "Setting up stable deep link handler");
 
+    // Handle initial URL
     Linking.getInitialURL()
       .then((url) => {
         if (url) {
@@ -284,16 +310,10 @@ export default function Pickup() {
             url.includes("cancelled=true");
 
           if (isPaymentURL) {
-            console.log(
-              "INFO",
-              "Initial URL appears to be payment-related, processing..."
-            );
-            handleDeepLink({ url });
+            console.log("INFO", "Initial URL appears to be payment-related, processing...");
+            stableHandleDeepLink({ url });
           } else {
-            console.log(
-              "INFO",
-              "Initial URL is not payment-related, skipping deep link processing"
-            );
+            console.log("INFO", "Initial URL is not payment-related, skipping deep link processing");
           }
         } else {
           console.log("INFO", "No initial URL found");
@@ -303,14 +323,14 @@ export default function Pickup() {
         console.log("ERROR", "Failed to get initial URL:", error.message);
       });
 
-    console.log("INFO", "Setting up deep link handler");
-    const subscription = Linking.addEventListener("url", handleDeepLink);
+    // Set up listener
+    const subscription = Linking.addEventListener("url", stableHandleDeepLink);
 
     return () => {
-      console.log("INFO", "Cleaning up deep link handler");
+      console.log("INFO", "Cleaning up stable deep link handler");
       subscription?.remove();
     };
-  }, [handleDeepLink]);
+  }, [stableHandleDeepLink]); // Include stableHandleDeepLink dependency
 
   useEffect(() => {
     // Phase changed - handle any side effects here if needed
@@ -429,11 +449,12 @@ export default function Pickup() {
   }, [authError, dialogShown, isFocused]);
 
   useEffect(() => {
+    const currentTimeoutId = deepLinkTimeoutRef.current;
     return () => {
       reset();
       // Cleanup timeout if component unmounts
-      if (deepLinkTimeoutRef.current) {
-        clearTimeout(deepLinkTimeoutRef.current);
+      if (currentTimeoutId) {
+        clearTimeout(currentTimeoutId);
       }
     };
   }, [reset]);
