@@ -57,7 +57,7 @@ try {
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 // Improved modal height calculation for better content distribution
-const MODAL_HEIGHT = SCREEN_HEIGHT * 0.85; // Increased from 0.75 to 0.85 for more space
+const MODAL_HEIGHT = SCREEN_HEIGHT * 0.75; // Further reduced for very small screens like 360x664
 const DISMISS_THRESHOLD = 150;
 export default function VoiceModal() {
   const { colors } = useThemedStyles();
@@ -362,15 +362,22 @@ export default function VoiceModal() {
   
   // Improved responsive record button size and margin calculations
   const { height: screenHeight, width: screenWidth } = Dimensions.get("window");
+  const isVerySmallScreen = screenHeight <= 664 && screenWidth <= 360; // Target specific screen size
   const isSmallScreen = screenHeight < 700 || screenWidth < 400;
   const isMediumScreen = screenHeight >= 700 && screenHeight < 900;
   
   // Adaptive button sizing based on available space and screen size
-  const recordButtonSize = isSmallScreen ? 60 : isMediumScreen ? 76 : 84;
-  const recordButtonMargin = isSmallScreen ? 16 : isMediumScreen ? 20 : 24;
+  const recordButtonSize = isVerySmallScreen ? 56 : isSmallScreen ? 60 : isMediumScreen ? 76 : 84;
+  const recordButtonMargin = isVerySmallScreen ? 12 : isSmallScreen ? 16 : isMediumScreen ? 20 : 24;
+
+  // Calculate safe bottom padding for different screen sizes
+  const safeBottomPadding = Math.max(
+    insets.bottom + (isVerySmallScreen ? spacing.md : isSmallScreen ? spacing.lg : spacing.xl), 
+    isVerySmallScreen ? 24 : isSmallScreen ? 30 : 40
+  );
 
   // Generate dynamic styles
-  const styles = getVoiceModalStyles(colors, insets);
+  const styles = getVoiceModalStyles(colors, insets, isSmallScreen, isVerySmallScreen);
 
   return (
     <GestureHandlerRootView style={styles.container}>
@@ -391,7 +398,7 @@ export default function VoiceModal() {
             animatedModalStyle,
             { 
               paddingTop: Math.max(insets.top + 20, 40), // Ensure minimum top padding
-              paddingBottom: spacing.md, // Reduced since we handle bottom padding in controlsContainer
+              paddingBottom: safeBottomPadding, // Use calculated safe bottom padding
             },
           ]}
         >
@@ -602,8 +609,8 @@ export default function VoiceModal() {
                 style={[
                   styles.controlsContainer,
                   {
-                    // Additional dynamic bottom padding to prevent overlap with navigation bar
-                    paddingBottom: Math.max(insets.bottom + spacing.lg, spacing.xl + 10),
+                    // Reduced bottom padding since we now handle it at modal level
+                    paddingBottom: spacing.sm,
                   }
                 ]}
               >
@@ -736,7 +743,7 @@ export default function VoiceModal() {
 }
 
 // Dynamic styles function for VoiceModal
-const getVoiceModalStyles = (colors, insets) =>
+const getVoiceModalStyles = (colors, insets, isSmallScreen = false, isVerySmallScreen = false) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -818,10 +825,10 @@ const getVoiceModalStyles = (colors, insets) =>
       flex: 1,
       justifyContent: "center", // Changed from flex-start for better centering
       alignItems: "center",
-      paddingVertical: spacing.lg,
-      paddingTop: spacing.xl,
-      minHeight: 220, // Increased minimum height
-      maxHeight: 350, // Increased maximum height constraint
+      paddingVertical: isVerySmallScreen ? spacing.sm : spacing.lg,
+      paddingTop: isVerySmallScreen ? spacing.md : spacing.xl,
+      minHeight: isVerySmallScreen ? 140 : isSmallScreen ? 180 : 220, // Much smaller for 360x664
+      maxHeight: isVerySmallScreen ? 200 : isSmallScreen ? 280 : 350, // Responsive maximum height constraint
     },
     waveformContainer: {
       alignItems: "center",
@@ -864,7 +871,7 @@ const getVoiceModalStyles = (colors, insets) =>
     },
     recordingControls: {
       alignItems: "center",
-      paddingVertical: spacing.xl,
+      paddingVertical: isVerySmallScreen ? spacing.lg : spacing.xl,
     },
     recordButton: {
       justifyContent: "center",
@@ -881,8 +888,8 @@ const getVoiceModalStyles = (colors, insets) =>
       lineHeight: 22,
     },
     playbackContainer: {
-      paddingVertical: spacing.lg,
-      paddingBottom: spacing.xl, // Extra bottom padding for send button
+      paddingVertical: isVerySmallScreen ? spacing.sm : spacing.lg,
+      paddingBottom: isVerySmallScreen ? spacing.xs : isSmallScreen ? spacing.md : spacing.xl, // Very compact for small screens
     },
     playbackControls: {
       flexDirection: "row",
@@ -890,17 +897,17 @@ const getVoiceModalStyles = (colors, insets) =>
       justifyContent: "space-between",
       backgroundColor: colors.base100,
       borderRadius: borderRadius.lg,
-      paddingVertical: spacing.xl,
-      paddingHorizontal: spacing.xl,
-      marginBottom: spacing.xl,
+      paddingVertical: isVerySmallScreen ? spacing.lg : spacing.xl,
+      paddingHorizontal: isVerySmallScreen ? spacing.lg : spacing.xl,
+      marginBottom: isVerySmallScreen ? spacing.md : spacing.xl,
       ...shadows.small,
       borderWidth: 1,
       borderColor: colors.base200,
     },
     controlButton: {
-      width: 56,
-      height: 56,
-      borderRadius: 28,
+      width: isVerySmallScreen ? 48 : 56,
+      height: isVerySmallScreen ? 48 : 56,
+      borderRadius: isVerySmallScreen ? 24 : 28,
       backgroundColor: colors.white,
       justifyContent: "center",
       alignItems: "center",
@@ -926,10 +933,10 @@ const getVoiceModalStyles = (colors, insets) =>
       justifyContent: "center",
       backgroundColor: colors.primary,
       borderRadius: borderRadius.lg,
-      paddingVertical: spacing.lg + 2,
-      paddingHorizontal: spacing.xl,
-      marginTop: spacing.md, // Add top margin for better spacing
-      marginBottom: spacing.md, // Add bottom margin to ensure clearance above navigation bar
+      paddingVertical: isVerySmallScreen ? spacing.sm + 4 : isSmallScreen ? spacing.md + 2 : spacing.lg + 2, // Much smaller for very small screens
+      paddingHorizontal: isVerySmallScreen ? spacing.lg : spacing.xl,
+      marginTop: isVerySmallScreen ? spacing.xs : spacing.md, // Reduced margins
+      marginBottom: 0, // Remove bottom margin to save space
       ...shadows.medium,
       elevation: 4,
     },
@@ -946,73 +953,73 @@ const getVoiceModalStyles = (colors, insets) =>
     },
     promptContainer: {
       alignItems: "center",
-      paddingHorizontal: spacing.md,
+      paddingHorizontal: isVerySmallScreen ? spacing.sm : spacing.md,
       flex: 1,
       justifyContent: "center", // Changed to center for better layout
-      paddingTop: spacing.md,
-      paddingBottom: spacing.lg,
-      maxHeight: 320, // Add constraint to prevent overflow
+      paddingTop: isVerySmallScreen ? spacing.xs : spacing.md,
+      paddingBottom: isVerySmallScreen ? spacing.sm : spacing.lg,
+      maxHeight: isVerySmallScreen ? 180 : isSmallScreen ? 260 : 320, // Much smaller for 360x664
     },
     aiAvatar: {
-      width: 70,
-      height: 70,
-      borderRadius: 35,
+      width: isVerySmallScreen ? 56 : 70,
+      height: isVerySmallScreen ? 56 : 70,
+      borderRadius: isVerySmallScreen ? 28 : 35,
       backgroundColor: colors.base100,
       justifyContent: "center",
       alignItems: "center",
-      marginBottom: spacing.md,
+      marginBottom: isVerySmallScreen ? spacing.sm : spacing.md,
       ...shadows.medium,
       borderWidth: 2,
       borderColor: colors.primary + "20",
     },
     promptTitle: {
       ...typography.title,
-      fontSize: 18,
+      fontSize: isVerySmallScreen ? 16 : 18,
       fontWeight: "600",
       color: colors.black,
       textAlign: "center",
-      marginBottom: spacing.sm,
-      lineHeight: 24,
+      marginBottom: isVerySmallScreen ? spacing.xs : spacing.sm,
+      lineHeight: isVerySmallScreen ? 20 : 24,
     },
     examplesContainer: {
-      width: 300, // Fixed width for better proportions
-      maxWidth: 320, // Reduced maximum width
-      marginBottom: spacing.md,
+      width: isVerySmallScreen ? 260 : isSmallScreen ? 280 : 300, // Much smaller for 360x664
+      maxWidth: isVerySmallScreen ? 280 : isSmallScreen ? 300 : 320, // Responsive maximum width
+      marginBottom: isVerySmallScreen ? spacing.xs : spacing.md,
     },
     examplesLabel: {
       ...typography.subtitle,
-      fontSize: 14,
+      fontSize: isVerySmallScreen ? 12 : 14,
       fontWeight: "600",
       color: colors.neutral,
       textAlign: "center",
-      marginBottom: spacing.sm,
+      marginBottom: isVerySmallScreen ? spacing.xs : spacing.sm,
     },
     examplesList: {
-      gap: spacing.sm,
+      gap: isVerySmallScreen ? spacing.xs : spacing.sm,
     },
     examplesRow: {
       flexDirection: "row",
-      gap: spacing.sm,
-      marginBottom: spacing.sm,
+      gap: isVerySmallScreen ? spacing.xs : spacing.sm,
+      marginBottom: isVerySmallScreen ? spacing.xs : spacing.sm,
     },
     exampleItem: {
       flex: 1,
       flexDirection: "row",
       alignItems: "center",
       backgroundColor: colors.base100,
-      paddingVertical: spacing.md,
-      paddingHorizontal: spacing.md,
+      paddingVertical: isVerySmallScreen ? spacing.xs : isSmallScreen ? spacing.sm : spacing.md, // Very compact
+      paddingHorizontal: isVerySmallScreen ? spacing.xs : isSmallScreen ? spacing.sm : spacing.md,
       borderRadius: borderRadius.md,
       ...shadows.small,
-      minHeight: 50,
+      minHeight: isVerySmallScreen ? 38 : isSmallScreen ? 45 : 50, // Much smaller for 360x664
     },
     exampleText: {
       ...typography.body,
-      fontSize: 11,
+      fontSize: isVerySmallScreen ? 10 : 11,
       color: colors.neutral,
       marginLeft: spacing.xs,
       flex: 1,
-      lineHeight: 14,
+      lineHeight: isVerySmallScreen ? 12 : 14,
     },
     tapHint: {
       ...typography.subtitle,
