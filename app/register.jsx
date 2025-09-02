@@ -219,7 +219,6 @@ export default function RegisterScreen() {
           router.replace("/home");
         }
         
-        Alert.alert("Success", "Registration successful! Welcome!");
         return;
       }
 
