@@ -370,7 +370,7 @@ export default function VoiceModal() {
   const recordButtonMargin = isSmallScreen ? 16 : isMediumScreen ? 20 : 24;
 
   // Generate dynamic styles
-  const styles = getVoiceModalStyles(colors);
+  const styles = getVoiceModalStyles(colors, insets);
 
   return (
     <GestureHandlerRootView style={styles.container}>
@@ -391,7 +391,7 @@ export default function VoiceModal() {
             animatedModalStyle,
             { 
               paddingTop: Math.max(insets.top + 20, 40), // Ensure minimum top padding
-              paddingBottom: Math.max(insets.bottom + spacing.lg, spacing.xl), // Ensure safe area coverage
+              paddingBottom: spacing.md, // Reduced since we handle bottom padding in controlsContainer
             },
           ]}
         >
@@ -598,7 +598,15 @@ export default function VoiceModal() {
                   </Text>
                 )}
               </View>
-              <View style={styles.controlsContainer}>
+              <View 
+                style={[
+                  styles.controlsContainer,
+                  {
+                    // Additional dynamic bottom padding to prevent overlap with navigation bar
+                    paddingBottom: Math.max(insets.bottom + spacing.lg, spacing.xl + 10),
+                  }
+                ]}
+              >
                 {!recordedURI ? (
                   <View style={styles.recordingControls}>
                     <Reanimated.View style={recordingButtonStyle}>
@@ -728,7 +736,7 @@ export default function VoiceModal() {
 }
 
 // Dynamic styles function for VoiceModal
-const getVoiceModalStyles = (colors) =>
+const getVoiceModalStyles = (colors, insets) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -852,7 +860,6 @@ const getVoiceModalStyles = (colors) =>
     },
     controlsContainer: {
       paddingTop: spacing.lg,
-      paddingBottom: spacing.md, // Increased padding
       marginTop: "auto", // Push controls to bottom
     },
     recordingControls: {
@@ -875,6 +882,7 @@ const getVoiceModalStyles = (colors) =>
     },
     playbackContainer: {
       paddingVertical: spacing.lg,
+      paddingBottom: spacing.xl, // Extra bottom padding for send button
     },
     playbackControls: {
       flexDirection: "row",
@@ -921,6 +929,7 @@ const getVoiceModalStyles = (colors) =>
       paddingVertical: spacing.lg + 2,
       paddingHorizontal: spacing.xl,
       marginTop: spacing.md, // Add top margin for better spacing
+      marginBottom: spacing.md, // Add bottom margin to ensure clearance above navigation bar
       ...shadows.medium,
       elevation: 4,
     },

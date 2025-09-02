@@ -165,9 +165,9 @@ export const orderService = {
         ? `/top-materials-recycled?category=${encodeURIComponent(category)}`
         : '/top-materials-recycled';
       
-      // Add timeout to prevent long loading times
+      // Use a longer timeout for potential cold starts
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Request timeout')), 5000);
+        setTimeout(() => reject(new Error('Request timeout')), 15000); // Increased to 15 seconds
       });
       
       const fetchPromise = apiService.get(url);
@@ -178,12 +178,9 @@ export const orderService = {
     } catch (error) {
       console.error('[Order Service] Failed to fetch top materials:', error.message);
       
-      // Return fallback data structure for offline scenarios
-      return {
-        success: false,
-        data: [],
-        message: 'Unable to load data. Please check your internet connection.'
-      };
+      // Don't return fallback data here - let the cold start handler deal with it
+      // This allows the retry mechanism to work properly
+      throw error;
     }
   },
 

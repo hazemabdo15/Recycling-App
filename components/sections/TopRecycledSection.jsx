@@ -12,6 +12,7 @@ import {
 import { useLocalization } from "../../context/LocalizationContext";
 import { useThemedStyles } from "../../hooks/useThemedStyles";
 import { orderService } from "../../services/api/orders";
+import coldStartHandler, { isColdStartError } from "../../utils/coldStartHandler";
 import networkUtils from "../../utils/networkUtils";
 import { scaleSize } from "../../utils/scale";
 import { extractNameFromMultilingual } from "../../utils/translationHelpers";
@@ -134,40 +135,77 @@ const TopRecycledSection = memo(() => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [hasFailedOnce, setHasFailedOnce] = useState(false);
+  const [retryAttempt, setRetryAttempt] = useState(0);
+  const [isColdStart, setIsColdStart] = useState(false);
 
-  // Function to fetch top materials
+  // Function to fetch top materials with cold start handling
   const fetchTopMaterials = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await orderService.getTopMaterials();
+      setRetryAttempt(0);
+      setIsColdStart(false);
 
-      if (res?.success) {
-        setTopItems(res.data || []);
+      const result = await coldStartHandler.executeWithRetry(
+        'top-materials',
+        () => orderService.getTopMaterials(),
+        {
+          maxRetries: 3,
+          onColdStartDetected: () => {
+            console.log('[TopRecycledSection] Cold start detected, warming up server...');
+            setIsColdStart(true);
+            setError(t('topRecycled.coldStartMessage', 'Server is starting up, please wait...'));
+          },
+          onRetry: (attempt, delay, isColdStartError) => {
+            console.log(`[TopRecycledSection] Retry attempt ${attempt}, delay: ${delay}ms, cold start: ${isColdStartError}`);
+            setRetryAttempt(attempt);
+            setError(
+              isColdStartError 
+                ? t('topRecycled.retryingColdStart', `Server warming up... Retrying in ${Math.ceil(delay/1000)}s (${attempt}/3)`)
+                : t('topRecycled.retrying', `Retrying... (${attempt}/3)`)
+            );
+          },
+          fallbackData: {
+            success: false,
+            data: [],
+            message: t('topRecycled.serverUnavailable', 'Server is temporarily unavailable. Please try again later.')
+          }
+        }
+      );
+
+      if (result?.success) {
+        setTopItems(result.data || []);
         setError(null);
         setHasFailedOnce(false);
+        setIsColdStart(false);
       } else if (
-        res?.data &&
-        Array.isArray(res.data) &&
-        res.data.length === 0
+        result?.data &&
+        Array.isArray(result.data) &&
+        result.data.length === 0
       ) {
         // Handle offline case with empty data but no error message
         setTopItems([]);
-        setError(res.message || "No data available");
+        setError(result.message || t('topRecycled.noData', 'No data available'));
         setHasFailedOnce(true);
       } else {
         setTopItems([]);
-        setError("Failed to load data");
+        setError(result.message || t('topRecycled.loadFailed', 'Failed to load data'));
         setHasFailedOnce(true);
       }
-    } catch (_err) {
+    } catch (err) {
+      console.error('[TopRecycledSection] Final error after all retries:', err);
       setTopItems([]);
-      setError("Failed to load data");
+      setError(
+        isColdStartError(err)
+          ? t('topRecycled.coldStartFailed', 'Server is not responding. Please try again in a few minutes.')
+          : t('topRecycled.loadFailed', 'Failed to load data')
+      );
       setHasFailedOnce(true);
     } finally {
       setLoading(false);
+      setRetryAttempt(0);
     }
-  }, []);
+  }, [t]);
 
   // Initial load
   useEffect(() => {
@@ -240,14 +278,41 @@ const TopRecycledSection = memo(() => {
             marginVertical: 16,
           }}
         >
-          Loading...
+          {isColdStart 
+            ? t('topRecycled.warmingUp', 'Warming up server...') 
+            : retryAttempt > 0 
+              ? t('topRecycled.retrying', `Retrying... (${retryAttempt}/3)`)
+              : t('topRecycled.loading', 'Loading...')
+          }
         </Text>
       ) : error ? (
-        <Text
-          style={{ textAlign: "center", color: "#dc2626", marginVertical: 16 }}
-        >
-          {error}
-        </Text>
+        <View style={{ alignItems: 'center', marginVertical: 16 }}>
+          <Text
+            style={{ 
+              textAlign: "center", 
+              color: isColdStart ? colors.warning : "#dc2626", 
+              marginBottom: 8 
+            }}
+          >
+            {error}
+          </Text>
+          {hasFailedOnce && (
+            <TouchableOpacity
+              onPress={fetchTopMaterials}
+              style={{
+                backgroundColor: colors.primary,
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+                borderRadius: 8,
+                marginTop: 4,
+              }}
+            >
+              <Text style={{ color: colors.white, fontWeight: '600' }}>
+                {t('topRecycled.tryAgain', 'Try Again')}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
       ) : topItems.length === 0 ? (
         <Text
           style={{

@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import apiService from '../../services/api/apiService';
 import { isAuthenticated } from '../../services/auth';
 import logger from '../../utils/logger';
+import { warmupServer } from '../../utils/serverWarmup';
 import SplashScreenComponent from './SplashScreen';
 
 SplashScreen.preventAutoHideAsync().catch(() => {
@@ -63,6 +64,13 @@ const SplashController = ({ children, onDataLoaded }) => {
 
       updateProgress(10, 'Setting up connections...');
       await apiService.initialize();
+      
+      // Attempt server warmup in background (don't block initialization)
+      updateProgress(15, 'Warming up server...');
+      warmupServer().catch(error => {
+        logger.warn('Server warmup failed during initialization', { error: error.message }, 'SPLASH');
+      });
+      
       await new Promise(resolve => setTimeout(resolve, __DEV__ ? 500 : 300));
 
       updateProgress(30, 'Verifying authentication...');

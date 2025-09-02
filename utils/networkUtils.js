@@ -16,24 +16,48 @@ class NetworkUtils {
 
   /**
    * Check if the device has internet connectivity
+   * Enhanced to better handle cold starts
    * @returns {Promise<boolean>}
    */
   async checkConnectivity() {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      const timeoutId = setTimeout(() => controller.abort(), 8000); // Increased timeout for cold starts
       
+      // Try a simple health check first
       const response = await fetch(`${API_BASE_URL}/health`, {
         method: 'HEAD',
         signal: controller.signal,
-        cache: 'no-cache'
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+        }
       });
       
       clearTimeout(timeoutId);
       return response.ok;
     } catch (error) {
       console.log('[NetworkUtils] Connectivity check failed:', error.message);
-      return false;
+      
+      // For cold start scenarios, we might get timeouts or connection refused
+      // Try a fallback check with a public endpoint
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        
+        const response = await fetch('https://httpbin.org/status/200', {
+          method: 'HEAD',
+          signal: controller.signal,
+          cache: 'no-cache'
+        });
+        
+        clearTimeout(timeoutId);
+        // If we can reach the internet but not our API, it might be a cold start
+        return response.ok;
+      } catch (_fallbackError) {
+        console.log('[NetworkUtils] Fallback connectivity check also failed');
+        return false;
+      }
     }
   }
 

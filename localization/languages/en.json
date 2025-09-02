@@ -151,6 +151,18 @@
     "welcomeTitle": "Welcome to Karakeeb",
     "trendingTitle": "Trending This Week",
     "trendingSubtitle": "Most recycled items in your area",
+    "topRecycled": {
+      "loading": "Loading...",
+      "warmingUp": "Warming up server...",
+      "retrying": "Retrying...",
+      "tryAgain": "Try Again",
+      "noData": "No data available",
+      "loadFailed": "Failed to load data",
+      "coldStartMessage": "Server is starting up, please wait...",
+      "retryingColdStart": "Server warming up... Retrying...",
+      "coldStartFailed": "Server is not responding. Please try again in a few minutes.",
+      "serverUnavailable": "Server is temporarily unavailable. Please try again later."
+    },
     "quickActions": "Quick Actions",
     "schedulePickup": "Schedule Pickup",
     "browseItems": "Browse Items",
