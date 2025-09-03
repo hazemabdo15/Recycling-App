@@ -16,6 +16,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Loader from "../components/common/Loader";
 import { useLocalization } from "../context/LocalizationContext";
 import { useThemedStyles } from "../hooks/useThemedStyles";
 import { useWallet } from "../hooks/useWallet";
@@ -222,10 +223,9 @@ export default function EWallet() {
 
   if (loading) {
     return (
-      <View style={[styles.container, styles.centered]}>
+      <View style={styles.container}>
         <StatusBar style="dark" backgroundColor="#ffffff" />
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Loading wallet...</Text>
+        <Loader />
       </View>
     );
   }
@@ -390,11 +390,6 @@ const getStyles = (colors) => StyleSheet.create({
   centered: {
     justifyContent: "center",
     alignItems: "center",
-  },
-  loadingText: {
-    marginTop: spacing.sm,
-    color: colors.textSecondary,
-    fontSize: scaleSize(16),
   },
   header: {
     paddingTop: 32,
