@@ -16,27 +16,48 @@ export const useCategories = () => {
       console.log('[useCategories] Fetching categories for role:', user?.role || 'customer');
       const data = await categoriesAPI.getAllCategories(user?.role || "customer");
       console.log("[useAPI] Fetched categories:", data);
-      const categoriesData = data.data || [];
+      
+      // Handle new response format with success flag and fallback data
+      let categoriesData;
+      let isUsingFallback = false;
+      
+      if (data.success === false) {
+        // Using fallback data due to server issues
+        console.log('[useCategories] ⚠️ Using fallback data:', data.message);
+        categoriesData = data.data || [];
+        isUsingFallback = true;
+      } else {
+        // Normal successful response
+        categoriesData = data.data || data || [];
+      }
 
-      // Extract and update stock quantities from category items
-      const stockUpdates = {};
-      categoriesData.forEach((category) => {
-        if (category.items && Array.isArray(category.items)) {
-          category.items.forEach((item) => {
-            if (item._id && typeof item.quantity === "number") {
-              stockUpdates[item._id] = item.quantity;
-            }
-          });
+      if (isUsingFallback) {
+        console.log('[useCategories] 📦 Processed', categoriesData.length, 'fallback categories');
+      } else {
+        console.log('[useCategories] ✅ Processed', categoriesData.length, 'categories from server');
+      }
+
+      // Extract and update stock quantities from category items (only for non-fallback data)
+      if (!isUsingFallback) {
+        const stockUpdates = {};
+        categoriesData.forEach((category) => {
+          if (category.items && Array.isArray(category.items)) {
+            category.items.forEach((item) => {
+              if (item._id && typeof item.quantity === "number") {
+                stockUpdates[item._id] = item.quantity;
+              }
+            });
+          }
+        });
+
+        if (Object.keys(stockUpdates).length > 0) {
+          console.log(
+            "🔄 [useCategories] Updating stock context with fresh API data:",
+            Object.keys(stockUpdates).length,
+            "items"
+          );
+          updateBulkStock(stockUpdates);
         }
-      });
-
-      if (Object.keys(stockUpdates).length > 0) {
-        console.log(
-          "🔄 [useCategories] Updating stock context with fresh API data:",
-          Object.keys(stockUpdates).length,
-          "items"
-        );
-        updateBulkStock(stockUpdates);
       }
 
       return categoriesData;
@@ -68,11 +89,30 @@ export const useAllItems = () => {
       console.log('[useAllItems] 🚀 SINGLE FETCH for all items (role:', user?.role || 'customer', ')');
       const data = await categoriesAPI.getAllItems(user?.role || 'customer');
 
-      const itemsArray = data.data?.items || data.items;
-      const processedItems = Array.isArray(itemsArray) ? itemsArray : [];
+      // Handle new response format with success flag and fallback data
+      let itemsArray;
+      let isUsingFallback = false;
+      
+      if (data.success === false) {
+        // Using fallback data due to server issues
+        console.log('[useAllItems] ⚠️ Using fallback data:', data.message);
+        itemsArray = data.data?.items || data.data || [];
+        isUsingFallback = true;
+      } else {
+        // Normal successful response
+        itemsArray = data.data?.items || data.items || data.data || [];
+      }
 
-      // Update stock context with fresh stock data from API
-      if (processedItems.length > 0) {
+      const processedItems = Array.isArray(itemsArray) ? itemsArray : [];
+      
+      if (isUsingFallback) {
+        console.log('[useAllItems] 📦 Processed', processedItems.length, 'fallback items');
+      } else {
+        console.log('[useAllItems] ✅ Processed', processedItems.length, 'items from server');
+      }
+
+      // Update stock context with fresh stock data from API (only for non-fallback data)
+      if (processedItems.length > 0 && !isUsingFallback) {
         const stockUpdates = {};
         processedItems.forEach((item) => {
           if (item._id && typeof item.quantity === "number") {

@@ -21,8 +21,15 @@
             "CFBundleURLSchemes": [
               "com.recyclecrew.karakeeb"
             ]
+          },
+          {
+            "CFBundleURLName": "com.recyclecrew.karakeeb.oauth",
+            "CFBundleURLSchemes": [
+              "com.recyclecrew.karakeeb"
+            ]
           }
-        ]
+        ],
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {

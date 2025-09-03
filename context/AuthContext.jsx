@@ -2,6 +2,7 @@
 import optimizedApiService from "../services/api/apiService";
 import { isAuthenticated, logoutUser } from "../services/auth";
 import { clearSession, getAccessToken, getLoggedInUser, setLoggedInUser, setAccessToken as storeAccessToken } from '../utils/authUtils';
+import { smartWarmServer } from '../utils/serverWarming';
 
 const AuthContext = createContext(null);
 
@@ -139,10 +140,28 @@ export function AuthProvider({ children }) {
             console.log('[AuthContext] Setting delivery status from stored user:', normalizedUser.deliveryStatus);
             setDeliveryStatus(normalizedUser.deliveryStatus);
           }
+          
+          // Warm up server in background after successful auth
+          console.log('[AuthContext] Starting server warming for role:', normalizedUser.role);
+          smartWarmServer({ 
+            role: normalizedUser.role || 'customer', 
+            silent: true 
+          }).catch(error => {
+            console.log('[AuthContext] Server warming failed (non-critical):', error.message);
+          });
         } else {
           console.log('[AuthContext] Missing user or token, staying logged out');
           console.log('[AuthContext] - User present:', !!normalizedUser);
           console.log('[AuthContext] - Token present:', !!storedToken);
+          
+          // Even for guests, try to warm the server with default role
+          console.log('[AuthContext] Starting server warming for guest user');
+          smartWarmServer({ 
+            role: 'customer', 
+            silent: true 
+          }).catch(error => {
+            console.log('[AuthContext] Server warming failed (non-critical):', error.message);
+          });
         }
       } catch (error) {
         console.error("[AuthContext] Error loading stored user:", error);
@@ -239,6 +258,15 @@ export function AuthProvider({ children }) {
       
       setIsLoggedIn(true);
       console.log('[AuthContext] Login state set to true');
+      
+      // Warm up server for the newly logged in user
+      console.log('[AuthContext] Starting server warming after login for role:', userData?.role);
+      smartWarmServer({ 
+        role: userData?.role || 'customer', 
+        silent: true 
+      }).catch(error => {
+        console.log('[AuthContext] Server warming after login failed (non-critical):', error.message);
+      });
       
       console.log('[AuthContext] Login completed successfully');
       console.log('[AuthContext] Final user state:', userData);

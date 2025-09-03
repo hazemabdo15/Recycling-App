@@ -1407,6 +1407,32 @@
       "noItemsStockLimitations": "No items could be added due to stock limitations",
       "noItemsAdded": "No items could be added",
       "addToCartError": "Failed to add items to cart. Please try again."
+    },
+    "coldStart": {
+      "warming": {
+        "title": "Server Starting",
+        "message": "Server is starting up, please wait...",
+        "retry": "Warming up server and retrying..."
+      },
+      "retrying": {
+        "title": "Retrying Connection",
+        "message": "Attempting to reconnect...",
+        "general": "Retrying... ({{attempt}}/3)",
+        "coldStart": "Server warming up... Retrying in {{seconds}}s ({{attempt}}/3)"
+      },
+      "error": {
+        "title": "Connection Issue",
+        "server": "Server is not responding. Please try again in a few minutes.",
+        "general": "Failed to load data",
+        "retryFailed": "Retry failed. Please check your connection."
+      },
+      "fallback": {
+        "message": "Server is temporarily unavailable. Please try again in a few moments."
+      },
+      "default": {
+        "title": "Please Wait"
+      },
+      "retry": "Try Again"
     }
   }
 }
