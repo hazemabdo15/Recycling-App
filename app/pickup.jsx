@@ -192,57 +192,58 @@ export default function Pickup() {
         }
         
         if (!currentSelectedAddress) {
-          console.log(
-            "[Pickup] No selected address found in deep link handler, attempting to restore from saved workflow state"
-          );
-          
-          const savedState = await workflowStateUtils.getWorkflowState();
-          if (savedState?.selectedAddress) {
-            console.log("[Pickup] Restored address from saved state:", savedState.selectedAddress);
-            if (currentSetSelectedAddress) {
-              currentSetSelectedAddress(savedState.selectedAddress);
-            }
-            // Use the restored address for order creation
-            try {
-              const orderResult = await currentCreateOrder({
-                address: savedState.selectedAddress,
-                paymentMethod: "credit-card",
-                paymentIntentId: paymentIntentId || sessionId, // Use either payment_intent or session_id
-              });
-              console.log("[Pickup] Deep link order created", orderResult);
+          // console.log(
+          //   "[Pickup] No selected address found in deep link handler, attempting to restore from saved workflow state"
+          // );
+
+          // const savedState = await workflowStateUtils.getWorkflowState();
+          // if (savedState?.selectedAddress) {
+          //   console.log("[Pickup] Restored address from saved state:", savedState.selectedAddress);
+          //   if (currentSetSelectedAddress) {
+          //     currentSetSelectedAddress(savedState.selectedAddress);
+          //   }
+          //   // Use the restored address for order creation
+          //   try {
+          //     const orderResult = await currentCreateOrder({
+          //       address: savedState.selectedAddress,
+          //       paymentMethod: "credit-card",
+          //       paymentIntentId: paymentIntentId || sessionId, // Use either payment_intent or session_id
+          //     });
+          //     console.log("[Pickup] Deep link order created", orderResult);
               
-              // Clear cart after successful order creation
-              if (currentHandleClearCart) {
-                console.log("[Pickup] Clearing cart after successful order creation");
-                try {
-                  await currentHandleClearCart();
-                  console.log("[Pickup] Cart cleared successfully");
-                } catch (clearError) {
-                  console.error("[Pickup] Failed to clear cart:", clearError);
-                }
-              }
-            } catch (orderError) {
-              console.error("[Pickup] Order creation failed:", orderError);
-              // On error, go back to review phase
-              if (currentSetCurrentPhase) {
-                console.log("[Pickup] Order creation failed, returning to review phase");
-                currentSetCurrentPhase(2);
-              }
-              Alert.alert("Order Failed", "Failed to create order. Please try again.");
-            }
-          } else {
-            console.error("[Pickup] No saved address state found, cannot proceed");
-            // On error, go back to review phase
-            if (currentSetCurrentPhase) {
-              console.log("[Pickup] No address found, returning to review phase");
-              currentSetCurrentPhase(2);
-            }
-            Alert.alert(
-              "Error",
-              "Unable to complete order. Please try again."
-            );
-          }
-        } else {
+          //     // Clear cart after successful order creation
+          //     if (currentHandleClearCart) {
+          //       console.log("[Pickup] Clearing cart after successful order creation");
+          //       try {
+          //         await currentHandleClearCart();
+          //         console.log("[Pickup] Cart cleared successfully");
+          //       } catch (clearError) {
+          //         console.error("[Pickup] Failed to clear cart:", clearError);
+          //       }
+          //     }
+          //   } catch (orderError) {
+          //     console.error("[Pickup] Order creation failed:", orderError);
+          //     // On error, go back to review phase
+          //     if (currentSetCurrentPhase) {
+          //       console.log("[Pickup] Order creation failed, returning to review phase");
+          //       currentSetCurrentPhase(2);
+          //     }
+          //     Alert.alert("Order Failed", "Failed to create order. Please try again.");
+          //   }
+          // } else {
+          //   console.error("[Pickup] No saved address state found, cannot proceed");
+          //   // On error, go back to review phase
+          //   if (currentSetCurrentPhase) {
+          //     console.log("[Pickup] No address found, returning to review phase");
+          //     currentSetCurrentPhase(2);
+          //   }
+          //   Alert.alert(
+          //     "Error",
+          //     "Unable to complete order. Please try again."
+          //   );
+          // }
+        } 
+        else {
           try {
             const orderResult = await currentCreateOrder({
               address: currentSelectedAddress,
@@ -288,9 +289,9 @@ export default function Pickup() {
       paymentDeduplicationManager.completeProcessing(paymentKey, false);
       
       // Only show error if it's not a duplicate processing error
-      if (!error.message?.includes("already being processed")) {
-        Alert.alert("Error", "Failed to process payment. Please try again.");
-      }
+      // if (!error.message?.includes("already being processed")) {
+      //   Alert.alert("Error", "Failed to process payment. Please try again.");
+      // }
     }
   }, []); // Empty dependency array - uses refs for data
 
