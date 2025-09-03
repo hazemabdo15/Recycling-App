@@ -153,21 +153,21 @@ const TopRecycledSection = memo(() => {
           onColdStartDetected: () => {
             console.log('[TopRecycledSection] Cold start detected, warming up server...');
             setIsColdStart(true);
-            setError(t('topRecycled.coldStartMessage', 'Server is starting up, please wait...'));
+            setError(t('home.topRecycled.coldStartMessage', 'Server is starting up, please wait...'));
           },
           onRetry: (attempt, delay, isColdStartError) => {
             console.log(`[TopRecycledSection] Retry attempt ${attempt}, delay: ${delay}ms, cold start: ${isColdStartError}`);
             setRetryAttempt(attempt);
             setError(
-              isColdStartError 
-                ? t('topRecycled.retryingColdStart', `Server warming up... Retrying in ${Math.ceil(delay/1000)}s (${attempt}/3)`)
-                : t('topRecycled.retrying', `Retrying... (${attempt}/3)`)
+              isColdStartError
+                ? t('home.topRecycled.retryingColdStart', `Server warming up... Retrying in ${Math.ceil(delay/1000)}s (${attempt}/3)`)
+                : t('home.topRecycled.retrying', `Retrying... (${attempt}/3)`)
             );
           },
           fallbackData: {
             success: false,
             data: [],
-            message: t('topRecycled.serverUnavailable', 'Server is temporarily unavailable. Please try again later.')
+            message: t('home.topRecycled.serverUnavailable', 'Server is temporarily unavailable. Please try again later.')
           }
         }
       );
@@ -184,11 +184,11 @@ const TopRecycledSection = memo(() => {
       ) {
         // Handle offline case with empty data but no error message
         setTopItems([]);
-        setError(result.message || t('topRecycled.noData', 'No data available'));
+        setError(result.message || t('home.topRecycled.noData', 'No data available'));
         setHasFailedOnce(true);
       } else {
         setTopItems([]);
-        setError(result.message || t('topRecycled.loadFailed', 'Failed to load data'));
+        setError(result.message || t('home.topRecycled.loadFailed', 'Failed to load data'));
         setHasFailedOnce(true);
       }
     } catch (err) {
@@ -196,8 +196,8 @@ const TopRecycledSection = memo(() => {
       setTopItems([]);
       setError(
         isColdStartError(err)
-          ? t('topRecycled.coldStartFailed', 'Server is not responding. Please try again in a few minutes.')
-          : t('topRecycled.loadFailed', 'Failed to load data')
+          ? t('home.topRecycled.coldStartFailed', 'Server is not responding. Please try again in a few minutes.')
+          : t('home.topRecycled.loadFailed', 'Failed to load data')
       );
       setHasFailedOnce(true);
     } finally {
@@ -255,10 +255,10 @@ const TopRecycledSection = memo(() => {
           }}
         >
           {isColdStart 
-            ? t('topRecycled.warmingUp', 'Warming up server...') 
+            ? t('home.topRecycled.warmingUp', 'Warming up server...') 
             : retryAttempt > 0 
-              ? t('topRecycled.retrying', `Retrying... (${retryAttempt}/3)`)
-              : t('topRecycled.loading', 'Loading...')
+              ? t('home.topRecycled.retrying', `Retrying... (${retryAttempt}/3)`)
+              : t('home.topRecycled.loading', 'Loading...')
           }
         </Text>
       ) : error ? (
@@ -284,7 +284,7 @@ const TopRecycledSection = memo(() => {
               }}
             >
               <Text style={{ color: colors.white, fontWeight: '600' }}>
-                {t('topRecycled.tryAgain', 'Try Again')}
+                {t('home.topRecycled.tryAgain', 'Try Again')}
               </Text>
             </TouchableOpacity>
           )}
