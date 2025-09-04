@@ -2,11 +2,12 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, TouchableOpacity } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { colors } from '../styles';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 
 const ChatContext = createContext();
 
 export const ChatProvider = ({ children }) => {
+    const { colors } = useThemedStyles();
     const pathname = usePathname();
     const pulseAnim = useRef(new Animated.Value(1)).current;
     // Only show FAB on these tab routes (support both '/home' and '/(tabs)/home' etc)
@@ -71,13 +72,13 @@ export const ChatProvider = ({ children }) => {
             {children}
             {!modalOpen && (
                 <Animated.View style={[
-                    styles.fab,
+                    styles(colors).fab,
                     { transform: [{ scale: pulseAnim }] }
                 ]}>
                     <TouchableOpacity
                         onPress={openChat}
                         activeOpacity={0.7}
-                        style={styles.touchable}
+                        style={styles(colors).touchable}
                     >
                         <MaterialCommunityIcons name="robot-outline" size={24} color="white" />
                     </TouchableOpacity>
@@ -89,7 +90,7 @@ export const ChatProvider = ({ children }) => {
 
 export const useChat = () => useContext(ChatContext);
 
-const styles = StyleSheet.create({
+const styles = (colors) => StyleSheet.create({
     fab: {
         position: 'absolute',
         bottom: 130,
@@ -101,7 +102,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         elevation: 8,
-        shadowColor: '#000',
+        shadowColor: colors.shadowColor,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
         shadowRadius: 4,

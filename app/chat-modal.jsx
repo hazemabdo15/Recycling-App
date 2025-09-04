@@ -1,36 +1,37 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { 
-    View, 
-    Text, 
-    TextInput, 
-    FlatList, 
-    TouchableOpacity, 
-    ActivityIndicator, 
-    StyleSheet,
-    KeyboardAvoidingView,
-    Platform,
-    Modal 
-} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
-import { colors, borderRadius, spacing, shadows, typography } from '../styles/theme';
 import { useRouter } from 'expo-router';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { t } from 'i18next';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import {
+    ActivityIndicator,
+    FlatList,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
+} from 'react-native';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useThemedStyles } from '../hooks/useThemedStyles';
+import { borderRadius, shadows, spacing } from '../styles/theme';
 
-const MessageItem = React.memo(({ msg }) => (
+const MessageItem = React.memo(({ msg, colors, typography }) => (
     <View 
         style={[
-            styles.message, 
-            msg.type === 'user' ? styles.userMsg : styles.aiMsg,
+            getStyles(colors, typography).message, 
+            msg.type === 'user' ? getStyles(colors, typography).userMsg : getStyles(colors, typography).aiMsg,
             shadows.small
         ]}
     >
-        <Text style={msg.type === 'user' ? styles.userText : styles.aiText}>
+        <Text style={msg.type === 'user' ? getStyles(colors, typography).userText : getStyles(colors, typography).aiText}>
             {msg.content}
         </Text>
         {msg.tips && msg.tips.map((tip, i) => (
-            <Text key={`${msg.id}-tip-${i}`} style={styles.tipText}>• {tip}</Text>
+            <Text key={`${msg.id}-tip-${i}`} style={getStyles(colors, typography).tipText}>• {tip}</Text>
         ))}
     </View>
 ), (prevProps, nextProps) => {
@@ -40,6 +41,7 @@ const MessageItem = React.memo(({ msg }) => (
 MessageItem.displayName = "MessageItem";
 
 export default function ChatModal() {
+    const { colors, typography } = useThemedStyles();
     const [messages, setMessages] = useState([]);
     const [inputValue, setInputValue] = useState('');
     const [isTyping, setIsTyping] = useState(false);
@@ -47,6 +49,8 @@ export default function ChatModal() {
     const [currentPlaceholder, setCurrentPlaceholder] = useState(0);
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
+
+    const styles = getStyles(colors, typography);
 
     const placeholders = [
         t("chatModal.howToDisposeOldElectronics"),
@@ -205,7 +209,7 @@ export default function ChatModal() {
                         <FlatList
                             data={messages}
                             keyExtractor={(item) => item.id.toString()}
-                            renderItem={({ item }) => <MessageItem msg={item} />}
+                            renderItem={({ item }) => <MessageItem msg={item} colors={colors} typography={typography} />}
                             contentContainerStyle={{ padding: spacing.md }}
                             ref={scrollViewRef}
                             keyboardShouldPersistTaps="handled"
@@ -252,11 +256,11 @@ export default function ChatModal() {
     );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors, typography) => StyleSheet.create({
     modalContainer: {
         flex: 1,
         justifyContent: 'flex-end',
-        backgroundColor: 'rgba(0,0,0,0.5)',
+        backgroundColor: 'transparent',
     },
     modalContent: {
         height: '70%', 
@@ -265,11 +269,10 @@ const styles = StyleSheet.create({
         borderTopLeftRadius: borderRadius.lg,
         borderTopRightRadius: borderRadius.lg,
         overflow: 'hidden',
-        ...shadows.large,
     },
     container: {
         flex: 1,
-        backgroundColor: colors.base100,
+        backgroundColor: colors.background,
         paddingTop: spacing.xl,
     },
     header: {
@@ -278,9 +281,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: spacing.xl,
         paddingBottom: spacing.sm,
-        backgroundColor: colors.white,
+        backgroundColor: colors.surface,
         borderBottomWidth: 1,
-        borderColor: colors.base200,
+        borderColor: colors.border,
         ...shadows.small,
     },
     headerContent: {
@@ -325,9 +328,9 @@ const styles = StyleSheet.create({
     },
     aiMsg: {
         alignSelf: 'flex-start',
-        backgroundColor: colors.white,
+        backgroundColor: colors.surface,
         borderWidth: 1,
-        borderColor: colors.base200,
+        borderColor: colors.border,
     },
     userText: {
         color: colors.white,
@@ -340,22 +343,23 @@ const styles = StyleSheet.create({
     tipText: {
         ...typography.caption,
         marginTop: spacing.xs,
+        color: colors.textSecondary,
     },
     typingBubble: {
         alignSelf: 'flex-start',
-        backgroundColor: colors.white,
+        backgroundColor: colors.surface,
         padding: spacing.md,
         borderRadius: borderRadius.md,
         borderWidth: 1,
-        borderColor: colors.base200,
+        borderColor: colors.border,
     },
     inputContainer: {
         flexDirection: 'row',
         padding: spacing.md,
-        backgroundColor: colors.white,
+        backgroundColor: colors.surface,
         alignItems: 'flex-end',
         borderTopWidth: 1,
-        borderColor: colors.base200,
+        borderColor: colors.border,
     },
     input: {
         flex: 1,
@@ -363,11 +367,12 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.md,
         paddingVertical: spacing.sm,
         borderWidth: 1,
-        borderColor: colors.base300,
+        borderColor: colors.border,
         marginRight: spacing.sm,
         maxHeight: 100,
         ...typography.body,
         color: colors.text,
+        backgroundColor: colors.background,
     },
     sendButton: {
         backgroundColor: colors.primary,
@@ -375,6 +380,6 @@ const styles = StyleSheet.create({
         borderRadius: borderRadius.sm,
     },
     disabledSend: {
-        backgroundColor: colors.base400,
+        backgroundColor: colors.disabled,
     }
 });
